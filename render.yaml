@@ -1,0 +1,14 @@
+previews:
+  generation: automatic
+
+services:
+  - type: web
+    name: opendatacapture-playground
+    env: docker
+    plan: free
+    dockerComposeFile: ./docker-compose.yaml
+    dockerServiceName: web
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
