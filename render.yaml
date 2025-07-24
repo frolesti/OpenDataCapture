@@ -5,6 +5,7 @@ services:
   - type: web
     name: web
     plan: free
+    runtime: node
     envVars:
       - key: NODE_ENV
         value: production
@@ -12,6 +13,14 @@ services:
   - type: web
     name: playground
     plan: free
+    runtime: node
+    envVars:
+      - key: NODE_ENV
+        value: production
+  - type: web
+    name: api
+    plan: free
+    runtime: node
     envVars:
       - key: NODE_ENV
         value: production
