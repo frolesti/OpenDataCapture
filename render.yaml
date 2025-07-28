@@ -75,18 +75,6 @@ services:
       - key: GATEWAY_API_KEY
         sync: false
       - key: MONGO_URI
-        fromDatabase:
-          name: odc-mongo
-          property: connectionString
+        sync: false
       - key: GATEWAY_DATABASE_URL
-        fromDatabase:
-          name: odc-postgres
-          property: connectionString
-databases:
-  - name: odc-mongo
-    databaseName: opendatacapture
-    ipAllowList: []
-  - name: odc-postgres
-    databaseName: gateway
-    ipAllowList: []
-    postgresMajorVersion: '16'
+        sync: false
