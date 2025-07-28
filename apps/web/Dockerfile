@@ -16,6 +16,8 @@ RUN turbo prune @opendatacapture/web
 
 # INSTALL DEPENDENCIES AND BUILD
 FROM base AS installer
+ARG VERSION=latest
+ENV VERSION=$VERSION
 COPY tsconfig.base.json vitest.config.ts vitest.workspace.ts ./
 COPY --from=builder /app/out/ .
 RUN pnpm install --frozen-lockfile 
