@@ -66,6 +66,8 @@ services:
     rootDir: .
     dockerfilePath: apps/api/Dockerfile
     envVars:
+      - key: VERSION
+        value: latest
       - key: NODE_ENV
         value: production
       - key: SECRET_KEY
@@ -73,6 +75,18 @@ services:
       - key: GATEWAY_API_KEY
         sync: false
       - key: MONGO_URI
-        sync: false
+        fromDatabase:
+          name: odc-mongo
+          property: connectionString
       - key: GATEWAY_DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: odc-postgres
+          property: connectionString
+databases:
+  - name: odc-mongo
+    databaseName: opendatacapture
+    ipAllowList: []
+  - name: odc-postgres
+    databaseName: gateway
+    ipAllowList: []
+    postgresMajorVersion: '16'
