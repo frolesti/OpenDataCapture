@@ -1,4 +1,4 @@
-FROM node:iron AS base
+FROM node:lts AS base
 WORKDIR /app
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"

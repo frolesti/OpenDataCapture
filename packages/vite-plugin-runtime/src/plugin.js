@@ -138,7 +138,7 @@ export async function plugin(options) {
     },
     config: () => ({
       optimizeDeps: {
-        exclude: Array.from(metadata.values().flatMap((pkg) => pkg.importPaths))
+        exclude: Array.from(metadata.values()).flatMap((pkg) => pkg.importPaths)
       }
     }),
     configureServer: (server) => {
