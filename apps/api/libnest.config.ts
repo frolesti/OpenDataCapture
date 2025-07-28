@@ -36,7 +36,11 @@ const config = defineUserConfig({
   },
   entry: () => import('./src/main.js'),
   globals: {
-    __RELEASE__: await getReleaseInfo()
+    __RELEASE__: {
+      buildTime: Date.now(),
+      type: 'production',
+      version: process.env.RELEASE_VERSION || process.env.VERSION || 'latest'
+    }
   }
 });
 

@@ -16,7 +16,11 @@ await esbuild.build({
   },
   bundle: true,
   define: {
-    __RELEASE__: JSON.stringify(await getReleaseInfo()),
+    __RELEASE__: JSON.stringify({
+      buildTime: Date.now(),
+      type: 'production',
+      version: process.env.RELEASE_VERSION || process.env.VERSION || 'latest'
+    }),
     'import.meta.env.DEV': 'false',
     'import.meta.env.PROD': 'true'
   },

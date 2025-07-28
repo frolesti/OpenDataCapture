@@ -17,7 +17,11 @@ export default defineConfig({
     target: 'es2022'
   },
   define: {
-    __RELEASE__: JSON.stringify(await getReleaseInfo())
+    __RELEASE__: JSON.stringify({
+      buildTime: Date.now(),
+      type: 'production',
+      version: process.env.RELEASE_VERSION || process.env.VERSION || 'latest'
+    })
   },
   optimizeDeps: {
     esbuildOptions: {
