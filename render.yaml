@@ -5,22 +5,48 @@ services:
   - type: web
     name: web
     plan: free
-    runtime: node
+    runtime: docker
+    rootDir: .
+    dockerfilePath: apps/web/Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_BASE_URL
+        fromService:
+          name: api
+          type: web
+          property: host
+      - key: DOCS_URL
+        value: https://opendatacapture.org/docs
+      - key: GITHUB_REPO_URL
+        value: https://github.com/DouglasNeuroInformatics/OpenDataCapture
+      - key: GATEWAY_ENABLED
+        value: 'true'
+
+  - type: web
+    name: playground
+    plan: free
+    runtime: docker
+    rootDir: .
+    dockerfilePath: apps/playground/Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
 
   - type: web
-    name: playground
-    plan: free
-    runtime: node
-    envVars:
-      - key: NODE_ENV
-        value: production
-  - type: web
     name: api
     plan: free
-    runtime: node
+    runtime: docker
+    rootDir: .
+    dockerfilePath: apps/api/Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
+      - key: SECRET_KEY
+        sync: false
+      - key: GATEWAY_API_KEY
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: GATEWAY_DATABASE_URL
+        sync: false
