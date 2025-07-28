@@ -45,7 +45,7 @@ export async function getReleaseInfo(): Promise<ReleaseInfo> {
       return $ProductionReleaseInfo.parseAsync({
         buildTime: Date.now(),
         type: 'production',
-        version: process.env.RELEASE_VERSION!
+        version: process.env.RELEASE_VERSION || process.env.VERSION || 'latest'
       } satisfies ProductionReleaseInfo);
     } else {
       throw new Error(`Unexpected value for process.env.NODE_ENV: ${process.env.NODE_ENV}`);
