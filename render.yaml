@@ -9,25 +9,15 @@ services:
       - key: NODE_ENV
         value: production
       - key: API_BASE_URL
-        fromService:
-          name: api
-          type: web
-          property: host
+        value: https://api-3bj5.onrender.com
       - key: WEB_URL
-        fromService:
-          name: web
-          type: web
-          property: host
+        value: https://web-service.onrender.com
       - key: VITE_API_BASE_URL
-        fromService:
-          name: api
-          type: web
-          property: host
+        value: https://api-3bj5.onrender.com
       - key: VITE_WEB_URL
-        fromService:
-          name: web
-          type: web
-          property: host
+        value: https://web-service.onrender.com
+      - key: GATEWAY_API_KEY
+        value: 'render-gateway-api-key-0123456789abcdef0123456789abcdef'
   - type: web
     name: web
     plan: free
@@ -38,10 +28,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: API_BASE_URL
-        fromService:
-          name: api
-          type: web
-          property: host
+        value: https://api-3bj5.onrender.com
       - key: DOCS_URL
         value: https://opendatacapture.org/docs
       - key: GITHUB_REPO_URL
@@ -81,7 +68,7 @@ services:
       - key: SECRET_KEY
         sync: false
       - key: GATEWAY_API_KEY
-        sync: false
+        value: 'render-gateway-api-key-0123456789abcdef0123456789abcdef'
       - key: MONGO_URI
         value: 'mongodb://localhost:27017/opendatacapture'
       - key: GATEWAY_DATABASE_URL
@@ -90,3 +77,5 @@ services:
         value: 'true'
       - key: GATEWAY_REFRESH_INTERVAL
         value: '300000'
+      - key: GATEWAY_SITE_ADDRESS
+        value: https://gateway-service.onrender.com
