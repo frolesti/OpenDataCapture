@@ -1,4 +1,8 @@
 services:
+  # MongoDB - You should set up a real MongoDB Atlas database
+  # This is just a placeholder - you'll need to replace with your own MongoDB URL in the Render.com dashboard
+
+  # Gateway Service
   - type: web
     name: gateway
     plan: free
@@ -62,6 +66,7 @@ services:
     runtime: docker
     rootDir: .
     dockerfilePath: apps/api/Dockerfile
+    healthCheckPath: /v1/health
     envVars:
       - key: VERSION
         value: latest
@@ -71,13 +76,12 @@ services:
         sync: false
       - key: GATEWAY_API_KEY
         value: 'render-gateway-api-key-0123456789abcdef0123456789abcdef'
-      # For production, use a hosted MongoDB service like MongoDB Atlas
-      # Example: mongodb+srv://<username>:<password>@<cluster-address>/
-      # Current setting is only for development/testing
+      # MongoDB connection - use a real MongoDB Atlas URL
       - key: MONGO_URI
-        value: 'mongodb://localhost:27017'
+        sync: false
+      # PostgreSQL connection - use a real PostgreSQL URL
       - key: GATEWAY_DATABASE_URL
-        value: 'postgresql://postgres:postgres@localhost:5432/gateway'
+        sync: false
       - key: GATEWAY_ENABLED
         value: 'true'
       - key: GATEWAY_REFRESH_INTERVAL

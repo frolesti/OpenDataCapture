@@ -32,6 +32,11 @@ COPY --from=installer /app/apps/api/dist/runtime/ /runtime/
 # Include Prisma schema and generate client
 COPY --from=installer /app/apps/api/prisma/ /app/prisma/
 
+# Add a health check to verify the service is running
+RUN apt-get update && apt-get install -y curl
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:10000/v1/health || exit 1
+
 RUN echo '{ "type": "module", "imports": { "#runtime/v1/*": "./dist/runtime/v1/*" } }' > package.json
 RUN echo '{ "type": "module" }' > /runtime/package.json
 USER node

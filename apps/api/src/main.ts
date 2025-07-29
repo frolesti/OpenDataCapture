@@ -2,6 +2,7 @@ import { AppFactory } from '@douglasneuroinformatics/libnest';
 import { PrismaClient } from '@prisma/client';
 
 import { AssignmentsModule } from './assignments/assignments.module';
+import { CoreModule } from './core/core.module';
 import { $Env } from './core/env.schema';
 import { GatewayModule } from './gateway/gateway.module';
 import { GroupsModule } from './groups/groups.module';
@@ -36,6 +37,7 @@ export default AppFactory.create({
   },
   envSchema: $Env,
   imports: [
+    CoreModule,
     ConfiguredAuthModule,
     GroupsModule,
     InstrumentRecordsModule,
