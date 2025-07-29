@@ -22,13 +22,15 @@ ENV VERSION=$VERSION
 COPY tsconfig.base.json vitest.config.ts vitest.workspace.ts ./
 COPY --from=pruner /app/out/ .
 RUN pnpm install --frozen-lockfile 
-RUN turbo build --filter=@opendatacapture/api
+RUN turbo db:generate build --filter=@opendatacapture/api
 
 # RUN SERVER
 FROM base AS runner
 COPY --from=installer /app/apps/api/dist/ /app/dist/
 COPY --from=installer /app/apps/api/public/ /app/public/
 COPY --from=installer /app/apps/api/dist/runtime/ /runtime/
+# Include Prisma schema and generate client
+COPY --from=installer /app/apps/api/prisma/ /app/prisma/
 
 RUN echo '{ "type": "module", "imports": { "#runtime/v1/*": "./dist/runtime/v1/*" } }' > package.json
 RUN echo '{ "type": "module" }' > /runtime/package.json

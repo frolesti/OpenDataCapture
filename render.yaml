@@ -69,8 +69,11 @@ services:
         sync: false
       - key: GATEWAY_API_KEY
         value: 'render-gateway-api-key-0123456789abcdef0123456789abcdef'
+      # For production, use a hosted MongoDB service like MongoDB Atlas
+      # Example: mongodb+srv://<username>:<password>@<cluster-address>/
+      # Current setting is only for development/testing
       - key: MONGO_URI
-        value: 'mongodb://localhost:27017/opendatacapture'
+        value: 'mongodb://localhost:27017'
       - key: GATEWAY_DATABASE_URL
         value: 'postgresql://postgres:postgres@localhost:5432/gateway'
       - key: GATEWAY_ENABLED

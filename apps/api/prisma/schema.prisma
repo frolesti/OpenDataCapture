@@ -10,7 +10,7 @@ generator json {
 
 datasource db {
   provider = "mongodb"
-  url      = env("_")
+  url      = env("MONGO_URI")
 }
 
 // Assignments
