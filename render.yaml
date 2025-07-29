@@ -29,6 +29,8 @@ services:
         value: production
       - key: API_BASE_URL
         value: https://api-3bj5.onrender.com
+      - key: VITE_API_BASE_URL
+        value: https://api-3bj5.onrender.com
       - key: DOCS_URL
         value: https://opendatacapture.org/docs
       - key: GITHUB_REPO_URL
