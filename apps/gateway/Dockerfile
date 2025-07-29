@@ -28,6 +28,7 @@ RUN turbo run db:push --filter=@opendatacapture/gateway
 # RUN SERVER
 FROM base AS runner
 COPY apps/gateway/scripts/run.sh run.sh
+RUN mkdir -p /app/sqlite
 COPY --from=installer /app/sqlite/gateway.db /app/gateway.tmpl.db
 COPY --from=installer /app/apps/gateway/dist/ /app/dist/
 COPY --from=installer /app/apps/gateway/public/ /app/public/

@@ -48,6 +48,14 @@ services:
         value: https://github.com/DouglasNeuroInformatics/OpenDataCapture
       - key: GATEWAY_ENABLED
         value: 'true'
+      - key: CONTACT_EMAIL
+        value: 'info@example.com'
+      - key: LICENSE_URL
+        value: 'https://github.com/DouglasNeuroInformatics/OpenDataCapture/blob/main/LICENSE'
+      - key: PLAUSIBLE_BASE_URL
+        value: 'https://plausible.io'
+      - key: PLAUSIBLE_WEB_DATA_DOMAIN
+        value: 'opendatacapture.org'
 
   - type: web
     name: playground
@@ -78,3 +86,7 @@ services:
         value: 'mongodb://localhost:27017/opendatacapture'
       - key: GATEWAY_DATABASE_URL
         value: 'postgresql://postgres:postgres@localhost:5432/gateway'
+      - key: GATEWAY_ENABLED
+        value: 'true'
+      - key: GATEWAY_REFRESH_INTERVAL
+        value: '300000'
