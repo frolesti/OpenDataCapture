@@ -3,957 +3,962 @@ import { z } from '/runtime/v1/zod@3.x';
 
 export default defineInstrument({
   kind: 'FORM',
-  language: 'es',
-  tags: ['Clinical Research', 'Osteoporosis', 'Multicenter Study'],
+  language: 'en',
+  tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
     edition: 1,
-    name: 'OSTEOPOROSIS_CRF_STUDY'
+    name: 'OMEGA_FF_AP_2025'
   },
   content: [
     {
-      title: 'DATOS DE IDENTIFICACIÓN DEL PACIENTE',
+      title: 'CUADERNO DE RECOGIDA DE DATOS',
+      description: 'Evaluación del tratamiento antiosteoporótico posterior a fractura por fragilidad en Atención Primaria: estudio transversal',
       fields: {
         codigoPaciente: {
           kind: 'string',
-          label: 'Código del paciente',
-          description: 'Código único asignado al paciente en el estudio',
+          label: 'CÓDIGO DEL PACIENTE',
           variant: 'input'
         },
-        inicialesPaciente: {
+        consentimientoInformado: {
           kind: 'string',
-          label: 'Iniciales del paciente',
-          description: 'Primera letra del nombre + Primera letra primer apellido + Primera letra segundo apellido',
-          variant: 'input'
+          label: 'CONSENTIMIENTO INFORMADO - ¿El paciente ha firmado el consentimiento informado?',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        centro: {
-          kind: 'string',
-          label: 'Centro',
-          description: 'Nombre del centro hospitalario',
-          variant: 'input'
-        },
-        codigoCentro: {
-          kind: 'string',
-          label: 'Código del centro',
-          variant: 'input'
-        },
-        investigadorPrincipal: {
-          kind: 'string',
-          label: 'Investigador principal',
-          description: 'Nombre completo del investigador responsable',
-          variant: 'input'
-        },
-        fechaInclusion: {
+        fechaConsentimiento: {
           kind: 'date',
-          label: 'Fecha de inclusión en el estudio'
+          label: 'FECHA DE OBTENCIÓN DEL CONSENTIMIENTO INFORMADO FIRMADO',
+          description: 'Fecha en la que el paciente firma el consentimiento informado'
         }
       }
     },
     {
-      title: 'DATOS DEMOGRÁFICOS Y ANTROPOMÉTRICOS',
+      title: 'CRITERIOS DE SELECCIÓN',
       fields: {
-        fechaNacimiento: {
-          kind: 'date',
-          label: 'Fecha de nacimiento'
+        criterioInclusion1: {
+          kind: 'string',
+          label: 'Criterios de INCLUSIÓN - 1. Adultos ≥ 50 años, con antecedentes de historia de al menos una fractura por fragilidad* (evento índice) (ICD Código ICD-9 y ICD-10) ocurrida entre enero de 2021 y diciembre de 2023',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        edad: {
+        criterioInclusion2: {
+          kind: 'string',
+          label: '2. Los pacientes deben haber otorgado su consentimiento informado para la recopilación y el uso de los datos clínicos contenidos en su historia médica',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        criterioExclusion1: {
+          kind: 'string',
+          label: 'Criterios de EXCLUSIÓN - 1. Pacientes sin otorgar el consentimiento informado',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        criterioExclusion2: {
+          kind: 'string',
+          label: '2. Pacientes cuya historia clínica presenta documentación incompleta o carece de información relevante necesaria para la correcta valoración de los resultados del estudio',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        criterioExclusion3: {
+          kind: 'string',
+          label: '3. Pacientes con una fractura debida a un traumatismo de alta o moderada intensidad (p. accidente automoví) y otras fracturas poco probables de estar relacionadas con la osteoporosis (dedos de las manos y pies y huesos de la cara)',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        criterioExclusion4: {
+          kind: 'string',
+          label: '4. Participación previa en otro estudio en el último año',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        inicialesProfesional: {
+          kind: 'string',
+          label: 'INICIALES Y FIRMA DEL PROFESIONAL SANITARIO QUE HA RELLENADO LOS DATOS - Iniciales',
+          variant: 'input'
+        },
+        firmaProfesional: {
+          kind: 'string',
+          label: 'Firma',
+          variant: 'input'
+        }
+      }
+    },
+    {
+      title: 'CARACTERIZACIÓN DEL PACIENTE EN EL MOMENTO DE LA FRACTURA ÍNDICE',
+      fields: {
+        centroAtencionPrimaria: {
+          kind: 'string',
+          label: 'CENTRO DE ATENCIÓN PRIMARIA - ¿Cuál es el centro de atención primaria dónde se visita el paciente?',
+          variant: 'input'
+        },
+        sexoPaciente: {
+          kind: 'string',
+          label: 'DATOS DEMOGRÁFICOS Y CLÍNICOS (en el momento de la fractura por fragilidad índice) - Indique el sexo del paciente',
+          variant: 'radio',
+          options: {
+            masculino: 'Masculino',
+            femenino: 'Femenino'
+          }
+        },
+        edadPaciente: {
           kind: 'number',
-          label: 'Edad (años)',
+          label: 'Indique la edad del paciente (años)',
           variant: 'input',
-          min: 0,
+          min: 50,
           max: 120
         },
-        sexo: {
+        pesoPaciente: {
+          kind: 'number',
+          label: 'Indique el peso (kg)',
+          variant: 'input',
+          min: 20,
+          max: 300
+        },
+        alturaPaciente: {
+          kind: 'number',
+          label: 'Indique la altura (cm)',
+          variant: 'input',
+          min: 100,
+          max: 250
+        },
+        observaCifosis: {
           kind: 'string',
-          label: 'Sexo',
+          label: '¿Se observa cifosis?',
           variant: 'radio',
           options: {
-            mujer: 'Mujer',
-            hombre: 'Hombre'
+            si: 'Sí',
+            no: 'No'
           }
         },
-        peso: {
-          kind: 'number',
-          label: 'Peso (kg)',
-          variant: 'input',
-          min: 0
-        },
-        talla: {
-          kind: 'number',
-          label: 'Talla (cm)',
-          variant: 'input',
-          min: 0
-        },
-        imc: {
-          kind: 'number',
-          label: 'IMC (kg/m²)',
-          description: 'Índice de Masa Corporal',
-          variant: 'input',
-          min: 0
-        },
-        raza: {
+        perdidaAlturaDocumentada: {
           kind: 'string',
-          label: 'Raza/Etnia',
-          variant: 'select',
-          options: {
-            caucasica: 'Caucásica',
-            asiatica: 'Asiática',
-            afroamericana: 'Afroamericana',
-            hispana: 'Hispana',
-            otra: 'Otra'
-          }
-        }
-      }
-    },
-    {
-      title: 'ANTECEDENTES PERSONALES',
-      fields: {
-        menarquia: {
-          kind: 'number',
-          label: 'Edad de menarquia (años)',
-          variant: 'input',
-          min: 0,
-          max: 25
-        },
-        menopausia: {
-          kind: 'boolean',
-          label: '¿Ha alcanzado la menopausia?',
-          variant: 'radio'
-        },
-        edadMenopausia: {
-          kind: 'number',
-          label: 'Edad de menopausia (años)',
-          variant: 'input',
-          min: 0
-        },
-        tipoMenopausia: {
-          kind: 'string',
-          label: 'Tipo de menopausia',
+          label: '¿Existe pérdida de altura documentada respecto a talla previa?',
           variant: 'radio',
           options: {
-            natural: 'Natural',
-            quirurgica: 'Quirúrgica',
-            inducida: 'Inducida (quimioterapia/radioterapia)'
+            si: 'Sí',
+            no: 'No'
           }
         },
-        gestaciones: {
-          kind: 'number',
-          label: 'Número de gestaciones',
-          variant: 'input',
-          min: 0
+        estiloVida: {
+          kind: 'string',
+          label: 'Indique el estilo de vida que se ajuste más al paciente',
+          variant: 'radio',
+          options: {
+            sedentario: 'Estilo de vida sedentario',
+            activo: 'Estilo de vida activo',
+            equilibrado: 'Estilo de vida equilibrado',
+            riesgo: 'Estilo de vida con hábitos de riesgo'
+          }
         },
-        partos: {
-          kind: 'number',
-          label: 'Número de partos',
-          variant: 'input',
-          min: 0
+        presentaFactoresRiesgo: {
+          kind: 'string',
+          label: 'FACTORES DE RIESGO (en el momento de la fractura por fragilidad índice) - ¿El paciente presenta alguno de los siguientes factores de riesgo?',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        lactanciaMaterna: {
+        imcMenor20: {
           kind: 'boolean',
-          label: '¿Ha dado lactancia materna?',
-          variant: 'radio'
+          label: 'IMC (< 20 kg/m²)',
+          variant: 'checkbox'
         },
-        duracionLactancia: {
-          kind: 'number',
-          label: 'Duración total de lactancia materna (meses)',
-          variant: 'input',
-          min: 0
-        }
-      }
-    },
-    {
-      title: 'ANTECEDENTES MÉDICOS',
-      fields: {
+        etnicidadBlancaCaucasica: {
+          kind: 'boolean',
+          label: 'Etnicidad (paciente blanco/a caucásico/a)',
+          variant: 'checkbox'
+        },
+        menopausiaPrecoz: {
+          kind: 'boolean',
+          label: 'Menopausia precoz (<45 años)',
+          variant: 'checkbox'
+        },
         fracturaPrevia: {
           kind: 'boolean',
-          label: 'Fractura previa por fragilidad',
-          variant: 'radio'
+          label: 'Fractura previa',
+          variant: 'checkbox'
         },
-        localizacionFractura: {
-          kind: 'set',
-          label: 'Localización de fracturas previas',
-          variant: 'listbox',
-          options: {
-            vertebral: 'Vertebral',
-            cadera: 'Cadera',
-            muneca: 'Muñeca',
-            humero: 'Húmero',
-            costillas: 'Costillas',
-            pelvis: 'Pelvis',
-            otra: 'Otra'
-          }
-        },
-        fechaUltimaFractura: {
-          kind: 'date',
-          label: 'Fecha de la última fractura'
-        },
-        diabetesMellitus: {
+        antecedenteFracturaPaternoMaterno: {
           kind: 'boolean',
-          label: 'Diabetes Mellitus',
-          variant: 'radio'
+          label: 'Antecedente paterno/materno de fractura femoral',
+          variant: 'checkbox'
         },
-        tipoDiabetes: {
-          kind: 'string',
-          label: 'Tipo de diabetes',
-          variant: 'radio',
-          options: {
-            tipo1: 'Tipo 1',
-            tipo2: 'Tipo 2',
-            gestacional: 'Gestacional'
-          }
-        },
-        hipertiroidismo: {
+        tabaquismoActivo: {
           kind: 'boolean',
-          label: 'Hipertiroidismo',
-          variant: 'radio'
+          label: 'Tabaquismo activo',
+          variant: 'checkbox'
         },
-        hipotiroidismo: {
+        ingestaAlcohol: {
           kind: 'boolean',
-          label: 'Hipotiroidismo',
-          variant: 'radio'
+          label: 'Ingesta de alcohol ≥3 unidades/día',
+          variant: 'checkbox'
+        },
+        nutricionPobre: {
+          kind: 'boolean',
+          label: 'Nutrición pobre - dieta baja en calcio (definiéndose como ingesta baja en calcio un aporte de < 3 unidades de calcio diarias: siendo 1 vaso de leche, 1 yogur o 40 g de queso 1 unidad)',
+          variant: 'checkbox'
+        },
+        medicamentosAsociados: {
+          kind: 'boolean',
+          label: 'Medicamentos asociados (glucocorticoides orales, inhibidores de la aromatasa, análogos de la GnRH, anticonvulsivos, inhibidores de la bomba de protones, fármacos antihipertensivos y estatinas)',
+          variant: 'checkbox'
+        }
+      }
+    },
+    {
+      title: 'COMORBILIDADES (en el momento de la fractura por fragilidad índice)',
+      description: '¿El paciente presenta alguna de las siguientes comorbilidades?',
+      fields: {
+        artritisReumatoide: {
+          kind: 'boolean',
+          label: 'Artritis reumatoide',
+          variant: 'checkbox'
+        },
+        otrasArtritisInflamatorias: {
+          kind: 'boolean',
+          label: 'Otras artritis inflamatorias',
+          variant: 'checkbox'
+        },
+        lupusEritematoso: {
+          kind: 'boolean',
+          label: 'Lupus eritematoso sistémico',
+          variant: 'checkbox'
         },
         hiperparatiroidismo: {
           kind: 'boolean',
           label: 'Hiperparatiroidismo',
-          variant: 'radio'
+          variant: 'checkbox'
         },
-        enfermedadCeliaca: {
+        hipertiroidismo: {
           kind: 'boolean',
-          label: 'Enfermedad celíaca',
-          variant: 'radio'
+          label: 'Hipertiroidismo',
+          variant: 'checkbox'
         },
-        enfermedadInflamatoria: {
+        hipercortisolismo: {
+          kind: 'boolean',
+          label: 'Hipercortisolismo/Cushing',
+          variant: 'checkbox'
+        },
+        diabetes: {
+          kind: 'boolean',
+          label: 'Diabetes (tipos 1 y 2)',
+          variant: 'checkbox'
+        },
+        enfermedadInflamatoriaIntestinal: {
           kind: 'boolean',
           label: 'Enfermedad inflamatoria intestinal',
-          variant: 'radio'
+          variant: 'checkbox'
         },
-        enfermedadReumatica: {
+        malnutricion: {
           kind: 'boolean',
-          label: 'Enfermedad reumática',
-          variant: 'radio'
+          label: 'Malnutrición',
+          variant: 'checkbox'
         },
-        tipoEnfermedadReumatica: {
-          kind: 'string',
-          label: 'Tipo de enfermedad reumática',
-          variant: 'input'
-        },
-        insuficienciaRenal: {
+        nutricionParenteral: {
           kind: 'boolean',
-          label: 'Insuficiencia renal crónica',
-          variant: 'radio'
+          label: 'Nutrición parenteral',
+          variant: 'checkbox'
         },
-        enfermedadHepatica: {
+        mielomaMultiple: {
           kind: 'boolean',
-          label: 'Enfermedad hepática',
-          variant: 'radio'
+          label: 'Mieloma múltiple',
+          variant: 'checkbox'
+        },
+        otrosTrastornosMedulares: {
+          kind: 'boolean',
+          label: 'Otros trastornos medulares',
+          variant: 'checkbox'
         },
         epoc: {
           kind: 'boolean',
-          label: 'EPOC (Enfermedad Pulmonar Obstructiva Crónica)',
-          variant: 'radio'
+          label: 'Enfermedad pulmonar obstructiva crónica (EPOC)',
+          variant: 'checkbox'
         },
-        cancer: {
+        enfermedadRenalCronica: {
           kind: 'boolean',
-          label: 'Historia de cáncer',
-          variant: 'radio'
-        },
-        tipoCancer: {
-          kind: 'string',
-          label: 'Tipo de cáncer',
-          variant: 'input'
+          label: 'Enfermedad renal crónica (ERC)',
+          variant: 'checkbox'
         }
       }
     },
     {
-      title: 'ANTECEDENTES FAMILIARES',
+      title: 'EPISODIO DE LA FRACTURA POR FRAGILIDAD',
+      description: 'Complete la siguiente información relacionada con la fractura por fragilidad reciente del paciente.',
       fields: {
-        fracturaFamiliar: {
-          kind: 'boolean',
-          label: 'Historia familiar de fractura de cadera',
-          variant: 'radio'
+        // Primera fractura
+        fechaFractura1: {
+          kind: 'date',
+          label: 'Fecha de la FF'
         },
-        parentescoFractura: {
+        localizacionFractura1: {
           kind: 'string',
-          label: 'Parentesco',
-          variant: 'select',
+          label: 'Localización - Elegir una opción',
+          variant: 'radio',
           options: {
-            madre: 'Madre',
-            padre: 'Padre',
-            hermanos: 'Hermanos',
-            abuelos: 'Abuelos',
-            otro: 'Otro'
+            vertebral: 'Vertebral',
+            femoral: 'Femoral',
+            humero: 'Húmero',
+            radioMuneca: 'Radio/cubito/muñeca',
+            pelvis: 'Pelvis',
+            costilla: 'Costilla',
+            tobillopie: 'Tobillo/pie',
+            otras: 'Otras'
           }
         },
-        osteoporosisFamiliar: {
-          kind: 'boolean',
-          label: 'Historia familiar de osteoporosis',
-          variant: 'radio'
-        },
-        parentescoOsteoporosis: {
+        hospitalizacion1: {
           kind: 'string',
-          label: 'Parentesco',
-          variant: 'select',
+          label: '¿Requirió hospitalización?',
+          variant: 'radio',
           options: {
-            madre: 'Madre',
-            padre: 'Padre',
-            hermanos: 'Hermanos',
-            abuelos: 'Abuelos',
-            otro: 'Otro'
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        // Segunda fractura
+        fechaFractura2: {
+          kind: 'date',
+          label: 'Fecha de la FF (segunda fractura)'
+        },
+        localizacionFractura2: {
+          kind: 'string',
+          label: 'Localización - Elegir una opción',
+          variant: 'radio',
+          options: {
+            vertebral: 'Vertebral',
+            femoral: 'Femoral',
+            humero: 'Húmero',
+            radioMuneca: 'Radio/cubito/muñeca',
+            pelvis: 'Pelvis',
+            costilla: 'Costilla',
+            tobillopie: 'Tobillo/pie',
+            otras: 'Otras'
+          }
+        },
+        hospitalizacion2: {
+          kind: 'string',
+          label: '¿Requirió hospitalización? (segunda fractura)',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        // Tercera fractura
+        fechaFractura3: {
+          kind: 'date',
+          label: 'Fecha de la FF (tercera fractura)'
+        },
+        localizacionFractura3: {
+          kind: 'string',
+          label: 'Localización - Elegir una opción',
+          variant: 'radio',
+          options: {
+            vertebral: 'Vertebral',
+            femoral: 'Femoral',
+            humero: 'Húmero',
+            radioMuneca: 'Radio/cubito/muñeca',
+            pelvis: 'Pelvis',
+            costilla: 'Costilla',
+            tobillopie: 'Tobillo/pie',
+            otras: 'Otras'
+          }
+        },
+        hospitalizacion3: {
+          kind: 'string',
+          label: '¿Requirió hospitalización? (tercera fractura)',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
           }
         }
       }
     },
     {
-      title: 'HÁBITOS DE VIDA',
+      title: 'DIAGNÓSTICO DE OSTEOPOROSIS',
       fields: {
-        tabaquismo: {
+        pacienteDiagnosticado: {
           kind: 'string',
-          label: 'Hábito tabáquico',
+          label: '¿El paciente está diagnosticado de osteoporosis?',
           variant: 'radio',
           options: {
-            nunca: 'Nunca fumador',
-            exfumador: 'Ex-fumador',
-            fumadorActual: 'Fumador actual'
+            si: 'Sí',
+            no: 'No'
           }
         },
-        cigarrillosDia: {
-          kind: 'number',
-          label: 'Número de cigarrillos/día',
-          variant: 'input',
-          min: 0
+        fechaDiagnostico: {
+          kind: 'date',
+          label: '¿Cuál fue la fecha en la que tuvo lugar el diagnóstico?'
         },
-        aniosTabaquismo: {
-          kind: 'number',
-          label: 'Años de tabaquismo',
-          variant: 'input',
-          min: 0
-        },
-        paquetesAnio: {
-          kind: 'number',
-          label: 'Paquetes-año',
-          description: 'Número de cigarrillos/día ÷ 20 × años fumando',
-          variant: 'input',
-          min: 0
-        },
-        consumoAlcohol: {
-          kind: 'string',
-          label: 'Consumo de alcohol',
-          variant: 'radio',
-          options: {
-            no: 'No',
-            ocasional: 'Ocasional (< 1 unidad/día)',
-            moderado: 'Moderado (1-2 unidades/día)',
-            excesivo: 'Excesivo (> 2 unidades/día)'
-          }
-        },
-        unidadesAlcoholSemana: {
-          kind: 'number',
-          label: 'Unidades de alcohol/semana',
-          description: '1 unidad = 10g alcohol puro',
-          variant: 'input',
-          min: 0
-        },
-        actividadFisica: {
-          kind: 'string',
-          label: 'Nivel de actividad física',
-          variant: 'radio',
-          options: {
-            sedentario: 'Sedentario',
-            ligero: 'Ligero (< 30 min/día)',
-            moderado: 'Moderado (30-60 min/día)',
-            intenso: 'Intenso (> 60 min/día)'
-          }
-        },
-        tipoEjercicio: {
+        metodoDiagnostico: {
           kind: 'set',
-          label: 'Tipo de ejercicio',
+          label: '¿Qué método principal se empleó para el diagnóstico?',
           variant: 'listbox',
           options: {
-            caminar: 'Caminar',
-            correr: 'Correr',
-            natacion: 'Natación',
-            ciclismo: 'Ciclismo',
-            gimnasio: 'Gimnasio/Musculación',
-            deporteEquipo: 'Deporte de equipo',
-            yoga: 'Yoga/Pilates',
+            dxa: 'Densitometría ósea (DXA)',
+            clinico: 'Diagnóstico clínico tras fractura por fragilidad (sin DXA)',
+            frax: 'Evaluación de riesgo mediante FRAX u otra escala sin DXA',
+            hallazgo: 'Hallazgo radiológico de fracturas',
+            presuntivo: 'Diagnóstico presuntivo por antecedentes y factores de riesgo',
             otro: 'Otro'
           }
         },
-        exposicionSolar: {
+        otroMetodoEspecificar: {
           kind: 'string',
-          label: 'Exposición solar',
+          label: 'Otro (especificar):',
+          variant: 'input'
+        }
+      }
+    },
+    {
+      title: 'PRESCRIPCIÓN DEL TRATAMIENTO DE OSTEOPOROSIS',
+      description: 'Indique los tratamientos que el paciente ha recibido para la osteoporosis y la duración de cada uno de ellos. Si continúa con la medicación no rellene la fecha fin y marque la casilla "continúa". Si no continúa, complete el "motivo de interrupción de la medicación"',
+      fields: {
+        // Alendronato
+        alendronatoFechaInicio: {
+          kind: 'date',
+          label: 'Alendronato - Fecha inicio'
+        },
+        alendronatoFechaFin: {
+          kind: 'date',
+          label: 'Alendronato - Fecha fin'
+        },
+        alendronatoContinua: {
+          kind: 'string',
+          label: 'Alendronato - Continúa',
           variant: 'radio',
           options: {
-            minima: 'Mínima (< 15 min/día)',
-            moderada: 'Moderada (15-30 min/día)',
-            alta: 'Alta (> 30 min/día)'
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        alendronatoMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Alendronato - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
+          }
+        },
+        // Risedronato
+        risedronatoFechaInicio: {
+          kind: 'date',
+          label: 'Risedronato - Fecha inicio'
+        },
+        risedronatoFechaFin: {
+          kind: 'date',
+          label: 'Risedronato - Fecha fin'
+        },
+        risedronatoContinua: {
+          kind: 'string',
+          label: 'Risedronato - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        risedronatoMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Risedronato - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
+          }
+        },
+        // Ibandronato
+        ibandronatoFechaInicio: {
+          kind: 'date',
+          label: 'Ibandronato - Fecha inicio'
+        },
+        ibandronatoFechaFin: {
+          kind: 'date',
+          label: 'Ibandronato - Fecha fin'
+        },
+        ibandronatoContinua: {
+          kind: 'string',
+          label: 'Ibandronato - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        ibandronatoMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Ibandronato - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
+          }
+        },
+        // Zoledronato
+        zoledronatoFechaInicio: {
+          kind: 'date',
+          label: 'Zoledronato - Fecha inicio'
+        },
+        zoledronatoFechaFin: {
+          kind: 'date',
+          label: 'Zoledronato - Fecha fin'
+        },
+        zoledronatoContinua: {
+          kind: 'string',
+          label: 'Zoledronato - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        zoledronatoMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Zoledronato - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
+          }
+        },
+        // Denosumab
+        denosumabFechaInicio: {
+          kind: 'date',
+          label: 'Denosumab - Fecha inicio'
+        },
+        denosumabFechaFin: {
+          kind: 'date',
+          label: 'Denosumab - Fecha fin'
+        },
+        denosumabContinua: {
+          kind: 'string',
+          label: 'Denosumab - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        denosumabMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Denosumab - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
+          }
+        },
+        // Raloxifeno
+        raloxifenoFechaInicio: {
+          kind: 'date',
+          label: 'Raloxifeno - Fecha inicio'
+        },
+        raloxifenoFechaFin: {
+          kind: 'date',
+          label: 'Raloxifeno - Fecha fin'
+        },
+        raloxifenoContinua: {
+          kind: 'string',
+          label: 'Raloxifeno - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        raloxifenoMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Raloxifeno - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
+          }
+        },
+        // Bazedoxifeno
+        bazedoxifenoFechaInicio: {
+          kind: 'date',
+          label: 'Bazedoxifeno - Fecha inicio'
+        },
+        bazedoxifenoFechaFin: {
+          kind: 'date',
+          label: 'Bazedoxifeno - Fecha fin'
+        },
+        bazedoxifenoContinua: {
+          kind: 'string',
+          label: 'Bazedoxifeno - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        bazedoxifenoMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Bazedoxifeno - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
+          }
+        },
+        // Tibolona
+        tibolonaFechaInicio: {
+          kind: 'date',
+          label: 'Tibolona - Fecha inicio'
+        },
+        tibolonaFechaFin: {
+          kind: 'date',
+          label: 'Tibolona - Fecha fin'
+        },
+        tibolonaContinua: {
+          kind: 'string',
+          label: 'Tibolona - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        tibolonaMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Tibolona - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
+          }
+        },
+        // Teriparatida
+        teriparatidaFechaInicio: {
+          kind: 'date',
+          label: 'Teriparatida - Fecha inicio'
+        },
+        teriparatidaFechaFin: {
+          kind: 'date',
+          label: 'Teriparatida - Fecha fin'
+        },
+        teriparatidaContinua: {
+          kind: 'string',
+          label: 'Teriparatida - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        teriparatidaMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Teriparatida - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
+          }
+        },
+        // Abaloparatida
+        abaloparatidaFechaInicio: {
+          kind: 'date',
+          label: 'Abaloparatida - Fecha inicio'
+        },
+        abaloparatidaFechaFin: {
+          kind: 'date',
+          label: 'Abaloparatida - Fecha fin'
+        },
+        abaloparatidaContinua: {
+          kind: 'string',
+          label: 'Abaloparatida - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        abaloparatidaMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Abaloparatida - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
+          }
+        },
+        // Romosozumab
+        romosozumabFechaInicio: {
+          kind: 'date',
+          label: 'Romosozumab - Fecha inicio'
+        },
+        romosozumabFechaFin: {
+          kind: 'date',
+          label: 'Romosozumab - Fecha fin'
+        },
+        romosozumabContinua: {
+          kind: 'string',
+          label: 'Romosozumab - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        romosozumabMotivoInterrupcion: {
+          kind: 'set',
+          label: 'Romosozumab - Motivo interrupción',
+          variant: 'listbox',
+          options: {
+            tolerabilidad: 'Problemas de tolerabilidad',
+            eficacia: 'Falta de eficacia',
+            incumplimiento: 'Incumplimiento',
+            cirugias: 'Procedimientos o cirugías dentales',
+            investigador: 'Decisión del investigador',
+            especialista: 'Decisión del especialista',
+            sujeto: 'Decisión del sujeto',
+            otros: 'Otros'
           }
         }
       }
     },
     {
-      title: 'TRATAMIENTO FARMACOLÓGICO',
+      title: 'TRATAMIENTO NO FARMACOLÓGICO OSTEOPOROSIS',
+      description: 'Indique los tratamientos no farmacológicos que el paciente ha recibido para la osteoporosis. Además, en aquellos en los que aplique, indique si actualmente continúa con ellos.',
       fields: {
-        corticoides: {
-          kind: 'boolean',
-          label: 'Tratamiento con corticoides (> 3 meses)',
-          variant: 'radio'
+        ejercicioFisico: {
+          kind: 'string',
+          label: 'Ejercicio físico - ¿Lo ha recibido?',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        dosisCortcoide: {
-          kind: 'number',
-          label: 'Dosis diaria de corticoide (mg prednisona equivalente)',
-          variant: 'input',
-          min: 0
+        ejercicioFisicoContinua: {
+          kind: 'string',
+          label: 'Ejercicio físico - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        duracionCorticoide: {
-          kind: 'number',
-          label: 'Duración del tratamiento con corticoides (meses)',
-          variant: 'input',
-          min: 0
+        suplementosCalcioVitaminaD: {
+          kind: 'string',
+          label: 'Suplementos de calcio / vitamina D - ¿Lo ha recibido?',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        tratamientoTiroideo: {
-          kind: 'boolean',
-          label: 'Tratamiento tiroideo supresor',
-          variant: 'radio'
+        suplementosCalcioVitaminaDContinua: {
+          kind: 'string',
+          label: 'Suplementos de calcio / vitamina D - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        anticonvulsivantes: {
-          kind: 'boolean',
-          label: 'Anticonvulsivantes',
-          variant: 'radio'
+        dejarFumar: {
+          kind: 'string',
+          label: 'Dejar de fumar - ¿Lo ha recibido?',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        inhibidoresBomba: {
-          kind: 'boolean',
-          label: 'Inhibidores de la bomba de protones',
-          variant: 'radio'
+        dejarFumarContinua: {
+          kind: 'string',
+          label: 'Dejar de fumar - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        heparina: {
-          kind: 'boolean',
-          label: 'Heparina (uso prolongado)',
-          variant: 'radio'
+        reduccionConsumoAlcohol: {
+          kind: 'string',
+          label: 'Reducción de consumo de alcohol - ¿Lo ha recibido?',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        inmunosupresores: {
-          kind: 'boolean',
-          label: 'Inmunosupresores',
-          variant: 'radio'
+        reduccionConsumoAlcoholContinua: {
+          kind: 'string',
+          label: 'Reducción de consumo de alcohol - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        quimioterapia: {
-          kind: 'boolean',
-          label: 'Quimioterapia',
-          variant: 'radio'
+        protectoresCadera: {
+          kind: 'string',
+          label: 'Protectores de cadera - ¿Lo ha recibido?',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        antiretrovirales: {
-          kind: 'boolean',
-          label: 'Tratamiento antirretroviral',
-          variant: 'radio'
+        protectoresCaderaContinua: {
+          kind: 'string',
+          label: 'Protectores de cadera - Continúa',
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
         },
-        terapiaHormonal: {
-          kind: 'boolean',
-          label: 'Terapia hormonal sustitutiva',
-          variant: 'radio'
-        },
-        duracionTerapiaHormonal: {
-          kind: 'number',
-          label: 'Duración de terapia hormonal (años)',
-          variant: 'input',
-          min: 0
+        otroTratamiento: {
+          kind: 'string',
+          label: 'Otros',
+          variant: 'input'
         }
       }
     },
     {
-      title: 'TRATAMIENTO PARA OSTEOPOROSIS',
+      title: 'FORMULARIO FIN DE ESTUDIO',
       fields: {
-        tratamientoOsteoporosis: {
-          kind: 'boolean',
-          label: '¿Ha recibido tratamiento para osteoporosis?',
-          variant: 'radio'
+        fechaFinEstudio: {
+          kind: 'date',
+          label: '¿Fecha en que se rellena el formulario de fin de estudio?'
         },
-        tipoTratamientoOsteoporosis: {
-          kind: 'set',
-          label: 'Tipo de tratamiento para osteoporosis',
-          variant: 'listbox',
+        pacienteCompletoEstudio: {
+          kind: 'string',
+          label: '¿Ha completado el paciente el estudio?',
+          variant: 'radio',
           options: {
-            bisfosfonatos: 'Bisfosfonatos',
-            denosumab: 'Denosumab',
-            teriparatida: 'Teriparatida',
-            raloxifeno: 'Raloxifeno',
-            ranelato: 'Ranelato de estroncio',
-            calcitonina: 'Calcitonina',
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        motivoNoCompletado: {
+          kind: 'string',
+          label: 'En caso negativo, indique el motivo',
+          variant: 'radio',
+          options: {
+            decisionInvestigador: 'Decisión del investigador',
+            decisionPaciente: 'Decisión del paciente',
             otro: 'Otro'
           }
         },
-        nombreTratamiento: {
+        otroMotivoEspecificar: {
           kind: 'string',
-          label: 'Nombre del tratamiento',
+          label: 'Otro motivo (especificar):',
           variant: 'input'
         },
-        fechaInicioTratamiento: {
-          kind: 'date',
-          label: 'Fecha de inicio del tratamiento'
-        },
-        fechaFinTratamiento: {
-          kind: 'date',
-          label: 'Fecha de fin del tratamiento (si aplica)'
-        },
-        adherenciaTratamiento: {
+        inicialesFinEstudio: {
           kind: 'string',
-          label: 'Adherencia al tratamiento',
-          variant: 'radio',
-          options: {
-            buena: 'Buena (> 80%)',
-            regular: 'Regular (50-80%)',
-            mala: 'Mala (< 50%)'
-          }
-        }
-      }
-    },
-    {
-      title: 'SUPLEMENTACIÓN',
-      fields: {
-        suplementoCalcio: {
-          kind: 'boolean',
-          label: 'Suplemento de calcio',
-          variant: 'radio'
-        },
-        dosisCalcio: {
-          kind: 'number',
-          label: 'Dosis de calcio (mg/día)',
-          variant: 'input',
-          min: 0
-        },
-        suplementoVitaminaD: {
-          kind: 'boolean',
-          label: 'Suplemento de vitamina D',
-          variant: 'radio'
-        },
-        dosisVitaminaD: {
-          kind: 'number',
-          label: 'Dosis de vitamina D (UI/día)',
-          variant: 'input',
-          min: 0
-        }
-      }
-    },
-    {
-      title: 'INGESTA DIETÉTICA',
-      fields: {
-        ingestaLacteos: {
-          kind: 'string',
-          label: 'Ingesta de productos lácteos',
-          variant: 'radio',
-          options: {
-            baja: 'Baja (< 1 ración/día)',
-            moderada: 'Moderada (1-2 raciones/día)',
-            alta: 'Alta (> 2 raciones/día)'
-          }
-        },
-        ingestaCafe: {
-          kind: 'string',
-          label: 'Consumo de café',
-          variant: 'radio',
-          options: {
-            no: 'No consume',
-            bajo: 'Bajo (1-2 tazas/día)',
-            moderado: 'Moderado (3-4 tazas/día)',
-            alto: 'Alto (> 4 tazas/día)'
-          }
-        },
-        dietaVegetariana: {
-          kind: 'boolean',
-          label: 'Dieta vegetariana/vegana',
-          variant: 'radio'
-        }
-      }
-    },
-    {
-      title: 'EXPLORACIÓN FÍSICA',
-      fields: {
-        cifosisToracica: {
-          kind: 'boolean',
-          label: 'Cifosis torácica',
-          variant: 'radio'
-        },
-        perdidaAltura: {
-          kind: 'number',
-          label: 'Pérdida de altura desde la juventud (cm)',
-          variant: 'input',
-          min: 0
-        },
-        testDistanciaParedOcciput: {
-          kind: 'number',
-          label: 'Test distancia pared-occipucio (cm)',
-          variant: 'input',
-          min: 0
-        },
-        testDistanciaCostillasPelvis: {
-          kind: 'number',
-          label: 'Test distancia costillas-pelvis (cm)',
-          variant: 'input',
-          min: 0
-        }
-      }
-    },
-    {
-      title: 'DATOS ANALÍTICOS',
-      fields: {
-        fechaAnalitica: {
-          kind: 'date',
-          label: 'Fecha de la analítica'
-        },
-        calcioSerico: {
-          kind: 'number',
-          label: 'Calcio sérico (mg/dL)',
-          variant: 'input',
-          min: 0
-        },
-        fosforoSerico: {
-          kind: 'number',
-          label: 'Fósforo sérico (mg/dL)',
-          variant: 'input',
-          min: 0
-        },
-        fosfatasaAlcalina: {
-          kind: 'number',
-          label: 'Fosfatasa alcalina (UI/L)',
-          variant: 'input',
-          min: 0
-        },
-        pth: {
-          kind: 'number',
-          label: 'PTH (hormona paratiroidea) (pg/mL)',
-          variant: 'input',
-          min: 0
-        },
-        vitaminaD25OH: {
-          kind: 'number',
-          label: '25-OH vitamina D (ng/mL)',
-          variant: 'input',
-          min: 0
-        },
-        creatinina: {
-          kind: 'number',
-          label: 'Creatinina (mg/dL)',
-          variant: 'input',
-          min: 0
-        },
-        filtradoGlomerular: {
-          kind: 'number',
-          label: 'Filtrado glomerular estimado (mL/min/1.73m²)',
-          variant: 'input',
-          min: 0
-        },
-        tsh: {
-          kind: 'number',
-          label: 'TSH (μUI/mL)',
-          variant: 'input',
-          min: 0
-        }
-      }
-    },
-    {
-      title: 'MARCADORES DE REMODELADO ÓSEO',
-      fields: {
-        ctx: {
-          kind: 'number',
-          label: 'CTX (marcador de resorción) (ng/mL)',
-          variant: 'input',
-          min: 0
-        },
-        p1np: {
-          kind: 'number',
-          label: 'P1NP (marcador de formación) (ng/mL)',
-          variant: 'input',
-          min: 0
-        }
-      }
-    },
-    {
-      title: 'DENSITOMETRÍA ÓSEA (DXA)',
-      fields: {
-        fechaDxa: {
-          kind: 'date',
-          label: 'Fecha de la densitometría'
-        },
-        dmoColumnaLumbar: {
-          kind: 'number',
-          label: 'DMO columna lumbar L1-L4 (g/cm²)',
-          description: 'Densidad Mineral Ósea',
-          variant: 'input',
-          min: 0
-        },
-        tScoreColumnaLumbar: {
-          kind: 'number',
-          label: 'T-Score columna lumbar',
+          label: 'Iniciales del profesional sanitario',
           variant: 'input'
         },
-        zScoreColumnaLumbar: {
-          kind: 'number',
-          label: 'Z-Score columna lumbar',
-          variant: 'input'
-        },
-        dmoCuelloFemoral: {
-          kind: 'number',
-          label: 'DMO cuello femoral (g/cm²)',
-          variant: 'input',
-          min: 0
-        },
-        tScoreCuelloFemoral: {
-          kind: 'number',
-          label: 'T-Score cuello femoral',
-          variant: 'input'
-        },
-        zScoreCuelloFemoral: {
-          kind: 'number',
-          label: 'Z-Score cuello femoral',
-          variant: 'input'
-        },
-        dmoCaderaTotal: {
-          kind: 'number',
-          label: 'DMO cadera total (g/cm²)',
-          variant: 'input',
-          min: 0
-        },
-        tScoreCaderaTotal: {
-          kind: 'number',
-          label: 'T-Score cadera total',
-          variant: 'input'
-        },
-        zScoreCaderaTotal: {
-          kind: 'number',
-          label: 'Z-Score cadera total',
-          variant: 'input'
-        },
-        dmoRadio: {
-          kind: 'number',
-          label: 'DMO radio distal (g/cm²)',
-          variant: 'input',
-          min: 0
-        },
-        tScoreRadio: {
-          kind: 'number',
-          label: 'T-Score radio',
-          variant: 'input'
-        }
-      }
-    },
-    {
-      title: 'DIAGNÓSTICO DENSITOMÉTRICO (OMS)',
-      fields: {
-        diagnosticoDxa: {
+        firmaFinEstudio: {
           kind: 'string',
-          label: 'Diagnóstico según criterios OMS',
-          variant: 'radio',
-          options: {
-            normal: 'Normal (T-score ≥ -1.0)',
-            osteopenia: 'Osteopenia (T-score entre -1.0 y -2.5)',
-            osteoporosis: 'Osteoporosis (T-score ≤ -2.5)',
-            osteoporosisGrave: 'Osteoporosis grave (T-score ≤ -2.5 + fractura)'
-          }
-        }
-      }
-    },
-    {
-      title: 'EVALUACIÓN RADIOLÓGICA VERTEBRAL',
-      fields: {
-        radiografiaColumna: {
-          kind: 'boolean',
-          label: '¿Se realizó radiografía de columna?',
-          variant: 'radio'
-        },
-        fechaRadiografia: {
-          kind: 'date',
-          label: 'Fecha de la radiografía'
-        },
-        fracturaVertebralRadiologica: {
-          kind: 'boolean',
-          label: 'Fractura vertebral radiológica detectada',
-          variant: 'radio'
-        },
-        numeroFracturasVertebrales: {
-          kind: 'number',
-          label: 'Número de fracturas vertebrales',
-          variant: 'input',
-          min: 0
-        },
-        localizacionFracturasVertebrales: {
-          kind: 'string',
-          label: 'Localización de fracturas vertebrales',
-          description: 'Especificar vértebras afectadas (ej: T12, L1)',
-          variant: 'textarea'
-        },
-        gradoGenant: {
-          kind: 'string',
-          label: 'Grado de deformidad vertebral (clasificación de Genant)',
-          variant: 'radio',
-          options: {
-            grado1: 'Grado 1: reducción 20-25%',
-            grado2: 'Grado 2: reducción 25-40%',
-            grado3: 'Grado 3: reducción > 40%'
-          }
-        }
-      }
-    },
-    {
-      title: 'CÁLCULO DEL RIESGO DE FRACTURA (FRAX)',
-      fields: {
-        fraxSinDmo: {
-          kind: 'number',
-          label: 'FRAX fractura mayor sin DMO (%)',
-          description: 'Riesgo a 10 años de fractura mayor osteoporótica',
-          variant: 'input',
-          min: 0,
-          max: 100
-        },
-        fraxCaderaSinDmo: {
-          kind: 'number',
-          label: 'FRAX fractura de cadera sin DMO (%)',
-          description: 'Riesgo a 10 años de fractura de cadera',
-          variant: 'input',
-          min: 0,
-          max: 100
-        },
-        fraxConDmo: {
-          kind: 'number',
-          label: 'FRAX fractura mayor con DMO (%)',
-          variant: 'input',
-          min: 0,
-          max: 100
-        },
-        fraxCaderaConDmo: {
-          kind: 'number',
-          label: 'FRAX fractura de cadera con DMO (%)',
-          variant: 'input',
-          min: 0,
-          max: 100
-        }
-      }
-    },
-    {
-      title: 'EVALUACIÓN DEL RIESGO DE CAÍDAS',
-      fields: {
-        caidasUltimoAnio: {
-          kind: 'number',
-          label: 'Número de caídas en el último año',
-          variant: 'input',
-          min: 0
-        },
-        miedoCaida: {
-          kind: 'boolean',
-          label: 'Miedo a caerse',
-          variant: 'radio'
-        },
-        usoDispositivos: {
-          kind: 'set',
-          label: 'Uso de dispositivos de ayuda',
-          variant: 'listbox',
-          options: {
-            baston: 'Bastón',
-            muletas: 'Muletas',
-            andador: 'Andador',
-            sillaRuedas: 'Silla de ruedas',
-            ninguno: 'Ninguno'
-          }
-        },
-        alteracionEquilibrio: {
-          kind: 'boolean',
-          label: 'Alteración del equilibrio',
-          variant: 'radio'
-        },
-        alteracionMarcha: {
-          kind: 'boolean',
-          label: 'Alteración de la marcha',
-          variant: 'radio'
-        },
-        deterioroCognitivo: {
-          kind: 'boolean',
-          label: 'Deterioro cognitivo',
-          variant: 'radio'
-        },
-        deficitVisual: {
-          kind: 'boolean',
-          label: 'Déficit visual',
-          variant: 'radio'
-        },
-        medicacionPsicoactiva: {
-          kind: 'boolean',
-          label: 'Medicación psicoactiva (sedantes, hipnóticos)',
-          variant: 'radio'
-        },
-        testTimedUpAndGo: {
-          kind: 'number',
-          label: 'Test Timed Up and Go (segundos)',
-          description: 'Normal: < 10 seg; Riesgo moderado: 10-20 seg; Riesgo alto: > 20 seg',
-          variant: 'input',
-          min: 0
-        }
-      }
-    },
-    {
-      title: 'CALIDAD DE VIDA Y ESTADO FUNCIONAL',
-      fields: {
-        escalaDolor: {
-          kind: 'number',
-          label: 'Escala visual analógica del dolor (0-10)',
-          description: '0 = sin dolor, 10 = dolor máximo',
-          variant: 'slider',
-          min: 0,
-          max: 10
-        },
-        limitacionActividades: {
-          kind: 'string',
-          label: 'Limitación de actividades diarias',
-          variant: 'radio',
-          options: {
-            ninguna: 'Ninguna',
-            leve: 'Leve',
-            moderada: 'Moderada',
-            grave: 'Grave'
-          }
-        },
-        independenciaActividades: {
-          kind: 'string',
-          label: 'Independencia para actividades básicas de la vida diaria',
-          variant: 'radio',
-          options: {
-            independiente: 'Independiente',
-            ayudaParcial: 'Requiere ayuda parcial',
-            ayudaTotal: 'Requiere ayuda total'
-          }
-        }
-      }
-    },
-    {
-      title: 'OBSERVACIONES Y COMENTARIOS',
-      fields: {
-        observaciones: {
-          kind: 'string',
-          label: 'Observaciones generales',
-          description: 'Incluya cualquier información relevante adicional',
-          variant: 'textarea'
-        },
-        investigadorResponsable: {
-          kind: 'string',
-          label: 'Nombre del investigador que completa el CRF',
+          label: 'Firma del profesional sanitario',
           variant: 'input'
-        },
-        fechaCompletado: {
-          kind: 'date',
-          label: 'Fecha de completado del CRF'
         }
       }
     }
   ],
   clientDetails: {
-    estimatedDuration: 45,
+    estimatedDuration: 60,
     instructions: [
       'Complete todos los campos del formulario con la información más precisa posible',
-      'Los campos marcados con * son obligatorios',
+      'Los campos marcados son obligatorios según los criterios de inclusión/exclusión',
       'Utilice las unidades de medida especificadas en cada campo',
       'En caso de duda, consulte con el investigador principal',
       'Asegúrese de verificar los datos antes de enviar el formulario'
     ]
   },
   details: {
-    description: 'Cuaderno de Recogida de Datos para el Estudio Observacional Multicéntrico sobre Factores de Riesgo de Osteoporosis. Versión final 10/09/25',
-    title: 'CRF Estudio Osteoporosis Multicéntrico',
+    description: 'Evaluación del Tratamiento Antiosteoporótico Posterior a Fractura por Fragilidad en Atención Primaria: Estudio Transversal',
+    title: 'OMEGA-FF-AP-2025',
     license: 'Apache-2.0',
     authors: ['Equipo de Investigación Osteoporosis']
   },
@@ -962,205 +967,172 @@ export default defineInstrument({
       kind: 'computed',
       label: 'Índice de Masa Corporal',
       value: (data) => {
-        if (data.peso && data.talla) {
-          const tallaMetros = data.talla / 100;
-          return Math.round((data.peso / (tallaMetros * tallaMetros)) * 100) / 100;
+        if (data.pesoPaciente && data.alturaPaciente) {
+          const alturaMetros = data.alturaPaciente / 100;
+          return Math.round((data.pesoPaciente / (alturaMetros * alturaMetros)) * 100) / 100;
         }
         return undefined;
       }
     },
-    riesgoFracturaAlto: {
+    cumpleCriteriosInclusion: {
       kind: 'computed',
-      label: 'Riesgo Alto de Fractura (FRAX > 20%)',
+      label: 'Cumple Criterios de Inclusión',
       value: (data) => {
-        if (data.fraxConDmo) {
-          return data.fraxConDmo > 20;
-        }
-        return undefined;
+        return data.criterioInclusion1 && data.criterioInclusion2;
       }
     },
-    diagnosticoOsteoporosis: {
-      kind: 'const',
-      ref: 'diagnosticoDxa',
-      label: 'Diagnóstico Densitométrico'
-    },
-    deficienciaVitaminaD: {
+    cumpleCriteriosExclusion: {
       kind: 'computed',
-      label: 'Deficiencia de Vitamina D',
+      label: 'Presenta Criterios de Exclusión',
       value: (data) => {
-        if (data.vitaminaD25OH) {
-          return data.vitaminaD25OH < 20;
-        }
-        return undefined;
+        return data.criterioExclusion1 || data.criterioExclusion2 || data.criterioExclusion3 || data.criterioExclusion4;
       }
     }
   },
   validationSchema: z.object({
-    // DATOS DE IDENTIFICACIÓN
-    codigoPaciente: z.string().min(1),
-    inicialesPaciente: z.string().min(3).max(3),
-    centro: z.string().min(1),
-    codigoCentro: z.string().min(1),
-    investigadorPrincipal: z.string().min(1),
-    fechaInclusion: z.date(),
+    // SELECCIÓN DEL PACIENTE
+    codigoPaciente: z.string().min(1, 'El código del paciente es obligatorio'),
+    consentimientoInformado: z.enum(['si', 'no']).refine(val => val === 'si', {
+      message: 'El consentimiento informado debe ser Sí'
+    }),
+    fechaConsentimiento: z.date(),
+    criterioInclusion1: z.enum(['si', 'no']),
+    criterioInclusion2: z.enum(['si', 'no']),
+    criterioExclusion1: z.enum(['si', 'no']),
+    criterioExclusion2: z.enum(['si', 'no']),
+    criterioExclusion3: z.enum(['si', 'no']),
+    criterioExclusion4: z.enum(['si', 'no']),
+    inicialesProfesional: z.string().min(1),
+    firmaProfesional: z.string().min(1),
     
-    // DATOS DEMOGRÁFICOS
-    fechaNacimiento: z.date(),
-    edad: z.number().int().min(18).max(120),
-    sexo: z.enum(['mujer', 'hombre']),
-    peso: z.number().positive(),
-    talla: z.number().positive(),
-    imc: z.number().positive().optional(),
-    raza: z.enum(['caucasica', 'asiatica', 'afroamericana', 'hispana', 'otra']),
+    // CARACTERIZACIÓN DEL PACIENTE
+    centroAtencionPrimaria: z.string().optional(),
+    sexoPaciente: z.enum(['masculino', 'femenino']).optional(),
+    edadPaciente: z.number().int().min(50).max(120).optional(),
+    pesoPaciente: z.number().positive().min(20).max(300).optional(),
+    alturaPaciente: z.number().positive().min(100).max(250).optional(),
+    observaCifosis: z.enum(['si', 'no']).optional(),
+    perdidaAlturaDocumentada: z.enum(['si', 'no']).optional(),
+    estiloVida: z.enum(['sedentario', 'activo', 'equilibrado', 'riesgo']).optional(),
+    presentaFactoresRiesgo: z.enum(['si', 'no']).optional(),
+    imcMenor20: z.boolean().optional(),
+    etnicidadBlancaCaucasica: z.boolean().optional(),
+    menopausiaPrecoz: z.boolean().optional(),
+    fracturaPrevia: z.boolean().optional(),
+    antecedenteFracturaPaternoMaterno: z.boolean().optional(),
+    tabaquismoActivo: z.boolean().optional(),
+    ingestaAlcohol: z.boolean().optional(),
+    nutricionPobre: z.boolean().optional(),
+    medicamentosAsociados: z.boolean().optional(),
     
-    // ANTECEDENTES PERSONALES
-    menarquia: z.number().int().min(8).max(20).optional(),
-    menopausia: z.boolean(),
-    edadMenopausia: z.number().int().min(30).max(60).optional(),
-    tipoMenopausia: z.enum(['natural', 'quirurgica', 'inducida']).optional(),
-    gestaciones: z.number().int().min(0).optional(),
-    partos: z.number().int().min(0).optional(),
-    lactanciaMaterna: z.boolean().optional(),
-    duracionLactancia: z.number().int().min(0).optional(),
+    // COMORBILIDADES
+    artritisReumatoide: z.boolean().optional(),
+    otrasArtritisInflamatorias: z.boolean().optional(),
+    lupusEritematoso: z.boolean().optional(),
+    hiperparatiroidismo: z.boolean().optional(),
+    hipertiroidismo: z.boolean().optional(),
+    hipercortisolismo: z.boolean().optional(),
+    diabetes: z.boolean().optional(),
+    enfermedadInflamatoriaIntestinal: z.boolean().optional(),
+    malnutricion: z.boolean().optional(),
+    nutricionParenteral: z.boolean().optional(),
+    mielomaMultiple: z.boolean().optional(),
+    otrosTrastornosMedulares: z.boolean().optional(),
+    epoc: z.boolean().optional(),
+    enfermedadRenalCronica: z.boolean().optional(),
     
-    // ANTECEDENTES MÉDICOS
-    fracturaPrevia: z.boolean(),
-    localizacionFractura: z.set(z.enum(['vertebral', 'cadera', 'muneca', 'humero', 'costillas', 'pelvis', 'otra'])).optional(),
-    fechaUltimaFractura: z.date().optional(),
-    diabetesMellitus: z.boolean(),
-    tipoDiabetes: z.enum(['tipo1', 'tipo2', 'gestacional']).optional(),
-    hipertiroidismo: z.boolean(),
-    hipotiroidismo: z.boolean(),
-    hiperparatiroidismo: z.boolean(),
-    enfermedadCeliaca: z.boolean(),
-    enfermedadInflamatoria: z.boolean(),
-    enfermedadReumatica: z.boolean(),
-    tipoEnfermedadReumatica: z.string().optional(),
-    insuficienciaRenal: z.boolean(),
-    enfermedadHepatica: z.boolean(),
-    epoc: z.boolean(),
-    cancer: z.boolean(),
-    tipoCancer: z.string().optional(),
+    // FRACTURA
+    fechaFractura1: z.date().optional(),
+    localizacionFractura1: z.enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras']).optional(),
+    hospitalizacion1: z.boolean().optional(),
+    fechaFractura2: z.date().optional(),
+    localizacionFractura2: z.enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras']).optional(),
+    hospitalizacion2: z.boolean().optional(),
+    fechaFractura3: z.date().optional(),
+    localizacionFractura3: z.enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras']).optional(),
+    hospitalizacion3: z.boolean().optional(),
     
-    // ANTECEDENTES FAMILIARES
-    fracturaFamiliar: z.boolean(),
-    parentescoFractura: z.enum(['madre', 'padre', 'hermanos', 'abuelos', 'otro']).optional(),
-    osteoporosisFamiliar: z.boolean(),
-    parentescoOsteoporosis: z.enum(['madre', 'padre', 'hermanos', 'abuelos', 'otro']).optional(),
+    // DIAGNÓSTICO
+    pacienteDiagnosticado: z.boolean().optional(),
+    fechaDiagnostico: z.date().optional(),
+    metodoDiagnostico: z.set(z.enum(['dxa', 'clinico', 'frax', 'hallazgo', 'presuntivo', 'otro'])).optional(),
+    otroMetodoEspecificar: z.string().optional(),
     
-    // HÁBITOS DE VIDA
-    tabaquismo: z.enum(['nunca', 'exfumador', 'fumadorActual']),
-    cigarrillosDia: z.number().int().min(0).optional(),
-    aniosTabaquismo: z.number().int().min(0).optional(),
-    paquetesAnio: z.number().min(0).optional(),
-    consumoAlcohol: z.enum(['no', 'ocasional', 'moderado', 'excesivo']),
-    unidadesAlcoholSemana: z.number().min(0).optional(),
-    actividadFisica: z.enum(['sedentario', 'ligero', 'moderado', 'intenso']),
-    tipoEjercicio: z.set(z.enum(['caminar', 'correr', 'natacion', 'ciclismo', 'gimnasio', 'deporteEquipo', 'yoga', 'otro'])).optional(),
-    exposicionSolar: z.enum(['minima', 'moderada', 'alta']),
+    // TRATAMIENTOS (todos opcionales)
+    alendronatoFechaInicio: z.date().optional(),
+    alendronatoFechaFin: z.date().optional(),
+    alendronatoContinua: z.boolean().optional(),
+    alendronatoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // TRATAMIENTO FARMACOLÓGICO
-    corticoides: z.boolean(),
-    dosisCortcoide: z.number().min(0).optional(),
-    duracionCorticoide: z.number().int().min(0).optional(),
-    tratamientoTiroideo: z.boolean(),
-    anticonvulsivantes: z.boolean(),
-    inhibidoresBomba: z.boolean(),
-    heparina: z.boolean(),
-    inmunosupresores: z.boolean(),
-    quimioterapia: z.boolean(),
-    antiretrovirales: z.boolean(),
-    terapiaHormonal: z.boolean(),
-    duracionTerapiaHormonal: z.number().min(0).optional(),
+    risedronatoFechaInicio: z.date().optional(),
+    risedronatoFechaFin: z.date().optional(),
+    risedronatoContinua: z.boolean().optional(),
+    risedronatoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // TRATAMIENTO OSTEOPOROSIS
-    tratamientoOsteoporosis: z.boolean(),
-    tipoTratamientoOsteoporosis: z.set(z.enum(['bisfosfonatos', 'denosumab', 'teriparatida', 'raloxifeno', 'ranelato', 'calcitonina', 'otro'])).optional(),
-    nombreTratamiento: z.string().optional(),
-    fechaInicioTratamiento: z.date().optional(),
-    fechaFinTratamiento: z.date().optional(),
-    adherenciaTratamiento: z.enum(['buena', 'regular', 'mala']).optional(),
+    ibandronatoFechaInicio: z.date().optional(),
+    ibandronatoFechaFin: z.date().optional(),
+    ibandronatoContinua: z.boolean().optional(),
+    ibandronatoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // SUPLEMENTACIÓN
-    suplementoCalcio: z.boolean(),
-    dosisCalcio: z.number().min(0).optional(),
-    suplementoVitaminaD: z.boolean(),
-    dosisVitaminaD: z.number().min(0).optional(),
+    zoledronatoFechaInicio: z.date().optional(),
+    zoledronatoFechaFin: z.date().optional(),
+    zoledronatoContinua: z.boolean().optional(),
+    zoledronatoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // INGESTA DIETÉTICA
-    ingestaLacteos: z.enum(['baja', 'moderada', 'alta']),
-    ingestaCafe: z.enum(['no', 'bajo', 'moderado', 'alto']),
-    dietaVegetariana: z.boolean(),
+    denosumabFechaInicio: z.date().optional(),
+    denosumabFechaFin: z.date().optional(),
+    denosumabContinua: z.boolean().optional(),
+    denosumabMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // EXPLORACIÓN FÍSICA
-    cifosisToracica: z.boolean(),
-    perdidaAltura: z.number().min(0).optional(),
-    testDistanciaParedOcciput: z.number().min(0).optional(),
-    testDistanciaCostillasPelvis: z.number().min(0).optional(),
+    raloxifenoFechaInicio: z.date().optional(),
+    raloxifenoFechaFin: z.date().optional(),
+    raloxifenoContinua: z.boolean().optional(),
+    raloxifenoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // DATOS ANALÍTICOS
-    fechaAnalitica: z.date().optional(),
-    calcioSerico: z.number().min(0).optional(),
-    fosforoSerico: z.number().min(0).optional(),
-    fosfatasaAlcalina: z.number().min(0).optional(),
-    pth: z.number().min(0).optional(),
-    vitaminaD25OH: z.number().min(0).optional(),
-    creatinina: z.number().min(0).optional(),
-    filtradoGlomerular: z.number().min(0).optional(),
-    tsh: z.number().min(0).optional(),
+    bazedoxifenoFechaInicio: z.date().optional(),
+    bazedoxifenoFechaFin: z.date().optional(),
+    bazedoxifenoContinua: z.boolean().optional(),
+    bazedoxifenoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // MARCADORES
-    ctx: z.number().min(0).optional(),
-    p1np: z.number().min(0).optional(),
+    tibolonaFechaInicio: z.date().optional(),
+    tibolonaFechaFin: z.date().optional(),
+    tibolonaContinua: z.boolean().optional(),
+    tibolonaMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // DENSITOMETRÍA
-    fechaDxa: z.date().optional(),
-    dmoColumnaLumbar: z.number().min(0).optional(),
-    tScoreColumnaLumbar: z.number().optional(),
-    zScoreColumnaLumbar: z.number().optional(),
-    dmoCuelloFemoral: z.number().min(0).optional(),
-    tScoreCuelloFemoral: z.number().optional(),
-    zScoreCuelloFemoral: z.number().optional(),
-    dmoCaderaTotal: z.number().min(0).optional(),
-    tScoreCaderaTotal: z.number().optional(),
-    zScoreCaderaTotal: z.number().optional(),
-    dmoRadio: z.number().min(0).optional(),
-    tScoreRadio: z.number().optional(),
-    diagnosticoDxa: z.enum(['normal', 'osteopenia', 'osteoporosis', 'osteoporosisGrave']).optional(),
+    teriparatidaFechaInicio: z.date().optional(),
+    teriparatidaFechaFin: z.date().optional(),
+    teriparatidaContinua: z.boolean().optional(),
+    teriparatidaMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // RADIOLOGÍA
-    radiografiaColumna: z.boolean(),
-    fechaRadiografia: z.date().optional(),
-    fracturaVertebralRadiologica: z.boolean().optional(),
-    numeroFracturasVertebrales: z.number().int().min(0).optional(),
-    localizacionFracturasVertebrales: z.string().optional(),
-    gradoGenant: z.enum(['grado1', 'grado2', 'grado3']).optional(),
+    abaloparatidaFechaInicio: z.date().optional(),
+    abaloparatidaFechaFin: z.date().optional(),
+    abaloparatidaContinua: z.boolean().optional(),
+    abaloparatidaMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // FRAX
-    fraxSinDmo: z.number().min(0).max(100).optional(),
-    fraxCaderaSinDmo: z.number().min(0).max(100).optional(),
-    fraxConDmo: z.number().min(0).max(100).optional(),
-    fraxCaderaConDmo: z.number().min(0).max(100).optional(),
+    romosozumabFechaInicio: z.date().optional(),
+    romosozumabFechaFin: z.date().optional(),
+    romosozumabContinua: z.boolean().optional(),
+    romosozumabMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
-    // RIESGO CAÍDAS
-    caidasUltimoAnio: z.number().int().min(0).optional(),
-    miedoCaida: z.boolean().optional(),
-    usoDispositivos: z.set(z.enum(['baston', 'muletas', 'andador', 'sillaRuedas', 'ninguno'])).optional(),
-    alteracionEquilibrio: z.boolean().optional(),
-    alteracionMarcha: z.boolean().optional(),
-    deterioroCognitivo: z.boolean().optional(),
-    deficitVisual: z.boolean().optional(),
-    medicacionPsicoactiva: z.boolean().optional(),
-    testTimedUpAndGo: z.number().min(0).optional(),
+    // TRATAMIENTO NO FARMACOLÓGICO
+    ejercicioFisico: z.boolean().optional(),
+    ejercicioFisicoContinua: z.boolean().optional(),
+    suplementosCalcioVitaminaD: z.boolean().optional(),
+    suplementosCalcioVitaminaDContinua: z.boolean().optional(),
+    dejarFumar: z.boolean().optional(),
+    dejarFumarContinua: z.boolean().optional(),
+    reduccionConsumoAlcohol: z.boolean().optional(),
+    reduccionConsumoAlcoholContinua: z.boolean().optional(),
+    protectoresCadera: z.boolean().optional(),
+    protectoresCaderaContinua: z.boolean().optional(),
+    otroTratamiento: z.string().optional(),
     
-    // CALIDAD DE VIDA
-    escalaDolor: z.number().int().min(0).max(10).optional(),
-    limitacionActividades: z.enum(['ninguna', 'leve', 'moderada', 'grave']).optional(),
-    independenciaActividades: z.enum(['independiente', 'ayudaParcial', 'ayudaTotal']).optional(),
-    
-    // OBSERVACIONES
-    observaciones: z.string().optional(),
-    investigadorResponsable: z.string().min(1),
-    fechaCompletado: z.date()
+    // FIN DE ESTUDIO
+    fechaFinEstudio: z.date().optional(),
+    pacienteCompletoEstudio: z.boolean().optional(),
+    motivoNoCompletado: z.enum(['decisionInvestigador', 'decisionPaciente', 'otro']).optional(),
+    otroMotivoEspecificar: z.string().optional(),
+    inicialesFinEstudio: z.string().optional(),
+    firmaFinEstudio: z.string().optional()
   })
 });
