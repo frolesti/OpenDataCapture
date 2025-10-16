@@ -6,7 +6,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 1,
+    edition: 3,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -56,6 +56,13 @@ export default defineInstrument({
             no: 'No'
           }
         },
+        notaInclusion: {
+          kind: 'string',
+          label: 'Todos los criterios de inclusión deben ser SI para que el paciente sea apto para el estudio',
+          variant: 'input',
+          disabled: true,
+          description: 'Nota informativa'
+        },
         criterioExclusion1: {
           kind: 'string',
           label: 'Criterios de EXCLUSIÓN - 1. Pacientes sin otorgar el consentimiento informado',
@@ -92,6 +99,13 @@ export default defineInstrument({
             no: 'No'
           }
         },
+        notaExclusion: {
+          kind: 'string',
+          label: 'Todos los criterios de exclusión deben ser NO para que el paciente sea apto para el estudio',
+          variant: 'input',
+          disabled: true,
+          description: 'Nota informativa'
+        },
         inicialesProfesional: {
           kind: 'string',
           label: 'INICIALES Y FIRMA DEL PROFESIONAL SANITARIO QUE HA RELLENADO LOS DATOS - Iniciales',
@@ -122,25 +136,19 @@ export default defineInstrument({
           }
         },
         edadPaciente: {
-          kind: 'number',
+          kind: 'string',
           label: 'Indique la edad del paciente (años)',
-          variant: 'input',
-          min: 50,
-          max: 120
+          variant: 'input'
         },
         pesoPaciente: {
-          kind: 'number',
+          kind: 'string',
           label: 'Indique el peso (kg)',
-          variant: 'input',
-          min: 20,
-          max: 300
+          variant: 'input'
         },
         alturaPaciente: {
-          kind: 'number',
+          kind: 'string',
           label: 'Indique la altura (cm)',
-          variant: 'input',
-          min: 100,
-          max: 250
+          variant: 'input'
         },
         observaCifosis: {
           kind: 'string',
@@ -968,8 +976,15 @@ export default defineInstrument({
       label: 'Índice de Masa Corporal',
       value: (data) => {
         if (data.pesoPaciente && data.alturaPaciente) {
-          const alturaMetros = data.alturaPaciente / 100;
-          return Math.round((data.pesoPaciente / (alturaMetros * alturaMetros)) * 100) / 100;
+          const peso = parseFloat(data.pesoPaciente);
+          const altura = parseFloat(data.alturaPaciente);
+          
+          if (isNaN(peso) || isNaN(altura) || altura === 0) {
+            return undefined;
+          }
+          
+          const alturaMetros = altura / 100;
+          return Math.round((peso / (alturaMetros * alturaMetros)) * 100) / 100;
         }
         return undefined;
       }
@@ -998,19 +1013,21 @@ export default defineInstrument({
     fechaConsentimiento: z.date(),
     criterioInclusion1: z.enum(['si', 'no']),
     criterioInclusion2: z.enum(['si', 'no']),
+    notaInclusion: z.string().optional(),
     criterioExclusion1: z.enum(['si', 'no']),
     criterioExclusion2: z.enum(['si', 'no']),
     criterioExclusion3: z.enum(['si', 'no']),
     criterioExclusion4: z.enum(['si', 'no']),
+    notaExclusion: z.string().optional(),
     inicialesProfesional: z.string().min(1),
     firmaProfesional: z.string().min(1),
     
     // CARACTERIZACIÓN DEL PACIENTE
     centroAtencionPrimaria: z.string().optional(),
     sexoPaciente: z.enum(['masculino', 'femenino']).optional(),
-    edadPaciente: z.number().int().min(50).max(120).optional(),
-    pesoPaciente: z.number().positive().min(20).max(300).optional(),
-    alturaPaciente: z.number().positive().min(100).max(250).optional(),
+    edadPaciente: z.string().optional(),
+    pesoPaciente: z.string().optional(),
+    alturaPaciente: z.string().optional(),
     observaCifosis: z.enum(['si', 'no']).optional(),
     perdidaAlturaDocumentada: z.enum(['si', 'no']).optional(),
     estiloVida: z.enum(['sedentario', 'activo', 'equilibrado', 'riesgo']).optional(),
@@ -1044,16 +1061,16 @@ export default defineInstrument({
     // FRACTURA
     fechaFractura1: z.date().optional(),
     localizacionFractura1: z.enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras']).optional(),
-    hospitalizacion1: z.boolean().optional(),
+    hospitalizacion1: z.enum(['si', 'no']).optional(),
     fechaFractura2: z.date().optional(),
     localizacionFractura2: z.enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras']).optional(),
-    hospitalizacion2: z.boolean().optional(),
+    hospitalizacion2: z.enum(['si', 'no']).optional(),
     fechaFractura3: z.date().optional(),
     localizacionFractura3: z.enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras']).optional(),
-    hospitalizacion3: z.boolean().optional(),
+    hospitalizacion3: z.enum(['si', 'no']).optional(),
     
     // DIAGNÓSTICO
-    pacienteDiagnosticado: z.boolean().optional(),
+    pacienteDiagnosticado: z.enum(['si', 'no']).optional(),
     fechaDiagnostico: z.date().optional(),
     metodoDiagnostico: z.set(z.enum(['dxa', 'clinico', 'frax', 'hallazgo', 'presuntivo', 'otro'])).optional(),
     otroMetodoEspecificar: z.string().optional(),
@@ -1061,78 +1078,108 @@ export default defineInstrument({
     // TRATAMIENTOS (todos opcionales)
     alendronatoFechaInicio: z.date().optional(),
     alendronatoFechaFin: z.date().optional(),
-    alendronatoContinua: z.boolean().optional(),
+    alendronatoContinua: z.enum(['si', 'no']).optional(),
     alendronatoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     risedronatoFechaInicio: z.date().optional(),
     risedronatoFechaFin: z.date().optional(),
-    risedronatoContinua: z.boolean().optional(),
+    risedronatoContinua: z.enum(['si', 'no']).optional(),
     risedronatoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     ibandronatoFechaInicio: z.date().optional(),
     ibandronatoFechaFin: z.date().optional(),
-    ibandronatoContinua: z.boolean().optional(),
+    ibandronatoContinua: z.enum(['si', 'no']).optional(),
     ibandronatoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     zoledronatoFechaInicio: z.date().optional(),
     zoledronatoFechaFin: z.date().optional(),
-    zoledronatoContinua: z.boolean().optional(),
+    zoledronatoContinua: z.enum(['si', 'no']).optional(),
     zoledronatoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     denosumabFechaInicio: z.date().optional(),
     denosumabFechaFin: z.date().optional(),
-    denosumabContinua: z.boolean().optional(),
+    denosumabContinua: z.enum(['si', 'no']).optional(),
     denosumabMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     raloxifenoFechaInicio: z.date().optional(),
     raloxifenoFechaFin: z.date().optional(),
-    raloxifenoContinua: z.boolean().optional(),
+    raloxifenoContinua: z.enum(['si', 'no']).optional(),
     raloxifenoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     bazedoxifenoFechaInicio: z.date().optional(),
     bazedoxifenoFechaFin: z.date().optional(),
-    bazedoxifenoContinua: z.boolean().optional(),
+    bazedoxifenoContinua: z.enum(['si', 'no']).optional(),
     bazedoxifenoMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     tibolonaFechaInicio: z.date().optional(),
     tibolonaFechaFin: z.date().optional(),
-    tibolonaContinua: z.boolean().optional(),
+    tibolonaContinua: z.enum(['si', 'no']).optional(),
     tibolonaMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     teriparatidaFechaInicio: z.date().optional(),
     teriparatidaFechaFin: z.date().optional(),
-    teriparatidaContinua: z.boolean().optional(),
+    teriparatidaContinua: z.enum(['si', 'no']).optional(),
     teriparatidaMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     abaloparatidaFechaInicio: z.date().optional(),
     abaloparatidaFechaFin: z.date().optional(),
-    abaloparatidaContinua: z.boolean().optional(),
+    abaloparatidaContinua: z.enum(['si', 'no']).optional(),
     abaloparatidaMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     romosozumabFechaInicio: z.date().optional(),
     romosozumabFechaFin: z.date().optional(),
-    romosozumabContinua: z.boolean().optional(),
+    romosozumabContinua: z.enum(['si', 'no']).optional(),
     romosozumabMotivoInterrupcion: z.set(z.enum(['tolerabilidad', 'eficacia', 'incumplimiento', 'cirugias', 'investigador', 'especialista', 'sujeto', 'otros'])).optional(),
     
     // TRATAMIENTO NO FARMACOLÓGICO
-    ejercicioFisico: z.boolean().optional(),
-    ejercicioFisicoContinua: z.boolean().optional(),
-    suplementosCalcioVitaminaD: z.boolean().optional(),
-    suplementosCalcioVitaminaDContinua: z.boolean().optional(),
-    dejarFumar: z.boolean().optional(),
-    dejarFumarContinua: z.boolean().optional(),
-    reduccionConsumoAlcohol: z.boolean().optional(),
-    reduccionConsumoAlcoholContinua: z.boolean().optional(),
-    protectoresCadera: z.boolean().optional(),
-    protectoresCaderaContinua: z.boolean().optional(),
+    ejercicioFisico: z.enum(['si', 'no']).optional(),
+    ejercicioFisicoContinua: z.enum(['si', 'no']).optional(),
+    suplementosCalcioVitaminaD: z.enum(['si', 'no']).optional(),
+    suplementosCalcioVitaminaDContinua: z.enum(['si', 'no']).optional(),
+    dejarFumar: z.enum(['si', 'no']).optional(),
+    dejarFumarContinua: z.enum(['si', 'no']).optional(),
+    reduccionConsumoAlcohol: z.enum(['si', 'no']).optional(),
+    reduccionConsumoAlcoholContinua: z.enum(['si', 'no']).optional(),
+    protectoresCadera: z.enum(['si', 'no']).optional(),
+    protectoresCaderaContinua: z.enum(['si', 'no']).optional(),
     otroTratamiento: z.string().optional(),
     
     // FIN DE ESTUDIO
     fechaFinEstudio: z.date().optional(),
-    pacienteCompletoEstudio: z.boolean().optional(),
+    pacienteCompletoEstudio: z.enum(['si', 'no']).optional(),
     motivoNoCompletado: z.enum(['decisionInvestigador', 'decisionPaciente', 'otro']).optional(),
     otroMotivoEspecificar: z.string().optional(),
     inicialesFinEstudio: z.string().optional(),
     firmaFinEstudio: z.string().optional()
+  }).superRefine((data, ctx) => {
+    // Validar que fecha inicio no sea mayor que fecha fin para todos los tratamientos
+    const medications = [
+      { name: 'alendronato', label: 'Alendronato' },
+      { name: 'risedronato', label: 'Risedronato' },
+      { name: 'ibandronato', label: 'Ibandronato' },
+      { name: 'zoledronato', label: 'Zoledronato' },
+      { name: 'denosumab', label: 'Denosumab' },
+      { name: 'raloxifeno', label: 'Raloxifeno' },
+      { name: 'bazedoxifeno', label: 'Bazedoxifeno' },
+      { name: 'tibolona', label: 'Tibolona' },
+      { name: 'teriparatida', label: 'Teriparatida' },
+      { name: 'abaloparatida', label: 'Abaloparatida' },
+      { name: 'romosozumab', label: 'Romosozumab' }
+    ];
+    
+    for (const med of medications) {
+      const fechaInicioKey = `${med.name}FechaInicio` as keyof typeof data;
+      const fechaFinKey = `${med.name}FechaFin` as keyof typeof data;
+      const fechaInicio = data[fechaInicioKey] as Date | undefined;
+      const fechaFin = data[fechaFinKey] as Date | undefined;
+      
+      if (fechaInicio && fechaFin && fechaInicio > fechaFin) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `La fecha de inicio no puede ser posterior a la fecha de fin`,
+          path: [fechaFinKey as string]
+        });
+      }
+    }
   })
 });
