@@ -7,10 +7,116 @@
       "ca": "API principal"
     },
     "description": {
-      "en": "This page provides technical information that you can share with your platform administrator if you encounter any issues. Don't worry if you don't understand the content; it's intended for technical support.",
-      "fr": "Cette page fournit des informations techniques que vous pouvez partager avec l'administrateur de votre plateforme si vous rencontrez des problèmes. Ne vous inquiétez pas si vous ne comprenez pas le contenu ; il est destiné à l'assistance technique.",
-      "es": "Esta página proporciona información técnica que puede compartir con el administrador de su plataforma si encuentra algún problema. No se preocupe si no entiende el contenido; está destinado al soporte técnico.",
-      "ca": "Aquesta pàgina proporciona informació tècnica que podeu compartir amb l'administrador de la vostra plataforma si trobeu algun problema. No us preocupeu si no enteneu el contingut; està destinat al suport tècnic."
+      "en": "Alta Medical Services provides a comprehensive platform for conducting clinical trials and collecting medical research data. Learn more about the platform and its capabilities below.",
+      "fr": "Alta Medical Services fournit une plateforme complète pour mener des essais cliniques et collecter des données de recherche médicale. Découvrez ci-dessous la plateforme et ses capacités.",
+      "es": "Alta Medical Services proporciona una plataforma integral para realizar ensayos clínicos y recopilar datos de investigación médica. Obtenga más información sobre la plataforma y sus capacidades a continuación.",
+      "ca": "Alta Medical Services proporciona una plataforma integral per realitzar assaigs clínics i recollir dades de recerca mèdica. Més informació sobre la plataforma i les seves capacitats a continuació."
+    },
+    "platformOverview": {
+      "title": {
+        "en": "Platform Overview",
+        "fr": "Aperçu de la plateforme",
+        "es": "Descripción de la plataforma",
+        "ca": "Descripció de la plataforma"
+      },
+      "description": {
+        "en": "This platform enables medical professionals and clinical researchers to conduct clinical trials, collect participant data, and manage research studies through standardized digital instruments. It provides comprehensive tools for patient assessments, data collection, and regulatory compliance in clinical research environments.",
+        "fr": "Cette plateforme permet aux professionnels de la santé et aux chercheurs cliniques de mener des essais cliniques, de collecter des données de participants et de gérer des études de recherche via des instruments numériques standardisés. Elle fournit des outils complets pour les évaluations des patients, la collecte de données et la conformité réglementaire dans les environnements de recherche clinique.",
+        "es": "Esta plataforma permite a profesionales médicos e investigadores clínicos realizar ensayos clínicos, recopilar datos de participantes y gestionar estudios de investigación mediante instrumentos digitales estandarizados. Proporciona herramientas integrales para evaluaciones de pacientes, recopilación de datos y cumplimiento normativo en entornos de investigación clínica.",
+        "ca": "Aquesta plataforma permet als professionals mèdics i investigadors clínics realitzar assaigs clínics, recollir dades de participants i gestionar estudis de recerca mitjançant instruments digitals estandarditzats. Proporciona eines integrals per a avaluacions de pacients, recollida de dades i compliment normatiu en entorns de recerca clínica."
+      }
+    },
+    "instruments": {
+      "title": {
+        "en": "Clinical Assessment Instruments",
+        "fr": "Instruments d'évaluation clinique",
+        "es": "Instrumentos de evaluación clínica",
+        "ca": "Instruments d'avaluació clínica"
+      },
+      "description": {
+        "en": "Clinical instruments are standardized assessment tools, questionnaires, and data collection forms used in clinical trials. Each instrument is designed to collect specific clinical data and can include various question types, medical validation rules, and conditional logic to ensure accurate and reliable data collection for research purposes.",
+        "fr": "Les instruments cliniques sont des outils d'évaluation standardisés, des questionnaires et des formulaires de collecte de données utilisés dans les essais cliniques. Chaque instrument est conçu pour collecter des données cliniques spécifiques et peut inclure différents types de questions, règles de validation médicale et logique conditionnelle pour garantir une collecte de données précise et fiable à des fins de recherche.",
+        "es": "Los instrumentos clínicos son herramientas de evaluación estandarizadas, cuestionarios y formularios de recopilación de datos utilizados en ensayos clínicos. Cada instrumento está diseñado para recopilar datos clínicos específicos y puede incluir varios tipos de preguntas, reglas de validación médica y lógica condicional para garantizar una recopilación de datos precisa y confiable con fines de investigación.",
+        "ca": "Els instruments clínics són eines d'avaluació estandarditzades, qüestionaris i formularis de recollida de dades utilitzats en assaigs clínics. Cada instrument està dissenyat per recollir dades clíniques específiques i pot incloure diversos tipus de preguntes, regles de validació mèdica i lògica condicional per garantir una recollida de dades precisa i fiable amb finalitats de recerca."
+      }
+    },
+    "keyFeatures": {
+      "title": {
+        "en": "Key Features",
+        "fr": "Fonctionnalités principales",
+        "es": "Características clave",
+        "ca": "Característiques clau"
+      },
+      "sessions": {
+        "title": {
+          "en": "Clinical Trial Sessions",
+          "fr": "Sessions d'essais cliniques",
+          "es": "Sesiones de ensayos clínicos",
+          "ca": "Sessions d'assaigs clínics"
+        },
+        "description": {
+          "en": "Conduct clinical trial data collection sessions with participants using multiple assessment instruments in a secure and controlled environment.",
+          "fr": "Effectuer des sessions de collecte de données d'essais cliniques avec des participants en utilisant plusieurs instruments d'évaluation dans un environnement sécurisé et contrôlé.",
+          "es": "Realizar sesiones de recopilación de datos de ensayos clínicos con participantes utilizando múltiples instrumentos de evaluación en un entorno seguro y controlado.",
+          "ca": "Realitzar sessions de recollida de dades d'assaigs clínics amb participants utilitzant múltiples instruments d'avaluació en un entorn segur i controlat."
+        }
+      },
+      "datahub": {
+        "title": {
+          "en": "Clinical Data Hub",
+          "fr": "Centre de données cliniques",
+          "es": "Centro de datos clínicos",
+          "ca": "Centre de dades clíniques"
+        },
+        "description": {
+          "en": "Access and analyze collected clinical trial data with powerful filtering, visualization, and export capabilities for research analysis and regulatory reporting.",
+          "fr": "Accéder et analyser les données d'essais cliniques collectées avec de puissantes capacités de filtrage, de visualisation et d'exportation pour l'analyse de recherche et les rapports réglementaires.",
+          "es": "Acceder y analizar los datos de ensayos clínicos recopilados con potentes capacidades de filtrado, visualización y exportación para análisis de investigación e informes regulatorios.",
+          "ca": "Accedir i analitzar les dades d'assaigs clínics recollides amb potents capacitats de filtratge, visualització i exportació per a anàlisi de recerca i informes reguladors."
+        }
+      },
+      "groups": {
+        "title": {
+          "en": "Study Cohort Management",
+          "fr": "Gestion des cohortes d'étude",
+          "es": "Gestión de cohortes de estudio",
+          "ca": "Gestió de cohorts d'estudi"
+        },
+        "description": {
+          "en": "Organize trial participants into study cohorts and control groups for comparative clinical analysis and research protocols.",
+          "fr": "Organiser les participants aux essais en cohortes d'étude et groupes témoins pour l'analyse clinique comparative et les protocoles de recherche.",
+          "es": "Organizar a los participantes del ensayo en cohortes de estudio y grupos de control para análisis clínicos comparativos y protocolos de investigación.",
+          "ca": "Organitzar els participants de l'assaig en cohorts d'estudi i grups de control per a anàlisi clíniques comparatives i protocols de recerca."
+        }
+      },
+      "security": {
+        "title": {
+          "en": "Security & Compliance",
+          "fr": "Sécurité et conformité",
+          "es": "Seguridad y cumplimiento",
+          "ca": "Seguretat i compliment"
+        },
+        "description": {
+          "en": "Role-based access control, encrypted data storage, and comprehensive audit logging ensure data security and compliance with clinical research regulations.",
+          "fr": "Contrôle d'accès basé sur les rôles, stockage de données cryptées et journalisation d'audit complète assurent la sécurité et la conformité aux réglementations de recherche clinique.",
+          "es": "Control de acceso basado en roles, almacenamiento de datos encriptados y registro de auditoría integral garantizan la seguridad y el cumplimiento de las regulaciones de investigación clínica.",
+          "ca": "Control d'accés basat en rols, emmagatzematge de dades xifrades i registre d'auditoria integral garanteixen la seguretat i el compliment de les regulacions de recerca clínica."
+        }
+      }
+    },
+    "technicalInfo": {
+      "title": {
+        "en": "Technical Information",
+        "fr": "Informations techniques",
+        "es": "Información técnica",
+        "ca": "Informació tècnica"
+      },
+      "description": {
+        "en": "The information below can be shared with technical support if you encounter any issues.",
+        "fr": "Les informations ci-dessous peuvent être partagées avec le support technique si vous rencontrez des problèmes.",
+        "es": "La información a continuación se puede compartir con el soporte técnico si encuentra algún problema.",
+        "ca": "La informació següent es pot compartir amb el suport tècnic si trobeu algun problema."
+      }
     },
     "gatewayService": {
       "en": "Gateway Service",

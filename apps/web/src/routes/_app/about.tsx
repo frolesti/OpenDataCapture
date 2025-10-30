@@ -150,19 +150,69 @@ const RouteComponent = () => {
   });
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            en: 'Platform Information',
-            fr: 'Informations concernant la plateforme'
+            ca: 'Sobre Alta Medical Services',
+            es: 'Sobre Alta Medical Services',
+            en: 'About Alta Medical Services',
+            fr: "À propos d'Alta Medical Services"
           })}
         </Heading>
       </PageHeader>
+
+      {/* Platform Overview Card */}
+      <Card>
+        <Card.Header>
+          <Card.Title>{t('common.about.platformOverview.title')}</Card.Title>
+        </Card.Header>
+        <Card.Content>
+          <p className="text-muted-foreground">{t('common.about.description')}</p>
+          <p className="text-muted-foreground mt-4">{t('common.about.platformOverview.description')}</p>
+        </Card.Content>
+      </Card>
+
+      {/* Digital Instruments Card */}
+      <Card>
+        <Card.Header>
+          <Card.Title>{t('common.about.instruments.title')}</Card.Title>
+        </Card.Header>
+        <Card.Content>
+          <p className="text-muted-foreground">{t('common.about.instruments.description')}</p>
+        </Card.Content>
+      </Card>
+
+      {/* Key Features Card */}
+      <Card>
+        <Card.Header>
+          <Card.Title>{t('common.about.keyFeatures.title')}</Card.Title>
+        </Card.Header>
+        <Card.Content className="space-y-4">
+          <div>
+            <h4 className="mb-1 font-semibold">{t('common.about.keyFeatures.sessions.title')}</h4>
+            <p className="text-muted-foreground text-sm">{t('common.about.keyFeatures.sessions.description')}</p>
+          </div>
+          <div>
+            <h4 className="mb-1 font-semibold">{t('common.about.keyFeatures.datahub.title')}</h4>
+            <p className="text-muted-foreground text-sm">{t('common.about.keyFeatures.datahub.description')}</p>
+          </div>
+          <div>
+            <h4 className="mb-1 font-semibold">{t('common.about.keyFeatures.groups.title')}</h4>
+            <p className="text-muted-foreground text-sm">{t('common.about.keyFeatures.groups.description')}</p>
+          </div>
+          <div>
+            <h4 className="mb-1 font-semibold">{t('common.about.keyFeatures.security.title')}</h4>
+            <p className="text-muted-foreground text-sm">{t('common.about.keyFeatures.security.description')}</p>
+          </div>
+        </Card.Content>
+      </Card>
+
+      {/* Technical Information Card */}
       <Card>
         <Card.Header className="border-b">
-          <Card.Title className="text-lg">Open Data Capture</Card.Title>
-          <Card.Description>{t('common.about.description')}</Card.Description>
+          <Card.Title>{t('common.about.technicalInfo.title')}</Card.Title>
+          <Card.Description>{t('common.about.technicalInfo.description')}</Card.Description>
         </Card.Header>
         <Card.Content className="flex flex-col gap-6 p-6 text-sm">
           <InfoBlock items={translateReleaseInfo(__RELEASE__)} label={t('common.about.webClient')} />
