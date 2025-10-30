@@ -73,10 +73,10 @@ const Walkthrough = () => {
         content: (
           <p>
             {t({
-              ca: 'Aquest tutorial proporciona una breu visió general de com utilitzar Open Data Capture.',
-              en: 'This tutorial provides a brief overview of how to use Open Data Capture.',
-              es: 'Este tutorial proporciona una breve descripción de cómo usar Open Data Capture.',
-              fr: "Ce tutoriel donne un bref aperçu de l'utilisation de la plateforme Open Data Capture."
+              ca: 'Aquest tutorial proporciona una breu visió general de com utilitzar la plataforma.',
+              en: 'This tutorial provides a brief overview of how to use the platform.',
+              es: 'Este tutorial proporciona una breve descripción de cómo usar la plataforma.',
+              fr: "Ce tutoriel donne un bref aperçu de l'utilisation de la plateforme."
             })}{' '}
             <span className="font-bold">
               {t({
@@ -87,9 +87,9 @@ const Walkthrough = () => {
               })}
             </span>{' '}
             {t({
-              ca: 'Després de completar el tutorial, aquesta finestra emergent ja no apareixerà quan inicieu sessió a Open Data Capture.',
-              en: 'After completing the tutorial, this popup will no longer appear when you log in to Open Data Capture.',
-              es: 'Después de completar el tutorial, esta ventana emergente ya no aparecerá cuando inicie sesión en Open Data Capture.',
+              ca: 'Després de completar el tutorial, aquesta finestra emergent ja no apareixerà quan inicieu sessió.',
+              en: 'After completing the tutorial, this popup will no longer appear when you log in.',
+              es: 'Después de completar el tutorial, esta ventana emergente ya no aparecerá cuando inicie sesión.',
               fr: "Après avoir suivi le tutoriel, cette fenêtre ne s'affichera plus lorsque vous vous connecterez à la plateforme."
             })}
           </p>
@@ -100,10 +100,10 @@ const Walkthrough = () => {
         position: 'bottom-left',
         target: '#sidebar-branding-container',
         title: t({
-          ca: 'Benvingut a Open Data Capture 👋',
-          en: 'Welcome to Open Data Capture 👋',
-          es: 'Bienvenido a Open Data Capture 👋',
-          fr: 'Bienvenue à Open Data Capture 👋'
+          ca: 'Benvingut a Alta Medical Services 👋',
+          en: 'Welcome to Alta Medical Services 👋',
+          es: 'Bienvenido a Alta Medical Services 👋',
+          fr: 'Bienvenue à Alta Medical Services 👋'
         })
       },
       {
