@@ -176,8 +176,6 @@ const RouteComponent = () => {
             <LanguageToggle
               align="start"
               options={{
-                ca: 'Català',
-                es: 'Español',
                 en: 'English',
                 fr: 'Français'
               }}
