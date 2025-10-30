@@ -67,6 +67,10 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       text: instrument.supportedLanguages
         .map((language) => {
           switch (language) {
+            case 'ca':
+              return 'Català';
+            case 'es':
+              return 'Español';
             case 'en':
               return 'English';
             case 'fr':
