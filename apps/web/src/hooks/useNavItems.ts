@@ -81,11 +81,11 @@ export function useNavItems() {
 
     const adminItems: NavItem[] = [];
     if (ability?.can('manage', 'all')) {
-      adminItems.push({
-        icon: CogIcon,
-        label: t('layout.navLinks.appSettings'),
-        url: '/admin/settings'
-      });
+      // adminItems.push({
+      //   icon: CogIcon,
+      //   label: t('layout.navLinks.appSettings'),
+      //   url: '/admin/settings'
+      // });
       adminItems.push({
         icon: UsersIcon,
         label: t('layout.navLinks.manageGroups'),

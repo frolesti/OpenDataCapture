@@ -535,9 +535,7 @@ export const WalkthroughProvider: React.FC<{ children: React.ReactElement }> = (
   const isDesktop = useIsDesktop();
 
   useEffect(() => {
-    const shouldDisableTutorial =
-      (import.meta.env.DEV && config.dev.disableTutorial) || // Dev mode disable
-      config.ui.disableTutorial; // Production mode disable
+    const shouldDisableTutorial = import.meta.env.DEV && config.dev.disableTutorial;
 
     if (isDisclaimerAccepted && !isWalkthroughComplete && !shouldDisableTutorial) {
       setIsWalkthroughOpen(true);
