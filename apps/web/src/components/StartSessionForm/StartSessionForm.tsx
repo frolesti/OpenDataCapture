@@ -58,7 +58,12 @@ export const StartSessionForm = ({
           fields: {
             subjectIdentificationMethod: {
               kind: 'string',
-              label: 'Method',
+              label: t({
+                ca: 'Mètode',
+                en: 'Method',
+                es: 'Método',
+                fr: 'Méthode'
+              }),
               options: {
                 CUSTOM_ID: t('common.customIdentifier'),
                 PERSONAL_INFO: t('common.personalInfo')
@@ -198,12 +203,17 @@ export const StartSessionForm = ({
               try {
                 const regex = new RegExp(currentGroup?.settings.idValidationRegex);
                 if (!regex.test(val.subjectId)) {
+                  const customErrorMessage = currentGroup.settings.idValidationRegexErrorMessage;
+                  const errorMessageFromGroup = customErrorMessage?.[resolvedLanguage];
+
                   ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     message:
-                      currentGroup.settings.idValidationRegexErrorMessage?.[resolvedLanguage] ??
+                      errorMessageFromGroup ??
                       t({
+                        ca: `Ha de coincidir amb l'expressió regular: ${regex.source}`,
                         en: `Must match regular expression: ${regex.source}`,
+                        es: `Debe coincidir con la expresión regular: ${regex.source}`,
                         fr: `Doit correspondre à l'expression régulière : ${regex.source}`
                       }),
                     path: ['subjectId']

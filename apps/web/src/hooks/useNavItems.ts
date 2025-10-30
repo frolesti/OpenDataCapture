@@ -83,26 +83,17 @@ export function useNavItems() {
     if (ability?.can('manage', 'all')) {
       adminItems.push({
         icon: CogIcon,
-        label: t({
-          en: 'App Settings',
-          fr: "Paramètres de l'application"
-        }),
+        label: t('layout.navLinks.appSettings'),
         url: '/admin/settings'
       });
       adminItems.push({
         icon: UsersIcon,
-        label: t({
-          en: 'Manage Groups',
-          fr: 'Gérer les groupes'
-        }),
+        label: t('layout.navLinks.manageGroups'),
         url: '/admin/groups'
       });
       adminItems.push({
         icon: UserCogIcon,
-        label: t({
-          en: 'Manage Users',
-          fr: 'Gérer les utilisateurs'
-        }),
+        label: t('layout.navLinks.manageUsers'),
         url: '/admin/users'
       });
     }

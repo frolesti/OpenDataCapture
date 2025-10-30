@@ -22,7 +22,9 @@ const RouteComponent = () => {
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
+            ca: 'Gestionar grups',
             en: 'Manage Groups',
+            es: 'Gestionar grupos',
             fr: 'Gérer les groupes'
           })}
         </Heading>
@@ -31,7 +33,9 @@ const RouteComponent = () => {
         <SearchBar
           className="grow"
           placeholder={t({
+            ca: 'Cercar per nom de grup',
             en: 'Search by Group Name',
+            es: 'Buscar por nombre de grupo',
             fr: 'Recherche par nom de groupe'
           })}
           value={searchTerm}
@@ -40,7 +44,9 @@ const RouteComponent = () => {
         <Button asChild variant="outline">
           <Link to="/admin/groups/create">
             {t({
+              ca: 'Afegir grup',
               en: 'Add Group',
+              es: 'Añadir grupo',
               fr: 'Ajouter un groupe'
             })}
           </Link>
@@ -74,7 +80,9 @@ const RouteComponent = () => {
           <Sheet.Title>{selectedGroup?.name}</Sheet.Title>
           <Sheet.Description>
             {t({
+              ca: 'Feu els canvis a aquest grup aquí. Feu clic a desar quan hàgiu acabat.',
               en: 'Make changes to this group here. Click save when you are done.',
+              es: 'Realice cambios en este grupo aquí. Haga clic en guardar cuando haya terminado.',
               fr: 'Apportez des modifications à ce groupe ici. Cliquez sur enregistrer lorsque vous avez terminé.'
             })}
           </Sheet.Description>

@@ -19,8 +19,16 @@ export const InstrumentLanguageDropdown: React.FC<{
       widthFull
       options={[
         {
+          key: 'ca',
+          label: t('core.languages.catalan')
+        },
+        {
           key: 'en',
           label: t('core.languages.english')
+        },
+        {
+          key: 'es',
+          label: t('core.languages.spanish')
         },
         {
           key: 'fr',

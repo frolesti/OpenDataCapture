@@ -162,36 +162,22 @@ const RouteComponent = () => {
       <Card>
         <Card.Header className="border-b">
           <Card.Title className="text-lg">Open Data Capture</Card.Title>
-          <Card.Description>
-            {t({
-              en: "This page provides technical information that you can share with your platform administrator if you encounter any issues. Don't worry if you don't understand the content; it's intended for technical support.",
-              fr: "Cette page fournit des informations techniques que vous pouvez partager avec l'administrateur de votre plateforme si vous rencontrez des problèmes. Ne vous inquiétez pas si vous ne comprenez pas le contenu ; il est destiné à l'assistance technique."
-            })}
-          </Card.Description>
+          <Card.Description>{t('common.about.description')}</Card.Description>
         </Card.Header>
         <Card.Content className="flex flex-col gap-6 p-6 text-sm">
-          <InfoBlock items={translateReleaseInfo(__RELEASE__)} label={t({ en: 'Web Client', fr: 'Client Web' })} />
+          <InfoBlock items={translateReleaseInfo(__RELEASE__)} label={t('common.about.webClient')} />
           <InfoBlock
             items={{
               ...translateReleaseInfo(setupStateQuery.data.release),
               [t(translations.uptime)]: `Uptime=${setupStateQuery.data.uptime}`
             }}
-            label={t({
-              en: 'Core API',
-              fr: 'API de base'
-            })}
+            label={t('common.about.coreApi')}
           />
-          <InfoBlock
-            items={getTranslatedGatewayInfo()}
-            label={t({
-              en: 'Gateway Service',
-              fr: 'Service de passerelle'
-            })}
-          />
+          <InfoBlock items={getTranslatedGatewayInfo()} label={t('common.about.gatewayService')} />
         </Card.Content>
         <Card.Footer className="border-t px-6 py-3">
           <p className="text-muted-foreground text-xs">
-            {t({ en: `Generated on ${currentDateString}`, fr: `Généré le ${currentDateString}` })}
+            {t('common.about.generatedOn')} {currentDateString}
           </p>
         </Card.Footer>
       </Card>

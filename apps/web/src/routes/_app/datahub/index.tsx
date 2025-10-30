@@ -85,6 +85,8 @@ const RouteComponent = () => {
     const baseFilename = `${currentUser!.username}_${new Date().toISOString()}`;
     addNotification({
       message: t({
+        ca: 'Exportant entrades, si us plau, espereu...',
+        es: 'Exportando entradas, por favor espere...',
         en: 'Exporting entries, please wait...',
         fr: 'Téléchargement des entrées, veuillez patienter...'
       }),
@@ -105,14 +107,14 @@ const RouteComponent = () => {
       })
       .then(() => {
         addNotification({
-          message: t({ en: 'Export successful', fr: 'Exportation réussie' }),
+          message: t('datahub.index.table.exportSuccess'),
           type: 'success'
         });
       })
       .catch((err) => {
         console.error(err);
         addNotification({
-          message: t({ en: 'Export failed', fr: "Échec de l'exportation" }),
+          message: t('datahub.index.table.exportFailed'),
           type: 'error'
         });
       });
@@ -146,7 +148,9 @@ const RouteComponent = () => {
                 className="[&>input]:text-foreground [&>input]:placeholder-foreground"
                 id="subject-lookup-search-bar"
                 placeholder={t({
+                  ca: 'Feu clic per cercar',
                   en: 'Click to Search',
+                  es: 'Haga clic para buscar',
                   fr: 'Cliquer pour rechercher'
                 })}
                 readOnly={true}

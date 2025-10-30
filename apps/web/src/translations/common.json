@@ -1,158 +1,290 @@
 {
+  "about": {
+    "coreApi": {
+      "en": "Core API",
+      "fr": "API de base",
+      "es": "API principal",
+      "ca": "API principal"
+    },
+    "description": {
+      "en": "This page provides technical information that you can share with your platform administrator if you encounter any issues. Don't worry if you don't understand the content; it's intended for technical support.",
+      "fr": "Cette page fournit des informations techniques que vous pouvez partager avec l'administrateur de votre plateforme si vous rencontrez des problèmes. Ne vous inquiétez pas si vous ne comprenez pas le contenu ; il est destiné à l'assistance technique.",
+      "es": "Esta página proporciona información técnica que puede compartir con el administrador de su plataforma si encuentra algún problema. No se preocupe si no entiende el contenido; está destinado al soporte técnico.",
+      "ca": "Aquesta pàgina proporciona informació tècnica que podeu compartir amb l'administrador de la vostra plataforma si trobeu algun problema. No us preocupeu si no enteneu el contingut; està destinat al suport tècnic."
+    },
+    "gatewayService": {
+      "en": "Gateway Service",
+      "fr": "Service de passerelle",
+      "es": "Servicio de puerta de enlace",
+      "ca": "Servei de passarel·la"
+    },
+    "generatedOn": {
+      "en": "Generated on",
+      "fr": "Généré le",
+      "es": "Generado el",
+      "ca": "Generat el"
+    },
+    "webClient": {
+      "en": "Web Client",
+      "fr": "Client Web",
+      "es": "Cliente Web",
+      "ca": "Client Web"
+    }
+  },
   "admin": {
     "en": "Admin",
-    "fr": "Administrateur"
+    "fr": "Administrateur",
+    "es": "Administrador",
+    "ca": "Administrador"
   },
   "basePermissionLevel": {
     "en": "Base Permission Level",
-    "fr": "Niveau de permission de base"
+    "fr": "Niveau de permission de base",
+    "es": "Nivel de permisos base",
+    "ca": "Nivell de permisos base"
   },
   "clinical": {
     "en": "Clinical",
-    "fr": "Clinique"
+    "fr": "Clinique",
+    "es": "Clínico",
+    "ca": "Clínic"
   },
   "confirmPassword": {
     "en": "Confirm Password",
-    "fr": "Confirmer le mot de passe"
+    "fr": "Confirmer le mot de passe",
+    "es": "Confirmar contraseña",
+    "ca": "Confirmar contrasenya"
   },
   "currentSession": {
     "en": "Current Session",
-    "fr": "Session en cours"
+    "fr": "Session en cours",
+    "es": "Sesión actual",
+    "ca": "Sessió actual"
   },
   "customIdentifier": {
     "en": "Custom Identifier",
-    "fr": "Identifiant unique"
+    "fr": "Identifiant unique",
+    "es": "Identificador personalizado",
+    "ca": "Identificador personalitzat"
+  },
+  "disclaimer": {
+    "accept": {
+      "en": "Accept",
+      "fr": "Accepter",
+      "es": "Aceptar",
+      "ca": "Acceptar"
+    },
+    "decline": {
+      "en": "Decline",
+      "fr": "Refuser",
+      "es": "Rechazar",
+      "ca": "Rebutjar"
+    },
+    "message": {
+      "en": "This platform is not an Electronic Health Record. Our terms of service prohibit using this platform as the primary mechanism to store clinical data.",
+      "fr": "Cette plateforme n'est pas un dossier médical électronique. Nos conditions de service interdisent l'utilisation de cette plateforme comme principal mécanisme de stockage des données cliniques.",
+      "es": "Esta plataforma no es un registro médico electrónico. Nuestros términos de servicio prohíben el uso de esta plataforma como mecanismo principal para almacenar datos clínicos.",
+      "ca": "Aquesta plataforma no és un registre mèdic electrònic. Els nostres termes de servei prohibeixen l'ús d'aquesta plataforma com a mecanisme principal per emmagatzemar dades clíniques."
+    },
+    "title": {
+      "en": "Disclaimer",
+      "fr": "Avis",
+      "es": "Descargo de responsabilidad",
+      "ca": "Descàrrec de responsabilitat"
+    }
   },
   "errors": {
     "failedToChangeLanguage": {
       "en": "Failed to change languages",
-      "fr": "Le changement de langue n'a pas été effectué"
+      "fr": "Le changement de langue n'a pas été effectué",
+      "es": "Error al cambiar el idioma",
+      "ca": "Error en canviar l'idioma"
     },
     "noDataToExport": {
       "en": "No Data to Export",
-      "fr": "Pas de données à exporter"
+      "fr": "Pas de données à exporter",
+      "es": "No hay datos para exportar",
+      "ca": "No hi ha dades per exportar"
     },
     "noInstrumentSelected": {
       "en": "No Instrument Selected",
-      "fr": "Aucun instrument sélectionné"
+      "fr": "Aucun instrument sélectionné",
+      "es": "Ningún instrumento seleccionado",
+      "ca": "Cap instrument seleccionat"
     }
   },
   "graph": {
     "en": "Graph",
-    "fr": "Graphique"
+    "fr": "Graphique",
+    "es": "Gráfico",
+    "ca": "Gràfic"
   },
   "groupManager": {
     "en": "Group Manager",
-    "fr": "Responsable de groupe"
+    "fr": "Responsable de groupe",
+    "es": "Gestor de grupo",
+    "ca": "Gestor de grup"
   },
   "groupName": {
     "en": "Group Name",
-    "fr": "Nom du groupe"
+    "fr": "Nom du groupe",
+    "es": "Nombre del grupo",
+    "ca": "Nom del grup"
   },
   "groupTrend": {
     "en": "Group Trend",
-    "fr": "Tendance du groupe"
+    "fr": "Tendance du groupe",
+    "es": "Tendencia del grupo",
+    "ca": "Tendència del grup"
   },
   "groupType": {
     "en": "Group Type",
-    "fr": "Type de groupe"
+    "fr": "Type de groupe",
+    "es": "Tipo de grupo",
+    "ca": "Tipus de grup"
   },
   "groups": {
     "en": "Groups",
-    "fr": "Groupes"
+    "fr": "Groupes",
+    "es": "Grupos",
+    "ca": "Grups"
   },
   "identificationMethod": {
     "en": "Identification Method",
-    "fr": "Méthode d'identification"
+    "fr": "Méthode d'identification",
+    "es": "Método de identificación",
+    "ca": "Mètode d'identificació"
   },
   "identificationMethodDesc": {
     "en": "Please select the method by which a subject will be identified for this session.",
-    "fr": "Veuillez sélectionner la méthode par laquelle un sujet sera identifié pour cette session."
+    "fr": "Veuillez sélectionner la méthode par laquelle un sujet sera identifié pour cette session.",
+    "es": "Seleccione el método por el cual se identificará al sujeto para esta sesión.",
+    "ca": "Seleccioneu el mètode pel qual s'identificarà el subjecte per a aquesta sessió."
   },
   "identifier": {
     "en": "Identifier",
-    "fr": "Identifiant"
+    "fr": "Identifiant",
+    "es": "Identificador",
+    "ca": "Identificador"
   },
   "insufficientPasswordStrength": {
     "en": "Insufficient password strength",
-    "fr": "Mot de passe trop faible"
+    "fr": "Mot de passe trop faible",
+    "es": "Contraseña insuficientemente segura",
+    "ca": "Contrasenya insuficientment segura"
   },
   "method": {
     "en": "Method",
-    "fr": "Méthode"
+    "fr": "Méthode",
+    "es": "Método",
+    "ca": "Mètode"
   },
   "password": {
     "en": "Password",
-    "fr": "Mot de passe"
+    "fr": "Mot de passe",
+    "es": "Contraseña",
+    "ca": "Contrasenya"
   },
   "personalInfo": {
     "en": "Personal Information",
-    "fr": "Renseignements personnels"
+    "fr": "Renseignements personnels",
+    "es": "Información personal",
+    "ca": "Informació personal"
   },
   "research": {
     "en": "Research",
-    "fr": "Recherche"
+    "fr": "Recherche",
+    "es": "Investigación",
+    "ca": "Recerca"
   },
   "sessionInProgress": {
     "en": "Session in Progress",
-    "fr": "Session en cours"
+    "fr": "Session en cours",
+    "es": "Sesión en curso",
+    "ca": "Sessió en curs"
   },
   "standard": {
     "en": "Standard",
-    "fr": "Standard"
+    "fr": "Standard",
+    "es": "Estándar",
+    "ca": "Estàndard"
   },
   "passwordsMustMatch": {
     "en": "Passwords Must Match",
-    "fr": "Les mots de passe doivent correspondre"
+    "fr": "Les mots de passe doivent correspondre",
+    "es": "Las contraseñas deben coincidir",
+    "ca": "Les contrasenyes han de coincidir"
   },
   "subjectIdentification": {
     "description": {
       "en": "The following items are used to compute a unique identifier that enables consistent cross-session identification.",
-      "fr": "Les éléments suivants sont utilisés pour calculer un identifiant unique qui permet une identification cohérente entre les sessions."
+      "fr": "Les éléments suivants sont utilisés pour calculer un identifiant unique qui permet une identification cohérente entre les sessions.",
+      "es": "Los siguientes elementos se utilizan para calcular un identificador único que permite una identificación consistente entre sesiones.",
+      "ca": "Els elements següents s'utilitzen per calcular un identificador únic que permet una identificació consistent entre sessions."
     },
     "firstName": {
       "description": {
         "en": "The subject's first name, as provided by their birth certificate. For the purpose of identification, white space, special characters, and accents are removed, with accented characters treated as a fixed ASCII transliteration.",
-        "fr": "Le prénom du sujet, tel qu'il figure dans son acte de naissance. Pour les besoins de l'identification, les espaces blancs, les caractères spéciaux et les accents sont supprimés, les caractères accentués étant traités comme une translittération ASCII fixe."
+        "fr": "Le prénom du sujet, tel qu'il figure dans son acte de naissance. Pour les besoins de l'identification, les espaces blancs, les caractères spéciaux et les accents sont supprimés, les caractères accentués étant traités comme une translittération ASCII fixe.",
+        "es": "El nombre del sujeto, tal como figura en su certificado de nacimiento. Para fines de identificación, se eliminan los espacios en blanco, caracteres especiales y acentos, tratándose los caracteres acentuados como una transliteración ASCII fija.",
+        "ca": "El nom del subjecte, tal com figura al seu certificat de naixement. Per a la identificació, s'eliminen els espais en blanc, caràcters especials i accents, tractant-se els caràcters accentuats com una transliteració ASCII fixa."
       },
       "label": {
         "en": "First Name",
-        "fr": "Prénom"
+        "fr": "Prénom",
+        "es": "Nombre",
+        "ca": "Nom"
       }
     },
     "lastName": {
       "description": {
         "en": "The subject's last name, as provided by their birth certificate. For the purpose of identification, white space, special characters, and accents are removed, with accented characters treated as their ASCII equivalents.",
-        "fr": "Le nom de famille du sujet, tel qu'il figure dans son acte de naissance. Aux fins d'identification, les espaces blancs, les caractères spéciaux et les accents sont supprimés, les caractères accentués étant traités comme leurs équivalents ASCII."
+        "fr": "Le nom de famille du sujet, tel qu'il figure dans son acte de naissance. Aux fins d'identification, les espaces blancs, les caractères spéciaux et les accents sont supprimés, les caractères accentués étant traités comme leurs équivalents ASCII.",
+        "es": "El apellido del sujeto, tal como figura en su certificado de nacimiento. Para fines de identificación, se eliminan los espacios en blanco, caracteres especiales y acentos, tratándose los caracteres acentuados como sus equivalentes ASCII.",
+        "ca": "El cognom del subjecte, tal com figura al seu certificat de naixement. Per a la identificació, s'eliminen els espais en blanc, caràcters especials i accents, tractant-se els caràcters accentuats com els seus equivalents ASCII."
       },
       "label": {
         "en": "Last Name",
-        "fr": "Nom de famille"
+        "fr": "Nom de famille",
+        "es": "Apellido",
+        "ca": "Cognom"
       }
     },
     "title": {
       "en": "Subject Identification",
-      "fr": "Identification du client"
+      "fr": "Identification du client",
+      "es": "Identificación del sujeto",
+      "ca": "Identificació del subjecte"
     }
   },
   "tags": {
     "en": "Tags",
-    "fr": "Tags"
+    "fr": "Tags",
+    "es": "Etiquetas",
+    "ca": "Etiquetes"
   },
   "timeCollected": {
     "en": "Time Collected",
-    "fr": "Horodatage"
+    "fr": "Horodatage",
+    "es": "Hora de recolección",
+    "ca": "Hora de recollida"
   },
   "uploadSuccessful": {
     "en": "Upload Successful",
-    "fr": "Téléchargement réussi"
+    "fr": "Téléchargement réussi",
+    "es": "Carga exitosa",
+    "ca": "Càrrega exitosa"
   },
   "username": {
     "en": "Username",
-    "fr": "Nom d'utilisateur"
+    "fr": "Nom d'utilisateur",
+    "es": "Nombre de usuario",
+    "ca": "Nom d'usuari"
   },
   "usernameExists": {
     "en": "Username already exists",
-    "fr": "Le nom d'utilisateur existe déjà"
+    "fr": "Le nom d'utilisateur existe déjà",
+    "es": "El nombre de usuario ya existe",
+    "ca": "El nom d'usuari ja existeix"
   }
 }

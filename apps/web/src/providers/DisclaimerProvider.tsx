@@ -17,25 +17,15 @@ export const DisclaimerProvider: React.FC<{ children: React.ReactElement }> = ({
       <Dialog open={!isDisclaimerAccepted}>
         <Dialog.Content onOpenAutoFocus={(event) => event.preventDefault()}>
           <Dialog.Header>
-            <Dialog.Title>
-              {t({
-                en: 'Disclaimer',
-                fr: 'Avis'
-              })}
-            </Dialog.Title>
-            <Dialog.Description>
-              {t({
-                en: 'This platform is not an Electronic Health Record. Our terms of service prohibit using this platform as the primary mechanism to store clinical data.',
-                fr: "Cette plateforme n'est pas un dossier médical électronique. Nos conditions de service interdisent l'utilisation de cette plateforme comme principal mécanisme de stockage des données cliniques."
-              })}
-            </Dialog.Description>
+            <Dialog.Title>{t('common.disclaimer.title')}</Dialog.Title>
+            <Dialog.Description>{t('common.disclaimer.message')}</Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
             <Button type="button" onClick={() => setIsDisclaimerAccepted(true)}>
-              {t({ en: 'Accept', fr: 'Accepter' })}
+              {t('common.disclaimer.accept')}
             </Button>
             <Button type="button" variant="outline" onClick={logout}>
-              {t({ en: 'Decline', fr: 'Refuser' })}
+              {t('common.disclaimer.decline')}
             </Button>
           </Dialog.Footer>
         </Dialog.Content>
