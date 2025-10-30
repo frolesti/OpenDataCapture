@@ -171,11 +171,13 @@ const RouteComponent = () => {
           />
         </Card.Content>
         <Card.Footer className="text-muted-foreground flex justify-between gap-3">
-          <p className="text-sm">&copy; {new Date().getFullYear()} Douglas Neuroinformatics Platform</p>
+          <p className="text-sm">&copy; {new Date().getFullYear()} Alta Medical Services</p>
           <div className="flex gap-2">
             <LanguageToggle
               align="start"
               options={{
+                ca: 'Català',
+                es: 'Español',
                 en: 'English',
                 fr: 'Français'
               }}

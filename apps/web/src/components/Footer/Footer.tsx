@@ -16,31 +16,11 @@ export const Footer = () => {
           <div className="flex w-1/2 items-center justify-center lg:w-auto">
             <a
               className="underline-offset-3 p-1 text-center hover:underline lg:mx-2"
-              href={config.meta.docsUrl}
-              rel="noreferrer"
-              target="_blank"
-            >
-              {t('footer.documentation')}
-            </a>
-          </div>
-          <div className="flex w-1/2 items-center justify-center lg:w-auto">
-            <a
-              className="underline-offset-3 p-1 text-center hover:underline lg:mx-2"
               href={config.meta.licenseUrl}
               rel="noreferrer"
               target="_blank"
             >
               {t('footer.license')}
-            </a>
-          </div>
-          <div className="flex w-1/2 items-center justify-center lg:w-auto">
-            <a
-              className="underline-offset-3 p-1 text-center hover:underline lg:mx-2"
-              href={config.meta.githubRepoUrl}
-              rel="noreferrer"
-              target="_blank"
-            >
-              {t('footer.sourceCode')}
             </a>
           </div>
           <div className="flex w-1/2 items-center justify-center lg:w-auto">
@@ -50,9 +30,7 @@ export const Footer = () => {
           </div>
         </div>
       </div>
-      <p className="text-center">
-        &copy; {CURRENT_YEAR} {t('organization.name')}
-      </p>
+      <p className="text-center">&copy; {CURRENT_YEAR} Alta Medical Services</p>
     </footer>
   );
 };

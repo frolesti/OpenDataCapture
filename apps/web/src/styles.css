@@ -1,5 +1,53 @@
 @import '@opendatacapture/react-core/globals.css';
 
+/* Override primary colors to match Alta Medical Services purple branding */
+:root {
+  --primary: 241 100% 80%; /* #9a99ff */
+  --primary-foreground: 0 0% 100%;
+  --accent: 241 100% 80%;
+  --accent-foreground: 0 0% 100%;
+  --ring: 241 100% 80%;
+}
+
+/* Ensure primary buttons use purple background in light mode */
+button[type='submit']:not([data-variant]),
+button[data-variant='primary'],
+.btn-primary {
+  background-color: #9a99ff !important;
+  color: white !important;
+}
+
+button[type='submit']:not([data-variant]):hover,
+button[data-variant='primary']:hover,
+.btn-primary:hover {
+  background-color: #8482e6 !important; /* Slightly darker for hover */
+}
+
+/* Override sidebar background - light mode - use single solid purple */
+.bg-slate-900 {
+  background-color: #9a99ff !important; /* Principal color #9a99ff */
+}
+
+/* Override sidebar hover states - light mode - slightly darker for hover */
+.hover\:bg-slate-800:hover,
+.bg-slate-800 {
+  background-color: #8482e6 !important; /* Slightly darker for hover/active */
+}
+
+/* Override sidebar dividers - light mode - same as main background */
+.bg-slate-700,
+.divide-slate-700 > * + * {
+  background-color: #9a99ff !important; /* Same as main sidebar - principal color */
+  border-color: #9a99ff !important;
+}
+
+/* Ensure text stays visible in light mode sidebar */
+.bg-slate-900 .text-slate-200,
+.bg-slate-900 .text-slate-100 {
+  color: #ffffff !important;
+}
+
+/* Existing spotlight styles */
 [data-spotlight='true'] {
   @apply pointer-events-none z-40 rounded-md shadow-2xl;
 }
@@ -15,7 +63,7 @@
 [data-spotlight-type='export-data-dropdown'][data-spotlight='true'] {
   @apply bg-slate-100 dark:bg-slate-900;
   & > button {
-    @apply disabled:opacity-100;
+    @apply text-slate-900 dark:text-slate-100;
   }
 }
 
