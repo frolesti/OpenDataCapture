@@ -125,6 +125,43 @@ function requiresOtroMotivo<T extends Record<string, any>>(field: T): any {
   };
 }
 
+// Helper function to show fracture N only if fracture N-1 is completed
+function requiresPreviousFracture<T extends Record<string, any>>(field: T, fractureNumber: number): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: [
+      'consentimientoInformado',
+      `fechaFractura${fractureNumber - 1}`,
+      `localizacionFractura${fractureNumber - 1}`,
+      `hospitalizacion${fractureNumber - 1}`
+    ] as const,
+    render(data: any): any {
+      if (fractureNumber === 1) {
+        // First fracture always shows if consent is given
+        if (data.consentimientoInformado === 'si') {
+          return field;
+        }
+        return null;
+      }
+
+      // For subsequent fractures, check if previous fracture is completed
+      const prevFechaKey = `fechaFractura${fractureNumber - 1}`;
+      const prevLocalizacionKey = `localizacionFractura${fractureNumber - 1}`;
+      const prevHospitalizacionKey = `hospitalizacion${fractureNumber - 1}`;
+
+      if (
+        data.consentimientoInformado === 'si' &&
+        data[prevFechaKey] &&
+        data[prevLocalizacionKey] &&
+        data[prevHospitalizacionKey]
+      ) {
+        return field;
+      }
+      return null;
+    }
+  };
+}
+
 export default defineInstrument({
   kind: 'FORM',
   language: 'en',
@@ -433,95 +470,200 @@ export default defineInstrument({
     },
     {
       title: 'EPISODIO DE LA FRACTURA POR FRAGILIDAD',
+      description:
+        'Complete la información de cada fractura por fragilidad. Las fracturas adicionales aparecerán progresivamente a medida que complete la información de la fractura anterior (fecha, localización y hospitalización).',
       fields: {
         _warningFractura: consentWarning() as any,
         // Primera fractura
-        fechaFractura1: requiresConsent({
-          kind: 'date',
-          label: 'Fecha de la Fractura por Fragilidad'
-        }),
-        localizacionFractura1: requiresConsent({
-          kind: 'string',
-          label: 'Localización - Elegir una opción',
-          variant: 'select',
-          options: {
-            vertebral: 'Vertebral',
-            femoral: 'Femoral',
-            humero: 'Húmero',
-            radioMuneca: 'Radio/cubito/muñeca',
-            pelvis: 'Pelvis',
-            costilla: 'Costilla',
-            tobillopie: 'Tobillo/pie',
-            otras: 'Otras'
-          }
-        }),
-        hospitalizacion1: requiresConsent({
-          kind: 'string',
-          label: '¿Requirió hospitalización?',
-          variant: 'select',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
+        fechaFractura1: requiresPreviousFracture(
+          {
+            kind: 'date',
+            label: 'Fecha de la Fractura por Fragilidad'
+          },
+          1
+        ),
+        localizacionFractura1: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: 'Localización - Elegir una opción',
+            variant: 'select',
+            options: {
+              vertebral: 'Vertebral',
+              femoral: 'Femoral',
+              humero: 'Húmero',
+              radioMuneca: 'Radio/cubito/muñeca',
+              pelvis: 'Pelvis',
+              costilla: 'Costilla',
+              tobillopie: 'Tobillo/pie',
+              otras: 'Otras'
+            }
+          },
+          1
+        ),
+        hospitalizacion1: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: '¿Requirió hospitalización?',
+            variant: 'select',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          1
+        ),
         // Segunda fractura
-        fechaFractura2: requiresConsent({
-          kind: 'date',
-          label: 'Fecha de la FF (segunda fractura)'
-        }),
-        localizacionFractura2: requiresConsent({
-          kind: 'string',
-          label: 'Localización - Elegir una opción',
-          variant: 'select',
-          options: {
-            vertebral: 'Vertebral',
-            femoral: 'Femoral',
-            humero: 'Húmero',
-            radioMuneca: 'Radio/cubito/muñeca',
-            pelvis: 'Pelvis',
-            costilla: 'Costilla',
-            tobillopie: 'Tobillo/pie',
-            otras: 'Otras'
-          }
-        }),
-        hospitalizacion2: requiresConsent({
-          kind: 'string',
-          label: '¿Requirió hospitalización? (segunda fractura)',
-          variant: 'select',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
+        fechaFractura2: requiresPreviousFracture(
+          {
+            kind: 'date',
+            label: 'Fecha de la FF (segunda fractura)'
+          },
+          2
+        ),
+        localizacionFractura2: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: 'Localización - Elegir una opción',
+            variant: 'select',
+            options: {
+              vertebral: 'Vertebral',
+              femoral: 'Femoral',
+              humero: 'Húmero',
+              radioMuneca: 'Radio/cubito/muñeca',
+              pelvis: 'Pelvis',
+              costilla: 'Costilla',
+              tobillopie: 'Tobillo/pie',
+              otras: 'Otras'
+            }
+          },
+          2
+        ),
+        hospitalizacion2: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: '¿Requirió hospitalización? (segunda fractura)',
+            variant: 'select',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          2
+        ),
         // Tercera fractura
-        fechaFractura3: requiresConsent({
-          kind: 'date',
-          label: 'Fecha de la FF (tercera fractura)'
-        }),
-        localizacionFractura3: requiresConsent({
-          kind: 'string',
-          label: 'Localización - Elegir una opción',
-          variant: 'select',
-          options: {
-            vertebral: 'Vertebral',
-            femoral: 'Femoral',
-            humero: 'Húmero',
-            radioMuneca: 'Radio/cubito/muñeca',
-            pelvis: 'Pelvis',
-            costilla: 'Costilla',
-            tobillopie: 'Tobillo/pie',
-            otras: 'Otras'
-          }
-        }),
-        hospitalizacion3: requiresConsent({
-          kind: 'string',
-          label: '¿Requirió hospitalización? (tercera fractura)',
-          variant: 'select',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        })
+        fechaFractura3: requiresPreviousFracture(
+          {
+            kind: 'date',
+            label: 'Fecha de la FF (tercera fractura)'
+          },
+          3
+        ),
+        localizacionFractura3: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: 'Localización - Elegir una opción',
+            variant: 'select',
+            options: {
+              vertebral: 'Vertebral',
+              femoral: 'Femoral',
+              humero: 'Húmero',
+              radioMuneca: 'Radio/cubito/muñeca',
+              pelvis: 'Pelvis',
+              costilla: 'Costilla',
+              tobillopie: 'Tobillo/pie',
+              otras: 'Otras'
+            }
+          },
+          3
+        ),
+        hospitalizacion3: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: '¿Requirió hospitalización? (tercera fractura)',
+            variant: 'select',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          3
+        ),
+        // Cuarta fractura
+        fechaFractura4: requiresPreviousFracture(
+          {
+            kind: 'date',
+            label: 'Fecha de la FF (cuarta fractura)'
+          },
+          4
+        ),
+        localizacionFractura4: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: 'Localización - Elegir una opción',
+            variant: 'select',
+            options: {
+              vertebral: 'Vertebral',
+              femoral: 'Femoral',
+              humero: 'Húmero',
+              radioMuneca: 'Radio/cubito/muñeca',
+              pelvis: 'Pelvis',
+              costilla: 'Costilla',
+              tobillopie: 'Tobillo/pie',
+              otras: 'Otras'
+            }
+          },
+          4
+        ),
+        hospitalizacion4: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: '¿Requirió hospitalización? (cuarta fractura)',
+            variant: 'select',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          4
+        ),
+        // Quinta fractura
+        fechaFractura5: requiresPreviousFracture(
+          {
+            kind: 'date',
+            label: 'Fecha de la FF (quinta fractura)'
+          },
+          5
+        ),
+        localizacionFractura5: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: 'Localización - Elegir una opción',
+            variant: 'select',
+            options: {
+              vertebral: 'Vertebral',
+              femoral: 'Femoral',
+              humero: 'Húmero',
+              radioMuneca: 'Radio/cubito/muñeca',
+              pelvis: 'Pelvis',
+              costilla: 'Costilla',
+              tobillopie: 'Tobillo/pie',
+              otras: 'Otras'
+            }
+          },
+          5
+        ),
+        hospitalizacion5: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: '¿Requirió hospitalización? (quinta fractura)',
+            variant: 'select',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          5
+        )
       }
     },
     {
@@ -1319,6 +1461,16 @@ export default defineInstrument({
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
       hospitalizacion3: z.enum(['si', 'no']).optional(),
+      fechaFractura4: z.date().optional(),
+      localizacionFractura4: z
+        .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
+        .optional(),
+      hospitalizacion4: z.enum(['si', 'no']).optional(),
+      fechaFractura5: z.date().optional(),
+      localizacionFractura5: z
+        .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
+        .optional(),
+      hospitalizacion5: z.enum(['si', 'no']).optional(),
 
       // DIAGNÓSTICO
       pacienteDiagnosticado: z.enum(['si', 'no']).optional(),
@@ -1573,6 +1725,53 @@ export default defineInstrument({
             message: `La fecha de inicio no puede ser posterior a la fecha de fin`,
             path: [fechaFinKey as string]
           });
+        }
+      }
+
+      // Validar que si una fractura tiene algún campo rellenado, debe tener todos los campos obligatorios
+      const fracturas = [
+        { num: 1, label: 'primera' },
+        { num: 2, label: 'segunda' },
+        { num: 3, label: 'tercera' },
+        { num: 4, label: 'cuarta' },
+        { num: 5, label: 'quinta' }
+      ];
+
+      for (const fractura of fracturas) {
+        const fechaKey = `fechaFractura${fractura.num}` as keyof typeof data;
+        const localizacionKey = `localizacionFractura${fractura.num}` as keyof typeof data;
+        const hospitalizacionKey = `hospitalizacion${fractura.num}` as keyof typeof data;
+
+        const fecha = data[fechaKey];
+        const localizacion = data[localizacionKey];
+        const hospitalizacion = data[hospitalizacionKey];
+
+        // Si algún campo está lleno, todos deben estarlo
+        const hasSomeData = fecha || localizacion || hospitalizacion;
+        const hasAllData = fecha && localizacion && hospitalizacion;
+
+        if (hasSomeData && !hasAllData) {
+          if (!fecha) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `La ${fractura.label} fractura está incompleta. Debe completar la fecha o dejar todos los campos vacíos. Esta fractura no será considerada en el formulario.`,
+              path: [fechaKey as string]
+            });
+          }
+          if (!localizacion) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `La ${fractura.label} fractura está incompleta. Debe completar la localización o dejar todos los campos vacíos. Esta fractura no será considerada en el formulario.`,
+              path: [localizacionKey as string]
+            });
+          }
+          if (!hospitalizacion) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `La ${fractura.label} fractura está incompleta. Debe completar si requirió hospitalización o dejar todos los campos vacíos. Esta fractura no será considerada en el formulario.`,
+              path: [hospitalizacionKey as string]
+            });
+          }
         }
       }
     })
