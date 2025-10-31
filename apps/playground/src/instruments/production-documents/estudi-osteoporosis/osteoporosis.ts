@@ -48,6 +48,37 @@ function requiresDiagnosis<T extends Record<string, any>>(field: T): any {
   };
 }
 
+// Helper function to show "Continúa" field only if start date exists
+function requiresStartDate<T extends Record<string, any>>(field: T, medicationName: string): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['consentimientoInformado', `${medicationName}FechaInicio`] as const,
+    render(data: any): any {
+      const startDateKey = `${medicationName}FechaInicio`;
+      if (data.consentimientoInformado === 'si' && data[startDateKey]) {
+        return field;
+      }
+      return null;
+    }
+  };
+}
+
+// Helper function to show end date and interruption reason only if "Continúa" is "no"
+function requiresDiscontinuation<T extends Record<string, any>>(field: T, medicationName: string): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['consentimientoInformado', `${medicationName}FechaInicio`, `${medicationName}Continua`] as const,
+    render(data: any): any {
+      const startDateKey = `${medicationName}FechaInicio`;
+      const continuaKey = `${medicationName}Continua`;
+      if (data.consentimientoInformado === 'si' && data[startDateKey] && data[continuaKey] === 'no') {
+        return field;
+      }
+      return null;
+    }
+  };
+}
+
 export default defineInstrument({
   kind: 'FORM',
   language: 'en',
@@ -493,364 +524,463 @@ export default defineInstrument({
           kind: 'date',
           label: 'Alendronato - Fecha inicio'
         }),
-        alendronatoFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Alendronato - Fecha fin'
-        }),
-        alendronatoContinua: requiresConsent({
-          kind: 'string',
-          label: 'Alendronato - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        alendronatoMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Alendronato - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        }),
+        alendronatoContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Alendronato - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'alendronato'
+        ),
+        alendronatoFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Alendronato - Fecha fin'
+          },
+          'alendronato'
+        ),
+        alendronatoMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Alendronato - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'alendronato'
+        ),
         // Risedronato
         risedronatoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Risedronato - Fecha inicio'
         }),
-        risedronatoFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Risedronato - Fecha fin'
-        }),
-        risedronatoContinua: requiresConsent({
-          kind: 'string',
-          label: 'Risedronato - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        risedronatoMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Risedronato - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        }),
+        risedronatoContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Risedronato - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'risedronato'
+        ),
+        risedronatoFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Risedronato - Fecha fin'
+          },
+          'risedronato'
+        ),
+        risedronatoMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Risedronato - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'risedronato'
+        ),
         // Ibandronato
         ibandronatoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Ibandronato - Fecha inicio'
         }),
-        ibandronatoFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Ibandronato - Fecha fin'
-        }),
-        ibandronatoContinua: requiresConsent({
-          kind: 'string',
-          label: 'Ibandronato - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        ibandronatoMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Ibandronato - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        }),
+        ibandronatoContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Ibandronato - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'ibandronato'
+        ),
+        ibandronatoFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Ibandronato - Fecha fin'
+          },
+          'ibandronato'
+        ),
+        ibandronatoMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Ibandronato - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'ibandronato'
+        ),
         // Zoledronato
         zoledronatoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Zoledronato - Fecha inicio'
         }),
-        zoledronatoFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Zoledronato - Fecha fin'
-        }),
-        zoledronatoContinua: requiresConsent({
-          kind: 'string',
-          label: 'Zoledronato - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        zoledronatoMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Zoledronato - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        }),
+        zoledronatoContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Zoledronato - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'zoledronato'
+        ),
+        zoledronatoFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Zoledronato - Fecha fin'
+          },
+          'zoledronato'
+        ),
+        zoledronatoMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Zoledronato - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'zoledronato'
+        ),
         // Denosumab
         denosumabFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Denosumab - Fecha inicio'
         }),
-        denosumabFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Denosumab - Fecha fin'
-        }),
-        denosumabContinua: requiresConsent({
-          kind: 'string',
-          label: 'Denosumab - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        denosumabMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Denosumab - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        }),
+        denosumabContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Denosumab - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'denosumab'
+        ),
+        denosumabFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Denosumab - Fecha fin'
+          },
+          'denosumab'
+        ),
+        denosumabMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Denosumab - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'denosumab'
+        ),
         // Raloxifeno
         raloxifenoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Raloxifeno - Fecha inicio'
         }),
-        raloxifenoFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Raloxifeno - Fecha fin'
-        }),
-        raloxifenoContinua: requiresConsent({
-          kind: 'string',
-          label: 'Raloxifeno - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        raloxifenoMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Raloxifeno - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        }),
+        raloxifenoContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Raloxifeno - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'raloxifeno'
+        ),
+        raloxifenoFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Raloxifeno - Fecha fin'
+          },
+          'raloxifeno'
+        ),
+        raloxifenoMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Raloxifeno - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'raloxifeno'
+        ),
         // Bazedoxifeno
         bazedoxifenoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Bazedoxifeno - Fecha inicio'
         }),
-        bazedoxifenoFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Bazedoxifeno - Fecha fin'
-        }),
-        bazedoxifenoContinua: requiresConsent({
-          kind: 'string',
-          label: 'Bazedoxifeno - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        bazedoxifenoMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Bazedoxifeno - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        }),
+        bazedoxifenoContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Bazedoxifeno - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'bazedoxifeno'
+        ),
+        bazedoxifenoFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Bazedoxifeno - Fecha fin'
+          },
+          'bazedoxifeno'
+        ),
+        bazedoxifenoMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Bazedoxifeno - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'bazedoxifeno'
+        ),
         // Tibolona
         tibolonaFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Tibolona - Fecha inicio'
         }),
-        tibolonaFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Tibolona - Fecha fin'
-        }),
-        tibolonaContinua: requiresConsent({
-          kind: 'string',
-          label: 'Tibolona - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        tibolonaMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Tibolona - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        }),
+        tibolonaContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Tibolona - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'tibolona'
+        ),
+        tibolonaFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Tibolona - Fecha fin'
+          },
+          'tibolona'
+        ),
+        tibolonaMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Tibolona - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'tibolona'
+        ),
         // Teriparatida
         teriparatidaFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Teriparatida - Fecha inicio'
         }),
-        teriparatidaFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Teriparatida - Fecha fin'
-        }),
-        teriparatidaContinua: requiresConsent({
-          kind: 'string',
-          label: 'Teriparatida - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        teriparatidaMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Teriparatida - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        }),
+        teriparatidaContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Teriparatida - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'teriparatida'
+        ),
+        teriparatidaFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Teriparatida - Fecha fin'
+          },
+          'teriparatida'
+        ),
+        teriparatidaMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Teriparatida - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'teriparatida'
+        ),
         // Abaloparatida
         abaloparatidaFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Abaloparatida - Fecha inicio'
         }),
-        abaloparatidaFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Abaloparatida - Fecha fin'
-        }),
-        abaloparatidaContinua: requiresConsent({
-          kind: 'string',
-          label: 'Abaloparatida - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        abaloparatidaMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Abaloparatida - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        }),
+        abaloparatidaContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Abaloparatida - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'abaloparatida'
+        ),
+        abaloparatidaFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Abaloparatida - Fecha fin'
+          },
+          'abaloparatida'
+        ),
+        abaloparatidaMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Abaloparatida - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'abaloparatida'
+        ),
         // Romosozumab
         romosozumabFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Romosozumab - Fecha inicio'
         }),
-        romosozumabFechaFin: requiresConsent({
-          kind: 'date',
-          label: 'Romosozumab - Fecha fin'
-        }),
-        romosozumabContinua: requiresConsent({
-          kind: 'string',
-          label: 'Romosozumab - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        romosozumabMotivoInterrupcion: requiresConsent({
-          kind: 'set',
-          label: 'Romosozumab - Motivo interrupción',
-          variant: 'listbox',
-          options: {
-            tolerabilidad: 'Problemas de tolerabilidad',
-            eficacia: 'Falta de eficacia',
-            incumplimiento: 'Incumplimiento',
-            cirugias: 'Procedimientos o cirugías dentales',
-            investigador: 'Decisión del investigador',
-            especialista: 'Decisión del especialista',
-            sujeto: 'Decisión del sujeto',
-            otros: 'Otros'
-          }
-        })
+        romosozumabContinua: requiresStartDate(
+          {
+            kind: 'string',
+            label: 'Romosozumab - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'romosozumab'
+        ),
+        romosozumabFechaFin: requiresDiscontinuation(
+          {
+            kind: 'date',
+            label: 'Romosozumab - Fecha fin'
+          },
+          'romosozumab'
+        ),
+        romosozumabMotivoInterrupcion: requiresDiscontinuation(
+          {
+            kind: 'set',
+            label: 'Romosozumab - Motivo interrupción',
+            variant: 'listbox',
+            options: {
+              tolerabilidad: 'Problemas de tolerabilidad',
+              eficacia: 'Falta de eficacia',
+              incumplimiento: 'Incumplimiento',
+              cirugias: 'Procedimientos o cirugías dentales',
+              investigador: 'Decisión del investigador',
+              especialista: 'Decisión del especialista',
+              sujeto: 'Decisión del sujeto',
+              otros: 'Otros'
+            }
+          },
+          'romosozumab'
+        )
       }
     },
     {
