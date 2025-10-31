@@ -34,6 +34,20 @@ function consentWarning(): any {
   };
 }
 
+// Helper function to make a field conditional on osteoporosis diagnosis
+function requiresDiagnosis<T extends Record<string, any>>(field: T): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['consentimientoInformado', 'pacienteDiagnosticado'] as const,
+    render(data: any): any {
+      if (data.consentimientoInformado === 'si' && data.pacienteDiagnosticado === 'si') {
+        return field;
+      }
+      return null;
+    }
+  };
+}
+
 export default defineInstrument({
   kind: 'FORM',
   language: 'en',
@@ -446,11 +460,11 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        fechaDiagnostico: requiresConsent({
+        fechaDiagnostico: requiresDiagnosis({
           kind: 'date',
           label: '¿Cuál fue la fecha en la que tuvo lugar el diagnóstico?'
         }),
-        metodoDiagnostico: requiresConsent({
+        metodoDiagnostico: requiresDiagnosis({
           kind: 'set',
           label: '¿Qué método principal se empleó para el diagnóstico?',
           variant: 'listbox',
@@ -463,7 +477,7 @@ export default defineInstrument({
             otro: 'Otro'
           }
         }),
-        otroMetodoEspecificar: requiresConsent({
+        otroMetodoEspecificar: requiresDiagnosis({
           kind: 'string',
           label: 'Otro (especificar):',
           variant: 'input'
