@@ -111,7 +111,9 @@ export const Sidebar = () => {
             contentClassName="bg-slate-800 border-slate-700 text-slate-300"
             itemClassName="bg-slate-800 hover:bg-slate-700 focus:bg-slate-700 focus:text-slate-100"
             options={{
+              ca: 'Català',
               en: 'English',
+              es: 'Español',
               fr: 'Français'
             }}
             triggerClassName="hover:bg-slate-800 hover:text-slate-300 focus-visible:ring-0"

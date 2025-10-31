@@ -9,7 +9,9 @@ export const $GroupSettings = z.object({
   idValidationRegex: $RegexString.nullish(),
   idValidationRegexErrorMessage: z
     .object({
+      ca: z.string().nullish(),
       en: z.string().nullish(),
+      es: z.string().nullish(),
       fr: z.string().nullish()
     })
     .nullish(),

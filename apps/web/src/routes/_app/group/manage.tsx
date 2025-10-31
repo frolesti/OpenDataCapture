@@ -32,6 +32,10 @@ type ManageGroupFormProps = {
       accessibleInteractiveInstrumentIds: Set<string>;
       defaultIdentificationMethod?: SubjectIdentificationMethod;
       idValidationRegex?: null | string;
+      idValidationRegexErrorMessageCa?: null | string;
+      idValidationRegexErrorMessageEn?: null | string;
+      idValidationRegexErrorMessageEs?: null | string;
+      idValidationRegexErrorMessageFr?: null | string;
       subjectIdDisplayLength?: number;
     };
   };
@@ -75,14 +79,18 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
             subjectIdDisplayLength: {
               kind: 'number',
               label: t({
+                ca: "Longitud preferida de visualització de l'ID del subjecte",
                 en: 'Preferred Subject ID Display Length',
+                es: 'Longitud de visualización preferida del ID del sujeto',
                 fr: "La longueur d'affichage préférée de l'ID"
               }),
               variant: 'input'
             }
           },
           title: t({
+            ca: 'Configuració de visualització',
             en: 'Display Settings',
+            es: 'Configuración de visualización',
             fr: "Paramètres d'affichage"
           })
         },
@@ -99,15 +107,38 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
             },
             idValidationRegex: {
               description: t({
+                ca: 'Definir una expressió regular personalitzada per validar els ID dels subjectes (vegeu https://regexr.com per obtenir ajuda en el disseny de la vostra expressió regular).',
                 en: 'Define a custom regular expression to validate subject IDs (see https://regexr.com for help designing your regular expression).',
+                es: 'Definir una expresión regular personalizada para validar los ID de los sujetos (consulte https://regexr.com para obtener ayuda en el diseño de su expresión regular).',
                 fr: "Définir une expression régulière pour valider les identifiants des sujets (voir https://regexr.com pour obtenir de l'aide dans la conception de votre expression régulière)."
               }),
               kind: 'string',
               label: t({
+                ca: 'Patró de validació ID',
                 en: 'ID Validation Pattern',
-                fr: 'TBD'
+                es: 'Patrón de validación ID',
+                fr: 'Modèle de validation ID'
               }),
               variant: 'input'
+            },
+            idValidationRegexErrorMessageCa: {
+              deps: ['idValidationRegex'],
+              kind: 'dynamic',
+              render: (data) => {
+                if (!data.idValidationRegex) {
+                  return null;
+                }
+                return {
+                  kind: 'string',
+                  label: t({
+                    ca: 'Missatge de validació ID personalitzat (català)',
+                    en: 'Custom ID Validation Message (Catalan)',
+                    es: 'Mensaje de validación ID personalizado (catalán)',
+                    fr: 'Message de validation spécifique (en catalan)'
+                  }),
+                  variant: 'input'
+                };
+              }
             },
             idValidationRegexErrorMessageEn: {
               deps: ['idValidationRegex'],
@@ -119,8 +150,29 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
                 return {
                   kind: 'string',
                   label: t({
+                    ca: 'Missatge de validació ID personalitzat (anglès)',
                     en: 'Custom ID Validation Message (English)',
+                    es: 'Mensaje de validación ID personalizado (inglés)',
                     fr: 'Message de validation spécifique (en anglais)'
+                  }),
+                  variant: 'input'
+                };
+              }
+            },
+            idValidationRegexErrorMessageEs: {
+              deps: ['idValidationRegex'],
+              kind: 'dynamic',
+              render: (data) => {
+                if (!data.idValidationRegex) {
+                  return null;
+                }
+                return {
+                  kind: 'string',
+                  label: t({
+                    ca: 'Missatge de validació ID personalitzat (espanyol)',
+                    en: 'Custom ID Validation Message (Spanish)',
+                    es: 'Mensaje de validación ID personalizado (español)',
+                    fr: 'Message de validation spécifique (en espagnol)'
                   }),
                   variant: 'input'
                 };
@@ -136,7 +188,9 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
                 return {
                   kind: 'string',
                   label: t({
+                    ca: 'Missatge de validació ID personalitzat (francès)',
                     en: 'Custom ID Validation Message (French)',
+                    es: 'Mensaje de validación ID personalizado (francés)',
                     fr: 'Message de validation spécifique (en français)'
                   }),
                   variant: 'input'
@@ -155,7 +209,9 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
         accessibleInteractiveInstrumentIds: z.set(z.string()),
         defaultIdentificationMethod: $SubjectIdentificationMethod.optional(),
         idValidationRegex: $RegexString.optional(),
+        idValidationRegexErrorMessageCa: z.string().optional(),
         idValidationRegexErrorMessageEn: z.string().optional(),
+        idValidationRegexErrorMessageEs: z.string().optional(),
         idValidationRegexErrorMessageFr: z.string().optional(),
         subjectIdDisplayLength: z.number().int().min(1)
       })}
@@ -166,7 +222,9 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
             defaultIdentificationMethod: data.defaultIdentificationMethod,
             idValidationRegex: data.idValidationRegex,
             idValidationRegexErrorMessage: {
+              ca: data.idValidationRegexErrorMessageCa,
               en: data.idValidationRegexErrorMessageEn,
+              es: data.idValidationRegexErrorMessageEs,
               fr: data.idValidationRegexErrorMessageFr
             },
             subjectIdDisplayLength: data.subjectIdDisplayLength
@@ -206,7 +264,9 @@ const RouteComponent = () => {
       accessibleInteractiveInstrumentIds: new Set<string>(),
       defaultIdentificationMethod,
       idValidationRegex: settings?.idValidationRegex,
+      idValidationRegexErrorMessageCa: settings?.idValidationRegexErrorMessage?.ca,
       idValidationRegexErrorMessageEn: settings?.idValidationRegexErrorMessage?.en,
+      idValidationRegexErrorMessageEs: settings?.idValidationRegexErrorMessage?.es,
       idValidationRegexErrorMessageFr: settings?.idValidationRegexErrorMessage?.fr
     };
     for (const instrument of availableInstruments) {

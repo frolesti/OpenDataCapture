@@ -1,5 +1,5 @@
 /** @public */
-type Language = 'en' | 'fr';
+type Language = 'ca' | 'en' | 'es' | 'fr';
 
 /** @public */
 type JsonLiteral = boolean | null | number | string;

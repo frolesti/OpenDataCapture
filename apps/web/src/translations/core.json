@@ -1,332 +1,496 @@
 {
   "anonymous": {
     "en": "Anonymous",
-    "fr": "Anonyme"
+    "fr": "Anonyme",
+    "es": "Anónimo",
+    "ca": "Anònim"
   },
   "authors": {
     "en": "Authors",
-    "fr": "Auteurs"
+    "fr": "Auteurs",
+    "es": "Autores",
+    "ca": "Autors"
   },
   "begin": {
     "en": "Begin",
-    "fr": "Commencer"
+    "fr": "Commencer",
+    "es": "Comenzar",
+    "ca": "Començar"
   },
   "bilingual": {
     "en": "Bilingual",
-    "fr": "Bilingue"
+    "fr": "Bilingue",
+    "es": "Bilingüe",
+    "ca": "Bilingüe"
   },
   "cancel": {
     "en": "Cancel",
-    "fr": "Annuler"
+    "fr": "Annuler",
+    "es": "Cancelar",
+    "ca": "Cancel·lar"
   },
   "changeTheme": {
     "en": "Change Theme",
-    "fr": "Changer de thème"
+    "fr": "Changer de thème",
+    "es": "Cambiar tema",
+    "ca": "Canviar tema"
   },
   "close": {
     "en": "Close",
-    "fr": "Fermer"
+    "fr": "Fermer",
+    "es": "Cerrar",
+    "ca": "Tancar"
   },
   "data": {
     "en": "Data",
-    "fr": "Données"
+    "fr": "Données",
+    "es": "Datos",
+    "ca": "Dades"
   },
   "delete": {
     "en": "Delete",
-    "fr": "Effacer"
+    "fr": "Effacer",
+    "es": "Eliminar",
+    "ca": "Eliminar"
   },
   "description": {
     "en": "Description",
-    "fr": "Description"
+    "fr": "Description",
+    "es": "Descripción",
+    "ca": "Descripció"
   },
   "details": {
     "en": "Details",
-    "fr": "Détails"
+    "fr": "Détails",
+    "es": "Detalles",
+    "ca": "Detalls"
   },
   "download": {
     "en": "Download",
-    "fr": "Télécharger"
+    "fr": "Télécharger",
+    "es": "Descargar",
+    "ca": "Descarregar"
   },
   "edition": {
     "en": "Edition",
-    "fr": "Édition"
+    "fr": "Édition",
+    "es": "Edición",
+    "ca": "Edició"
   },
   "editor": {
     "keyboardShortcuts": {
       "format": {
         "en": "Format Document: {{keybinding}}",
-        "fr": "Appliquer le formatage du code : {{keybinding}}"
+        "fr": "Appliquer le formatage du code : {{keybinding}}",
+        "es": "Formatear documento: {{keybinding}}",
+        "ca": "Formatar document: {{keybinding}}"
       }
     },
     "noFileSelected": {
       "en": "No File Selected",
-      "fr": "Aucun fichier sélectionné"
+      "fr": "Aucun fichier sélectionné",
+      "es": "Ningún archivo seleccionado",
+      "ca": "Cap fitxer seleccionat"
     },
     "pleaseSelectFile": {
       "en": "Please Select a File to Begin",
-      "fr": "Veuillez sélectionner un fichier pour commencer"
+      "fr": "Veuillez sélectionner un fichier pour commencer",
+      "es": "Seleccione un archivo para comenzar",
+      "ca": "Seleccioneu un fitxer per començar"
     }
   },
   "error": {
     "en": "Error",
-    "fr": "Erreur"
+    "fr": "Erreur",
+    "es": "Error",
+    "ca": "Error"
   },
   "estimatedDuration": {
     "en": "Estimated Duration",
-    "fr": "Durée estimée"
+    "fr": "Durée estimée",
+    "es": "Duración estimada",
+    "ca": "Durada estimada"
   },
   "failedToLoadInstrument": {
     "en": "Failed to Load Instrument",
-    "fr": "Échec du chargement de l'instrument"
+    "fr": "Échec du chargement de l'instrument",
+    "es": "Error al cargar el instrumento",
+    "ca": "Error en carregar l'instrument"
   },
   "failedToLoadInstrumentDesc": {
     "en": "An unexpected error occurred while loading this instrument. Please contact the platform administrator for further assistance.",
-    "fr": "Une erreur inattendue s'est produite lors du chargement de cet instrument. Veuillez contacter l'administrateur de la plateforme pour obtenir de l'aide."
+    "fr": "Une erreur inattendue s'est produite lors du chargement de cet instrument. Veuillez contacter l'administrateur de la plateforme pour obtenir de l'aide.",
+    "es": "Ocurrió un error inesperado al cargar este instrumento. Póngase en contacto con el administrador de la plataforma para obtener más ayuda.",
+    "ca": "S'ha produït un error inesperat en carregar aquest instrument. Poseu-vos en contacte amb l'administrador de la plataforma per obtenir més ajuda."
   },
   "form": {
     "requiredField": {
       "en": "This field is required",
-      "fr": "Ce champ est obligatoire"
+      "fr": "Ce champ est obligatoire",
+      "es": "Este campo es obligatorio",
+      "ca": "Aquest camp és obligatori"
     }
   },
   "fullName": {
     "en": "Full Name",
-    "fr": "Nom et prénom"
+    "fr": "Nom et prénom",
+    "es": "Nombre completo",
+    "ca": "Nom complet"
   },
   "genericApology": {
     "en": "We apologize for the inconvenience. Please contact us for further assistance.",
-    "fr": "Nous nous excusons pour ce désagrément. N'hésitez pas à nous contacter pour obtenir de l'aide."
+    "fr": "Nous nous excusons pour ce désagrément. N'hésitez pas à nous contacter pour obtenir de l'aide.",
+    "es": "Pedimos disculpas por las molestias. Póngase en contacto con nosotros para obtener más ayuda.",
+    "ca": "Demanem disculpes per les molèsties. Poseu-vos en contacte amb nosaltres per obtenir més ajuda."
   },
   "help": {
     "en": "Help",
-    "fr": "Aide"
+    "fr": "Aide",
+    "es": "Ayuda",
+    "ca": "Ajuda"
   },
   "httpRequestFailed": {
     "en": "HTTP Request Failed",
-    "fr": "Échec de la requête HTTP"
+    "fr": "Échec de la requête HTTP",
+    "es": "Error en la solicitud HTTP",
+    "ca": "Error en la sol·licitud HTTP"
   },
   "identificationData": {
     "dateOfBirth": {
       "label": {
         "en": "Date of Birth",
-        "fr": "Date de naissance"
+        "fr": "Date de naissance",
+        "es": "Fecha de nacimiento",
+        "ca": "Data de naixement"
       }
     },
     "firstName": {
       "description": {
         "en": "The subject's first name, as provided by their birth certificate.",
-        "fr": "Le prénom du sujet, tel qu'il figure dans son acte de naissance."
+        "fr": "Le prénom du sujet, tel qu'il figure dans son acte de naissance.",
+        "es": "El nombre del sujeto, tal como figura en su certificado de nacimiento.",
+        "ca": "El nom del subjecte, tal com figura al seu certificat de naixement."
       },
       "label": {
         "en": "First Name",
-        "fr": "Prénom"
+        "fr": "Prénom",
+        "es": "Nombre",
+        "ca": "Nom"
       }
     },
     "lastName": {
       "description": {
         "en": "The subject's last name, as provided by their birth certificate.",
-        "fr": "Le nom de famille du sujet, tel qu'il figure dans son acte de naissance."
+        "fr": "Le nom de famille du sujet, tel qu'il figure dans son acte de naissance.",
+        "es": "El apellido del sujeto, tal como figura en su certificado de nacimiento.",
+        "ca": "El cognom del subjecte, tal com figura al seu certificat de naixement."
       },
       "label": {
         "en": "Last Name",
-        "fr": "Nom de famille"
+        "fr": "Nom de famille",
+        "es": "Apellido",
+        "ca": "Cognom"
       }
     },
     "sex": {
       "description": {
         "en": "The subject's biological sex, as assigned at birth.",
-        "fr": "Le sexe biologique du sujet, tel qu'il a été assigné à la naissance."
+        "fr": "Le sexe biologique du sujet, tel qu'il a été assigné à la naissance.",
+        "es": "El sexo biológico del sujeto, tal como fue asignado al nacer.",
+        "ca": "El sexe biològic del subjecte, tal com va ser assignat en néixer."
       },
       "female": {
         "en": "Female",
-        "fr": "Féminin"
+        "fr": "Féminin",
+        "es": "Femenino",
+        "ca": "Femení"
       },
       "label": {
         "en": "Sex at Birth",
-        "fr": "Sexe à la naissance"
+        "fr": "Sexe à la naissance",
+        "es": "Sexo al nacer",
+        "ca": "Sexe en néixer"
       },
       "male": {
         "en": "Male",
-        "fr": "Masculin"
+        "fr": "Masculin",
+        "es": "Masculino",
+        "ca": "Masculí"
       }
     }
   },
   "instructions": {
     "en": "Instructions",
-    "fr": "Instructions"
+    "fr": "Instructions",
+    "es": "Instrucciones",
+    "ca": "Instruccions"
   },
   "instrument": {
     "en": "Instrument",
-    "fr": "Instrument"
+    "fr": "Instrument",
+    "es": "Instrumento",
+    "ca": "Instrument"
   },
   "instrumentComplete": {
     "en": "Instrument Complete",
-    "fr": "Instrument complet"
+    "fr": "Instrument complet",
+    "es": "Instrumento completado",
+    "ca": "Instrument completat"
   },
   "instrumentName": {
     "en": "Instrument Name",
-    "fr": "Nom de l'instrument"
+    "fr": "Nom de l'instrument",
+    "es": "Nombre del instrumento",
+    "ca": "Nom de l'instrument"
   },
   "language": {
     "en": "Language",
-    "fr": "Langue"
+    "fr": "Langue",
+    "es": "Idioma",
+    "ca": "Idioma"
   },
   "languages": {
+    "catalan": {
+      "en": "Catalan",
+      "fr": "Catalan",
+      "es": "Catalán",
+      "ca": "Català"
+    },
     "english": {
       "en": "English",
-      "fr": "Anglais"
+      "fr": "Anglais",
+      "es": "Inglés",
+      "ca": "Anglès"
     },
     "french": {
       "en": "French",
-      "fr": "Français"
+      "fr": "Français",
+      "es": "Francés",
+      "ca": "Francès"
+    },
+    "spanish": {
+      "en": "Spanish",
+      "fr": "Espagnol",
+      "es": "Español",
+      "ca": "Espanyol"
     }
   },
   "license": {
     "en": "License",
-    "fr": "Licence"
+    "fr": "Licence",
+    "es": "Licencia",
+    "ca": "Llicència"
   },
   "minutes": {
     "en": "{{minutes}} minute(s)",
-    "fr": "{{minutes}} minute(s)"
+    "fr": "{{minutes}} minute(s)",
+    "es": "{{minutes}} minuto(s)",
+    "ca": "{{minutes}} minut(s)"
   },
   "mobileBlocker": {
     "subtitle": {
       "en": "Please try again on a device with a larger screen",
-      "fr": "Veuillez réessayer sur un appareil doté d'un écran plus grand"
+      "fr": "Veuillez réessayer sur un appareil doté d'un écran plus grand",
+      "es": "Intente nuevamente en un dispositivo con una pantalla más grande",
+      "ca": "Proveu-ho de nou en un dispositiu amb una pantalla més gran"
     },
     "title": {
       "en": "Sorry, this feature is not available on mobile",
-      "fr": "Désolé, cette fonctionnalité n'est pas disponible sur mobile"
+      "fr": "Désolé, cette fonctionnalité n'est pas disponible sur mobile",
+      "es": "Lo sentimos, esta función no está disponible en móviles",
+      "ca": "Ho sentim, aquesta funció no està disponible en mòbils"
     }
   },
   "name": {
     "en": "Name",
-    "fr": "Nom"
+    "fr": "Nom",
+    "es": "Nombre",
+    "ca": "Nom"
   },
   "networkError": {
     "en": "Network Error",
-    "fr": "Erreur de réseau"
+    "fr": "Erreur de réseau",
+    "es": "Error de red",
+    "ca": "Error de xarxa"
   },
   "nextInstrument": {
     "en": "Next Instrument: {{title}}",
-    "fr": "Next Instrument: {{title}}"
+    "fr": "Next Instrument: {{title}}",
+    "es": "Siguiente instrumento: {{title}}",
+    "ca": "Següent instrument: {{title}}"
   },
   "no": {
     "en": "No",
-    "fr": "Non"
+    "fr": "Non",
+    "es": "No",
+    "ca": "No"
   },
   "notFound": {
     "en": "Not Found",
-    "fr": "Pas trouvé"
+    "fr": "Pas trouvé",
+    "es": "No encontrado",
+    "ca": "No trobat"
   },
   "openSourceLicense": {
     "en": "This is a free and open-source license",
-    "fr": "Il s'agit d'une licence libre"
+    "fr": "Il s'agit d'une licence libre",
+    "es": "Esta es una licencia libre y de código abierto",
+    "ca": "Aquesta és una llicència lliure i de codi obert"
   },
   "print": {
     "en": "Print",
-    "fr": "Imprimer"
+    "fr": "Imprimer",
+    "es": "Imprimir",
+    "ca": "Imprimir"
   },
   "proprietaryLicense": {
     "en": "This is not a free and open source license",
-    "fr": "Il ne s'agit pas d'une licence libre"
+    "fr": "Il ne s'agit pas d'une licence libre",
+    "es": "Esta no es una licencia libre y de código abierto",
+    "ca": "Aquesta no és una llicència lliure i de codi obert"
   },
   "referenceLink": {
     "en": "Reference Link",
-    "fr": "Lien vers la référence"
+    "fr": "Lien vers la référence",
+    "es": "Enlace de referencia",
+    "ca": "Enllaç de referència"
   },
   "responses": {
     "en": "Responses",
-    "fr": "Réponses"
+    "fr": "Réponses",
+    "es": "Respuestas",
+    "ca": "Respostes"
   },
   "results": {
     "en": "Results",
-    "fr": "Résultats"
+    "fr": "Résultats",
+    "es": "Resultados",
+    "ca": "Resultats"
   },
   "save": {
     "en": "Save",
-    "fr": "Enregistrer"
+    "fr": "Enregistrer",
+    "es": "Guardar",
+    "ca": "Desar"
   },
   "seriesInstrumentContent": {
     "inProgress": {
       "en": "Series Instrument in Process",
-      "fr": "Série d'instruments en cours"
+      "fr": "Série d'instruments en cours",
+      "es": "Serie de instrumentos en proceso",
+      "ca": "Sèrie d'instruments en procés"
     },
     "instrumentsCompleted": {
       "en": "Instruments Completed: {{completed}}/{{total}}",
-      "fr": "Nombre d'instruments complétés : {{completed}}/{{total}}"
+      "fr": "Nombre d'instruments complétés : {{completed}}/{{total}}",
+      "es": "Instrumentos completados: {{completed}}/{{total}}",
+      "ca": "Instruments completats: {{completed}}/{{total}}"
     }
   },
   "somethingWentWrong": {
     "en": "Something Went Wrong",
-    "fr": "Quelque chose n'a pas fonctionné"
+    "fr": "Quelque chose n'a pas fonctionné",
+    "es": "Algo salió mal",
+    "ca": "Alguna cosa ha anat malament"
   },
   "sourceLink": {
     "en": "Source Link",
-    "fr": "Lien vers le code source"
+    "fr": "Lien vers le code source",
+    "es": "Enlace de origen",
+    "ca": "Enllaç d'origen"
   },
   "steps": {
     "overview": {
       "en": "Overview",
-      "fr": "Aperçu"
+      "fr": "Aperçu",
+      "es": "Resumen",
+      "ca": "Resum"
     },
     "questions": {
       "en": "Content",
-      "fr": "Contenu"
+      "fr": "Contenu",
+      "es": "Contenido",
+      "ca": "Contingut"
     },
     "summary": {
       "en": "Summary",
-      "fr": "Résumé"
+      "fr": "Résumé",
+      "es": "Resumen",
+      "ca": "Resum"
     }
   },
   "subject": {
     "en": "Subject",
-    "fr": "Client"
+    "fr": "Client",
+    "es": "Sujeto",
+    "ca": "Subjecte"
   },
   "submit": {
     "en": "Submit",
-    "fr": "Soumettre"
+    "fr": "Soumettre",
+    "es": "Enviar",
+    "ca": "Enviar"
   },
   "summary": {
     "subtitle": {
       "en": "Completed on {{ dateCompleted }}",
-      "fr": "Remplie le {{ dateCompleted }}"
+      "fr": "Remplie le {{ dateCompleted }}",
+      "es": "Completado el {{ dateCompleted }}",
+      "ca": "Completat el {{ dateCompleted }}"
     },
     "title": {
       "en": "Summary of Results for the {{title}}",
-      "fr": "{{title}} : résumé des résultats"
+      "fr": "{{title}} : résumé des résultats",
+      "es": "Resumen de resultados para {{title}}",
+      "ca": "Resum de resultats per a {{title}}"
     },
     "titleFallback": {
       "en": "Summary of Results",
-      "fr": "Résumé des résultats"
+      "fr": "Résumé des résultats",
+      "es": "Resumen de resultados",
+      "ca": "Resum de resultats"
     }
   },
   "table": {
     "en": "Table",
-    "fr": "Tableau"
+    "fr": "Tableau",
+    "es": "Tabla",
+    "ca": "Taula"
   },
   "tag": {
     "en": "Tag",
-    "fr": "Tag"
+    "fr": "Tag",
+    "es": "Etiqueta",
+    "ca": "Etiqueta"
   },
   "tags": {
     "en": "Tags",
-    "fr": "Tags"
+    "fr": "Tags",
+    "es": "Etiquetas",
+    "ca": "Etiquetes"
   },
   "title": {
     "en": "Title",
-    "fr": "Titre"
+    "fr": "Titre",
+    "es": "Título",
+    "ca": "Títol"
   },
   "unknownError": {
     "en": "Unknown Error",
-    "fr": "Erreur inconnue"
+    "fr": "Erreur inconnue",
+    "es": "Error desconocido",
+    "ca": "Error desconegut"
   },
   "version": {
     "en": "Version",
-    "fr": "Version"
+    "fr": "Version",
+    "es": "Versión",
+    "ca": "Versió"
   },
   "yes": {
     "en": "Yes",
-    "fr": "Oui"
+    "fr": "Oui",
+    "es": "Sí",
+    "ca": "Sí"
   }
 }

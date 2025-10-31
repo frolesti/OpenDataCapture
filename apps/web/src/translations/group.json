@@ -2,35 +2,51 @@
   "manage": {
     "accessibleInstrumentDemoNote": {
       "en": "Please note that this feature is disabled in demo mode to avoid disrupting other users.",
-      "fr": "Veuillez noter que cette fonction est désactivée en mode démo, afin d'éviter de perturber les autres utilisateurs."
+      "fr": "Veuillez noter que cette fonction est désactivée en mode démo, afin d'éviter de perturber les autres utilisateurs.",
+      "es": "Tenga en cuenta que esta función está deshabilitada en modo demostración para evitar interrumpir a otros usuarios.",
+      "ca": "Tingueu en compte que aquesta funció està desactivada en mode demostració per evitar interrompre altres usuaris."
     },
     "accessibleInstruments": {
       "en": "Accessible Instruments",
-      "fr": "Instruments accessibles"
+      "fr": "Instruments accessibles",
+      "es": "Instrumentos accesibles",
+      "ca": "Instruments accessibles"
     },
     "accessibleInstrumentsDesc": {
       "en": "Select the instruments that are shown to you and other members of your group. This can be changed by a group manager at any time.",
-      "fr": "Sélectionnez les instruments qui vous sont présentés ainsi qu'aux autres membres de votre groupe. Cette sélection peut être modifiée à tout moment par un responsable de groupe."
+      "fr": "Sélectionnez les instruments qui vous sont présentés ainsi qu'aux autres membres de votre groupe. Cette sélection peut être modifiée à tout moment par un responsable de groupe.",
+      "es": "Seleccione los instrumentos que se muestran a usted y a otros miembros de su grupo. Esto puede ser cambiado por un gestor de grupo en cualquier momento.",
+      "ca": "Seleccioneu els instruments que es mostren a vostè i a altres membres del vostre grup. Això pot ser canviat per un gestor de grup en qualsevol moment."
     },
     "defaultSubjectIdMethod": {
       "en": "Subject Identification Method (Default)",
-      "fr": "Méthode d'identification du sujet par défaut"
+      "fr": "Méthode d'identification du sujet par défaut",
+      "es": "Método de identificación del sujeto (predeterminado)",
+      "ca": "Mètode d'identificació del subjecte (per defecte)"
     },
     "forms": {
       "en": "Forms",
-      "fr": "Formulaires"
+      "fr": "Formulaires",
+      "es": "Formularios",
+      "ca": "Formularis"
     },
     "groupSettings": {
       "en": "Group Settings",
-      "fr": "Paramètres du groupe"
+      "fr": "Paramètres du groupe",
+      "es": "Configuración del grupo",
+      "ca": "Configuració del grup"
     },
     "interactive": {
       "en": "Interactive Tasks",
-      "fr": "Tâches interactives"
+      "fr": "Tâches interactives",
+      "es": "Tareas interactivas",
+      "ca": "Tasques interactives"
     },
     "pageTitle": {
       "en": "Manage Group",
-      "fr": "Gestion du groupe"
+      "fr": "Gestion du groupe",
+      "es": "Gestionar grupo",
+      "ca": "Gestionar grup"
     }
   }
 }

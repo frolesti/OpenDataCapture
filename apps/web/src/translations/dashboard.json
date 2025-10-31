@@ -1,0 +1,80 @@
+{
+  "activityOverTime": {
+    "en": "Activity over time",
+    "fr": "Activité au fil du temps",
+    "es": "Actividad a lo largo del tiempo",
+    "ca": "Activitat al llarg del temps"
+  },
+  "growthTrajectory": {
+    "en": "Growth trajectory",
+    "fr": "Trajectoire de croissance",
+    "es": "Trayectoria de crecimiento",
+    "ca": "Trajectòria de creixement"
+  },
+  "overviewClinicalGroup": {
+    "en": "Overview of Your Clinic",
+    "fr": "Vue d'ensemble de votre clinique",
+    "es": "Resumen de su clínica",
+    "ca": "Resum de la vostra clínica"
+  },
+  "overviewResearchGroup": {
+    "en": "Overview of Your Research Group",
+    "fr": "Vue d'ensemble de votre groupe de recherche",
+    "es": "Resumen de su grupo de investigación",
+    "ca": "Resum del vostre grup de recerca"
+  },
+  "recordsSessionsTrend": {
+    "en": "Records & Sessions Trend",
+    "fr": "Tendance des enregistrements et sessions",
+    "es": "Tendencia de registros y sesiones",
+    "ca": "Tendència de registres i sessions"
+  },
+  "subjects": {
+    "en": "Subjects",
+    "fr": "Sujets",
+    "es": "Sujetos",
+    "ca": "Subjectes"
+  },
+  "subjectsGrowth": {
+    "en": "Subjects Growth",
+    "fr": "Croissance des sujets",
+    "es": "Crecimiento de sujetos",
+    "ca": "Creixement de subjectes"
+  },
+  "summaryApplicationState": {
+    "en": "Summary of Application State",
+    "fr": "La cliente actuelle",
+    "es": "Resumen del estado de la aplicación",
+    "ca": "Resum de l'estat de l'aplicació"
+  },
+  "title": {
+    "en": "Dashboard",
+    "fr": "Tableau de bord",
+    "es": "Panel de control",
+    "ca": "Tauler de control"
+  },
+  "totalInstruments": {
+    "en": "Total Instruments",
+    "fr": "Nombre d'instruments",
+    "es": "Total de instrumentos",
+    "ca": "Total d'instruments"
+  },
+  "totalRecords": {
+    "en": "Total Records",
+    "fr": "Nombre d'enregistrements",
+    "es": "Total de registros",
+    "ca": "Total de registres"
+  },
+  "totalSubjects": {
+    "en": "Total Subjects",
+    "fr": "Nombre de clients",
+    "es": "Total de sujetos",
+    "ca": "Total de subjectes"
+  },
+  "totalUsers": {
+    "en": "Total Users",
+    "fr": "Nombre d'utilisateurs",
+    "es": "Total de usuarios",
+    "ca": "Total d'usuaris"
+  }
+}

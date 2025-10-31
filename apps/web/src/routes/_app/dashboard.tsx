@@ -74,20 +74,11 @@ const RouteComponent = () => {
 
   let welcome: string;
   if (currentGroup?.type === 'CLINICAL') {
-    welcome = t({
-      en: 'Overview of Your Clinic',
-      fr: "Vue d'ensemble de votre clinique"
-    });
+    welcome = t('dashboard.overviewClinicalGroup');
   } else if (currentGroup?.type === 'RESEARCH') {
-    welcome = t({
-      en: 'Overview of Your Research Group',
-      fr: "Vue d'ensemble de votre groupe de recherche"
-    });
+    welcome = t('dashboard.overviewResearchGroup');
   } else {
-    welcome = t({
-      en: 'Summary of Application State',
-      fr: 'La cliente actuelle'
-    });
+    welcome = t('dashboard.summaryApplicationState');
   }
 
   // should never happen, as data is ensured in loader, but avoid crashing the app if someone changes this
@@ -98,12 +89,7 @@ const RouteComponent = () => {
   return (
     <div className="flex grow flex-col">
       <PageHeader className="text-center">
-        <Heading variant="h2">
-          {t({
-            en: 'Dashboard',
-            fr: 'Tableau de bord'
-          })}
-        </Heading>
+        <Heading variant="h2">{t('dashboard.title')}</Heading>
       </PageHeader>
       <section className="flex grow flex-col gap-8 p-6">
         <div className="flex w-full flex-col flex-wrap justify-between gap-3 md:flex-row md:items-center">
@@ -138,10 +124,7 @@ const RouteComponent = () => {
                 icon={
                   <UsersIcon className="h-12 w-12 text-blue-600 transition-transform duration-300 group-hover:scale-110 dark:text-blue-400" />
                 }
-                label={t({
-                  en: 'Total Users',
-                  fr: "Nombre d'utilisateurs"
-                })}
+                label={t('dashboard.totalUsers')}
                 value={summaryQuery.data.counts.users}
               />
             </div>
@@ -150,10 +133,7 @@ const RouteComponent = () => {
                 icon={
                   <UserIcon className="h-12 w-12 text-emerald-600 transition-transform duration-300 group-hover:scale-110 dark:text-emerald-400" />
                 }
-                label={t({
-                  en: 'Total Subjects',
-                  fr: 'Nombre de clients'
-                })}
+                label={t('dashboard.totalSubjects')}
                 value={summaryQuery.data.counts.subjects}
               />
             </div>
@@ -162,10 +142,7 @@ const RouteComponent = () => {
                 icon={
                   <ClipboardDocumentIcon className="h-12 w-12 text-amber-600 transition-transform duration-300 group-hover:scale-110 dark:text-amber-400" />
                 }
-                label={t({
-                  en: 'Total Instruments',
-                  fr: "Nombre d'instruments"
-                })}
+                label={t('dashboard.totalInstruments')}
                 value={summaryQuery.data.counts.instruments}
               />
             </div>
@@ -174,10 +151,7 @@ const RouteComponent = () => {
                 icon={
                   <DocumentTextIcon className="h-12 w-12 text-purple-600 transition-transform duration-300 group-hover:scale-110 dark:text-purple-400" />
                 }
-                label={t({
-                  en: 'Total Records',
-                  fr: "Nombre d'enregistrements"
-                })}
+                label={t('dashboard.totalRecords')}
                 value={summaryQuery.data.counts.records}
               />
             </div>
@@ -192,17 +166,9 @@ const RouteComponent = () => {
                 </div>
                 <div>
                   <Heading className="text-slate-800 dark:text-slate-200" variant="h4">
-                    {t({
-                      en: 'Records & Sessions Trend',
-                      fr: 'Tendance des enregistrements et sessions'
-                    })}
+                    {t('dashboard.recordsSessionsTrend')}
                   </Heading>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    {t({
-                      en: 'Activity over time',
-                      fr: 'Activité au fil du temps'
-                    })}
-                  </p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{t('dashboard.activityOverTime')}</p>
                 </div>
               </div>
             </div>
@@ -260,6 +226,8 @@ const RouteComponent = () => {
                             <div className="space-y-1">
                               <p className="font-semibold text-blue-600 dark:text-blue-400">
                                 {t({
+                                  ca: 'Registres',
+                                  es: 'Registros',
                                   en: 'Records',
                                   fr: 'Enregistrements'
                                 })}
@@ -267,6 +235,8 @@ const RouteComponent = () => {
                               </p>
                               <p className="font-semibold text-emerald-600 dark:text-emerald-400">
                                 {t({
+                                  ca: 'Sessions',
+                                  es: 'Sesiones',
                                   en: 'Sessions',
                                   fr: 'Sessions'
                                 })}
@@ -309,17 +279,9 @@ const RouteComponent = () => {
                 </div>
                 <div>
                   <Heading className="text-slate-800 dark:text-slate-200" variant="h4">
-                    {t({
-                      en: 'Subjects Growth',
-                      fr: 'Croissance des sujets'
-                    })}
+                    {t('dashboard.subjectsGrowth')}
                   </Heading>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    {t({
-                      en: 'Growth trajectory',
-                      fr: 'Trajectoire de croissance'
-                    })}
-                  </p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{t('dashboard.growthTrajectory')}</p>
                 </div>
               </div>
             </div>
@@ -375,6 +337,8 @@ const RouteComponent = () => {
                             </p>
                             <p className="font-semibold text-amber-600 dark:text-amber-400">
                               {t({
+                                ca: 'Subjectes',
+                                es: 'Sujetos',
                                 en: 'Subjects',
                                 fr: 'Sujets'
                               })}

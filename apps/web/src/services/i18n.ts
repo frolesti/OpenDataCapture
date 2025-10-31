@@ -7,6 +7,7 @@ import auth from '../translations/auth.json';
 import common from '../translations/common.json';
 import contact from '../translations/contact.json';
 import core from '../translations/core.json';
+import dashboard from '../translations/dashboard.json';
 import datahub from '../translations/datahub.json';
 import group from '../translations/group.json';
 import instruments from '../translations/instruments.json';
@@ -18,7 +19,9 @@ import user from '../translations/user.json';
 declare module '@douglasneuroinformatics/libui/i18n' {
   export namespace UserConfig {
     export interface LanguageOptions {
+      ca: true;
       en: true;
+      es: true;
       fr: true;
     }
     export interface Translations {
@@ -26,6 +29,7 @@ declare module '@douglasneuroinformatics/libui/i18n' {
       common: typeof common;
       contact: typeof contact;
       core: typeof core;
+      dashboard: typeof dashboard;
       datahub: typeof datahub;
       group: typeof group;
       instruments: typeof instruments;
@@ -38,11 +42,13 @@ declare module '@douglasneuroinformatics/libui/i18n' {
 }
 
 i18n.init({
+  defaultLanguage: 'en',
   translations: {
     auth,
     common,
     contact,
     core,
+    dashboard,
     datahub,
     group,
     instruments,

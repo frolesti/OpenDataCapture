@@ -2,57 +2,83 @@
   "admin": {
     "description": {
       "en": "To use the application, there must be at least one platform administrator. Ensure you remember these credentials, as failure to do so may result in data loss.",
-      "fr": "Pour utiliser l'application, il faut qu'il y ait au moins un administrateur. Assurez-vous de vous souvenir de ces informations d'identification, faute de quoi vous risquez de perdre des données."
+      "fr": "Pour utiliser l'application, il faut qu'il y ait au moins un administrateur. Assurez-vous de vous souvenir de ces informations d'identification, faute de quoi vous risquez de perdre des données.",
+      "es": "Para usar la aplicación, debe haber al menos un administrador de plataforma. Asegúrese de recordar estas credenciales, ya que no hacerlo puede resultar en pérdida de datos.",
+      "ca": "Per utilitzar l'aplicació, ha d'haver-hi almenys un administrador de plataforma. Assegureu-vos de recordar aquestes credencials, ja que no fer-ho pot resultar en pèrdua de dades."
     },
     "password": {
       "en": "Password",
-      "fr": "Mot de passe"
+      "fr": "Mot de passe",
+      "es": "Contraseña",
+      "ca": "Contrasenya"
     },
     "title": {
       "en": "Admin",
-      "fr": "Administrateur"
+      "fr": "Administrateur",
+      "es": "Administrador",
+      "ca": "Administrador"
     },
     "username": {
       "en": "Username",
-      "fr": "Nom d'utilisateur"
+      "fr": "Nom d'utilisateur",
+      "es": "Nombre de usuario",
+      "ca": "Nom d'usuari"
     }
   },
   "demo": {
     "description": {
       "en": "If you're testing the platform, you have the option to populate the database with sample data.",
-      "fr": "Si vous testez la plateforme, vous avez la possibilité d'alimenter la base de données avec des échantillons de données."
+      "fr": "Si vous testez la plateforme, vous avez la possibilité d'alimenter la base de données avec des échantillons de données.",
+      "es": "Si está probando la plataforma, tiene la opción de poblar la base de datos con datos de muestra.",
+      "ca": "Si esteu provant la plataforma, teniu l'opció de poblar la base de dades amb dades de mostra."
     },
     "dummySubjectCount": {
       "en": "Number of Dummy Subjects",
-      "fr": "Nombre de clients fictifs"
+      "fr": "Nombre de clients fictifs",
+      "es": "Número de sujetos ficticios",
+      "ca": "Nombre de subjectes ficticis"
     },
     "init": {
       "en": "Initialize Demo",
-      "fr": "Initialiser la démonstration"
+      "fr": "Initialiser la démonstration",
+      "es": "Inicializar demostración",
+      "ca": "Inicialitzar demostració"
     },
     "recordsPerSubject": {
       "en": "Records Per Subject",
-      "fr": "Enregistrements par sujet"
+      "fr": "Enregistrements par sujet",
+      "es": "Registros por sujeto",
+      "ca": "Registres per subjecte"
     },
     "title": {
       "en": "Demo",
-      "fr": "Démonstration"
+      "fr": "Démonstration",
+      "es": "Demostración",
+      "ca": "Demostració"
     }
   },
   "enableExperimentalFeatures": {
     "en": "Enable Experimental Features (Not Recommended)",
-    "fr": "Activer les fonctionnalités expérimentales (Non recommandé)"
+    "fr": "Activer les fonctionnalités expérimentales (Non recommandé)",
+    "es": "Habilitar funciones experimentales (No recomendado)",
+    "ca": "Habilitar funcions experimentals (No recomanat)"
   },
   "loadingSubtitle": {
     "en": "Please be patient, this may take a while...",
-    "fr": "Veuillez patienter, cela peut prendre un certain temps..."
+    "fr": "Veuillez patienter, cela peut prendre un certain temps...",
+    "es": "Por favor sea paciente, esto puede tomar un tiempo...",
+    "ca": "Si us plau, segueu pacient, això pot trigar una estona..."
   },
   "loadingTitle": {
     "en": "Initializing Application",
-    "fr": "Initialisation de l'application"
+    "fr": "Initialisation de l'application",
+    "es": "Inicializando aplicación",
+    "ca": "Inicialitzant aplicació"
   },
   "pageTitle": {
     "en": "Setup",
-    "fr": "Mise en service"
+    "fr": "Mise en service",
+    "es": "Configuración",
+    "ca": "Configuració"
   }
 }

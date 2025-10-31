@@ -1,6 +1,8 @@
 {
   "title": {
     "en": "Instrument Title",
-    "fr": "Titre de l'instrument"
+    "fr": "Titre de l'instrument",
+    "es": "Título del instrumento",
+    "ca": "Títol de l'instrument"
   }
 }

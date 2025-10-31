@@ -82,7 +82,9 @@ export const bilingualFormInstrument = await createInstrumentStub(async () => {
         kind: 'number',
         label: {
           en: 'Favorite Number',
-          fr: 'Numéro préféré'
+          fr: 'Numéro préféré',
+          es: 'Número favorito',
+          ca: 'Número favorit'
         },
         variant: 'input'
       },
@@ -97,7 +99,9 @@ export const bilingualFormInstrument = await createInstrumentStub(async () => {
             kind: 'string',
             label: {
               en: 'Why is Your Favorite Number Negative?',
-              fr: 'Pourquoi votre nombre préféré est-il négatif ?'
+              fr: 'Pourquoi votre nombre préféré est-il négatif ?',
+              es: '¿Por qué tu número favorito es negativo?',
+              ca: 'Per què el teu número favorit és negatiu?'
             },
             variant: 'textarea'
           };
@@ -107,17 +111,23 @@ export const bilingualFormInstrument = await createInstrumentStub(async () => {
     details: {
       description: {
         en: 'This is a bilingual form instrument',
-        fr: "Il s'agit d'un instrument bilingue"
+        fr: "Il s'agit d'un instrument bilingue",
+        es: 'Este es un instrumento de formulario bilingüe',
+        ca: 'Aquest és un instrument de formulari bilingüe'
       },
       estimatedDuration: 1,
       instructions: {
         en: ['Please complete all questions'],
-        fr: ['Veuillez répondre à toutes les questions']
+        fr: ['Veuillez répondre à toutes les questions'],
+        es: ['Por favor complete todas las preguntas'],
+        ca: ['Si us plau, completeu totes les preguntes']
       },
       license: 'Apache-2.0',
       title: {
         en: 'Bilingual Form',
-        fr: 'Formulaire bilingue'
+        fr: 'Formulaire bilingue',
+        es: 'Formulario bilingüe',
+        ca: 'Formulari bilingüe'
       }
     },
     kind: 'FORM',
@@ -125,7 +135,9 @@ export const bilingualFormInstrument = await createInstrumentStub(async () => {
 
     tags: {
       en: ['Example', 'Preferences'],
-      fr: ['Exemple', 'Préférences']
+      fr: ['Exemple', 'Préférences'],
+      es: ['Ejemplo', 'Preferencias'],
+      ca: ['Exemple', 'Preferències']
     },
     measures: {},
     validationSchema: z.object({

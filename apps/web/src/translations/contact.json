@@ -1,32 +1,46 @@
 {
   "message": {
     "en": "Message",
-    "fr": "Message"
+    "fr": "Message",
+    "es": "Mensaje",
+    "ca": "Missatge"
   },
   "pageTitle": {
     "en": "Contact Us",
-    "fr": "Nous contacter"
+    "fr": "Nous contacter",
+    "es": "Contáctenos",
+    "ca": "Contacteu-nos"
   },
   "reason": {
     "en": "Reason",
-    "fr": "Raison"
+    "fr": "Raison",
+    "es": "Motivo",
+    "ca": "Motiu"
   },
   "reasons": {
     "bug": {
       "en": "Bug Report",
-      "fr": "Rapport de bug"
+      "fr": "Rapport de bug",
+      "es": "Reporte de error",
+      "ca": "Informe d'error"
     },
     "feedback": {
       "en": "Feedback",
-      "fr": "Retour d'information"
+      "fr": "Retour d'information",
+      "es": "Comentarios",
+      "ca": "Comentaris"
     },
     "other": {
       "en": "Other",
-      "fr": "Autre"
+      "fr": "Autre",
+      "es": "Otro",
+      "ca": "Altre"
     },
     "request": {
       "en": "Request",
-      "fr": "Demande"
+      "fr": "Demande",
+      "es": "Solicitud",
+      "ca": "Sol·licitud"
     }
   }
 }
