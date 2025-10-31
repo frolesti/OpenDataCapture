@@ -1,12 +1,45 @@
 import { defineInstrument } from '/runtime/v1/@opendatacapture/runtime-core';
 import { z } from '/runtime/v1/zod@3.x';
 
+// Helper function to make a field conditional on informed consent
+function requiresConsent<T extends Record<string, any>>(field: T): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['consentimientoInformado'] as const,
+    render(data: any): any {
+      if (data.consentimientoInformado === 'si') {
+        return field;
+      }
+      return null;
+    }
+  };
+}
+
+// Helper function to show warning message when consent is NOT granted
+function consentWarning(): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['consentimientoInformado'] as const,
+    render(data: any): any {
+      if (data.consentimientoInformado !== 'si') {
+        return {
+          kind: 'string',
+          variant: 'input',
+          label: '⚠️ Esta sección requiere consentimiento informado del paciente',
+          disabled: true
+        };
+      }
+      return null;
+    }
+  };
+}
+
 export default defineInstrument({
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 3,
+    edition: 4,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -28,7 +61,7 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
+        } as any,
         fechaConsentimiento: {
           kind: 'date',
           label: 'FECHA DE OBTENCIÓN DEL CONSENTIMIENTO INFORMADO FIRMADO',
@@ -39,7 +72,8 @@ export default defineInstrument({
     {
       title: 'CRITERIOS DE SELECCIÓN',
       fields: {
-        criterioInclusion1: {
+        _warningCriteriosSeleccion: consentWarning() as any,
+        criterioInclusion1: requiresConsent({
           kind: 'string',
           label:
             'Criterios de INCLUSIÓN - 1. Adultos ≥ 50 años, con antecedentes de historia de al menos una fractura por fragilidad* (evento índice) (ICD Código ICD-9 y ICD-10) ocurrida entre enero de 2021 y diciembre de 2023',
@@ -48,8 +82,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        criterioInclusion2: {
+        }),
+        criterioInclusion2: requiresConsent({
           kind: 'string',
           label:
             '2. Los pacientes deben haber otorgado su consentimiento informado para la recopilación y el uso de los datos clínicos contenidos en su historia médica',
@@ -58,15 +92,14 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        notaInclusion: {
+        }),
+        notaInclusion: requiresConsent({
           kind: 'string',
           label: 'Todos los criterios de inclusión deben ser SI para que el paciente sea apto para el estudio',
           variant: 'input',
-          disabled: true,
-          description: 'Nota informativa'
-        },
-        criterioExclusion1: {
+          disabled: true
+        }),
+        criterioExclusion1: requiresConsent({
           kind: 'string',
           label: 'Criterios de EXCLUSIÓN - 1. Pacientes sin otorgar el consentimiento informado',
           variant: 'radio',
@@ -74,8 +107,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        criterioExclusion2: {
+        }),
+        criterioExclusion2: requiresConsent({
           kind: 'string',
           label:
             '2. Pacientes cuya historia clínica presenta documentación incompleta o carece de información relevante necesaria para la correcta valoración de los resultados del estudio',
@@ -84,8 +117,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        criterioExclusion3: {
+        }),
+        criterioExclusion3: requiresConsent({
           kind: 'string',
           label:
             '3. Pacientes con una fractura debida a un traumatismo de alta o moderada intensidad (p. accidente automoví) y otras fracturas poco probables de estar relacionadas con la osteoporosis (dedos de las manos y pies y huesos de la cara)',
@@ -94,8 +127,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        criterioExclusion4: {
+        }),
+        criterioExclusion4: requiresConsent({
           kind: 'string',
           label: '4. Participación previa en otro estudio en el último año',
           variant: 'radio',
@@ -103,35 +136,25 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        notaExclusion: {
+        }),
+        notaExclusion: requiresConsent({
           kind: 'string',
           label: 'Todos los criterios de exclusión deben ser NO para que el paciente sea apto para el estudio',
           variant: 'input',
-          disabled: true,
-          description: 'Nota informativa'
-        },
-        inicialesProfesional: {
-          kind: 'string',
-          label: 'INICIALES Y FIRMA DEL PROFESIONAL SANITARIO QUE HA RELLENADO LOS DATOS - Iniciales',
-          variant: 'input'
-        },
-        firmaProfesional: {
-          kind: 'string',
-          label: 'Firma',
-          variant: 'input'
-        }
+          disabled: true
+        })
       }
     },
     {
       title: 'CARACTERIZACIÓN DEL PACIENTE EN EL MOMENTO DE LA FRACTURA ÍNDICE',
       fields: {
-        centroAtencionPrimaria: {
+        _warningCaracterizacion: consentWarning() as any,
+        centroAtencionPrimaria: requiresConsent({
           kind: 'string',
           label: 'CENTRO DE ATENCIÓN PRIMARIA - ¿Cuál es el centro de atención primaria dónde se visita el paciente?',
           variant: 'input'
-        },
-        sexoPaciente: {
+        }),
+        sexoPaciente: requiresConsent({
           kind: 'string',
           label:
             'DATOS DEMOGRÁFICOS Y CLÍNICOS (en el momento de la fractura por fragilidad índice) - Indique el sexo del paciente',
@@ -140,23 +163,23 @@ export default defineInstrument({
             masculino: 'Masculino',
             femenino: 'Femenino'
           }
-        },
-        edadPaciente: {
+        }),
+        edadPaciente: requiresConsent({
           kind: 'string',
           label: 'Indique la edad del paciente (años)',
           variant: 'input'
-        },
-        pesoPaciente: {
+        }),
+        pesoPaciente: requiresConsent({
           kind: 'string',
           label: 'Indique el peso (kg)',
           variant: 'input'
-        },
-        alturaPaciente: {
+        }),
+        alturaPaciente: requiresConsent({
           kind: 'string',
           label: 'Indique la altura (cm)',
           variant: 'input'
-        },
-        observaCifosis: {
+        }),
+        observaCifosis: requiresConsent({
           kind: 'string',
           label: '¿Se observa cifosis?',
           variant: 'radio',
@@ -164,8 +187,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        perdidaAlturaDocumentada: {
+        }),
+        perdidaAlturaDocumentada: requiresConsent({
           kind: 'string',
           label: '¿Existe pérdida de altura documentada respecto a talla previa?',
           variant: 'radio',
@@ -173,8 +196,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        estiloVida: {
+        }),
+        estiloVida: requiresConsent({
           kind: 'string',
           label: 'Indique el estilo de vida que se ajuste más al paciente',
           variant: 'radio',
@@ -184,156 +207,152 @@ export default defineInstrument({
             equilibrado: 'Estilo de vida equilibrado',
             riesgo: 'Estilo de vida con hábitos de riesgo'
           }
-        },
-        presentaFactoresRiesgo: {
+        }),
+        presentaFactoresRiesgo: requiresConsent({
           kind: 'string',
           label:
             'FACTORES DE RIESGO (en el momento de la fractura por fragilidad índice) - ¿El paciente presenta alguno de los siguientes factores de riesgo?',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        },
-        imcMenor20: {
+          variant: 'input',
+          disabled: true
+        }),
+        imcMenor20: requiresConsent({
           kind: 'boolean',
           label: 'IMC (< 20 kg/m²)',
           variant: 'checkbox'
-        },
-        etnicidadBlancaCaucasica: {
+        }),
+        etnicidadBlancaCaucasica: requiresConsent({
           kind: 'boolean',
           label: 'Etnicidad (paciente blanco/a caucásico/a)',
           variant: 'checkbox'
-        },
-        menopausiaPrecoz: {
+        }),
+        menopausiaPrecoz: requiresConsent({
           kind: 'boolean',
           label: 'Menopausia precoz (<45 años)',
           variant: 'checkbox'
-        },
-        fracturaPrevia: {
+        }),
+        fracturaPrevia: requiresConsent({
           kind: 'boolean',
           label: 'Fractura previa',
           variant: 'checkbox'
-        },
-        antecedenteFracturaPaternoMaterno: {
+        }),
+        antecedenteFracturaPaternoMaterno: requiresConsent({
           kind: 'boolean',
           label: 'Antecedente paterno/materno de fractura femoral',
           variant: 'checkbox'
-        },
-        tabaquismoActivo: {
+        }),
+        tabaquismoActivo: requiresConsent({
           kind: 'boolean',
           label: 'Tabaquismo activo',
           variant: 'checkbox'
-        },
-        ingestaAlcohol: {
+        }),
+        ingestaAlcohol: requiresConsent({
           kind: 'boolean',
           label: 'Ingesta de alcohol ≥3 unidades/día',
           variant: 'checkbox'
-        },
-        nutricionPobre: {
+        }),
+        nutricionPobre: requiresConsent({
           kind: 'boolean',
           label:
             'Nutrición pobre - dieta baja en calcio (definiéndose como ingesta baja en calcio un aporte de < 3 unidades de calcio diarias: siendo 1 vaso de leche, 1 yogur o 40 g de queso 1 unidad)',
           variant: 'checkbox'
-        },
-        medicamentosAsociados: {
+        }),
+        medicamentosAsociados: requiresConsent({
           kind: 'boolean',
           label:
             'Medicamentos asociados (glucocorticoides orales, inhibidores de la aromatasa, análogos de la GnRH, anticonvulsivos, inhibidores de la bomba de protones, fármacos antihipertensivos y estatinas)',
           variant: 'checkbox'
-        }
+        })
       }
     },
     {
       title: 'COMORBILIDADES (en el momento de la fractura por fragilidad índice)',
-      description: '¿El paciente presenta alguna de las siguientes comorbilidades?',
       fields: {
-        artritisReumatoide: {
+        _warningComorbilidades: consentWarning() as any,
+        artritisReumatoide: requiresConsent({
           kind: 'boolean',
           label: 'Artritis reumatoide',
           variant: 'checkbox'
-        },
-        otrasArtritisInflamatorias: {
+        }),
+        otrasArtritisInflamatorias: requiresConsent({
           kind: 'boolean',
           label: 'Otras artritis inflamatorias',
           variant: 'checkbox'
-        },
-        lupusEritematoso: {
+        }),
+        lupusEritematoso: requiresConsent({
           kind: 'boolean',
           label: 'Lupus eritematoso sistémico',
           variant: 'checkbox'
-        },
-        hiperparatiroidismo: {
+        }),
+        hiperparatiroidismo: requiresConsent({
           kind: 'boolean',
           label: 'Hiperparatiroidismo',
           variant: 'checkbox'
-        },
-        hipertiroidismo: {
+        }),
+        hipertiroidismo: requiresConsent({
           kind: 'boolean',
           label: 'Hipertiroidismo',
           variant: 'checkbox'
-        },
-        hipercortisolismo: {
+        }),
+        hipercortisolismo: requiresConsent({
           kind: 'boolean',
           label: 'Hipercortisolismo/Cushing',
           variant: 'checkbox'
-        },
-        diabetes: {
+        }),
+        diabetes: requiresConsent({
           kind: 'boolean',
           label: 'Diabetes (tipos 1 y 2)',
           variant: 'checkbox'
-        },
-        enfermedadInflamatoriaIntestinal: {
+        }),
+        enfermedadInflamatoriaIntestinal: requiresConsent({
           kind: 'boolean',
           label: 'Enfermedad inflamatoria intestinal',
           variant: 'checkbox'
-        },
-        malnutricion: {
+        }),
+        malnutricion: requiresConsent({
           kind: 'boolean',
           label: 'Malnutrición',
           variant: 'checkbox'
-        },
-        nutricionParenteral: {
+        }),
+        nutricionParenteral: requiresConsent({
           kind: 'boolean',
           label: 'Nutrición parenteral',
           variant: 'checkbox'
-        },
-        mielomaMultiple: {
+        }),
+        mielomaMultiple: requiresConsent({
           kind: 'boolean',
           label: 'Mieloma múltiple',
           variant: 'checkbox'
-        },
-        otrosTrastornosMedulares: {
+        }),
+        otrosTrastornosMedulares: requiresConsent({
           kind: 'boolean',
           label: 'Otros trastornos medulares',
           variant: 'checkbox'
-        },
-        epoc: {
+        }),
+        epoc: requiresConsent({
           kind: 'boolean',
           label: 'Enfermedad pulmonar obstructiva crónica (EPOC)',
           variant: 'checkbox'
-        },
-        enfermedadRenalCronica: {
+        }),
+        enfermedadRenalCronica: requiresConsent({
           kind: 'boolean',
           label: 'Enfermedad renal crónica (ERC)',
           variant: 'checkbox'
-        }
+        })
       }
     },
     {
       title: 'EPISODIO DE LA FRACTURA POR FRAGILIDAD',
-      description:
-        'Complete la siguiente información relacionada con la fractura por fragilidad reciente del paciente.',
       fields: {
+        _warningFractura: consentWarning() as any,
         // Primera fractura
-        fechaFractura1: {
+        fechaFractura1: requiresConsent({
           kind: 'date',
           label: 'Fecha de la FF'
-        },
-        localizacionFractura1: {
+        }),
+        localizacionFractura1: requiresConsent({
           kind: 'string',
           label: 'Localización - Elegir una opción',
-          variant: 'radio',
+          variant: 'select',
           options: {
             vertebral: 'Vertebral',
             femoral: 'Femoral',
@@ -344,25 +363,25 @@ export default defineInstrument({
             tobillopie: 'Tobillo/pie',
             otras: 'Otras'
           }
-        },
-        hospitalizacion1: {
+        }),
+        hospitalizacion1: requiresConsent({
           kind: 'string',
           label: '¿Requirió hospitalización?',
-          variant: 'radio',
+          variant: 'select',
           options: {
             si: 'Sí',
             no: 'No'
           }
-        },
+        }),
         // Segunda fractura
-        fechaFractura2: {
+        fechaFractura2: requiresConsent({
           kind: 'date',
           label: 'Fecha de la FF (segunda fractura)'
-        },
-        localizacionFractura2: {
+        }),
+        localizacionFractura2: requiresConsent({
           kind: 'string',
           label: 'Localización - Elegir una opción',
-          variant: 'radio',
+          variant: 'select',
           options: {
             vertebral: 'Vertebral',
             femoral: 'Femoral',
@@ -373,25 +392,25 @@ export default defineInstrument({
             tobillopie: 'Tobillo/pie',
             otras: 'Otras'
           }
-        },
-        hospitalizacion2: {
+        }),
+        hospitalizacion2: requiresConsent({
           kind: 'string',
           label: '¿Requirió hospitalización? (segunda fractura)',
-          variant: 'radio',
+          variant: 'select',
           options: {
             si: 'Sí',
             no: 'No'
           }
-        },
+        }),
         // Tercera fractura
-        fechaFractura3: {
+        fechaFractura3: requiresConsent({
           kind: 'date',
           label: 'Fecha de la FF (tercera fractura)'
-        },
-        localizacionFractura3: {
+        }),
+        localizacionFractura3: requiresConsent({
           kind: 'string',
           label: 'Localización - Elegir una opción',
-          variant: 'radio',
+          variant: 'select',
           options: {
             vertebral: 'Vertebral',
             femoral: 'Femoral',
@@ -402,22 +421,23 @@ export default defineInstrument({
             tobillopie: 'Tobillo/pie',
             otras: 'Otras'
           }
-        },
-        hospitalizacion3: {
+        }),
+        hospitalizacion3: requiresConsent({
           kind: 'string',
           label: '¿Requirió hospitalización? (tercera fractura)',
-          variant: 'radio',
+          variant: 'select',
           options: {
             si: 'Sí',
             no: 'No'
           }
-        }
+        })
       }
     },
     {
       title: 'DIAGNÓSTICO DE OSTEOPOROSIS',
       fields: {
-        pacienteDiagnosticado: {
+        _warningDiagnostico: consentWarning() as any,
+        pacienteDiagnosticado: requiresConsent({
           kind: 'string',
           label: '¿El paciente está diagnosticado de osteoporosis?',
           variant: 'radio',
@@ -425,12 +445,12 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        fechaDiagnostico: {
+        }),
+        fechaDiagnostico: requiresConsent({
           kind: 'date',
           label: '¿Cuál fue la fecha en la que tuvo lugar el diagnóstico?'
-        },
-        metodoDiagnostico: {
+        }),
+        metodoDiagnostico: requiresConsent({
           kind: 'set',
           label: '¿Qué método principal se empleó para el diagnóstico?',
           variant: 'listbox',
@@ -442,29 +462,28 @@ export default defineInstrument({
             presuntivo: 'Diagnóstico presuntivo por antecedentes y factores de riesgo',
             otro: 'Otro'
           }
-        },
-        otroMetodoEspecificar: {
+        }),
+        otroMetodoEspecificar: requiresConsent({
           kind: 'string',
           label: 'Otro (especificar):',
           variant: 'input'
-        }
+        })
       }
     },
     {
       title: 'PRESCRIPCIÓN DEL TRATAMIENTO DE OSTEOPOROSIS',
-      description:
-        'Indique los tratamientos que el paciente ha recibido para la osteoporosis y la duración de cada uno de ellos. Si continúa con la medicación no rellene la fecha fin y marque la casilla "continúa". Si no continúa, complete el "motivo de interrupción de la medicación"',
       fields: {
+        _warningTratamiento: consentWarning() as any,
         // Alendronato
-        alendronatoFechaInicio: {
+        alendronatoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Alendronato - Fecha inicio'
-        },
-        alendronatoFechaFin: {
+        }),
+        alendronatoFechaFin: requiresConsent({
           kind: 'date',
           label: 'Alendronato - Fecha fin'
-        },
-        alendronatoContinua: {
+        }),
+        alendronatoContinua: requiresConsent({
           kind: 'string',
           label: 'Alendronato - Continúa',
           variant: 'radio',
@@ -472,8 +491,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        alendronatoMotivoInterrupcion: {
+        }),
+        alendronatoMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Alendronato - Motivo interrupción',
           variant: 'listbox',
@@ -487,17 +506,17 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        },
+        }),
         // Risedronato
-        risedronatoFechaInicio: {
+        risedronatoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Risedronato - Fecha inicio'
-        },
-        risedronatoFechaFin: {
+        }),
+        risedronatoFechaFin: requiresConsent({
           kind: 'date',
           label: 'Risedronato - Fecha fin'
-        },
-        risedronatoContinua: {
+        }),
+        risedronatoContinua: requiresConsent({
           kind: 'string',
           label: 'Risedronato - Continúa',
           variant: 'radio',
@@ -505,8 +524,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        risedronatoMotivoInterrupcion: {
+        }),
+        risedronatoMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Risedronato - Motivo interrupción',
           variant: 'listbox',
@@ -520,17 +539,17 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        },
+        }),
         // Ibandronato
-        ibandronatoFechaInicio: {
+        ibandronatoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Ibandronato - Fecha inicio'
-        },
-        ibandronatoFechaFin: {
+        }),
+        ibandronatoFechaFin: requiresConsent({
           kind: 'date',
           label: 'Ibandronato - Fecha fin'
-        },
-        ibandronatoContinua: {
+        }),
+        ibandronatoContinua: requiresConsent({
           kind: 'string',
           label: 'Ibandronato - Continúa',
           variant: 'radio',
@@ -538,8 +557,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        ibandronatoMotivoInterrupcion: {
+        }),
+        ibandronatoMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Ibandronato - Motivo interrupción',
           variant: 'listbox',
@@ -553,17 +572,17 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        },
+        }),
         // Zoledronato
-        zoledronatoFechaInicio: {
+        zoledronatoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Zoledronato - Fecha inicio'
-        },
-        zoledronatoFechaFin: {
+        }),
+        zoledronatoFechaFin: requiresConsent({
           kind: 'date',
           label: 'Zoledronato - Fecha fin'
-        },
-        zoledronatoContinua: {
+        }),
+        zoledronatoContinua: requiresConsent({
           kind: 'string',
           label: 'Zoledronato - Continúa',
           variant: 'radio',
@@ -571,8 +590,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        zoledronatoMotivoInterrupcion: {
+        }),
+        zoledronatoMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Zoledronato - Motivo interrupción',
           variant: 'listbox',
@@ -586,17 +605,17 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        },
+        }),
         // Denosumab
-        denosumabFechaInicio: {
+        denosumabFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Denosumab - Fecha inicio'
-        },
-        denosumabFechaFin: {
+        }),
+        denosumabFechaFin: requiresConsent({
           kind: 'date',
           label: 'Denosumab - Fecha fin'
-        },
-        denosumabContinua: {
+        }),
+        denosumabContinua: requiresConsent({
           kind: 'string',
           label: 'Denosumab - Continúa',
           variant: 'radio',
@@ -604,8 +623,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        denosumabMotivoInterrupcion: {
+        }),
+        denosumabMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Denosumab - Motivo interrupción',
           variant: 'listbox',
@@ -619,17 +638,17 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        },
+        }),
         // Raloxifeno
-        raloxifenoFechaInicio: {
+        raloxifenoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Raloxifeno - Fecha inicio'
-        },
-        raloxifenoFechaFin: {
+        }),
+        raloxifenoFechaFin: requiresConsent({
           kind: 'date',
           label: 'Raloxifeno - Fecha fin'
-        },
-        raloxifenoContinua: {
+        }),
+        raloxifenoContinua: requiresConsent({
           kind: 'string',
           label: 'Raloxifeno - Continúa',
           variant: 'radio',
@@ -637,8 +656,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        raloxifenoMotivoInterrupcion: {
+        }),
+        raloxifenoMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Raloxifeno - Motivo interrupción',
           variant: 'listbox',
@@ -652,17 +671,17 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        },
+        }),
         // Bazedoxifeno
-        bazedoxifenoFechaInicio: {
+        bazedoxifenoFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Bazedoxifeno - Fecha inicio'
-        },
-        bazedoxifenoFechaFin: {
+        }),
+        bazedoxifenoFechaFin: requiresConsent({
           kind: 'date',
           label: 'Bazedoxifeno - Fecha fin'
-        },
-        bazedoxifenoContinua: {
+        }),
+        bazedoxifenoContinua: requiresConsent({
           kind: 'string',
           label: 'Bazedoxifeno - Continúa',
           variant: 'radio',
@@ -670,8 +689,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        bazedoxifenoMotivoInterrupcion: {
+        }),
+        bazedoxifenoMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Bazedoxifeno - Motivo interrupción',
           variant: 'listbox',
@@ -685,17 +704,17 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        },
+        }),
         // Tibolona
-        tibolonaFechaInicio: {
+        tibolonaFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Tibolona - Fecha inicio'
-        },
-        tibolonaFechaFin: {
+        }),
+        tibolonaFechaFin: requiresConsent({
           kind: 'date',
           label: 'Tibolona - Fecha fin'
-        },
-        tibolonaContinua: {
+        }),
+        tibolonaContinua: requiresConsent({
           kind: 'string',
           label: 'Tibolona - Continúa',
           variant: 'radio',
@@ -703,8 +722,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        tibolonaMotivoInterrupcion: {
+        }),
+        tibolonaMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Tibolona - Motivo interrupción',
           variant: 'listbox',
@@ -718,17 +737,17 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        },
+        }),
         // Teriparatida
-        teriparatidaFechaInicio: {
+        teriparatidaFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Teriparatida - Fecha inicio'
-        },
-        teriparatidaFechaFin: {
+        }),
+        teriparatidaFechaFin: requiresConsent({
           kind: 'date',
           label: 'Teriparatida - Fecha fin'
-        },
-        teriparatidaContinua: {
+        }),
+        teriparatidaContinua: requiresConsent({
           kind: 'string',
           label: 'Teriparatida - Continúa',
           variant: 'radio',
@@ -736,8 +755,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        teriparatidaMotivoInterrupcion: {
+        }),
+        teriparatidaMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Teriparatida - Motivo interrupción',
           variant: 'listbox',
@@ -751,17 +770,17 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        },
+        }),
         // Abaloparatida
-        abaloparatidaFechaInicio: {
+        abaloparatidaFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Abaloparatida - Fecha inicio'
-        },
-        abaloparatidaFechaFin: {
+        }),
+        abaloparatidaFechaFin: requiresConsent({
           kind: 'date',
           label: 'Abaloparatida - Fecha fin'
-        },
-        abaloparatidaContinua: {
+        }),
+        abaloparatidaContinua: requiresConsent({
           kind: 'string',
           label: 'Abaloparatida - Continúa',
           variant: 'radio',
@@ -769,8 +788,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        abaloparatidaMotivoInterrupcion: {
+        }),
+        abaloparatidaMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Abaloparatida - Motivo interrupción',
           variant: 'listbox',
@@ -784,17 +803,17 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        },
+        }),
         // Romosozumab
-        romosozumabFechaInicio: {
+        romosozumabFechaInicio: requiresConsent({
           kind: 'date',
           label: 'Romosozumab - Fecha inicio'
-        },
-        romosozumabFechaFin: {
+        }),
+        romosozumabFechaFin: requiresConsent({
           kind: 'date',
           label: 'Romosozumab - Fecha fin'
-        },
-        romosozumabContinua: {
+        }),
+        romosozumabContinua: requiresConsent({
           kind: 'string',
           label: 'Romosozumab - Continúa',
           variant: 'radio',
@@ -802,8 +821,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        romosozumabMotivoInterrupcion: {
+        }),
+        romosozumabMotivoInterrupcion: requiresConsent({
           kind: 'set',
           label: 'Romosozumab - Motivo interrupción',
           variant: 'listbox',
@@ -817,15 +836,14 @@ export default defineInstrument({
             sujeto: 'Decisión del sujeto',
             otros: 'Otros'
           }
-        }
+        })
       }
     },
     {
       title: 'TRATAMIENTO NO FARMACOLÓGICO OSTEOPOROSIS',
-      description:
-        'Indique los tratamientos no farmacológicos que el paciente ha recibido para la osteoporosis. Además, en aquellos en los que aplique, indique si actualmente continúa con ellos.',
       fields: {
-        ejercicioFisico: {
+        _warningTratamientoNoFarmacologico: consentWarning() as any,
+        ejercicioFisico: requiresConsent({
           kind: 'string',
           label: 'Ejercicio físico - ¿Lo ha recibido?',
           variant: 'radio',
@@ -833,8 +851,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        ejercicioFisicoContinua: {
+        }),
+        ejercicioFisicoContinua: requiresConsent({
           kind: 'string',
           label: 'Ejercicio físico - Continúa',
           variant: 'radio',
@@ -842,8 +860,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        suplementosCalcioVitaminaD: {
+        }),
+        suplementosCalcioVitaminaD: requiresConsent({
           kind: 'string',
           label: 'Suplementos de calcio / vitamina D - ¿Lo ha recibido?',
           variant: 'radio',
@@ -851,8 +869,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        suplementosCalcioVitaminaDContinua: {
+        }),
+        suplementosCalcioVitaminaDContinua: requiresConsent({
           kind: 'string',
           label: 'Suplementos de calcio / vitamina D - Continúa',
           variant: 'radio',
@@ -860,8 +878,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        dejarFumar: {
+        }),
+        dejarFumar: requiresConsent({
           kind: 'string',
           label: 'Dejar de fumar - ¿Lo ha recibido?',
           variant: 'radio',
@@ -869,8 +887,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        dejarFumarContinua: {
+        }),
+        dejarFumarContinua: requiresConsent({
           kind: 'string',
           label: 'Dejar de fumar - Continúa',
           variant: 'radio',
@@ -878,8 +896,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        reduccionConsumoAlcohol: {
+        }),
+        reduccionConsumoAlcohol: requiresConsent({
           kind: 'string',
           label: 'Reducción de consumo de alcohol - ¿Lo ha recibido?',
           variant: 'radio',
@@ -887,8 +905,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        reduccionConsumoAlcoholContinua: {
+        }),
+        reduccionConsumoAlcoholContinua: requiresConsent({
           kind: 'string',
           label: 'Reducción de consumo de alcohol - Continúa',
           variant: 'radio',
@@ -896,8 +914,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        protectoresCadera: {
+        }),
+        protectoresCadera: requiresConsent({
           kind: 'string',
           label: 'Protectores de cadera - ¿Lo ha recibido?',
           variant: 'radio',
@@ -905,8 +923,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        protectoresCaderaContinua: {
+        }),
+        protectoresCaderaContinua: requiresConsent({
           kind: 'string',
           label: 'Protectores de cadera - Continúa',
           variant: 'radio',
@@ -914,22 +932,23 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        otroTratamiento: {
+        }),
+        otroTratamiento: requiresConsent({
           kind: 'string',
           label: 'Otros',
           variant: 'input'
-        }
+        })
       }
     },
     {
       title: 'FORMULARIO FIN DE ESTUDIO',
       fields: {
-        fechaFinEstudio: {
+        _warningFinEstudio: consentWarning() as any,
+        fechaFinEstudio: requiresConsent({
           kind: 'date',
           label: '¿Fecha en que se rellena el formulario de fin de estudio?'
-        },
-        pacienteCompletoEstudio: {
+        }),
+        pacienteCompletoEstudio: requiresConsent({
           kind: 'string',
           label: '¿Ha completado el paciente el estudio?',
           variant: 'radio',
@@ -937,8 +956,8 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        },
-        motivoNoCompletado: {
+        }),
+        motivoNoCompletado: requiresConsent({
           kind: 'string',
           label: 'En caso negativo, indique el motivo',
           variant: 'radio',
@@ -947,22 +966,22 @@ export default defineInstrument({
             decisionPaciente: 'Decisión del paciente',
             otro: 'Otro'
           }
-        },
-        otroMotivoEspecificar: {
+        }),
+        otroMotivoEspecificar: requiresConsent({
           kind: 'string',
           label: 'Otro motivo (especificar):',
           variant: 'input'
-        },
-        inicialesFinEstudio: {
+        }),
+        inicialesFinEstudio: requiresConsent({
           kind: 'string',
           label: 'Iniciales del profesional sanitario',
           variant: 'input'
-        },
-        firmaFinEstudio: {
+        }),
+        firmaFinEstudio: requiresConsent({
           kind: 'string',
           label: 'Firma del profesional sanitario',
           variant: 'input'
-        }
+        })
       }
     }
   ],
