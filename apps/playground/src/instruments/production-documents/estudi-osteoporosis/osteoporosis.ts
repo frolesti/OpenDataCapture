@@ -165,17 +165,17 @@ export default defineInstrument({
           }
         }),
         edadPaciente: requiresConsent({
-          kind: 'string',
+          kind: 'number',
           label: 'Indique la edad del paciente (años)',
           variant: 'input'
         }),
         pesoPaciente: requiresConsent({
-          kind: 'string',
+          kind: 'number',
           label: 'Indique el peso (kg)',
           variant: 'input'
         }),
         alturaPaciente: requiresConsent({
-          kind: 'string',
+          kind: 'number',
           label: 'Indique la altura (cm)',
           variant: 'input'
         }),
@@ -347,7 +347,7 @@ export default defineInstrument({
         // Primera fractura
         fechaFractura1: requiresConsent({
           kind: 'date',
-          label: 'Fecha de la FF'
+          label: 'Fecha de la Fractura por Fragilidad'
         }),
         localizacionFractura1: requiresConsent({
           kind: 'string',
@@ -1008,10 +1008,10 @@ export default defineInstrument({
       label: 'Índice de Masa Corporal',
       value: (data) => {
         if (data.pesoPaciente && data.alturaPaciente) {
-          const peso = parseFloat(data.pesoPaciente);
-          const altura = parseFloat(data.alturaPaciente);
+          const peso = data.pesoPaciente;
+          const altura = data.alturaPaciente;
 
-          if (isNaN(peso) || isNaN(altura) || altura === 0) {
+          if (altura === 0) {
             return undefined;
           }
 
@@ -1058,9 +1058,21 @@ export default defineInstrument({
       // CARACTERIZACIÓN DEL PACIENTE
       centroAtencionPrimaria: z.string().optional(),
       sexoPaciente: z.enum(['masculino', 'femenino']).optional(),
-      edadPaciente: z.string().optional(),
-      pesoPaciente: z.string().optional(),
-      alturaPaciente: z.string().optional(),
+      edadPaciente: z
+        .number()
+        .min(50, 'La edad debe ser al menos 50 años')
+        .max(120, 'La edad debe ser menor a 120 años')
+        .optional(),
+      pesoPaciente: z
+        .number()
+        .min(1, 'El peso debe ser mayor a 0 kg')
+        .max(300, 'El peso debe ser menor o igual a 300 kg')
+        .optional(),
+      alturaPaciente: z
+        .number()
+        .min(50, 'La altura debe ser al menos 50 cm')
+        .max(250, 'La altura debe ser menor o igual a 250 cm')
+        .optional(),
       observaCifosis: z.enum(['si', 'no']).optional(),
       perdidaAlturaDocumentada: z.enum(['si', 'no']).optional(),
       estiloVida: z.enum(['sedentario', 'activo', 'equilibrado', 'riesgo']).optional(),
