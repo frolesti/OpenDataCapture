@@ -38,7 +38,7 @@ const RouteComponent = () => {
               widthFull
               data-spotlight-type="export-data-dropdown"
               disabled={!instrumentId}
-              options={['TSV', 'JSON']}
+              options={['TSV', 'TSV Long', 'JSON', 'CSV', 'CSV Long', 'Excel', 'Excel Long']}
               title={t('core.download')}
               triggerClassName="min-w-32"
               onSelection={dl}
@@ -57,7 +57,7 @@ const RouteComponent = () => {
           ...fields
         ]}
         data={records}
-        data-cy="subject-table"
+        data-testid="subject-table"
         entriesPerPage={15}
         minRows={15}
       />
