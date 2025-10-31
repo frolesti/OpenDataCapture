@@ -79,6 +79,52 @@ function requiresDiscontinuation<T extends Record<string, any>>(field: T, medica
   };
 }
 
+// Helper function to show "Continúa" field only if "¿Lo ha recibido?" is "si"
+function requiresRecibido<T extends Record<string, any>>(field: T, treatmentName: string): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['consentimientoInformado', treatmentName] as const,
+    render(data: any): any {
+      if (data.consentimientoInformado === 'si' && data[treatmentName] === 'si') {
+        return field;
+      }
+      return null;
+    }
+  };
+}
+
+// Helper function to show fields only if study was NOT completed
+function requiresStudyNotCompleted<T extends Record<string, any>>(field: T): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['consentimientoInformado', 'pacienteCompletoEstudio'] as const,
+    render(data: any): any {
+      if (data.consentimientoInformado === 'si' && data.pacienteCompletoEstudio === 'no') {
+        return field;
+      }
+      return null;
+    }
+  };
+}
+
+// Helper function to show "Otro motivo especificar" only if "otro" is selected
+function requiresOtroMotivo<T extends Record<string, any>>(field: T): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['consentimientoInformado', 'pacienteCompletoEstudio', 'motivoNoCompletado'] as const,
+    render(data: any): any {
+      if (
+        data.consentimientoInformado === 'si' &&
+        data.pacienteCompletoEstudio === 'no' &&
+        data.motivoNoCompletado === 'otro'
+      ) {
+        return field;
+      }
+      return null;
+    }
+  };
+}
+
 export default defineInstrument({
   kind: 'FORM',
   language: 'en',
@@ -996,15 +1042,18 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        ejercicioFisicoContinua: requiresConsent({
-          kind: 'string',
-          label: 'Ejercicio físico - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
+        ejercicioFisicoContinua: requiresRecibido(
+          {
+            kind: 'string',
+            label: 'Ejercicio físico - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'ejercicioFisico'
+        ),
         suplementosCalcioVitaminaD: requiresConsent({
           kind: 'string',
           label: 'Suplementos de calcio / vitamina D - ¿Lo ha recibido?',
@@ -1014,15 +1063,18 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        suplementosCalcioVitaminaDContinua: requiresConsent({
-          kind: 'string',
-          label: 'Suplementos de calcio / vitamina D - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
+        suplementosCalcioVitaminaDContinua: requiresRecibido(
+          {
+            kind: 'string',
+            label: 'Suplementos de calcio / vitamina D - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'suplementosCalcioVitaminaD'
+        ),
         dejarFumar: requiresConsent({
           kind: 'string',
           label: 'Dejar de fumar - ¿Lo ha recibido?',
@@ -1032,15 +1084,18 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        dejarFumarContinua: requiresConsent({
-          kind: 'string',
-          label: 'Dejar de fumar - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
+        dejarFumarContinua: requiresRecibido(
+          {
+            kind: 'string',
+            label: 'Dejar de fumar - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'dejarFumar'
+        ),
         reduccionConsumoAlcohol: requiresConsent({
           kind: 'string',
           label: 'Reducción de consumo de alcohol - ¿Lo ha recibido?',
@@ -1050,15 +1105,18 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        reduccionConsumoAlcoholContinua: requiresConsent({
-          kind: 'string',
-          label: 'Reducción de consumo de alcohol - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
+        reduccionConsumoAlcoholContinua: requiresRecibido(
+          {
+            kind: 'string',
+            label: 'Reducción de consumo de alcohol - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'reduccionConsumoAlcohol'
+        ),
         protectoresCadera: requiresConsent({
           kind: 'string',
           label: 'Protectores de cadera - ¿Lo ha recibido?',
@@ -1068,15 +1126,18 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        protectoresCaderaContinua: requiresConsent({
-          kind: 'string',
-          label: 'Protectores de cadera - Continúa',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
+        protectoresCaderaContinua: requiresRecibido(
+          {
+            kind: 'string',
+            label: 'Protectores de cadera - Continúa',
+            variant: 'radio',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          'protectoresCadera'
+        ),
         otroTratamiento: requiresConsent({
           kind: 'string',
           label: 'Otros',
@@ -1101,7 +1162,7 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        motivoNoCompletado: requiresConsent({
+        motivoNoCompletado: requiresStudyNotCompleted({
           kind: 'string',
           label: 'En caso negativo, indique el motivo',
           variant: 'radio',
@@ -1111,7 +1172,7 @@ export default defineInstrument({
             otro: 'Otro'
           }
         }),
-        otroMotivoEspecificar: requiresConsent({
+        otroMotivoEspecificar: requiresOtroMotivo({
           kind: 'string',
           label: 'Otro motivo (especificar):',
           variant: 'input'
@@ -1119,11 +1180,6 @@ export default defineInstrument({
         inicialesFinEstudio: requiresConsent({
           kind: 'string',
           label: 'Iniciales del profesional sanitario',
-          variant: 'input'
-        }),
-        firmaFinEstudio: requiresConsent({
-          kind: 'string',
-          label: 'Firma del profesional sanitario',
           variant: 'input'
         })
       }
@@ -1487,8 +1543,7 @@ export default defineInstrument({
       pacienteCompletoEstudio: z.enum(['si', 'no']).optional(),
       motivoNoCompletado: z.enum(['decisionInvestigador', 'decisionPaciente', 'otro']).optional(),
       otroMotivoEspecificar: z.string().optional(),
-      inicialesFinEstudio: z.string().optional(),
-      firmaFinEstudio: z.string().optional()
+      inicialesFinEstudio: z.string().optional()
     })
     .superRefine((data, ctx) => {
       // Validar que fecha inicio no sea mayor que fecha fin para todos los tratamientos
