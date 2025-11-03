@@ -125,7 +125,7 @@ function requiresOtroMotivo<T extends Record<string, any>>(field: T): any {
   };
 }
 
-// Helper function to show fracture N only if fracture N-1 is completed
+// Helper function to show fracture N only if user wants to add it
 function requiresPreviousFracture<T extends Record<string, any>>(field: T, fractureNumber: number): any {
   return {
     kind: 'dynamic' as const,
@@ -133,7 +133,8 @@ function requiresPreviousFracture<T extends Record<string, any>>(field: T, fract
       'consentimientoInformado',
       `fechaFractura${fractureNumber - 1}`,
       `localizacionFractura${fractureNumber - 1}`,
-      `hospitalizacion${fractureNumber - 1}`
+      `hospitalizacion${fractureNumber - 1}`,
+      `agregarFractura${fractureNumber}`
     ] as const,
     render(data: any): any {
       if (fractureNumber === 1) {
@@ -144,17 +145,169 @@ function requiresPreviousFracture<T extends Record<string, any>>(field: T, fract
         return null;
       }
 
-      // For subsequent fractures, check if previous fracture is completed
+      // For subsequent fractures, check if:
+      // 1. Previous fracture is completed (all 3 fields)
+      // 2. User wants to add this fracture
       const prevFechaKey = `fechaFractura${fractureNumber - 1}`;
       const prevLocalizacionKey = `localizacionFractura${fractureNumber - 1}`;
       const prevHospitalizacionKey = `hospitalizacion${fractureNumber - 1}`;
+      const agregarKey = `agregarFractura${fractureNumber}`;
 
+      const isPreviousComplete = data[prevFechaKey] && data[prevLocalizacionKey] && data[prevHospitalizacionKey];
+
+      // Show if previous is complete AND user said yes to adding this fracture
+      if (data.consentimientoInformado === 'si' && isPreviousComplete && data[agregarKey] === 'si') {
+        return field;
+      }
+
+      return null;
+    }
+  };
+}
+
+// Helper function to show "Add another fracture?" button after each complete fracture
+function showAddFractureButton(fractureNumber: number): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: [
+      'consentimientoInformado',
+      `fechaFractura${fractureNumber}`,
+      `localizacionFractura${fractureNumber}`,
+      `hospitalizacion${fractureNumber}`
+    ] as const,
+    render(data: any): any {
+      const fechaKey = `fechaFractura${fractureNumber}`;
+      const localizacionKey = `localizacionFractura${fractureNumber}`;
+      const hospitalizacionKey = `hospitalizacion${fractureNumber}`;
+
+      // Show button only if current fracture is complete
+      const isCurrentComplete = data[fechaKey] && data[localizacionKey] && data[hospitalizacionKey];
+
+      if (data.consentimientoInformado === 'si' && isCurrentComplete && fractureNumber < 5) {
+        return {
+          kind: 'string' as const,
+          label: `¿Desea agregar ${fractureNumber === 1 ? 'una segunda' : fractureNumber === 2 ? 'una tercera' : fractureNumber === 3 ? 'una cuarta' : 'una quinta'} fractura?`,
+          variant: 'radio' as const,
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        };
+      }
+
+      return null;
+    }
+  };
+}
+
+// Helper function to check if medication treatment N is complete
+function isMedicationTreatmentComplete(data: any, medicationName: string, treatmentNumber: number): boolean {
+  const fechaInicioKey = `${medicationName}FechaInicio${treatmentNumber}`;
+  const continuaKey = `${medicationName}Continua${treatmentNumber}`;
+
+  // Treatment is complete if it has a start date and either:
+  // - continues (continua = 'si'), OR
+  // - has been discontinued with end date and reason (continua = 'no')
+  if (!data[fechaInicioKey]) {
+    return false;
+  }
+
+  if (data[continuaKey] === 'si') {
+    return true;
+  }
+
+  if (data[continuaKey] === 'no') {
+    const fechaFinKey = `${medicationName}FechaFin${treatmentNumber}`;
+    const motivoKey = `${medicationName}MotivoInterrupcion${treatmentNumber}`;
+    return !!(data[fechaFinKey] && data[motivoKey]);
+  }
+
+  return false;
+}
+
+// Helper function to show "Add another treatment?" button for medications
+function showAddMedicationButton(medicationName: string, medicationLabel: string, treatmentNumber: number): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: [
+      'consentimientoInformado',
+      `${medicationName}FechaInicio${treatmentNumber}`,
+      `${medicationName}Continua${treatmentNumber}`,
+      `${medicationName}FechaFin${treatmentNumber}`,
+      `${medicationName}MotivoInterrupcion${treatmentNumber}`
+    ] as const,
+    render(data: any): any {
       if (
         data.consentimientoInformado === 'si' &&
-        data[prevFechaKey] &&
-        data[prevLocalizacionKey] &&
-        data[prevHospitalizacionKey]
+        isMedicationTreatmentComplete(data, medicationName, treatmentNumber)
       ) {
+        return {
+          kind: 'string' as const,
+          label: `¿Desea agregar ${treatmentNumber === 1 ? 'un segundo' : treatmentNumber === 2 ? 'un tercer' : 'otro'} tratamiento de ${medicationLabel}?`,
+          variant: 'radio' as const,
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        };
+      }
+      return null;
+    }
+  };
+}
+
+// Helper function to show medication treatment N fields based on "Add treatment?" answer
+function requiresPreviousMedicationTreatment<T extends Record<string, any>>(
+  field: T,
+  medicationName: string,
+  treatmentNumber: number
+): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: [
+      'consentimientoInformado',
+      `${medicationName}FechaInicio${treatmentNumber - 1}`,
+      `${medicationName}Continua${treatmentNumber - 1}`,
+      `${medicationName}FechaFin${treatmentNumber - 1}`,
+      `${medicationName}MotivoInterrupcion${treatmentNumber - 1}`,
+      `agregarTratamiento${medicationName}${treatmentNumber}`
+    ] as const,
+    render(data: any): any {
+      if (treatmentNumber === 1) {
+        // First treatment always shows if consent is given
+        if (data.consentimientoInformado === 'si') {
+          return field;
+        }
+        return null;
+      }
+
+      // For subsequent treatments, check if:
+      // 1. Previous treatment is completed
+      // 2. User wants to add this treatment
+      const agregarKey = `agregarTratamiento${medicationName}${treatmentNumber}`;
+      const isPreviousComplete = isMedicationTreatmentComplete(data, medicationName, treatmentNumber - 1);
+
+      if (data.consentimientoInformado === 'si' && isPreviousComplete && data[agregarKey] === 'si') {
+        return field;
+      }
+
+      return null;
+    }
+  };
+}
+
+// Helper function for medication "Continua" field - requires start date
+function requiresMedicationStartDate<T extends Record<string, any>>(
+  field: T,
+  medicationName: string,
+  treatmentNumber: number
+): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['consentimientoInformado', `${medicationName}FechaInicio${treatmentNumber}`] as const,
+    render(data: any): any {
+      const startDateKey = `${medicationName}FechaInicio${treatmentNumber}`;
+      if (data.consentimientoInformado === 'si' && data[startDateKey]) {
         return field;
       }
       return null;
@@ -162,12 +315,143 @@ function requiresPreviousFracture<T extends Record<string, any>>(field: T, fract
   };
 }
 
+// Helper function for medication end date and reason - requires discontinuation
+function requiresMedicationDiscontinuation<T extends Record<string, any>>(
+  field: T,
+  medicationName: string,
+  treatmentNumber: number
+): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: [
+      'consentimientoInformado',
+      `${medicationName}FechaInicio${treatmentNumber}`,
+      `${medicationName}Continua${treatmentNumber}`
+    ] as const,
+    render(data: any): any {
+      const startDateKey = `${medicationName}FechaInicio${treatmentNumber}`;
+      const continuaKey = `${medicationName}Continua${treatmentNumber}`;
+      if (data.consentimientoInformado === 'si' && data[startDateKey] && data[continuaKey] === 'no') {
+        return field;
+      }
+      return null;
+    }
+  };
+}
+
+// Function to generate medication fields for multiple treatments (up to 3)
+function generateMedicationFields(medicationName: string, medicationLabel: string, maxTreatments: number = 3) {
+  const fields: Record<string, any> = {};
+
+  const motivoOptions = {
+    tolerabilidad: 'Problemas de tolerabilidad',
+    eficacia: 'Falta de eficacia',
+    incumplimiento: 'Incumplimiento',
+    cirugias: 'Procedimientos o cirugías dentales',
+    investigador: 'Decisión del investigador',
+    especialista: 'Decisión del especialista',
+    sujeto: 'Decisión del sujeto',
+    otros: 'Otros'
+  };
+
+  for (let i = 1; i <= maxTreatments; i++) {
+    const treatmentLabel = i === 1 ? medicationLabel : `${medicationLabel} (tratamiento ${i})`;
+
+    // Fecha inicio
+    fields[`${medicationName}FechaInicio${i}`] = requiresPreviousMedicationTreatment(
+      {
+        kind: 'date',
+        label: `${treatmentLabel} - Fecha inicio`
+      },
+      medicationName,
+      i
+    );
+
+    // Continúa
+    fields[`${medicationName}Continua${i}`] = requiresMedicationStartDate(
+      {
+        kind: 'string',
+        label: `${treatmentLabel} - Continúa`,
+        variant: 'radio',
+        options: {
+          si: 'Sí',
+          no: 'No'
+        }
+      },
+      medicationName,
+      i
+    );
+
+    // Fecha fin
+    fields[`${medicationName}FechaFin${i}`] = requiresMedicationDiscontinuation(
+      {
+        kind: 'date',
+        label: `${treatmentLabel} - Fecha fin`
+      },
+      medicationName,
+      i
+    );
+
+    // Motivo interrupción
+    fields[`${medicationName}MotivoInterrupcion${i}`] = requiresMedicationDiscontinuation(
+      {
+        kind: 'string',
+        label: `${treatmentLabel} - Motivo interrupción`,
+        variant: 'select',
+        options: motivoOptions
+      },
+      medicationName,
+      i
+    );
+
+    // Add treatment button (except for last treatment)
+    if (i < maxTreatments) {
+      fields[`agregarTratamiento${medicationName}${i + 1}`] = showAddMedicationButton(
+        medicationName,
+        medicationLabel,
+        i
+      );
+    }
+  }
+
+  return fields;
+}
+
+// Function to generate medication validation schemas for multiple treatments
+function generateMedicationValidationSchemas(medicationName: string, maxTreatments: number = 3) {
+  const schemas: Record<string, any> = {};
+
+  const motivoEnum = z.enum([
+    'tolerabilidad',
+    'eficacia',
+    'incumplimiento',
+    'cirugias',
+    'investigador',
+    'especialista',
+    'sujeto',
+    'otros'
+  ]);
+
+  for (let i = 1; i <= maxTreatments; i++) {
+    schemas[`${medicationName}FechaInicio${i}`] = z.date().optional();
+    schemas[`${medicationName}Continua${i}`] = z.enum(['si', 'no']).optional();
+    schemas[`${medicationName}FechaFin${i}`] = z.date().optional();
+    schemas[`${medicationName}MotivoInterrupcion${i}`] = motivoEnum.optional();
+
+    if (i < maxTreatments) {
+      schemas[`agregarTratamiento${medicationName}${i + 1}`] = z.enum(['si', 'no']).optional();
+    }
+  }
+
+  return schemas;
+}
+
 export default defineInstrument({
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 4,
+    edition: 5,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -471,7 +755,7 @@ export default defineInstrument({
     {
       title: 'EPISODIO DE LA FRACTURA POR FRAGILIDAD',
       description:
-        'Complete la información de cada fractura por fragilidad. Las fracturas adicionales aparecerán progresivamente a medida que complete la información de la fractura anterior (fecha, localización y hospitalización).',
+        'Complete la información de cada fractura por fragilidad. Después de completar una fractura, podrá elegir si desea agregar otra.',
       fields: {
         _warningFractura: consentWarning() as any,
         // Primera fractura
@@ -512,6 +796,7 @@ export default defineInstrument({
           },
           1
         ),
+        agregarFractura2: showAddFractureButton(1),
         // Segunda fractura
         fechaFractura2: requiresPreviousFracture(
           {
@@ -550,6 +835,7 @@ export default defineInstrument({
           },
           2
         ),
+        agregarFractura3: showAddFractureButton(2),
         // Tercera fractura
         fechaFractura3: requiresPreviousFracture(
           {
@@ -588,6 +874,7 @@ export default defineInstrument({
           },
           3
         ),
+        agregarFractura4: showAddFractureButton(3),
         // Cuarta fractura
         fechaFractura4: requiresPreviousFracture(
           {
@@ -626,6 +913,7 @@ export default defineInstrument({
           },
           4
         ),
+        agregarFractura5: showAddFractureButton(4),
         // Quinta fractura
         fechaFractura5: requiresPreviousFracture(
           {
@@ -684,9 +972,9 @@ export default defineInstrument({
           label: '¿Cuál fue la fecha en la que tuvo lugar el diagnóstico?'
         }),
         metodoDiagnostico: requiresDiagnosis({
-          kind: 'set',
+          kind: 'string',
           label: '¿Qué método principal se empleó para el diagnóstico?',
-          variant: 'listbox',
+          variant: 'radio',
           options: {
             dxa: 'Densitometría ósea (DXA)',
             clinico: 'Diagnóstico clínico tras fractura por fragilidad (sin DXA)',
@@ -696,479 +984,38 @@ export default defineInstrument({
             otro: 'Otro'
           }
         }),
-        otroMetodoEspecificar: requiresDiagnosis({
-          kind: 'string',
-          label: 'Otro (especificar):',
-          variant: 'input'
-        })
+        otroMetodoEspecificar: {
+          kind: 'dynamic' as const,
+          deps: ['pacienteDiagnosticado', 'metodoDiagnostico'] as const,
+          render(data: any) {
+            if (data.pacienteDiagnosticado === 'si' && data.metodoDiagnostico === 'otro') {
+              return {
+                kind: 'string' as const,
+                label: 'Otro (especificar):',
+                variant: 'input' as const
+              };
+            }
+            return null;
+          }
+        }
       }
     },
     {
       title: 'PRESCRIPCIÓN DEL TRATAMIENTO DE OSTEOPOROSIS',
       fields: {
         _warningTratamiento: consentWarning() as any,
-        // Alendronato
-        alendronatoFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Alendronato - Fecha inicio'
-        }),
-        alendronatoContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Alendronato - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'alendronato'
-        ),
-        alendronatoFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Alendronato - Fecha fin'
-          },
-          'alendronato'
-        ),
-        alendronatoMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Alendronato - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'alendronato'
-        ),
-        // Risedronato
-        risedronatoFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Risedronato - Fecha inicio'
-        }),
-        risedronatoContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Risedronato - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'risedronato'
-        ),
-        risedronatoFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Risedronato - Fecha fin'
-          },
-          'risedronato'
-        ),
-        risedronatoMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Risedronato - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'risedronato'
-        ),
-        // Ibandronato
-        ibandronatoFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Ibandronato - Fecha inicio'
-        }),
-        ibandronatoContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Ibandronato - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'ibandronato'
-        ),
-        ibandronatoFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Ibandronato - Fecha fin'
-          },
-          'ibandronato'
-        ),
-        ibandronatoMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Ibandronato - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'ibandronato'
-        ),
-        // Zoledronato
-        zoledronatoFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Zoledronato - Fecha inicio'
-        }),
-        zoledronatoContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Zoledronato - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'zoledronato'
-        ),
-        zoledronatoFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Zoledronato - Fecha fin'
-          },
-          'zoledronato'
-        ),
-        zoledronatoMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Zoledronato - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'zoledronato'
-        ),
-        // Denosumab
-        denosumabFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Denosumab - Fecha inicio'
-        }),
-        denosumabContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Denosumab - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'denosumab'
-        ),
-        denosumabFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Denosumab - Fecha fin'
-          },
-          'denosumab'
-        ),
-        denosumabMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Denosumab - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'denosumab'
-        ),
-        // Raloxifeno
-        raloxifenoFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Raloxifeno - Fecha inicio'
-        }),
-        raloxifenoContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Raloxifeno - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'raloxifeno'
-        ),
-        raloxifenoFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Raloxifeno - Fecha fin'
-          },
-          'raloxifeno'
-        ),
-        raloxifenoMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Raloxifeno - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'raloxifeno'
-        ),
-        // Bazedoxifeno
-        bazedoxifenoFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Bazedoxifeno - Fecha inicio'
-        }),
-        bazedoxifenoContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Bazedoxifeno - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'bazedoxifeno'
-        ),
-        bazedoxifenoFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Bazedoxifeno - Fecha fin'
-          },
-          'bazedoxifeno'
-        ),
-        bazedoxifenoMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Bazedoxifeno - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'bazedoxifeno'
-        ),
-        // Tibolona
-        tibolonaFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Tibolona - Fecha inicio'
-        }),
-        tibolonaContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Tibolona - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'tibolona'
-        ),
-        tibolonaFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Tibolona - Fecha fin'
-          },
-          'tibolona'
-        ),
-        tibolonaMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Tibolona - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'tibolona'
-        ),
-        // Teriparatida
-        teriparatidaFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Teriparatida - Fecha inicio'
-        }),
-        teriparatidaContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Teriparatida - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'teriparatida'
-        ),
-        teriparatidaFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Teriparatida - Fecha fin'
-          },
-          'teriparatida'
-        ),
-        teriparatidaMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Teriparatida - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'teriparatida'
-        ),
-        // Abaloparatida
-        abaloparatidaFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Abaloparatida - Fecha inicio'
-        }),
-        abaloparatidaContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Abaloparatida - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'abaloparatida'
-        ),
-        abaloparatidaFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Abaloparatida - Fecha fin'
-          },
-          'abaloparatida'
-        ),
-        abaloparatidaMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Abaloparatida - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'abaloparatida'
-        ),
-        // Romosozumab
-        romosozumabFechaInicio: requiresConsent({
-          kind: 'date',
-          label: 'Romosozumab - Fecha inicio'
-        }),
-        romosozumabContinua: requiresStartDate(
-          {
-            kind: 'string',
-            label: 'Romosozumab - Continúa',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'romosozumab'
-        ),
-        romosozumabFechaFin: requiresDiscontinuation(
-          {
-            kind: 'date',
-            label: 'Romosozumab - Fecha fin'
-          },
-          'romosozumab'
-        ),
-        romosozumabMotivoInterrupcion: requiresDiscontinuation(
-          {
-            kind: 'set',
-            label: 'Romosozumab - Motivo interrupción',
-            variant: 'listbox',
-            options: {
-              tolerabilidad: 'Problemas de tolerabilidad',
-              eficacia: 'Falta de eficacia',
-              incumplimiento: 'Incumplimiento',
-              cirugias: 'Procedimientos o cirugías dentales',
-              investigador: 'Decisión del investigador',
-              especialista: 'Decisión del especialista',
-              sujeto: 'Decisión del sujeto',
-              otros: 'Otros'
-            }
-          },
-          'romosozumab'
-        )
+        // All medications with up to 3 treatments each
+        ...generateMedicationFields('alendronato', 'Alendronato'),
+        ...generateMedicationFields('risedronato', 'Risedronato'),
+        ...generateMedicationFields('ibandronato', 'Ibandronato'),
+        ...generateMedicationFields('zoledronato', 'Zoledronato'),
+        ...generateMedicationFields('denosumab', 'Denosumab'),
+        ...generateMedicationFields('raloxifeno', 'Raloxifeno'),
+        ...generateMedicationFields('bazedoxifeno', 'Bazedoxifeno'),
+        ...generateMedicationFields('tibolona', 'Tibolona'),
+        ...generateMedicationFields('teriparatida', 'Teriparatida'),
+        ...generateMedicationFields('abaloparatida', 'Abaloparatida'),
+        ...generateMedicationFields('romosozumab', 'Romosozumab')
       }
     },
     {
@@ -1394,8 +1241,6 @@ export default defineInstrument({
       criterioExclusion3: z.enum(['si', 'no']),
       criterioExclusion4: z.enum(['si', 'no']),
       notaExclusion: z.string().optional(),
-      inicialesProfesional: z.string().min(1),
-      firmaProfesional: z.string().min(1),
 
       // CARACTERIZACIÓN DEL PACIENTE
       centroAtencionPrimaria: z.string().optional(),
@@ -1451,21 +1296,25 @@ export default defineInstrument({
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
       hospitalizacion1: z.enum(['si', 'no']).optional(),
+      agregarFractura2: z.enum(['si', 'no']).optional(),
       fechaFractura2: z.date().optional(),
       localizacionFractura2: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
       hospitalizacion2: z.enum(['si', 'no']).optional(),
+      agregarFractura3: z.enum(['si', 'no']).optional(),
       fechaFractura3: z.date().optional(),
       localizacionFractura3: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
       hospitalizacion3: z.enum(['si', 'no']).optional(),
+      agregarFractura4: z.enum(['si', 'no']).optional(),
       fechaFractura4: z.date().optional(),
       localizacionFractura4: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
       hospitalizacion4: z.enum(['si', 'no']).optional(),
+      agregarFractura5: z.enum(['si', 'no']).optional(),
       fechaFractura5: z.date().optional(),
       localizacionFractura5: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
@@ -1475,207 +1324,21 @@ export default defineInstrument({
       // DIAGNÓSTICO
       pacienteDiagnosticado: z.enum(['si', 'no']).optional(),
       fechaDiagnostico: z.date().optional(),
-      metodoDiagnostico: z.set(z.enum(['dxa', 'clinico', 'frax', 'hallazgo', 'presuntivo', 'otro'])).optional(),
+      metodoDiagnostico: z.enum(['dxa', 'clinico', 'frax', 'hallazgo', 'presuntivo', 'otro']).optional(),
       otroMetodoEspecificar: z.string().optional(),
 
       // TRATAMIENTOS (todos opcionales)
-      alendronatoFechaInicio: z.date().optional(),
-      alendronatoFechaFin: z.date().optional(),
-      alendronatoContinua: z.enum(['si', 'no']).optional(),
-      alendronatoMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
-
-      risedronatoFechaInicio: z.date().optional(),
-      risedronatoFechaFin: z.date().optional(),
-      risedronatoContinua: z.enum(['si', 'no']).optional(),
-      risedronatoMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
-
-      ibandronatoFechaInicio: z.date().optional(),
-      ibandronatoFechaFin: z.date().optional(),
-      ibandronatoContinua: z.enum(['si', 'no']).optional(),
-      ibandronatoMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
-
-      zoledronatoFechaInicio: z.date().optional(),
-      zoledronatoFechaFin: z.date().optional(),
-      zoledronatoContinua: z.enum(['si', 'no']).optional(),
-      zoledronatoMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
-
-      denosumabFechaInicio: z.date().optional(),
-      denosumabFechaFin: z.date().optional(),
-      denosumabContinua: z.enum(['si', 'no']).optional(),
-      denosumabMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
-
-      raloxifenoFechaInicio: z.date().optional(),
-      raloxifenoFechaFin: z.date().optional(),
-      raloxifenoContinua: z.enum(['si', 'no']).optional(),
-      raloxifenoMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
-
-      bazedoxifenoFechaInicio: z.date().optional(),
-      bazedoxifenoFechaFin: z.date().optional(),
-      bazedoxifenoContinua: z.enum(['si', 'no']).optional(),
-      bazedoxifenoMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
-
-      tibolonaFechaInicio: z.date().optional(),
-      tibolonaFechaFin: z.date().optional(),
-      tibolonaContinua: z.enum(['si', 'no']).optional(),
-      tibolonaMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
-
-      teriparatidaFechaInicio: z.date().optional(),
-      teriparatidaFechaFin: z.date().optional(),
-      teriparatidaContinua: z.enum(['si', 'no']).optional(),
-      teriparatidaMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
-
-      abaloparatidaFechaInicio: z.date().optional(),
-      abaloparatidaFechaFin: z.date().optional(),
-      abaloparatidaContinua: z.enum(['si', 'no']).optional(),
-      abaloparatidaMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
-
-      romosozumabFechaInicio: z.date().optional(),
-      romosozumabFechaFin: z.date().optional(),
-      romosozumabContinua: z.enum(['si', 'no']).optional(),
-      romosozumabMotivoInterrupcion: z
-        .set(
-          z.enum([
-            'tolerabilidad',
-            'eficacia',
-            'incumplimiento',
-            'cirugias',
-            'investigador',
-            'especialista',
-            'sujeto',
-            'otros'
-          ])
-        )
-        .optional(),
+      ...generateMedicationValidationSchemas('alendronato'),
+      ...generateMedicationValidationSchemas('risedronato'),
+      ...generateMedicationValidationSchemas('ibandronato'),
+      ...generateMedicationValidationSchemas('zoledronato'),
+      ...generateMedicationValidationSchemas('denosumab'),
+      ...generateMedicationValidationSchemas('raloxifeno'),
+      ...generateMedicationValidationSchemas('bazedoxifeno'),
+      ...generateMedicationValidationSchemas('tibolona'),
+      ...generateMedicationValidationSchemas('teriparatida'),
+      ...generateMedicationValidationSchemas('abaloparatida'),
+      ...generateMedicationValidationSchemas('romosozumab'),
 
       // TRATAMIENTO NO FARMACOLÓGICO
       ejercicioFisico: z.enum(['si', 'no']).optional(),
@@ -1754,21 +1417,21 @@ export default defineInstrument({
           if (!fecha) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `La ${fractura.label} fractura está incompleta. Debe completar la fecha o dejar todos los campos vacíos. Esta fractura no será considerada en el formulario.`,
+              message: `La ${fractura.label} fractura está incompleta. Debe completar la fecha o borrar todos los campos (fecha, localización y hospitalización) para eliminarla.`,
               path: [fechaKey as string]
             });
           }
           if (!localizacion) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `La ${fractura.label} fractura está incompleta. Debe completar la localización o dejar todos los campos vacíos. Esta fractura no será considerada en el formulario.`,
+              message: `La ${fractura.label} fractura está incompleta. Debe completar la localización o borrar todos los campos (fecha, localización y hospitalización) para eliminarla.`,
               path: [localizacionKey as string]
             });
           }
           if (!hospitalizacion) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: `La ${fractura.label} fractura está incompleta. Debe completar si requirió hospitalización o dejar todos los campos vacíos. Esta fractura no será considerada en el formulario.`,
+              message: `La ${fractura.label} fractura está incompleta. Debe completar la hospitalización o borrar todos los campos (fecha, localización y hospitalización) para eliminarla.`,
               path: [hospitalizacionKey as string]
             });
           }
