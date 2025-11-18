@@ -1,3 +1,4 @@
+import { title } from 'process';
 import { defineInstrument } from '/runtime/v1/@opendatacapture/runtime-core';
 import { z } from '/runtime/v1/zod@3.x';
 
@@ -41,37 +42,6 @@ function requiresDiagnosis<T extends Record<string, any>>(field: T): any {
     deps: ['consentimientoInformado', 'pacienteDiagnosticado'] as const,
     render(data: any): any {
       if (data.consentimientoInformado === 'si' && data.pacienteDiagnosticado === 'si') {
-        return field;
-      }
-      return null;
-    }
-  };
-}
-
-// Helper function to show "Continúa" field only if start date exists
-function requiresStartDate<T extends Record<string, any>>(field: T, medicationName: string): any {
-  return {
-    kind: 'dynamic' as const,
-    deps: ['consentimientoInformado', `${medicationName}FechaInicio`] as const,
-    render(data: any): any {
-      const startDateKey = `${medicationName}FechaInicio`;
-      if (data.consentimientoInformado === 'si' && data[startDateKey]) {
-        return field;
-      }
-      return null;
-    }
-  };
-}
-
-// Helper function to show end date and interruption reason only if "Continúa" is "no"
-function requiresDiscontinuation<T extends Record<string, any>>(field: T, medicationName: string): any {
-  return {
-    kind: 'dynamic' as const,
-    deps: ['consentimientoInformado', `${medicationName}FechaInicio`, `${medicationName}Continua`] as const,
-    render(data: any): any {
-      const startDateKey = `${medicationName}FechaInicio`;
-      const continuaKey = `${medicationName}Continua`;
-      if (data.consentimientoInformado === 'si' && data[startDateKey] && data[continuaKey] === 'no') {
         return field;
       }
       return null;
@@ -451,7 +421,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 5,
+    edition: 6,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -459,36 +429,48 @@ export default defineInstrument({
       title: 'CUADERNO DE RECOGIDA DE DATOS',
       description:
         'Evaluación del tratamiento antiosteoporótico posterior a fractura por fragilidad en Atención Primaria: estudio transversal',
+      fields: {}
+    },
+    {
+      title: 'CÓDIGO DEL PACIENTE',
       fields: {
         codigoPaciente: {
           kind: 'string',
-          label: 'CÓDIGO DEL PACIENTE',
-          variant: 'input'
-        },
+          variant: 'input',
+          label:
+            'Introduzca el código único asignado al paciente en su centro. Este código se utilizará para identificar de manera anónima los datos del paciente *'
+        }
+      }
+    },
+    {
+      title: 'Consentimiento informado',
+      fields: {
         consentimientoInformado: {
           kind: 'string',
-          label: 'CONSENTIMIENTO INFORMADO - ¿El paciente ha firmado el consentimiento informado?',
           variant: 'radio',
+          label: '¿El paciente ha firmado el consentimiento informado? *',
           options: {
             si: 'Sí',
             no: 'No'
           }
-        } as any,
+        },
         fechaConsentimiento: {
           kind: 'date',
-          label: 'FECHA DE OBTENCIÓN DEL CONSENTIMIENTO INFORMADO FIRMADO',
+          label: 'Fecha de obtención del consentimiento informado firmado *',
           description: 'Fecha en la que el paciente firma el consentimiento informado'
         }
       }
     },
     {
       title: 'CRITERIOS DE SELECCIÓN',
+      description:
+        'Criterios de inclusión - Todos los criterios de inclusión deben ser SÍ para que el paciente sea apto para el estudio',
       fields: {
         _warningCriteriosSeleccion: consentWarning() as any,
         criterioInclusion1: requiresConsent({
           kind: 'string',
           label:
-            'Criterios de INCLUSIÓN - 1. Adultos ≥ 50 años, con antecedentes de historia de al menos una fractura por fragilidad* (evento índice) (ICD Código ICD-9 y ICD-10) ocurrida entre enero de 2021 y diciembre de 2023',
+            '1. Adultos ≥ 50 años, con antecedentes de historia de al menos una fractura por fragilidad* (evento índice) (ICD Código ICD-9 y ICD-10) ocurrida entre enero de 2021 y diciembre de 2023 *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -498,22 +480,24 @@ export default defineInstrument({
         criterioInclusion2: requiresConsent({
           kind: 'string',
           label:
-            '2. Los pacientes deben haber otorgado su consentimiento informado para la recopilación y el uso de los datos clínicos contenidos en su historia médica',
+            '2. Los pacientes deben haber otorgado su consentimiento informado para la recopilación y el uso de los datos clínicos contenidos en su historia médica *',
           variant: 'radio',
           options: {
             si: 'Sí',
             no: 'No'
           }
-        }),
-        notaInclusion: requiresConsent({
-          kind: 'string',
-          label: 'Todos los criterios de inclusión deben ser SI para que el paciente sea apto para el estudio',
-          variant: 'input',
-          disabled: true
-        }),
+        })
+      }
+    },
+    {
+      title: 'CRITERIOS DE SELECCIÓN',
+      description:
+        'Criterios de exclusión - Todos los criterios de exclusión deben ser NO para que el paciente sea apto para el estudio',
+      fields: {
+        _warningCriteriosSeleccion: consentWarning() as any,
         criterioExclusion1: requiresConsent({
           kind: 'string',
-          label: 'Criterios de EXCLUSIÓN - 1. Pacientes sin otorgar el consentimiento informado',
+          label: '1. Pacientes sin otorgar el consentimiento informado *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -523,7 +507,7 @@ export default defineInstrument({
         criterioExclusion2: requiresConsent({
           kind: 'string',
           label:
-            '2. Pacientes cuya historia clínica presenta documentación incompleta o carece de información relevante necesaria para la correcta valoración de los resultados del estudio',
+            '2. Pacientes cuya historia clínica presenta documentación incompleta o carece de información relevante necesaria para la correcta valoración de los resultados del estudio *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -533,7 +517,7 @@ export default defineInstrument({
         criterioExclusion3: requiresConsent({
           kind: 'string',
           label:
-            '3. Pacientes con una fractura debida a un traumatismo de alta o moderada intensidad (p. accidente automoví) y otras fracturas poco probables de estar relacionadas con la osteoporosis (dedos de las manos y pies y huesos de la cara)',
+            '3. Pacientes con una fractura debida a un traumatismo de alta o moderada intensidad (p. accidente automoví) y otras fracturas poco probables de estar relacionadas con la osteoporosis (dedos de las manos y pies y huesos de la cara) *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -542,34 +526,29 @@ export default defineInstrument({
         }),
         criterioExclusion4: requiresConsent({
           kind: 'string',
-          label: '4. Participación previa en otro estudio en el último año',
+          label: '4. Participación previa en otro estudio en el último año *',
           variant: 'radio',
           options: {
             si: 'Sí',
             no: 'No'
           }
-        }),
-        notaExclusion: requiresConsent({
-          kind: 'string',
-          label: 'Todos los criterios de exclusión deben ser NO para que el paciente sea apto para el estudio',
-          variant: 'input',
-          disabled: true
         })
       }
     },
     {
       title: 'CARACTERIZACIÓN DEL PACIENTE EN EL MOMENTO DE LA FRACTURA ÍNDICE',
+      description:
+        'Centro de Atención Primaria y datos demográficos y clínicos en el moment de la fractura por fragilidad índice',
       fields: {
         _warningCaracterizacion: consentWarning() as any,
         centroAtencionPrimaria: requiresConsent({
           kind: 'string',
-          label: 'CENTRO DE ATENCIÓN PRIMARIA - ¿Cuál es el centro de atención primaria dónde se visita el paciente?',
+          label: '¿Cuál es el centro de atención primaria dónde se visita el paciente? *',
           variant: 'input'
         }),
         sexoPaciente: requiresConsent({
           kind: 'string',
-          label:
-            'DATOS DEMOGRÁFICOS Y CLÍNICOS (en el momento de la fractura por fragilidad índice) - Indique el sexo del paciente',
+          label: 'Indique el sexo del paciente *',
           variant: 'radio',
           options: {
             masculino: 'Masculino',
@@ -578,22 +557,22 @@ export default defineInstrument({
         }),
         edadPaciente: requiresConsent({
           kind: 'number',
-          label: 'Indique la edad del paciente (años)',
+          label: 'Indique la edad del paciente (años) *',
           variant: 'input'
         }),
         pesoPaciente: requiresConsent({
           kind: 'number',
-          label: 'Indique el peso (kg)',
+          label: 'Indique el peso (kg) *',
           variant: 'input'
         }),
         alturaPaciente: requiresConsent({
           kind: 'number',
-          label: 'Indique la altura (cm)',
+          label: 'Indique la altura (cm) *',
           variant: 'input'
         }),
         observaCifosis: requiresConsent({
           kind: 'string',
-          label: '¿Se observa cifosis?',
+          label: '¿Se observa cifosis? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -602,7 +581,7 @@ export default defineInstrument({
         }),
         perdidaAlturaDocumentada: requiresConsent({
           kind: 'string',
-          label: '¿Existe pérdida de altura documentada respecto a talla previa?',
+          label: '¿Existe pérdida de altura documentada respecto a talla previa? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -611,7 +590,7 @@ export default defineInstrument({
         }),
         estiloVida: requiresConsent({
           kind: 'string',
-          label: 'Indique el estilo de vida que se ajuste más al paciente',
+          label: 'Indique el estilo de vida que se ajuste más al paciente *',
           variant: 'radio',
           options: {
             sedentario: 'Estilo de vida sedentario',
@@ -619,14 +598,14 @@ export default defineInstrument({
             equilibrado: 'Estilo de vida equilibrado',
             riesgo: 'Estilo de vida con hábitos de riesgo'
           }
-        }),
-        presentaFactoresRiesgo: requiresConsent({
-          kind: 'string',
-          label:
-            'FACTORES DE RIESGO (en el momento de la fractura por fragilidad índice) - ¿El paciente presenta alguno de los siguientes factores de riesgo?',
-          variant: 'input',
-          disabled: true
-        }),
+        })
+      }
+    },
+    {
+      title: 'FACTORES DE RIESGO (en el momento de la fractura por fragilidad índice)',
+      description: 'Indique si el paciente presenta alguno de los siguientes factores de riesgo',
+      fields: {
+        _warningFactoresRiesgo: consentWarning() as any,
         imcMenor20: requiresConsent({
           kind: 'boolean',
           label: 'IMC (< 20 kg/m²)',
@@ -762,14 +741,14 @@ export default defineInstrument({
         fechaFractura1: requiresPreviousFracture(
           {
             kind: 'date',
-            label: 'Fecha de la Fractura por Fragilidad'
+            label: 'Fecha de la Fractura por Fragilidad *'
           },
           1
         ),
         localizacionFractura1: requiresPreviousFracture(
           {
             kind: 'string',
-            label: 'Localización - Elegir una opción',
+            label: 'Localización - Elegir una opción *',
             variant: 'select',
             options: {
               vertebral: 'Vertebral',
@@ -787,7 +766,7 @@ export default defineInstrument({
         hospitalizacion1: requiresPreviousFracture(
           {
             kind: 'string',
-            label: '¿Requirió hospitalización?',
+            label: '¿Requirió hospitalización? *',
             variant: 'select',
             options: {
               si: 'Sí',
@@ -960,7 +939,7 @@ export default defineInstrument({
         _warningDiagnostico: consentWarning() as any,
         pacienteDiagnosticado: requiresConsent({
           kind: 'string',
-          label: '¿El paciente está diagnosticado de osteoporosis?',
+          label: '¿El paciente está diagnosticado de osteoporosis? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -969,11 +948,11 @@ export default defineInstrument({
         }),
         fechaDiagnostico: requiresDiagnosis({
           kind: 'date',
-          label: '¿Cuál fue la fecha en la que tuvo lugar el diagnóstico?'
+          label: '¿Cuál fue la fecha en la que tuvo lugar el diagnóstico? *'
         }),
         metodoDiagnostico: requiresDiagnosis({
           kind: 'string',
-          label: '¿Qué método principal se empleó para el diagnóstico?',
+          label: '¿Qué método principal se empleó para el diagnóstico? *',
           variant: 'radio',
           options: {
             dxa: 'Densitometría ósea (DXA)',
@@ -1140,11 +1119,11 @@ export default defineInstrument({
         _warningFinEstudio: consentWarning() as any,
         fechaFinEstudio: requiresConsent({
           kind: 'date',
-          label: '¿Fecha en que se rellena el formulario de fin de estudio?'
+          label: '¿Fecha en que se rellena el formulario de fin de estudio? *'
         }),
         pacienteCompletoEstudio: requiresConsent({
           kind: 'string',
-          label: '¿Ha completado el paciente el estudio?',
+          label: '¿Ha completado el paciente el estudio? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -1153,7 +1132,7 @@ export default defineInstrument({
         }),
         motivoNoCompletado: requiresStudyNotCompleted({
           kind: 'string',
-          label: 'En caso negativo, indique el motivo',
+          label: 'En caso negativo, indique el motivo *',
           variant: 'radio',
           options: {
             decisionInvestigador: 'Decisión del investigador',
@@ -1163,25 +1142,21 @@ export default defineInstrument({
         }),
         otroMotivoEspecificar: requiresOtroMotivo({
           kind: 'string',
-          label: 'Otro motivo (especificar):',
+          label: 'Otro motivo (especificar): *',
           variant: 'input'
         }),
         inicialesFinEstudio: requiresConsent({
           kind: 'string',
-          label: 'Iniciales del profesional sanitario',
+          label: 'Iniciales del profesional sanitario *',
           variant: 'input'
         })
       }
     }
   ],
   clientDetails: {
-    estimatedDuration: 10,
+    estimatedDuration: 45,
     instructions: [
-      'Complete todos los campos del formulario con la información más precisa posible',
-      'Los campos marcados son obligatorios según los criterios de inclusión/exclusión',
-      'Utilice las unidades de medida especificadas en cada campo',
-      'En caso de duda, consulte con el investigador principal',
-      'Asegúrese de verificar los datos antes de enviar el formulario'
+      'IMPORTANTE: Antes de comenzar, asegúrese de tener a mano TODOS los datos clínicos del paciente necesarios para completar el formulario.\n Revise el formulario compartido previamente en la sesión de formación para familiarizarse con todos los datos que se requerirán.\n Complete todos los campos del formulario con la información más precisa posible.\n Los campos marcados con * son obligatorios.\n Utilice las unidades de medida especificadas en cada campo.\n En caso de duda, consulte con el investigador principal.\n Asegúrese de verificar los datos antes de enviar el formulario.'
     ]
   },
   details: {
@@ -1235,12 +1210,10 @@ export default defineInstrument({
       fechaConsentimiento: z.date(),
       criterioInclusion1: z.enum(['si', 'no']),
       criterioInclusion2: z.enum(['si', 'no']),
-      notaInclusion: z.string().optional(),
       criterioExclusion1: z.enum(['si', 'no']),
       criterioExclusion2: z.enum(['si', 'no']),
       criterioExclusion3: z.enum(['si', 'no']),
       criterioExclusion4: z.enum(['si', 'no']),
-      notaExclusion: z.string().optional(),
 
       // CARACTERIZACIÓN DEL PACIENTE
       centroAtencionPrimaria: z.string().optional(),
