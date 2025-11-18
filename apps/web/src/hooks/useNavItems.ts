@@ -61,6 +61,8 @@ export function useNavItems() {
       });
     }
     if (
+      currentGroup &&
+      ability?.can('manage', 'Group') &&
       ability?.can('read', 'Subject') &&
       ability.can('create', 'InstrumentRecord') &&
       setupStateQuery.data.isExperimentalFeaturesEnabled

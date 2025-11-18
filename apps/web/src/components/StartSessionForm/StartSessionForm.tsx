@@ -48,6 +48,78 @@ export const StartSessionForm = ({
   const { resolvedLanguage, t } = useTranslation();
   const isAltaHealthServices = currentGroup?.name === 'Alta Health Services';
 
+  // For Alta Health Services, show simplified form with only session date
+  if (isAltaHealthServices) {
+    return (
+      <Form
+        preventResetValuesOnReset
+        suspendWhileSubmitting
+        className="mx-auto max-w-3xl"
+        content={[
+          {
+            title: t({
+              ca: 'Iniciar Registre',
+              en: 'Start Record',
+              es: 'Iniciar Registro',
+              fr: "Démarrer l'enregistrement"
+            }),
+            description: t({
+              ca: "Seleccioneu la data per iniciar una nova sessió. Podreu afegir múltiples registres de pacients dins d'aquesta sessió.",
+              en: 'Select the date to start a new session. You will be able to add multiple patient records within this session.',
+              es: 'Seleccione la fecha para iniciar una nueva sesión. Podrá agregar múltiples registros de pacientes dentro de esta sesión.',
+              fr: 'Sélectionnez la date pour démarrer une nouvelle session. Vous pourrez ajouter plusieurs dossiers de patients dans cette session.'
+            }),
+            fields: {
+              sessionDate: {
+                kind: 'date',
+                label: t({
+                  ca: 'Data de la Sessió',
+                  en: 'Session Date',
+                  es: 'Fecha de la Sesión',
+                  fr: 'Date de la Session'
+                }),
+                description: t({
+                  ca: 'La data en què es realitza aquesta sessió',
+                  en: 'The date when this session is being conducted',
+                  es: 'La fecha en que se realiza esta sesión',
+                  fr: 'La date à laquelle cette session est effectuée'
+                })
+              } as any
+            }
+          }
+        ]}
+        data-testid="start-session-form"
+        initialValues={{
+          sessionDate: (() => {
+            const today = new Date();
+            return new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0, 0);
+          })()
+        }}
+        readOnly={readOnly}
+        submitBtnLabel={t('core.submit')}
+        validationSchema={z.object({
+          sessionDate: z.date()
+        })}
+        onSubmit={async ({ sessionDate }) => {
+          const subjectId = encodeScopedSubjectId(username!, {
+            groupName: currentGroup?.name ?? DEFAULT_GROUP_NAME
+          });
+
+          await onSubmit({
+            date: sessionDate,
+            groupId: currentGroup?.id ?? null,
+            username: username ?? null,
+            type: 'RETROSPECTIVE',
+            subjectData: {
+              id: subjectId
+            }
+          });
+        }}
+      />
+    );
+  }
+
+  // For all other groups, show the standard form
   return (
     <Form
       preventResetValuesOnReset
@@ -66,14 +138,10 @@ export const StartSessionForm = ({
                 es: 'Método',
                 fr: 'Méthode'
               }),
-              options: (isAltaHealthServices
-                ? {
-                    CUSTOM_ID: t('common.customIdentifier')
-                  }
-                : {
-                    CUSTOM_ID: t('common.customIdentifier'),
-                    PERSONAL_INFO: t('common.personalInfo')
-                  }) as any,
+              options: {
+                CUSTOM_ID: t('common.customIdentifier'),
+                PERSONAL_INFO: t('common.personalInfo')
+              } as any,
               variant: 'select'
             }
           }
@@ -125,22 +193,21 @@ export const StartSessionForm = ({
             subjectDateOfBirth: {
               kind: 'dynamic',
               deps: ['subjectIdentificationMethod'],
-              render() {
-                return isAltaHealthServices
-                  ? null
-                  : {
+              render({ subjectIdentificationMethod }) {
+                return subjectIdentificationMethod === 'PERSONAL_INFO'
+                  ? {
                       kind: 'date',
                       label: t('core.identificationData.dateOfBirth.label')
-                    };
+                    }
+                  : null;
               }
             },
             subjectSex: {
               kind: 'dynamic',
               deps: ['subjectIdentificationMethod'],
-              render() {
-                return isAltaHealthServices
-                  ? null
-                  : {
+              render({ subjectIdentificationMethod }) {
+                return subjectIdentificationMethod === 'PERSONAL_INFO'
+                  ? {
                       description: t('core.identificationData.sex.description'),
                       kind: 'string',
                       label: t('core.identificationData.sex.label'),
@@ -149,7 +216,8 @@ export const StartSessionForm = ({
                         MALE: t('core.identificationData.sex.male')
                       },
                       variant: 'select'
-                    };
+                    }
+                  : null;
               }
             }
           }
@@ -158,33 +226,18 @@ export const StartSessionForm = ({
           title: t('session.additionalData.title'),
           fields: {
             sessionType: {
-              kind: 'dynamic',
-              deps: ['subjectIdentificationMethod'],
-              render() {
-                return isAltaHealthServices
-                  ? null
-                  : {
-                      kind: 'string',
-                      label: t('session.type.label'),
-                      variant: 'select',
-                      options: {
-                        RETROSPECTIVE: t('session.type.retrospective'),
-                        IN_PERSON: t('session.type.in-person')
-                      }
-                    };
+              kind: 'string',
+              label: t('session.type.label'),
+              variant: 'select',
+              options: {
+                RETROSPECTIVE: t('session.type.retrospective'),
+                IN_PERSON: t('session.type.in-person')
               }
             },
             sessionDate: {
               kind: 'dynamic',
               deps: ['sessionType'],
               render({ sessionType }) {
-                if (isAltaHealthServices) {
-                  return {
-                    description: t('session.dateAssessed.description'),
-                    kind: 'date',
-                    label: t('session.dateAssessed.label')
-                  };
-                }
                 return sessionType === 'RETROSPECTIVE'
                   ? {
                       description: t('session.dateAssessed.description'),
@@ -272,15 +325,6 @@ export const StartSessionForm = ({
                 });
               }
             }
-          }
-
-          // For Alta Health Services, require sessionDate
-          if (isAltaHealthServices && !val.sessionDate) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t('core.form.requiredField'),
-              path: ['sessionDate']
-            });
           }
         })}
       onSubmit={async ({
