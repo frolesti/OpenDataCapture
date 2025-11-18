@@ -210,10 +210,10 @@ const Walkthrough = () => {
         position: 'bottom-left',
         target: 'button[data-nav-url="/session/start-session"]',
         title: t({
-          ca: 'Iniciar sessió',
-          en: 'Start Session',
-          es: 'Iniciar sesión',
-          fr: 'Commencer une session'
+          ca: 'Iniciar Registre',
+          en: 'Start Record',
+          es: 'Iniciar Registro',
+          fr: 'Commencer un enregistrement'
         })
       },
       {

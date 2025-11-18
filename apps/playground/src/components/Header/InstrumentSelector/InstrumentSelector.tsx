@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { Button, Command, Popover } from '@douglasneuroinformatics/libui/components';
+import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { cn } from '@douglasneuroinformatics/libui/utils';
 import { InstrumentIcon } from '@opendatacapture/react-core';
 import { groupBy } from 'lodash-es';
@@ -9,8 +10,30 @@ import { CheckIcon, ChevronsUpDown } from 'lucide-react';
 import type { InstrumentCategory, InstrumentRepository } from '@/models/instrument-repository.model';
 import { useAppStore } from '@/store';
 
+const translations = {
+  loadInstrument: {
+    en: 'Load an instrument...',
+    fr: 'Charger un instrument...',
+    es: 'Cargar un instrumento...',
+    ca: 'Carregar un instrument...'
+  },
+  noInstrumentsFound: {
+    en: 'No Instruments Found',
+    fr: 'Aucun instrument trouvé',
+    es: 'No se encontraron instrumentos',
+    ca: "No s'han trobat instruments"
+  },
+  search: {
+    en: 'Search...',
+    fr: 'Rechercher...',
+    es: 'Buscar...',
+    ca: 'Cercar...'
+  }
+};
+
 export const InstrumentSelector = () => {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
   const instruments = useAppStore((store) => store.instruments);
   const selectedInstrument = useAppStore((store) => store.selectedInstrument);
   const setSelectedInstrument = useAppStore((store) => store.setSelectedInstrument);
@@ -29,7 +52,7 @@ export const InstrumentSelector = () => {
       <Popover.Trigger asChild>
         <Button
           aria-expanded={open}
-          aria-label="Load an instrument..."
+          aria-label={t(translations.loadInstrument)}
           className="w-full flex-1 justify-between"
           role="combobox"
           variant="outline"
@@ -40,9 +63,9 @@ export const InstrumentSelector = () => {
       </Popover.Trigger>
       <Popover.Content className="w-72 p-0 lg:w-96">
         <Command>
-          <Command.Input placeholder="Search..." />
+          <Command.Input placeholder={t(translations.search)} />
           <Command.List>
-            <Command.Empty>No Instruments Found</Command.Empty>
+            <Command.Empty>{t(translations.noInstrumentsFound)}</Command.Empty>
             {Object.entries(categorizedInstruments).map(([heading, instruments]) => (
               <Command.Group heading={heading} key={heading}>
                 {instruments.map((instrument) => (

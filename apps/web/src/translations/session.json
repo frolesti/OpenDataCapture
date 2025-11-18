@@ -36,10 +36,10 @@
     }
   },
   "startSession": {
-    "en": "Start Session",
-    "fr": "Commencer une session",
-    "es": "Iniciar sesión",
-    "ca": "Iniciar sessió"
+    "en": "Start Record",
+    "fr": "Commencer un enregistrement",
+    "es": "Iniciar Registro",
+    "ca": "Iniciar Registre"
   },
   "type": {
     "in-person": {

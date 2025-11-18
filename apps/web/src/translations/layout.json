@@ -49,10 +49,10 @@
   },
   "navLinks": {
     "accessibleInstruments": {
-      "en": "Administer Instrument",
-      "fr": "Administrer un instrument",
-      "es": "Administrar instrumento",
-      "ca": "Administrar instrument"
+      "en": "Select Study",
+      "fr": "Sélectionner une étude",
+      "es": "Seleccionar Estudio",
+      "ca": "Selecciona Estudi"
     },
     "appSettings": {
       "en": "App Settings",
@@ -85,10 +85,10 @@
       "ca": "Carregar dades"
     },
     "endSession": {
-      "en": "End Current Session",
-      "fr": "Terminer la session en cours",
-      "es": "Finalizar sesión actual",
-      "ca": "Finalitzar sessió actual"
+      "en": "Close Current Record",
+      "fr": "Fermer l'enregistrement actuel",
+      "es": "Cerrar registro actual",
+      "ca": "Tanca registre actual"
     },
     "manageGroup": {
       "en": "Manage Group",
@@ -109,10 +109,10 @@
       "ca": "Gestionar usuaris"
     },
     "startSession": {
-      "en": "Start Session",
-      "fr": "Commencer une session",
-      "es": "Iniciar sesión",
-      "ca": "Iniciar sessió"
+      "en": "Start Record",
+      "fr": "Démarrer un enregistrement",
+      "es": "Iniciar Registro",
+      "ca": "Inicia Registre"
     },
     "viewCurrentSubject": {
       "en": "View Current Subject",

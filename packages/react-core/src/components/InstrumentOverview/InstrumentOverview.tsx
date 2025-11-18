@@ -22,6 +22,8 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
             <>
               <Heading variant="h5">
                 {t({
+                  ca: 'Duració estimada',
+                  es: 'Tiempo estimado',
                   en: 'Estimated Duration',
                   fr: 'Durée estimée'
                 })}
@@ -34,6 +36,8 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
           <div>
             <Heading variant="h5">
               {t({
+                ca: 'Instruccions',
+                es: 'Instrucciones',
                 en: 'Instructions',
                 fr: 'Instructions'
               })}
@@ -45,9 +49,12 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
       <Button
         className="w-full"
         label={t({
+          ca: 'Començar',
+          es: 'Comenzar',
           en: 'Begin',
           fr: 'Commencer'
         })}
+        variant="primary"
         onClick={() => {
           onNext();
         }}
