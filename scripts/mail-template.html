@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Benvingut a OpenDataCapture</title>
+    <style>
+      body {
+        background: #f6f8fb;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      .card {
+        max-width: 520px;
+        width: 100%;
+        margin: 48px auto;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow:
+          0 6px 32px rgba(100, 100, 150, 0.18),
+          0 1.5px 6px rgba(100, 100, 150, 0.1);
+        padding: 32px 24px;
+        text-align: center;
+        border: 1px solid #ececec;
+      }
+      .greeting {
+        font-size: 1.1rem;
+        margin-bottom: 16px;
+        color: #222;
+      }
+      .info {
+        background: #f6f8fb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+        font-size: 1rem;
+        color: #333;
+        text-align: left;
+      }
+      .cta {
+        display: block;
+        width: 100%;
+        background: #a7a6f9;
+        color: #fff !important;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 0;
+        font-size: 1.1rem;
+        font-weight: bold;
+        text-decoration: none;
+        margin-bottom: 16px;
+        margin-top: 8px;
+        transition: background 0.2s;
+      }
+      .cta:hover {
+        background: #8d8be6;
+        color: #fff !important;
+      }
+      .footer {
+        font-size: 0.95rem;
+        color: #888;
+        margin-top: 24px;
+        text-align: left;
+      }
+      .signature {
+        font-size: 0.95rem;
+        color: #888;
+      }
+      @media (max-width: 600px) {
+        .card {
+          padding: 16px 4px;
+          margin: 16px auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div
+        style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 16px"
+      >
+        <img
+          src="cid:logo-alta"
+          alt="ALTA medical services"
+          style="display: block; margin: 0 auto; max-width: 160px; height: auto"
+        />
+      </div>
+      <div class="greeting">Hola {{Nom}},</div>
+      <div class="info">
+        El teu compte per a <strong>OpenDataCapture</strong> ha estat creat.<br /><br />
+        <strong>Usuari:</strong> {{username}}<br />
+        <strong>Contrasenya:</strong> {{password}}<br />
+      </div>
+      <a class="cta" href="https://altahealthdata.com/auth/login">Accedeix a la plataforma</a>
+      <div class="footer">Si us plau, canvia la contrasenya després del primer inici de sessió.<br /></div>
+      <div class="signature">
+        Salutacions,<br />
+        L'equip d'OpenDataCapture
+      </div>
+    </div>
+  </body>
+</html>
