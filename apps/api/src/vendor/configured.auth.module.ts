@@ -11,6 +11,7 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
         return {
           defineAbility: (ability, payload, metadata) => {
             const groupIds = payload.groups.map((group) => group.id);
+            const userId = (payload as any).id;
             switch (payload.basePermissionLevel) {
               case 'ADMIN':
                 ability.can('manage', 'all');
@@ -26,6 +27,7 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
                 ability.can('create', 'Subject');
                 ability.can('read', 'Subject', { groupIds: { hasSome: groupIds } });
                 ability.can('read', 'User', { groupIds: { hasSome: groupIds } });
+                ability.can('update', 'User', { id: userId });
                 break;
               case 'STANDARD':
                 ability.can('read', 'Group', { id: { in: groupIds } });
@@ -35,6 +37,7 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
                 ability.can('create', 'Session');
                 ability.can('create', 'Subject');
                 ability.can('read', 'Subject', { groupIds: { hasSome: groupIds } });
+                ability.can('update', 'User', { id: userId });
                 break;
             }
             metadata.additionalPermissions?.forEach(({ action, subject }) => {
@@ -62,8 +65,9 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
                 firstName: user.firstName,
                 groups: user.groups,
                 lastName: user.lastName,
-                username: user.username
-              }
+                username: user.username,
+                id: user.id
+              } as any
             };
           }
         };

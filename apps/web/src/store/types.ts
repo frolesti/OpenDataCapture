@@ -7,6 +7,7 @@ import type { StateCreator } from 'zustand';
 
 export type CurrentUser = Omit<TokenPayload, 'basePermissionLevel' | 'permissions'> & {
   ability: BaseAppAbility;
+  id: string;
 };
 
 export type AuthSlice = {
