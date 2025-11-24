@@ -10,6 +10,7 @@ import {
   EyeIcon,
   UploadIcon,
   UserCogIcon,
+  UserIcon,
   UsersIcon
 } from 'lucide-react';
 
@@ -80,6 +81,17 @@ export function useNavItems() {
         url: '/group/manage'
       });
     }
+
+    globalItems.push({
+      icon: UserIcon,
+      label: t({
+        ca: 'El meu perfil',
+        en: 'My Profile',
+        es: 'Mi perfil',
+        fr: 'Mon profil'
+      }),
+      url: '/profile'
+    });
 
     const adminItems: NavItem[] = [];
     if (ability?.can('manage', 'all')) {

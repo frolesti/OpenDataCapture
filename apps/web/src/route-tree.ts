@@ -14,6 +14,7 @@ import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AppUserRouteImport } from './routes/_app/user'
+import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppContactRouteImport } from './routes/_app/contact'
 import { Route as AppAboutRouteImport } from './routes/_app/about'
@@ -56,6 +57,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 const AppUserRoute = AppUserRouteImport.update({
   id: '/user',
   path: '/user',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AppAboutRoute
   '/contact': typeof AppContactRoute
   '/dashboard': typeof AppDashboardRoute
+  '/profile': typeof AppProfileRoute
   '/user': typeof AppUserRoute
   '/auth/login': typeof AuthLoginRoute
   '/': typeof AppIndexRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/about': typeof AppAboutRoute
   '/contact': typeof AppContactRoute
   '/dashboard': typeof AppDashboardRoute
+  '/profile': typeof AppProfileRoute
   '/user': typeof AppUserRoute
   '/auth/login': typeof AuthLoginRoute
   '/': typeof AppIndexRoute
@@ -216,6 +224,7 @@ export interface FileRoutesById {
   '/_app/about': typeof AppAboutRoute
   '/_app/contact': typeof AppContactRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/profile': typeof AppProfileRoute
   '/_app/user': typeof AppUserRoute
   '/auth/login': typeof AuthLoginRoute
   '/_app/': typeof AppIndexRoute
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/dashboard'
+    | '/profile'
     | '/user'
     | '/auth/login'
     | '/'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/dashboard'
+    | '/profile'
     | '/user'
     | '/auth/login'
     | '/'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/_app/about'
     | '/_app/contact'
     | '/_app/dashboard'
+    | '/_app/profile'
     | '/_app/user'
     | '/auth/login'
     | '/_app/'
@@ -356,6 +368,13 @@ declare module '@tanstack/react-router' {
       path: '/user'
       fullPath: '/user'
       preLoaderRoute: typeof AppUserRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/dashboard': {
@@ -516,6 +535,7 @@ interface AppRouteRouteChildren {
   AppAboutRoute: typeof AppAboutRoute
   AppContactRoute: typeof AppContactRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppProfileRoute: typeof AppProfileRoute
   AppUserRoute: typeof AppUserRoute
   AppIndexRoute: typeof AppIndexRoute
   AppDatahubSubjectIdRouteRoute: typeof AppDatahubSubjectIdRouteRouteWithChildren
@@ -537,6 +557,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAboutRoute: AppAboutRoute,
   AppContactRoute: AppContactRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppProfileRoute: AppProfileRoute,
   AppUserRoute: AppUserRoute,
   AppIndexRoute: AppIndexRoute,
   AppDatahubSubjectIdRouteRoute: AppDatahubSubjectIdRouteRouteWithChildren,
