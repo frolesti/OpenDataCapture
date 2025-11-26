@@ -212,15 +212,15 @@ async function sendMail(doctor: any, user: any, mailHtml: string) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'frolesti4@gmail.com',
-      pass: 'omhj bvqa cprv heic'
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASSWORD
     }
   });
 
   await transporter.sendMail({
-    from: '"OpenDataCapture" <noreply@opendatacapture.org>',
+    from: '"Alta Medical Services" <noreply@altamedicalservices.com>',
     to: doctor.Email,
-    subject: 'El teu accés a OpenDataCapture',
+    subject: 'El teu accés a Alta Medical Services',
     html: mailHtml,
     attachments: [
       {

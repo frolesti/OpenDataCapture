@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { estimatePasswordStrength } from '@douglasneuroinformatics/libpasswd';
 import { Form, Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
+import type { Group } from '@opendatacapture/schemas/group';
 import type { Promisable } from 'type-fest';
 import { z } from 'zod/v4';
 
@@ -11,11 +12,12 @@ import { UserIcon } from '@/components/UserIcon';
 import type { CurrentUser } from '@/store/types';
 
 export type ProfileProps = {
+  currentGroup: Group | null;
   currentUser: CurrentUser;
   onSubmit: (data: { password: string }) => Promisable<void>;
 };
 
-export const Profile = ({ currentUser, onSubmit }: ProfileProps) => {
+export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) => {
   const { resolvedLanguage, t } = useTranslation();
 
   const $ChangePasswordFormData = useMemo(() => {
@@ -91,6 +93,17 @@ export const Profile = ({ currentUser, onSubmit }: ProfileProps) => {
                 {t('common.username')}
               </label>
               <p className="text-lg font-medium">{currentUser.username}</p>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
+                {t({
+                  ca: 'Hospital',
+                  en: 'Hospital',
+                  es: 'Hospital',
+                  fr: 'Hôpital'
+                })}
+              </label>
+              <p className="text-lg font-medium">{currentGroup?.name || '-'}</p>
             </div>
           </div>
         </div>
