@@ -11,13 +11,14 @@ import { SessionsModule } from './sessions/sessions.module';
 import { SetupModule } from './setup/setup.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { SummaryModule } from './summary/summary.module';
+import { SupportModule } from './support/support.module';
 import { UsersModule } from './users/users.module';
 import { ConfiguredAuthModule } from './vendor/configured.auth.module';
 
 export default AppFactory.create({
   docs: {
     contact: {
-      email: 'support@douglasneuroinformatics.ca',
+      email: 'suport.alta.medical@gmail.com',
       name: 'Douglas Neuroinformatics',
       url: 'https://douglasneuroinformatics.ca'
     },
@@ -44,6 +45,7 @@ export default AppFactory.create({
     SetupModule,
     SubjectsModule,
     SummaryModule,
+    SupportModule,
     UsersModule,
     {
       module: AssignmentsModule,

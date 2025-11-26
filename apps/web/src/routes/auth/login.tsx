@@ -4,6 +4,7 @@ import { Logo } from '@opendatacapture/react-core';
 import type { AuthPayload, LoginCredentials } from '@opendatacapture/schemas/auth';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
+import { useState } from 'react';
 
 import { DemoBanner } from '@/components/DemoBanner';
 import { LoginForm } from '@/components/LoginForm';
@@ -30,6 +31,7 @@ const RouteComponent = () => {
   const notifications = useNotificationsStore();
   const { t } = useTranslation('auth');
   const navigate = useNavigate();
+  const [isResetMode, setIsResetMode] = useState(false);
 
   const handleLogin = async (credentials: LoginCredentials) => {
     const result = await loginRequest(credentials);
@@ -55,10 +57,10 @@ const RouteComponent = () => {
         >
           <Card.Header className="flex items-center justify-center">
             <Logo className="m-1.5 h-auto w-40" variant="auto" />
-            <Heading variant="h2">{t('login')}</Heading>
+            {!isResetMode && <Heading variant="h2">{t('login')}</Heading>}
           </Card.Header>
           <Card.Content>
-            <LoginForm onSubmit={(credentials) => void handleLogin(credentials)} />
+            <LoginForm onResetModeChange={setIsResetMode} onSubmit={(credentials) => void handleLogin(credentials)} />
           </Card.Content>
           <Card.Footer className="text-muted-foreground flex justify-between" data-testid="login-footer-toggles">
             <LanguageToggle

@@ -5,6 +5,7 @@ import { useUpdateUserMutation } from '@/hooks/useUpdateUserMutation';
 import { useAppStore } from '@/store';
 
 const RouteComponent = () => {
+  const currentGroup = useAppStore((store) => store.currentGroup);
   const currentUser = useAppStore((store) => store.currentUser);
   const updateUserMutation = useUpdateUserMutation();
 
@@ -14,6 +15,7 @@ const RouteComponent = () => {
 
   return (
     <Profile
+      currentGroup={currentGroup}
       currentUser={currentUser}
       onSubmit={async (data) => {
         await updateUserMutation.mutateAsync({
