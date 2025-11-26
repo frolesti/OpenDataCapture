@@ -3,15 +3,15 @@ import React, { useMemo } from 'react';
 import { estimatePasswordStrength } from '@douglasneuroinformatics/libpasswd';
 import { Form, Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
-import type { User } from '@opendatacapture/schemas/user';
 import type { Promisable } from 'type-fest';
 import { z } from 'zod/v4';
 
 import { PageHeader } from '@/components/PageHeader';
 import { UserIcon } from '@/components/UserIcon';
+import type { CurrentUser } from '@/store/types';
 
 export type ProfileProps = {
-  currentUser: User;
+  currentUser: CurrentUser;
   onSubmit: (data: { password: string }) => Promisable<void>;
 };
 
@@ -58,9 +58,7 @@ export const Profile = ({ currentUser, onSubmit }: ProfileProps) => {
               <UserIcon className="h-16 w-16 text-slate-600 dark:text-slate-400" />
             </div>
             <div className="text-center">
-              <Heading variant="h3">
-                {currentUser.firstName} {currentUser.lastName}
-              </Heading>
+              <Heading variant="h3">{`${currentUser.firstName} ${currentUser.lastName}`}</Heading>
               <p className="text-slate-500 dark:text-slate-400">@{currentUser.username}</p>
             </div>
           </div>
@@ -93,17 +91,6 @@ export const Profile = ({ currentUser, onSubmit }: ProfileProps) => {
                 {t('common.username')}
               </label>
               <p className="text-lg font-medium">{currentUser.username}</p>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t({
-                  ca: 'Rol',
-                  en: 'Role',
-                  es: 'Rol',
-                  fr: 'Rôle'
-                })}
-              </label>
-              <p className="text-lg font-medium capitalize">{currentUser.basePermissionLevel?.toLowerCase() || '-'}</p>
             </div>
           </div>
         </div>
@@ -150,7 +137,6 @@ export const Profile = ({ currentUser, onSubmit }: ProfileProps) => {
                       es: 'Nueva contraseña',
                       fr: 'Nouveau mot de passe'
                     }),
-                    placeholder: '••••••••',
                     variant: 'password'
                   }
                 },
