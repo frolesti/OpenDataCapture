@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 
-import { toBasicISOString } from '@douglasneuroinformatics/libjs';
-import { ActionDropdown, ClientTable, Dialog, Heading, SearchBar } from '@douglasneuroinformatics/libui/components';
+import { camelToSnakeCase, toBasicISOString } from '@douglasneuroinformatics/libjs';
+import {
+  ActionDropdown,
+  ClientTable,
+  Dialog,
+  Heading,
+  SearchBar,
+  Select
+} from '@douglasneuroinformatics/libui/components';
 import { useDownload, useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { InstrumentRecordsExport } from '@opendatacapture/schemas/instrument-records';
 import type { Subject } from '@opendatacapture/schemas/subject';
@@ -12,6 +19,8 @@ import { unparse } from 'papaparse';
 
 import { IdentificationForm } from '@/components/IdentificationForm';
 import { PageHeader } from '@/components/PageHeader';
+import { SelectInstrument } from '@/components/SelectInstrument';
+import { useGlobalInstrumentVisualization } from '@/hooks/useGlobalInstrumentVisualization';
 import { subjectsQueryOptions, useSubjectsQuery } from '@/hooks/useSubjectsQuery';
 import { useAppStore } from '@/store';
 import { downloadExcel } from '@/utils/excel';
@@ -71,6 +80,18 @@ const RouteComponent = () => {
   const navigate = useNavigate();
 
   const { data } = useSubjectsQuery({ params: { groupId: currentGroup?.id } });
+
+  const {
+    dl,
+    filterOptions,
+    filters,
+    instrumentId,
+    instrumentOptions,
+    records,
+    setFilter,
+    setInstrumentId,
+    setMinDate
+  } = useGlobalInstrumentVisualization();
 
   const getExportRecords = async () => {
     const response = await axios.get<InstrumentRecordsExport>('/v1/instrument-records/export', {
@@ -133,6 +154,23 @@ const RouteComponent = () => {
     }
   };
 
+  const fields: { field: string; label: string }[] = [];
+  if (records.length > 0) {
+    const allKeys = new Set<string>();
+    records.forEach((record) => {
+      Object.keys(record).forEach((key) => allKeys.add(key));
+    });
+
+    Array.from(allKeys).forEach((subItem) => {
+      if (!subItem.startsWith('__')) {
+        fields.push({
+          field: subItem,
+          label: camelToSnakeCase(subItem).toUpperCase()
+        });
+      }
+    });
+  }
+
   return (
     <React.Fragment>
       <PageHeader>
@@ -164,23 +202,118 @@ const RouteComponent = () => {
               <IdentificationForm onSubmit={(data) => void lookupSubject(data)} />
             </Dialog.Content>
           </Dialog>
+          <div className="min-w-60">
+            <SelectInstrument options={instrumentOptions} onSelect={setInstrumentId} />
+          </div>
           <div className="flex min-w-60 gap-2 lg:shrink">
-            <ActionDropdown
-              widthFull
-              data-spotlight-type="export-data-dropdown"
-              data-testid="datahub-export-dropdown"
-              options={['CSV', 'JSON', 'Excel']}
-              title={t('datahub.index.table.export')}
-              onSelection={handleExportSelection}
-            />
+            {instrumentId ? (
+              <React.Fragment>
+                {Object.entries(filterOptions).map(([key, options]) => {
+                  const normalizedKey = key.toUpperCase();
+                  const isHealthCenter =
+                    normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
+                    normalizedKey === 'CENTRO_SANITARIO' ||
+                    (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'));
+
+                  let label = key;
+                  if (key === '__subjectId__') {
+                    label = t('datahub.index.table.subject').toUpperCase();
+                  } else if (isHealthCenter) {
+                    label = t({
+                      ca: 'Centre Sanitari',
+                      en: 'Health Center',
+                      es: 'Centro de Salud',
+                      fr: 'Centre de Santé'
+                    }).toUpperCase();
+                  }
+
+                  return (
+                    <Select
+                      key={key}
+                      value={filters[key] ?? 'ALL'}
+                      onValueChange={(val) => setFilter(key, val === 'ALL' ? null : val)}
+                    >
+                      <Select.Trigger className="min-w-32">
+                        <Select.Value placeholder={label} />
+                      </Select.Trigger>
+                      <Select.Content>
+                        <Select.Item value="ALL">
+                          {key === '__subjectId__'
+                            ? t({
+                                ca: 'Tots els subjectes',
+                                en: 'All Subjects',
+                                es: 'Todos los sujetos',
+                                fr: 'Tous les sujets'
+                              })
+                            : isHealthCenter
+                              ? t({
+                                  ca: 'Tots els centres sanitaris',
+                                  en: 'All Health Centers',
+                                  es: 'Todos los centros de salud',
+                                  fr: 'Tous les centres de santé'
+                                })
+                              : `${t({ ca: 'Tots', en: 'All', es: 'Todos', fr: 'Tous' })} ${key}`}
+                        </Select.Item>
+                        {Array.from(options).map((opt) => (
+                          <Select.Item key={opt} value={opt}>
+                            {key === '__subjectId__' ? removeSubjectIdScope(opt) : opt}
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select>
+                  );
+                })}
+                <ActionDropdown
+                  widthFull
+                  data-spotlight-type="export-data-dropdown"
+                  disabled={!instrumentId}
+                  options={['TSV', 'JSON', 'CSV', 'Excel']}
+                  title={t('core.download')}
+                  triggerClassName="min-w-32"
+                  onSelection={dl}
+                />
+              </React.Fragment>
+            ) : (
+              <ActionDropdown
+                widthFull
+                data-spotlight-type="export-data-dropdown"
+                data-testid="datahub-export-dropdown"
+                options={['CSV', 'JSON', 'Excel']}
+                title={t('datahub.index.table.export')}
+                onSelection={handleExportSelection}
+              />
+            )}
           </div>
         </div>
-        <MasterDataTable
-          data={data}
-          onSelect={(subject) => {
-            void navigate({ to: `./${subject.id}/assignments` });
-          }}
-        />
+        {instrumentId ? (
+          <ClientTable
+            noWrap
+            columns={[
+              {
+                field: '__date__',
+                formatter: (value: Date) => toBasicISOString(value),
+                label: 'DATE_COLLECTED'
+              },
+              {
+                field: '__subjectId__',
+                formatter: (value: string) => removeSubjectIdScope(value),
+                label: 'SUBJECT_ID'
+              },
+              ...fields
+            ]}
+            data={records}
+            data-testid="instrument-table"
+            entriesPerPage={15}
+            minRows={15}
+          />
+        ) : (
+          <MasterDataTable
+            data={data}
+            onSelect={(subject) => {
+              void navigate({ to: `./${subject.id}/assignments` });
+            }}
+          />
+        )}
       </div>
     </React.Fragment>
   );

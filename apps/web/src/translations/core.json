@@ -492,5 +492,29 @@
     "fr": "Oui",
     "es": "Sí",
     "ca": "Sí"
+  },
+  "all": {
+    "en": "All",
+    "fr": "Tous",
+    "es": "Todos",
+    "ca": "Tots"
+  },
+  "allSubjects": {
+    "en": "All Subjects",
+    "fr": "Tous les clients",
+    "es": "Todos los sujetos",
+    "ca": "Tots els subjectes"
+  },
+  "allHealthCenters": {
+    "en": "All Health Centers",
+    "fr": "Tous les centres de santé",
+    "es": "Todos los centros de salud",
+    "ca": "Tots els centres sanitaris"
+  },
+  "healthCenter": {
+    "en": "Health Center",
+    "fr": "Centre de santé",
+    "es": "Centro de salud",
+    "ca": "Centre sanitari"
   }
 }
