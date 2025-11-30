@@ -20,9 +20,9 @@ const EIGHTEEN_YEARS = 568025136000; // milliseconds
 const MIN_DATE_OF_BIRTH = new Date(currentDate.getTime() - EIGHTEEN_YEARS);
 
 type StartSessionFormData = {
-  sessionDate: Date;
+  sessionDate: string;
   sessionType: 'IN_PERSON' | 'RETROSPECTIVE';
-  subjectDateOfBirth?: Date;
+  subjectDateOfBirth?: string;
   subjectFirstName?: string;
   subjectId?: string;
   subjectIdentificationMethod: SubjectIdentificationMethod;
@@ -72,6 +72,7 @@ export const StartSessionForm = ({
             fields: {
               sessionDate: {
                 kind: 'date',
+                disabled: true,
                 label: t({
                   ca: 'Data de la Sessió',
                   en: 'Session Date',
@@ -79,10 +80,10 @@ export const StartSessionForm = ({
                   fr: 'Date de la Session'
                 }),
                 description: t({
-                  ca: 'La data en què es realitza aquesta sessió',
-                  en: 'The date when this session is being conducted',
-                  es: 'La fecha en que se realiza esta sesión',
-                  fr: 'La date à laquelle cette session est effectuée'
+                  ca: 'La data en què es realitza aquesta sessió (Avui)',
+                  en: 'The date when this session is being conducted (Today)',
+                  es: 'La fecha en que se realiza esta sesión (Hoy)',
+                  fr: "La date à laquelle cette session est effectuée (Aujourd'hui)"
                 })
               } as any
             }
@@ -90,23 +91,20 @@ export const StartSessionForm = ({
         ]}
         data-testid="start-session-form"
         initialValues={{
-          sessionDate: (() => {
-            const today = new Date();
-            return new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0, 0);
-          })()
+          sessionDate: new Date()
         }}
         readOnly={readOnly}
         submitBtnLabel={t('core.submit')}
         validationSchema={z.object({
-          sessionDate: z.date()
+          sessionDate: z.any()
         })}
-        onSubmit={async ({ sessionDate }) => {
+        onSubmit={async () => {
           const subjectId = encodeScopedSubjectId(username!, {
             groupName: currentGroup?.name ?? DEFAULT_GROUP_NAME
           });
 
           await onSubmit({
-            date: sessionDate,
+            date: new Date(),
             groupId: currentGroup?.id ?? null,
             username: username ?? null,
             type: 'RETROSPECTIVE',
@@ -196,7 +194,9 @@ export const StartSessionForm = ({
               render({ subjectIdentificationMethod }) {
                 return subjectIdentificationMethod === 'PERSONAL_INFO'
                   ? {
-                      kind: 'date',
+                      kind: 'string',
+                      variant: 'input',
+                      type: 'date',
                       label: t('core.identificationData.dateOfBirth.label')
                     }
                   : null;
@@ -241,7 +241,9 @@ export const StartSessionForm = ({
                 return sessionType === 'RETROSPECTIVE'
                   ? {
                       description: t('session.dateAssessed.description'),
-                      kind: 'date',
+                      kind: 'string',
+                      variant: 'input',
+                      type: 'date',
                       label: t('session.dateAssessed.label')
                     }
                   : null;
@@ -271,15 +273,27 @@ export const StartSessionForm = ({
             )
             .optional(),
           subjectDateOfBirth: z
-            .date()
-            .max(MIN_DATE_OF_BIRTH, { message: t('session.errors.mustBeAdult') })
-            .optional(),
+            .string()
+            .optional()
+            .transform((arg) => {
+              if (!arg) return undefined;
+              const d = new Date(arg);
+              d.setHours(12, 0, 0, 0);
+              return d;
+            })
+            .refine((date) => !date || date <= MIN_DATE_OF_BIRTH, { message: t('session.errors.mustBeAdult') }),
           subjectSex: z.enum(['MALE', 'FEMALE']).optional(),
           sessionType: $SessionType.exclude(['REMOTE']).optional(),
           sessionDate: z
-            .date()
-            .max(currentDate, { message: t('session.errors.assessmentMustBeInPast') })
+            .string()
             .optional()
+            .transform((arg) => {
+              if (!arg) return undefined;
+              const d = new Date(arg);
+              d.setHours(12, 0, 0, 0);
+              return d;
+            })
+            .refine((date) => !date || date <= currentDate, { message: t('session.errors.assessmentMustBeInPast') })
         })
         .superRefine((val, ctx) => {
           if (val.subjectIdentificationMethod === 'CUSTOM_ID') {
