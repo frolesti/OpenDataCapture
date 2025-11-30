@@ -1,10 +1,10 @@
 {
   "accessible": {
     "title": {
-      "en": "Administer Instrument",
-      "fr": "Administrer un instrument",
-      "es": "Administrar instrumento",
-      "ca": "Administrar instrument"
+      "en": "Select Study",
+      "fr": "Sélectionner une étude",
+      "es": "Seleccionar estudio",
+      "ca": "Seleccionar estudi"
     }
   },
   "manage": {
