@@ -15,6 +15,7 @@ import layout from '../translations/layout.json';
 import session from '../translations/session.json';
 import setup from '../translations/setup.json';
 import user from '../translations/user.json';
+import walkthrough from '../translations/walkthrough.json';
 
 declare module '@douglasneuroinformatics/libui/i18n' {
   export namespace UserConfig {
@@ -37,6 +38,7 @@ declare module '@douglasneuroinformatics/libui/i18n' {
       session: typeof session;
       setup: typeof setup;
       user: typeof user;
+      walkthrough: typeof walkthrough;
     }
   }
 }
@@ -55,7 +57,8 @@ i18n.init({
     layout,
     session,
     setup,
-    user
+    user,
+    walkthrough
   }
 });
 
