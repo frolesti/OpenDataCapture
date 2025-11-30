@@ -416,6 +416,119 @@ function generateMedicationValidationSchemas(medicationName: string, maxTreatmen
   return schemas;
 }
 
+// Function to generate all measures (fields) for export
+function generateAllMeasures() {
+  const measures: Record<string, any> = {};
+
+  const add = (key: string) => {
+    measures[key] = {
+      kind: 'computed',
+      label: key,
+      value: (data: any) => data[key]
+    };
+  };
+
+  const fields = [
+    'codigoPaciente',
+    'consentimientoInformado',
+    'fechaConsentimiento',
+    'criterioInclusion1',
+    'criterioInclusion2',
+    'criterioExclusion1',
+    'criterioExclusion2',
+    'criterioExclusion3',
+    'criterioExclusion4',
+    'centroAtencionPrimaria',
+    'sexoPaciente',
+    'edadPaciente',
+    'pesoPaciente',
+    'alturaPaciente',
+    'observaCifosis',
+    'perdidaAlturaDocumentada',
+    'estiloVida',
+    'imcMenor20',
+    'etnicidadBlancaCaucasica',
+    'menopausiaPrecoz',
+    'fracturaPrevia',
+    'antecedenteFracturaPaternoMaterno',
+    'tabaquismoActivo',
+    'ingestaAlcohol',
+    'nutricionPobre',
+    'medicamentosAsociados',
+    'artritisReumatoide',
+    'otrasArtritisInflamatorias',
+    'lupusEritematoso',
+    'hiperparatiroidismo',
+    'hipertiroidismo',
+    'hipercortisolismo',
+    'diabetes',
+    'enfermedadInflamatoriaIntestinal',
+    'malnutricion',
+    'nutricionParenteral',
+    'mielomaMultiple',
+    'otrosTrastornosMedulares',
+    'epoc',
+    'enfermedadRenalCronica',
+    'pacienteDiagnosticado',
+    'fechaDiagnostico',
+    'metodoDiagnostico',
+    'otroMetodoEspecificar',
+    'ejercicioFisico',
+    'ejercicioFisicoContinua',
+    'suplementosCalcioVitaminaD',
+    'suplementosCalcioVitaminaDContinua',
+    'dejarFumar',
+    'dejarFumarContinua',
+    'reduccionConsumoAlcohol',
+    'reduccionConsumoAlcoholContinua',
+    'protectoresCadera',
+    'protectoresCaderaContinua',
+    'otroTratamiento',
+    'fechaFinEstudio',
+    'pacienteCompletoEstudio',
+    'motivoNoCompletado',
+    'otroMotivoEspecificar',
+    'inicialesFinEstudio'
+  ];
+
+  fields.forEach(add);
+
+  // Fractures
+  for (let i = 1; i <= 5; i++) {
+    add(`fechaFractura${i}`);
+    add(`localizacionFractura${i}`);
+    add(`hospitalizacion${i}`);
+    if (i > 1) add(`agregarFractura${i}`);
+  }
+
+  // Medications
+  const meds = [
+    'alendronato',
+    'risedronato',
+    'ibandronato',
+    'zoledronato',
+    'denosumab',
+    'raloxifeno',
+    'bazedoxifeno',
+    'tibolona',
+    'teriparatida',
+    'abaloparatida',
+    'romosozumab'
+  ];
+
+  meds.forEach((med) => {
+    for (let i = 1; i <= 3; i++) {
+      add(`${med}FechaInicio${i}`);
+      add(`${med}Continua${i}`);
+      add(`${med}FechaFin${i}`);
+      add(`${med}MotivoInterrupcion${i}`);
+      if (i > 1) add(`agregarTratamiento${med}${i}`);
+    }
+  });
+
+  return measures;
+}
+
 export default defineInstrument({
   kind: 'FORM',
   language: 'en',
@@ -1167,6 +1280,7 @@ export default defineInstrument({
     authors: ['Equipo de Investigación Osteoporosis']
   },
   measures: {
+    ...generateAllMeasures(),
     imc: {
       kind: 'computed',
       label: 'Índice de Masa Corporal',
