@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { FormTypes } from '@opendatacapture/runtime-core';
-import { createFileRoute, useLocation } from '@tanstack/react-router';
+import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 
 import { PageHeader } from '@/components/PageHeader';
 import { StartSessionForm } from '@/components/StartSessionForm';
@@ -17,6 +17,7 @@ const RouteComponent = () => {
   const startSession = useAppStore((store) => store.startSession);
   const currentUser = useAppStore((store) => store.currentUser);
   const location = useLocation();
+  const navigate = useNavigate();
   const defaultInitialValues = {
     sessionType: 'IN_PERSON',
     subjectIdentificationMethod: currentGroup?.settings.defaultIdentificationMethod ?? 'CUSTOM_ID'
@@ -49,6 +50,7 @@ const RouteComponent = () => {
         onSubmit={async (formData) => {
           const session = await createSessionMutation.mutateAsync(formData);
           startSession({ ...session, type: formData.type });
+          await navigate({ to: '/instruments/accessible-instruments' });
         }}
       />
     </React.Fragment>
