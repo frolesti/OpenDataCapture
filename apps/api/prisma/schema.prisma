@@ -206,6 +206,7 @@ model User {
   groupIds              String[]             @db.ObjectId
   groups                Group[]              @relation(fields: [groupIds], references: [id])
   lastName              String
+  email                 String?              @unique
   hashedPassword        String               @map("password")
   username              String
   sex                   Sex?
