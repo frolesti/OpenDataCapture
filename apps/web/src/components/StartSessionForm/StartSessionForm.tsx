@@ -20,9 +20,9 @@ const EIGHTEEN_YEARS = 568025136000; // milliseconds
 const MIN_DATE_OF_BIRTH = new Date(currentDate.getTime() - EIGHTEEN_YEARS);
 
 type StartSessionFormData = {
-  sessionDate: string;
+  sessionDate: Date;
   sessionType: 'IN_PERSON' | 'RETROSPECTIVE';
-  subjectDateOfBirth?: string;
+  subjectDateOfBirth?: Date;
   subjectFirstName?: string;
   subjectId?: string;
   subjectIdentificationMethod: SubjectIdentificationMethod;
@@ -194,9 +194,7 @@ export const StartSessionForm = ({
               render({ subjectIdentificationMethod }) {
                 return subjectIdentificationMethod === 'PERSONAL_INFO'
                   ? {
-                      kind: 'string',
-                      variant: 'input',
-                      type: 'date',
+                      kind: 'date',
                       label: t('core.identificationData.dateOfBirth.label')
                     }
                   : null;
@@ -241,9 +239,7 @@ export const StartSessionForm = ({
                 return sessionType === 'RETROSPECTIVE'
                   ? {
                       description: t('session.dateAssessed.description'),
-                      kind: 'string',
-                      variant: 'input',
-                      type: 'date',
+                      kind: 'date',
                       label: t('session.dateAssessed.label')
                     }
                   : null;
@@ -273,11 +269,11 @@ export const StartSessionForm = ({
             )
             .optional(),
           subjectDateOfBirth: z
-            .string()
+            .date()
             .optional()
-            .transform((arg) => {
-              if (!arg) return undefined;
-              const d = new Date(arg);
+            .transform((date) => {
+              if (!date) return undefined;
+              const d = new Date(date);
               d.setHours(12, 0, 0, 0);
               return d;
             })
@@ -285,11 +281,11 @@ export const StartSessionForm = ({
           subjectSex: z.enum(['MALE', 'FEMALE']).optional(),
           sessionType: $SessionType.exclude(['REMOTE']).optional(),
           sessionDate: z
-            .string()
+            .date()
             .optional()
-            .transform((arg) => {
-              if (!arg) return undefined;
-              const d = new Date(arg);
+            .transform((date) => {
+              if (!date) return undefined;
+              const d = new Date(date);
               d.setHours(12, 0, 0, 0);
               return d;
             })

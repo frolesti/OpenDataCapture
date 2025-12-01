@@ -93,7 +93,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       keys.forEach((key) => {
         const val = record[key];
         if (typeof val === 'string') {
-          options[key].add(val);
+          options[key]?.add(val);
         }
       });
     });
