@@ -6,6 +6,7 @@ import type { CurrentUser } from '@/store/types';
 
 export const currentUser: CurrentUser = Object.freeze({
   ability: createMongoAbility<PureAbility<[AppAction, AppSubjectName], any>>([{ action: 'manage', subject: 'all' }]),
+  basePermissionLevel: 'ADMIN',
   firstName: 'Jane',
   groups: [],
   id: '123',
