@@ -340,14 +340,10 @@ export const WalkthroughProvider: React.FC<{ children: React.ReactElement }> = (
     }
   }, [isDisclaimerAccepted, isWalkthroughComplete]);
 
-  if (!isDesktop) {
-    return children;
-  }
-
   return (
     <React.Fragment>
       {children}
-      <AnimatePresence>{isWalkthroughOpen && <Walkthrough />}</AnimatePresence>
+      <AnimatePresence>{isDesktop && isWalkthroughOpen && <Walkthrough />}</AnimatePresence>
     </React.Fragment>
   );
 };
