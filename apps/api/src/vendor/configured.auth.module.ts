@@ -33,6 +33,10 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
                 ability.can('read', 'Group', { id: { in: groupIds } });
                 ability.can('read', 'Instrument');
                 ability.can('create', 'InstrumentRecord');
+                ability.can('read', 'InstrumentRecord', {
+                  groupId: { in: groupIds },
+                  session: { userId }
+                });
                 ability.can('read', 'Session', { groupId: { in: groupIds } });
                 ability.can('create', 'Session');
                 ability.can('create', 'Subject');

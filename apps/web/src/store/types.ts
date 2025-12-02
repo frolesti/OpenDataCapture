@@ -5,7 +5,7 @@ import type { Session } from '@opendatacapture/schemas/session';
 import type { Simplify } from 'type-fest';
 import type { StateCreator } from 'zustand';
 
-export type CurrentUser = Omit<TokenPayload, 'basePermissionLevel' | 'permissions'> & {
+export type CurrentUser = Omit<TokenPayload, 'permissions'> & {
   ability: BaseAppAbility;
   id: string;
 };

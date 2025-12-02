@@ -21,52 +21,8 @@ import { IdentificationForm } from '@/components/IdentificationForm';
 import { PageHeader } from '@/components/PageHeader';
 import { SelectInstrument } from '@/components/SelectInstrument';
 import { useGlobalInstrumentVisualization } from '@/hooks/useGlobalInstrumentVisualization';
-import { subjectsQueryOptions, useSubjectsQuery } from '@/hooks/useSubjectsQuery';
 import { useAppStore } from '@/store';
 import { downloadExcel } from '@/utils/excel';
-
-type MasterDataTableProps = {
-  data: Subject[];
-  onSelect: (subject: Subject) => void;
-};
-
-const MasterDataTable = ({ data, onSelect }: MasterDataTableProps) => {
-  const { t } = useTranslation();
-  const subjectIdDisplaySetting = useAppStore((store) => store.currentGroup?.settings.subjectIdDisplayLength);
-
-  return (
-    <ClientTable<Subject>
-      columns={[
-        {
-          field: (subject) => removeSubjectIdScope(subject.id).slice(0, subjectIdDisplaySetting ?? 9),
-          label: t('datahub.index.table.subject')
-        },
-        {
-          field: (subject) => (subject.dateOfBirth ? toBasicISOString(new Date(subject.dateOfBirth)) : 'NULL'),
-          label: t('core.identificationData.dateOfBirth.label')
-        },
-        {
-          field: (subject) => {
-            switch (subject.sex) {
-              case 'FEMALE':
-                return t('core.identificationData.sex.female');
-              case 'MALE':
-                return t('core.identificationData.sex.male');
-              default:
-                return 'NULL';
-            }
-          },
-          label: t('core.identificationData.sex.label')
-        }
-      ]}
-      data={data}
-      data-testid="master-data-table"
-      entriesPerPage={15}
-      minRows={15}
-      onEntryClick={onSelect}
-    />
-  );
-};
 
 const RouteComponent = () => {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
@@ -78,8 +34,6 @@ const RouteComponent = () => {
   const addNotification = useNotificationsStore((store) => store.addNotification);
   const { t } = useTranslation();
   const navigate = useNavigate();
-
-  const { data } = useSubjectsQuery({ params: { groupId: currentGroup?.id } });
 
   const {
     dl,
@@ -209,6 +163,9 @@ const RouteComponent = () => {
             {instrumentId ? (
               <React.Fragment>
                 {Object.entries(filterOptions).map(([key, options]) => {
+                  if (currentUser?.basePermissionLevel === 'STANDARD') {
+                    return null;
+                  }
                   const normalizedKey = key.toUpperCase();
                   const isHealthCenter =
                     normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
@@ -307,12 +264,16 @@ const RouteComponent = () => {
             minRows={15}
           />
         ) : (
-          <MasterDataTable
-            data={data}
-            onSelect={(subject) => {
-              void navigate({ to: `./${subject.id}/assignments` });
-            }}
-          />
+          <div className="flex grow flex-col items-center justify-center gap-2 text-slate-500">
+            <p>
+              {t({
+                ca: "Seleccioneu un instrument per veure'n les dades",
+                en: 'Select an instrument to view data',
+                es: 'Seleccione un instrumento para ver los datos',
+                fr: 'Sélectionnez un instrument pour voir les données'
+              })}
+            </p>
+          </div>
         )}
       </div>
     </React.Fragment>
@@ -320,9 +281,5 @@ const RouteComponent = () => {
 };
 
 export const Route = createFileRoute('/_app/datahub/')({
-  component: RouteComponent,
-  loader: async ({ context }) => {
-    const { currentGroup } = useAppStore.getState();
-    await context.queryClient.ensureQueryData(subjectsQueryOptions({ params: { groupId: currentGroup?.id } }));
-  }
+  component: RouteComponent
 });
