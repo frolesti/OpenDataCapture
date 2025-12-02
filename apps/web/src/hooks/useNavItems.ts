@@ -129,7 +129,11 @@ export function useNavItems() {
         url: '/instruments/accessible-instruments'
       });
     }
-    if (ability?.can('read', 'Subject') && ability.can('read', 'InstrumentRecord')) {
+    if (
+      ability?.can('read', 'Subject') &&
+      ability.can('read', 'InstrumentRecord') &&
+      currentUser?.basePermissionLevel !== 'STANDARD'
+    ) {
       sessionItems.push({
         disabled: currentSession === null,
         icon: EyeIcon,
