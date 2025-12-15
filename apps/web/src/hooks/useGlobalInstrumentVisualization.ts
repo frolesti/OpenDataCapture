@@ -12,6 +12,38 @@ import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
 import { useAppStore } from '@/store';
 import { downloadSubjectTableExcel } from '@/utils/excel';
 
+const CENTROS_SANITARIOS = [
+  'CAP Badia (Barcelona)',
+  'CAP Numància (Barcelona)',
+  'CAP Sant Martí (Barcelona)',
+  'CAP Manso (Barcelona)',
+  'CS Alhama de Granada (Granada)',
+  'CS Aguadulce Sur (Almería)',
+  'CS Maria Fuensanta Pérez Quirós (Sevilla)',
+  'CS Brújula (Madrid)',
+  'CS Juncal (Torrejón de Ardoz)',
+  'CS Ensanche (Vallecas)',
+  'Cons Alovera (Guadalajara)',
+  'CS Gandhi (Madrid)',
+  'CS Aravaca (Madrid)',
+  'Cons Fontaras (Valencia)',
+  'CS Vinarós (Castellón)',
+  'Cons Almenara Playa (Sagunto)',
+  'CS Arturo Eiryes (Valladolid)',
+  'CS Antonio Gutierrez (León)',
+  'CS Tortola (Valladolid)',
+  'CS José Aguado (León)',
+  'CS Ávila Norte (Ávila)',
+  'CS Vitoria (Salamanca)',
+  'CS Alfonso Sánchez Montero (Salamanca)',
+  'CS Xunqueira de Ambia (Orense)',
+  'CS Casco Vello (Pontevedra)',
+  'CS Elviña (A Coruña)',
+  'CS Culleredo (A Coruña)',
+  'CS Montealto La Torre (A Coruña)',
+  'CS Marín (Pontevedra)'
+];
+
 type InstrumentVisualizationRecord = {
   [key: string]: unknown;
   __date__: Date;
@@ -87,6 +119,20 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
 
     keys.forEach((key) => {
       options[key] = new Set();
+
+      // Explicitly allow only the specific column requested, case-insensitive and accent-insensitive
+      const normalizedKey = key
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+      if (
+        normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
+        normalizedKey === 'CENTRO_SANITARIO' ||
+        (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'))
+      ) {
+        CENTROS_SANITARIOS.forEach((center) => options[key]?.add(center));
+      }
     });
 
     records.forEach((record) => {
