@@ -35,6 +35,38 @@ function consentWarning(): any {
   };
 }
 
+const centrosSanitariosOptions = {
+  'CAP Badia (Barcelona)': 'CAP Badia (Barcelona)',
+  'CAP Numància (Barcelona)': 'CAP Numància (Barcelona)',
+  'CAP Sant Martí (Barcelona)': 'CAP Sant Martí (Barcelona)',
+  'CAP Manso (Barcelona)': 'CAP Manso (Barcelona)',
+  'CS Alhama de Granada (Granada)': 'CS Alhama de Granada (Granada)',
+  'CS Aguadulce Sur (Almería)': 'CS Aguadulce Sur (Almería)',
+  'CS Maria Fuensanta Pérez Quirós (Sevilla)': 'CS Maria Fuensanta Pérez Quirós (Sevilla)',
+  'CS Brújula (Madrid)': 'CS Brújula (Madrid)',
+  'CS Juncal (Torrejón de Ardoz)': 'CS Juncal (Torrejón de Ardoz)',
+  'CS Ensanche (Vallecas)': 'CS Ensanche (Vallecas)',
+  'Cons Alovera (Guadalajara)': 'Cons Alovera (Guadalajara)',
+  'CS Gandhi (Madrid)': 'CS Gandhi (Madrid)',
+  'CS Aravaca (Madrid)': 'CS Aravaca (Madrid)',
+  'Cons Fontaras (Valencia)': 'Cons Fontaras (Valencia)',
+  'CS Vinarós (Castellón)': 'CS Vinarós (Castellón)',
+  'Cons Almenara Playa (Sagunto)': 'Cons Almenara Playa (Sagunto)',
+  'CS Arturo Eiryes (Valladolid)': 'CS Arturo Eiryes (Valladolid)',
+  'CS Antonio Gutierrez (León)': 'CS Antonio Gutierrez (León)',
+  'CS Tortola (Valladolid)': 'CS Tortola (Valladolid)',
+  'CS José Aguado (León)': 'CS José Aguado (León)',
+  'CS Ávila Norte (Ávila)': 'CS Ávila Norte (Ávila)',
+  'CS Vitoria (Salamanca)': 'CS Vitoria (Salamanca)',
+  'CS Alfonso Sánchez Montero (Salamanca)': 'CS Alfonso Sánchez Montero (Salamanca)',
+  'CS Xunqueira de Ambia (Orense)': 'CS Xunqueira de Ambia (Orense)',
+  'CS Casco Vello (Pontevedra)': 'CS Casco Vello (Pontevedra)',
+  'CS Elviña (A Coruña)': 'CS Elviña (A Coruña)',
+  'CS Culleredo (A Coruña)': 'CS Culleredo (A Coruña)',
+  'CS Montealto La Torre (A Coruña)': 'CS Montealto La Torre (A Coruña)',
+  'CS Marín (Pontevedra)': 'CS Marín (Pontevedra)'
+};
+
 // Helper function to make a field conditional on osteoporosis diagnosis
 function requiresDiagnosis<T extends Record<string, any>>(field: T): any {
   return {
@@ -153,10 +185,10 @@ function showAddFractureButton(fractureNumber: number): any {
       // Show button only if current fracture is complete
       const isCurrentComplete = data[fechaKey] && data[localizacionKey] && data[hospitalizacionKey];
 
-      if (data.consentimientoInformado === 'si' && isCurrentComplete && fractureNumber < 5) {
+      if (data.consentimientoInformado === 'si' && isCurrentComplete && fractureNumber < 6) {
         return {
           kind: 'string' as const,
-          label: `¿Desea agregar ${fractureNumber === 1 ? 'una segunda' : fractureNumber === 2 ? 'una tercera' : fractureNumber === 3 ? 'una cuarta' : 'una quinta'} fractura?`,
+          label: `¿Desea agregar ${fractureNumber === 1 ? 'una segunda' : fractureNumber === 2 ? 'una tercera' : fractureNumber === 3 ? 'una cuarta' : fractureNumber === 4 ? 'una quinta' : 'una sexta'} fractura por fragilidad?`,
           variant: 'radio' as const,
           options: {
             si: 'Sí',
@@ -330,49 +362,84 @@ function generateMedicationFields(medicationName: string, medicationLabel: strin
     // Fecha inicio
     fields[`${medicationName}FechaInicio${i}`] = requiresPreviousMedicationTreatment(
       {
-        kind: 'date',
-        label: `${treatmentLabel} - Fecha inicio`
+        kind: 'string',
+        variant: 'input',
+        placeholder: 'DD-MM-YYYY',
+        label: `${treatmentLabel} - Fecha inicio (DD-MM-YYYY)`
       },
       medicationName,
       i
     );
 
-    // Continúa
-    fields[`${medicationName}Continua${i}`] = requiresMedicationStartDate(
-      {
-        kind: 'string',
-        label: `${treatmentLabel} - Continúa`,
-        variant: 'radio',
-        options: {
-          si: 'Sí',
-          no: 'No'
-        }
-      },
-      medicationName,
-      i
-    );
+    // Continúa (only for treatments 1 and 2)
+    if (i < maxTreatments) {
+      fields[`${medicationName}Continua${i}`] = requiresMedicationStartDate(
+        {
+          kind: 'string',
+          label: `${treatmentLabel} - Continúa`,
+          variant: 'radio',
+          options: {
+            si: 'Sí',
+            no: 'No'
+          }
+        },
+        medicationName,
+        i
+      );
+    }
 
     // Fecha fin
-    fields[`${medicationName}FechaFin${i}`] = requiresMedicationDiscontinuation(
-      {
-        kind: 'date',
-        label: `${treatmentLabel} - Fecha fin`
-      },
-      medicationName,
-      i
-    );
+    // For the last treatment (3), we show Fecha Fin directly without asking "Continua"
+    // For others, it depends on "Continua" being "No"
+    if (i === maxTreatments) {
+      fields[`${medicationName}FechaFin${i}`] = requiresMedicationStartDate(
+        {
+          kind: 'string',
+          variant: 'input',
+          placeholder: 'DD-MM-YYYY',
+          label: `${treatmentLabel} - Fecha fin (DD-MM-YYYY)`
+        },
+        medicationName,
+        i
+      );
+    } else {
+      fields[`${medicationName}FechaFin${i}`] = requiresMedicationDiscontinuation(
+        {
+          kind: 'string',
+          variant: 'input',
+          placeholder: 'DD-MM-YYYY',
+          label: `${treatmentLabel} - Fecha fin (DD-MM-YYYY)`
+        },
+        medicationName,
+        i
+      );
+    }
 
     // Motivo interrupción
-    fields[`${medicationName}MotivoInterrupcion${i}`] = requiresMedicationDiscontinuation(
-      {
-        kind: 'string',
-        label: `${treatmentLabel} - Motivo interrupción`,
-        variant: 'select',
-        options: motivoOptions
-      },
-      medicationName,
-      i
-    );
+    // Same logic as Fecha Fin
+    if (i === maxTreatments) {
+      fields[`${medicationName}MotivoInterrupcion${i}`] = requiresMedicationStartDate(
+        {
+          kind: 'string',
+          label: `${treatmentLabel} - Motivo interrupción`,
+          variant: 'select',
+          options: motivoOptions
+        },
+        medicationName,
+        i
+      );
+    } else {
+      fields[`${medicationName}MotivoInterrupcion${i}`] = requiresMedicationDiscontinuation(
+        {
+          kind: 'string',
+          label: `${treatmentLabel} - Motivo interrupción`,
+          variant: 'select',
+          options: motivoOptions
+        },
+        medicationName,
+        i
+      );
+    }
 
     // Add treatment button (except for last treatment)
     if (i < maxTreatments) {
@@ -384,8 +451,40 @@ function generateMedicationFields(medicationName: string, medicationLabel: strin
     }
   }
 
+  // Add open text field for details if more than 3 treatments
+  fields[`${medicationName}DetallesAdicionales`] = {
+    kind: 'dynamic' as const,
+    deps: [
+      'consentimientoInformado',
+      `${medicationName}FechaInicio${maxTreatments}`,
+      `${medicationName}FechaFin${maxTreatments}`
+    ] as const,
+    render(data: any): any {
+      const lastStartKey = `${medicationName}FechaInicio${maxTreatments}`;
+      const lastEndKey = `${medicationName}FechaFin${maxTreatments}`;
+
+      if (data.consentimientoInformado === 'si' && data[lastStartKey] && data[lastEndKey]) {
+        return {
+          kind: 'string',
+          variant: 'textarea',
+          label: `En caso de que tenga más de tres tratamientos de ${medicationLabel}, especificar los detalles a continuación`,
+          rows: 3
+        };
+      }
+      return null;
+    }
+  };
+
   return fields;
 }
+
+// Helper to validate real calendar dates (e.g. rejects 30-02-2025)
+const isValidDate = (val: string | undefined) => {
+  if (!val) return true;
+  const [day, month, year] = val.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+};
 
 // Function to generate medication validation schemas for multiple treatments
 function generateMedicationValidationSchemas(medicationName: string, maxTreatments: number = 3) {
@@ -403,15 +502,29 @@ function generateMedicationValidationSchemas(medicationName: string, maxTreatmen
   ]);
 
   for (let i = 1; i <= maxTreatments; i++) {
-    schemas[`${medicationName}FechaInicio${i}`] = z.date().optional();
-    schemas[`${medicationName}Continua${i}`] = z.enum(['si', 'no']).optional();
-    schemas[`${medicationName}FechaFin${i}`] = z.date().optional();
+    schemas[`${medicationName}FechaInicio${i}`] = z
+      .string()
+      .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+      .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+      .optional();
+
+    if (i < maxTreatments) {
+      schemas[`${medicationName}Continua${i}`] = z.enum(['si', 'no']).optional();
+    }
+
+    schemas[`${medicationName}FechaFin${i}`] = z
+      .string()
+      .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+      .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+      .optional();
     schemas[`${medicationName}MotivoInterrupcion${i}`] = motivoEnum.optional();
 
     if (i < maxTreatments) {
       schemas[`agregarTratamiento${medicationName}${i + 1}`] = z.enum(['si', 'no']).optional();
     }
   }
+
+  schemas[`${medicationName}DetallesAdicionales`] = z.string().optional();
 
   return schemas;
 }
@@ -420,10 +533,15 @@ function generateMedicationValidationSchemas(medicationName: string, maxTreatmen
 function generateAllMeasures() {
   const measures: Record<string, any> = {};
 
+  const camelToSnake = (str: string) => {
+    return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`).replace(/([a-z])([0-9])/g, '$1_$2');
+  };
+
   const add = (key: string) => {
-    measures[key] = {
+    const exportKey = camelToSnake(key);
+    measures[exportKey] = {
       kind: 'computed',
-      label: key,
+      label: exportKey,
       value: (data: any) => data[key]
     };
   };
@@ -494,7 +612,7 @@ function generateAllMeasures() {
   fields.forEach(add);
 
   // Fractures
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 6; i++) {
     add(`fechaFractura${i}`);
     add(`localizacionFractura${i}`);
     add(`hospitalizacion${i}`);
@@ -519,11 +637,12 @@ function generateAllMeasures() {
   meds.forEach((med) => {
     for (let i = 1; i <= 3; i++) {
       add(`${med}FechaInicio${i}`);
-      add(`${med}Continua${i}`);
+      if (i < 3) add(`${med}Continua${i}`);
       add(`${med}FechaFin${i}`);
       add(`${med}MotivoInterrupcion${i}`);
       if (i > 1) add(`agregarTratamiento${med}${i}`);
     }
+    add(`${med}DetallesAdicionales`);
   });
 
   return measures;
@@ -565,31 +684,32 @@ export default defineInstrument({
           options: {
             si: 'Sí',
             no: 'No'
-          }
-        },
+          } as any
+        } as any,
         fechaConsentimiento: {
-          kind: 'date',
-          label: 'Fecha de obtención del consentimiento informado firmado *',
+          kind: 'string',
+          variant: 'input',
+          placeholder: 'DD-MM-YYYY',
+          label: 'Fecha de obtención del consentimiento informado firmado (DD-MM-YYYY) *',
           description: 'Fecha en la que el paciente firma el consentimiento informado'
         }
       }
     },
     {
-      title: 'CRITERIOS DE SELECCIÓN',
-      description:
-        'Criterios de inclusión - Todos los criterios de inclusión deben ser SÍ para que el paciente sea apto para el estudio',
+      title: 'CRITERIOS DE INCLUSIÓN',
+      description: 'Todos los criterios de inclusión deben ser SÍ para que el paciente sea apto para el estudio',
       fields: {
         _warningCriteriosSeleccion: consentWarning() as any,
         criterioInclusion1: requiresConsent({
           kind: 'string',
           label:
-            '1. Adultos ≥ 50 años, con antecedentes de historia de al menos una fractura por fragilidad* (evento índice) (ICD Código ICD-9 y ICD-10) ocurrida entre enero de 2021 y diciembre de 2023 *',
+            '1. Adultos ≥ 50 años, con antecedentes de historia de al menos una fractura por fragilidad (evento índice) (ICD Código ICD-9 y ICD-10) ocurrida entre enero de 2021 y diciembre de 2025 *',
           variant: 'radio',
           options: {
             si: 'Sí',
             no: 'No'
           }
-        }),
+        } as any) as any,
         criterioInclusion2: requiresConsent({
           kind: 'string',
           label:
@@ -603,11 +723,10 @@ export default defineInstrument({
       }
     },
     {
-      title: 'CRITERIOS DE SELECCIÓN',
-      description:
-        'Criterios de exclusión - Todos los criterios de exclusión deben ser NO para que el paciente sea apto para el estudio',
+      title: 'CRITERIOS DE EXCLUSIÓN',
+      description: 'Todos los criterios de exclusión deben ser NO para que el paciente sea apto para el estudio',
       fields: {
-        _warningCriteriosSeleccion: consentWarning() as any,
+        _warningExclusionStart: consentWarning() as any,
         criterioExclusion1: requiresConsent({
           kind: 'string',
           label: '1. Pacientes sin otorgar el consentimiento informado *',
@@ -630,7 +749,7 @@ export default defineInstrument({
         criterioExclusion3: requiresConsent({
           kind: 'string',
           label:
-            '3. Pacientes con una fractura debida a un traumatismo de alta o moderada intensidad (p. accidente automoví) y otras fracturas poco probables de estar relacionadas con la osteoporosis (dedos de las manos y pies y huesos de la cara) *',
+            '3. Pacientes con una fractura debido a un traumatismo de alta a moderada intensidad (ej. accidente automóvil) y otras fracturas poco probables de estar relacionadas con la osteoporosis (dedos de las manos y pies y huesos de la cara) *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -645,19 +764,50 @@ export default defineInstrument({
             si: 'Sí',
             no: 'No'
           }
-        })
+        }),
+        _warningExclusionCriteria: {
+          kind: 'dynamic' as const,
+          deps: [
+            'criterioInclusion1',
+            'criterioInclusion2',
+            'criterioExclusion1',
+            'criterioExclusion2',
+            'criterioExclusion3',
+            'criterioExclusion4'
+          ] as const,
+          render(data: any) {
+            const inclusionFailed = data.criterioInclusion1 === 'no' || data.criterioInclusion2 === 'no';
+            const exclusionFailed =
+              data.criterioExclusion1 === 'si' ||
+              data.criterioExclusion2 === 'si' ||
+              data.criterioExclusion3 === 'si' ||
+              data.criterioExclusion4 === 'si';
+
+            if (inclusionFailed || exclusionFailed) {
+              return {
+                kind: 'string',
+                variant: 'input',
+                label: '⚠️ El paciente no cumple con los criterios de selección',
+                disabled: true,
+                className: 'text-red-600 font-bold'
+              };
+            }
+            return null;
+          }
+        } as any
       }
     },
     {
       title: 'CARACTERIZACIÓN DEL PACIENTE EN EL MOMENTO DE LA FRACTURA ÍNDICE',
       description:
-        'Centro de Atención Primaria y datos demográficos y clínicos en el moment de la fractura por fragilidad índice',
+        'Centro de Atención Primaria y datos demográficos y clínicos en el momento de la fractura por fragilidad índice',
       fields: {
         _warningCaracterizacion: consentWarning() as any,
         centroAtencionPrimaria: requiresConsent({
           kind: 'string',
           label: '¿Cuál es el centro de atención primaria dónde se visita el paciente? *',
-          variant: 'input'
+          variant: 'select',
+          options: centrosSanitariosOptions
         }),
         sexoPaciente: requiresConsent({
           kind: 'string',
@@ -694,7 +844,7 @@ export default defineInstrument({
         }),
         perdidaAlturaDocumentada: requiresConsent({
           kind: 'string',
-          label: '¿Existe pérdida de altura documentada respecto a talla previa? *',
+          label: '¿Existe pérdida de altura documentada RECIENTE respecto a talla previa? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -757,7 +907,7 @@ export default defineInstrument({
         nutricionPobre: requiresConsent({
           kind: 'boolean',
           label:
-            'Nutrición pobre - dieta baja en calcio (definiéndose como ingesta baja en calcio un aporte de < 3 unidades de calcio diarias: siendo 1 vaso de leche, 1 yogur o 40 g de queso 1 unidad)',
+            'Nutrición pobre - dieta baja en calcio (definiéndose como ingesta baja en calcio un aporte de < 3 unidades de calcio diarias; siendo 1 vaso de leche, 1 yogur o 40 g de queso 1 unidad)',
           variant: 'checkbox'
         }),
         medicamentosAsociados: requiresConsent({
@@ -770,6 +920,7 @@ export default defineInstrument({
     },
     {
       title: 'COMORBILIDADES (en el momento de la fractura por fragilidad índice)',
+      description: 'Indique si el paciente presenta alguna de las siguientes comorbilidades',
       fields: {
         _warningComorbilidades: consentWarning() as any,
         artritisReumatoide: requiresConsent({
@@ -847,21 +998,23 @@ export default defineInstrument({
     {
       title: 'EPISODIO DE LA FRACTURA POR FRAGILIDAD',
       description:
-        'Complete la información de cada fractura por fragilidad. Después de completar una fractura, podrá elegir si desea agregar otra.',
+        'Complete la información de cada fractura por fragilidad reciente del paciente. Después de completar una fractura, podrá elegir si desea agregar otra.',
       fields: {
         _warningFractura: consentWarning() as any,
         // Primera fractura
         fechaFractura1: requiresPreviousFracture(
           {
-            kind: 'date',
-            label: 'Fecha de la Fractura por Fragilidad *'
+            kind: 'string',
+            variant: 'input',
+            placeholder: 'DD-MM-YYYY',
+            label: 'Fecha de la Fractura por Fragilidad (DD-MM-YYYY) *'
           },
           1
         ),
         localizacionFractura1: requiresPreviousFracture(
           {
             kind: 'string',
-            label: 'Localización - Elegir una opción *',
+            label: 'Localización de la fractura por fragilidad - Elegir una opción *',
             variant: 'select',
             options: {
               vertebral: 'Vertebral',
@@ -892,15 +1045,17 @@ export default defineInstrument({
         // Segunda fractura
         fechaFractura2: requiresPreviousFracture(
           {
-            kind: 'date',
-            label: 'Fecha de la FF (segunda fractura)'
+            kind: 'string',
+            variant: 'input',
+            placeholder: 'DD-MM-YYYY',
+            label: 'Fecha de la FF (segunda fractura por fragilidad) (DD-MM-YYYY)'
           },
           2
         ),
         localizacionFractura2: requiresPreviousFracture(
           {
             kind: 'string',
-            label: 'Localización - Elegir una opción',
+            label: 'Localización de la fractura por fragilidad - Elegir una opción',
             variant: 'select',
             options: {
               vertebral: 'Vertebral',
@@ -931,15 +1086,17 @@ export default defineInstrument({
         // Tercera fractura
         fechaFractura3: requiresPreviousFracture(
           {
-            kind: 'date',
-            label: 'Fecha de la FF (tercera fractura)'
+            kind: 'string',
+            variant: 'input',
+            placeholder: 'DD-MM-YYYY',
+            label: 'Fecha de la FF (tercera fractura por fragilidad) (DD-MM-YYYY)'
           },
           3
         ),
         localizacionFractura3: requiresPreviousFracture(
           {
             kind: 'string',
-            label: 'Localización - Elegir una opción',
+            label: 'Localización de la fractura por fragilidad - Elegir una opción',
             variant: 'select',
             options: {
               vertebral: 'Vertebral',
@@ -970,15 +1127,17 @@ export default defineInstrument({
         // Cuarta fractura
         fechaFractura4: requiresPreviousFracture(
           {
-            kind: 'date',
-            label: 'Fecha de la FF (cuarta fractura)'
+            kind: 'string',
+            variant: 'input',
+            placeholder: 'DD-MM-YYYY',
+            label: 'Fecha de la FF (cuarta fractura por fragilidad) (DD-MM-YYYY)'
           },
           4
         ),
         localizacionFractura4: requiresPreviousFracture(
           {
             kind: 'string',
-            label: 'Localización - Elegir una opción',
+            label: 'Localización de la fractura por fragilidad - Elegir una opción',
             variant: 'select',
             options: {
               vertebral: 'Vertebral',
@@ -1009,15 +1168,17 @@ export default defineInstrument({
         // Quinta fractura
         fechaFractura5: requiresPreviousFracture(
           {
-            kind: 'date',
-            label: 'Fecha de la FF (quinta fractura)'
+            kind: 'string',
+            variant: 'input',
+            placeholder: 'DD-MM-YYYY',
+            label: 'Fecha de la FF (quinta fractura por fragilidad) (DD-MM-YYYY)'
           },
           5
         ),
         localizacionFractura5: requiresPreviousFracture(
           {
             kind: 'string',
-            label: 'Localización - Elegir una opción',
+            label: 'Localización de la fractura por fragilidad - Elegir una opción',
             variant: 'select',
             options: {
               vertebral: 'Vertebral',
@@ -1043,6 +1204,47 @@ export default defineInstrument({
             }
           },
           5
+        ),
+        agregarFractura6: showAddFractureButton(5),
+        // Sexta fractura
+        fechaFractura6: requiresPreviousFracture(
+          {
+            kind: 'string',
+            variant: 'input',
+            placeholder: 'DD-MM-YYYY',
+            label: 'Fecha de la FF (sexta fractura por fragilidad) (DD-MM-YYYY)'
+          },
+          6
+        ),
+        localizacionFractura6: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: 'Localización de la fractura por fragilidad - Elegir una opción',
+            variant: 'select',
+            options: {
+              vertebral: 'Vertebral',
+              femoral: 'Femoral',
+              humero: 'Húmero',
+              radioMuneca: 'Radio/cubito/muñeca',
+              pelvis: 'Pelvis',
+              costilla: 'Costilla',
+              tobillopie: 'Tobillo/pie',
+              otras: 'Otras'
+            }
+          },
+          6
+        ),
+        hospitalizacion6: requiresPreviousFracture(
+          {
+            kind: 'string',
+            label: '¿Requirió hospitalización? (sexta fractura)',
+            variant: 'select',
+            options: {
+              si: 'Sí',
+              no: 'No'
+            }
+          },
+          6
         )
       }
     },
@@ -1060,8 +1262,10 @@ export default defineInstrument({
           }
         }),
         fechaDiagnostico: requiresDiagnosis({
-          kind: 'date',
-          label: '¿Cuál fue la fecha en la que tuvo lugar el diagnóstico? *'
+          kind: 'string',
+          variant: 'input',
+          placeholder: 'DD-MM-YYYY',
+          label: '¿Cuál fue la fecha en la que tuvo lugar el diagnóstico? (DD-MM-YYYY) *'
         }),
         metodoDiagnostico: requiresDiagnosis({
           kind: 'string',
@@ -1094,6 +1298,7 @@ export default defineInstrument({
     },
     {
       title: 'PRESCRIPCIÓN DEL TRATAMIENTO DE OSTEOPOROSIS',
+      description: 'Indique los tratamientos prescritos. Si un tratamiento no aplica, no es necesario contestar.',
       fields: {
         _warningTratamiento: consentWarning() as any,
         // All medications with up to 3 treatments each
@@ -1112,6 +1317,7 @@ export default defineInstrument({
     },
     {
       title: 'TRATAMIENTO NO FARMACOLÓGICO OSTEOPOROSIS',
+      description: 'Indique los tratamientos no farmacológicos recibidos',
       fields: {
         _warningTratamientoNoFarmacologico: consentWarning() as any,
         ejercicioFisico: requiresConsent({
@@ -1231,8 +1437,10 @@ export default defineInstrument({
       fields: {
         _warningFinEstudio: consentWarning() as any,
         fechaFinEstudio: requiresConsent({
-          kind: 'date',
-          label: '¿Fecha en que se rellena el formulario de fin de estudio? *'
+          kind: 'string',
+          variant: 'input',
+          placeholder: 'DD-MM-YYYY',
+          label: '¿Fecha en que se rellena el formulario de fin de estudio? (DD-MM-YYYY) *'
         }),
         pacienteCompletoEstudio: requiresConsent({
           kind: 'string',
@@ -1260,7 +1468,7 @@ export default defineInstrument({
         }),
         inicialesFinEstudio: requiresConsent({
           kind: 'string',
-          label: 'Iniciales del profesional sanitario *',
+          label: 'Iniciales del investigador *',
           variant: 'input'
         })
       }
@@ -1299,14 +1507,14 @@ export default defineInstrument({
         return undefined;
       }
     },
-    cumpleCriteriosInclusion: {
+    cumple_criterios_inclusion: {
       kind: 'computed',
       label: 'Cumple Criterios de Inclusión',
       value: (data) => {
         return data.criterioInclusion1 && data.criterioInclusion2;
       }
     },
-    cumpleCriteriosExclusion: {
+    cumple_criterios_exclusion: {
       kind: 'computed',
       label: 'Presenta Criterios de Exclusión',
       value: (data) => {
@@ -1316,12 +1524,28 @@ export default defineInstrument({
   },
   validationSchema: z
     .object({
+      // WARNINGS (Dynamic fields)
+      _warningCriteriosSeleccion: z.any().optional(),
+      _warningExclusionStart: z.any().optional(),
+      _warningExclusionCriteria: z.any().optional(),
+      _warningCaracterizacion: z.any().optional(),
+      _warningFactoresRiesgo: z.any().optional(),
+      _warningComorbilidades: z.any().optional(),
+      _warningFractura: z.any().optional(),
+      _warningDiagnostico: z.any().optional(),
+      _warningTratamiento: z.any().optional(),
+      _warningTratamientoNoFarmacologico: z.any().optional(),
+      _warningFinEstudio: z.any().optional(),
+
       // SELECCIÓN DEL PACIENTE
       codigoPaciente: z.string().min(1, 'El código del paciente es obligatorio'),
       consentimientoInformado: z.enum(['si', 'no']).refine((val) => val === 'si', {
         message: 'El consentimiento informado debe ser Sí'
       }),
-      fechaConsentimiento: z.date(),
+      fechaConsentimiento: z
+        .string()
+        .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+        .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)'),
       criterioInclusion1: z.enum(['si', 'no']),
       criterioInclusion2: z.enum(['si', 'no']),
       criterioExclusion1: z.enum(['si', 'no']),
@@ -1378,39 +1602,73 @@ export default defineInstrument({
       enfermedadRenalCronica: z.boolean().optional(),
 
       // FRACTURA
-      fechaFractura1: z.date().optional(),
+      fechaFractura1: z
+        .string()
+        .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+        .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .optional(),
       localizacionFractura1: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
       hospitalizacion1: z.enum(['si', 'no']).optional(),
       agregarFractura2: z.enum(['si', 'no']).optional(),
-      fechaFractura2: z.date().optional(),
+      fechaFractura2: z
+        .string()
+        .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+        .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .optional(),
       localizacionFractura2: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
       hospitalizacion2: z.enum(['si', 'no']).optional(),
       agregarFractura3: z.enum(['si', 'no']).optional(),
-      fechaFractura3: z.date().optional(),
+      fechaFractura3: z
+        .string()
+        .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+        .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .optional(),
       localizacionFractura3: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
       hospitalizacion3: z.enum(['si', 'no']).optional(),
       agregarFractura4: z.enum(['si', 'no']).optional(),
-      fechaFractura4: z.date().optional(),
+      fechaFractura4: z
+        .string()
+        .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+        .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .optional(),
       localizacionFractura4: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
       hospitalizacion4: z.enum(['si', 'no']).optional(),
       agregarFractura5: z.enum(['si', 'no']).optional(),
-      fechaFractura5: z.date().optional(),
+      fechaFractura5: z
+        .string()
+        .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+        .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .optional(),
       localizacionFractura5: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
       hospitalizacion5: z.enum(['si', 'no']).optional(),
+      agregarFractura6: z.enum(['si', 'no']).optional(),
+      fechaFractura6: z
+        .string()
+        .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+        .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .optional(),
+      localizacionFractura6: z
+        .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
+        .optional(),
+      hospitalizacion6: z.enum(['si', 'no']).optional(),
 
       // DIAGNÓSTICO
       pacienteDiagnosticado: z.enum(['si', 'no']).optional(),
-      fechaDiagnostico: z.date().optional(),
+      fechaDiagnostico: z
+        .string()
+        .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+        .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .optional(),
       metodoDiagnostico: z.enum(['dxa', 'clinico', 'frax', 'hallazgo', 'presuntivo', 'otro']).optional(),
       otroMetodoEspecificar: z.string().optional(),
 
@@ -1441,7 +1699,11 @@ export default defineInstrument({
       otroTratamiento: z.string().optional(),
 
       // FIN DE ESTUDIO
-      fechaFinEstudio: z.date().optional(),
+      fechaFinEstudio: z
+        .string()
+        .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
+        .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .optional(),
       pacienteCompletoEstudio: z.enum(['si', 'no']).optional(),
       motivoNoCompletado: z.enum(['decisionInvestigador', 'decisionPaciente', 'otro']).optional(),
       otroMotivoEspecificar: z.string().optional(),
@@ -1466,15 +1728,37 @@ export default defineInstrument({
       for (const med of medications) {
         const fechaInicioKey = `${med.name}FechaInicio` as keyof typeof data;
         const fechaFinKey = `${med.name}FechaFin` as keyof typeof data;
-        const fechaInicio = data[fechaInicioKey] as Date | undefined;
-        const fechaFin = data[fechaFinKey] as Date | undefined;
+        const fechaInicioStr = data[fechaInicioKey] as string | undefined;
+        const fechaFinStr = data[fechaFinKey] as string | undefined;
 
-        if (fechaInicio && fechaFin && fechaInicio > fechaFin) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `La fecha de inicio no puede ser posterior a la fecha de fin`,
-            path: [fechaFinKey as string]
-          });
+        if (fechaInicioStr && fechaFinStr) {
+          const partsInicio = fechaInicioStr.split('-').map(Number);
+          const partsFin = fechaFinStr.split('-').map(Number);
+
+          if (partsInicio.length === 3 && partsFin.length === 3) {
+            const [dayInicio, monthInicio, yearInicio] = partsInicio;
+            const [dayFin, monthFin, yearFin] = partsFin;
+
+            if (
+              dayInicio !== undefined &&
+              monthInicio !== undefined &&
+              yearInicio !== undefined &&
+              dayFin !== undefined &&
+              monthFin !== undefined &&
+              yearFin !== undefined
+            ) {
+              const fechaInicio = new Date(yearInicio, monthInicio - 1, dayInicio);
+              const fechaFin = new Date(yearFin, monthFin - 1, dayFin);
+
+              if (fechaInicio > fechaFin) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: `La fecha de inicio no puede ser posterior a la fecha de fin`,
+                  path: [fechaFinKey as string]
+                });
+              }
+            }
+          }
         }
       }
 
@@ -1484,7 +1768,8 @@ export default defineInstrument({
         { num: 2, label: 'segunda' },
         { num: 3, label: 'tercera' },
         { num: 4, label: 'cuarta' },
-        { num: 5, label: 'quinta' }
+        { num: 5, label: 'quinta' },
+        { num: 6, label: 'sexta' }
       ];
 
       for (const fractura of fracturas) {
