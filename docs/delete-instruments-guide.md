@@ -1,62 +1,55 @@
-# Guia per esborrar instruments a Producció (Google Cloud)
+# Guia per esborrar tots els instruments a Producció (Google Cloud)
 
-Aquesta guia explica com executar l'script de neteja contra l'entorn de producció allotjat a Google Cloud.
+Aquesta guia descriu com executar l'script per eliminar tots els instruments, assignacions i registres de la base de dades de producció.
 
-**Nota:** Com has indicat, aquesta guia assumeix que **NO** es necessita còpia de seguretat i que l'objectiu és eliminar tots els instruments, assignacions i registres existents.
+**ATENCIÓ: Aquesta operació és destructiva i irreversible. Assegureu-vos de tenir una còpia de seguretat abans de procedir.**
 
-## Mètode Recomanat: Execució des de Local connectant a Producció
+## 1. Còpia de seguretat (Backup)
 
-La manera més senzilla i segura és executar l'script des del teu ordinador, apuntant a la base de dades de Google Cloud.
+Abans de fer res, feu una còpia de seguretat de la base de dades. Si utilitzeu MongoDB Atlas o un servei gestionat, utilitzeu les seves eines de backup. Si teniu accés directe a la base de dades, podeu utilitzar `mongodump`.
 
-### Pas 1: Obtenir la cadena de connexió (DATABASE_URL)
+Exemple amb `mongodump`:
 
-Necessites la URL de connexió a MongoDB que utilitza el servidor de producció.
+```bash
+mongodump --uri="mongodb+srv://<usuari>:<contrasenya>@<host>/<base_de_dades>" --out=./backup-$(date +%F)
+```
 
-1.  Accedeix a la **Google Cloud Console** (https://console.cloud.google.com).
-2.  Ves al servei on està allotjada l'API (normalment **Cloud Run** o **App Engine**).
-3.  Busca la secció de configuració o variables d'entorn.
-4.  Copia el valor de la variable `DATABASE_URL`. Hauria de tenir un format similar a:
-    `mongodb+srv://<usuari>:<password>@<cluster>.mongodb.net/<base_de_dades>`
+## 2. Preparació de l'entorn
 
-### Pas 2: Executar l'script
+Necessitareu accés al codi font i a l'entorn on s'executa l'API, o bé executar-ho des de la vostra màquina local connectant-vos a la base de dades remota.
 
-Des de la terminal del teu projecte (on tens aquest codi):
+### Opció A: Execució des de local (Recomanat si teniu accés a la DB)
 
-1.  Assegura't de tenir les dependències instal·lades:
+1.  Assegureu-vos de tenir el repositori clonat i les dependències instal·lades:
 
     ```bash
     pnpm install
     ```
 
-2.  Executa l'script passant la variable d'entorn directament. Substitueix `<LA_TEVA_URL_DE_PRODUCCIO>` pel valor que has copiat al Pas 1.
+2.  Obteniu la cadena de connexió de la base de dades de producció (`DATABASE_URL`). Aquesta sol estar en l'arxiu `.env` del servidor o en la configuració de Google Cloud.
 
-    **Linux/Mac:**
-
-    ```bash
-    DATABASE_URL="<LA_TEVA_URL_DE_PRODUCCIO>" npx tsx apps/api/scripts/delete-all-instruments.ts
+3.  Creeu un fitxer `.env.production` (o modifiqueu el `.env` local temporalment) amb la variable `DATABASE_URL` apuntant a la base de dades de producció.
+    ```env
+    DATABASE_URL="mongodb+srv://..."
     ```
 
-    **Windows (PowerShell):**
+### Opció B: Execució des del servidor (Google Cloud)
 
-    ```powershell
-    $env:DATABASE_URL="<LA_TEVA_URL_DE_PRODUCCIO>"
-    npx tsx apps/api/scripts/delete-all-instruments.ts
-    ```
+1.  Accediu al servidor o contenidor on s'executa l'API.
+2.  Navegueu al directori de l'aplicació.
 
-### Què farà l'script?
+## 3. Execució de l'script
 
-1.  Connectarà a la base de dades remota.
-2.  Eliminarà **totes** les assignacions (`Assignment`).
-3.  Eliminarà **tots** els registres de dades (`InstrumentRecord`).
-4.  Netejarà la llista d'instruments accessibles de tots els grups.
-5.  Eliminarà **tots** els instruments (`Instrument`).
+L'script es troba a `apps/api/scripts/delete-all-instruments.ts`.
 
-Un cop acabi, veuràs un missatge "Cleanup complete".
+Per executar-lo, utilitzeu `tsx` (o `ts-node` si està configurat). Des de l'arrel del projecte:
+
+```bash
+# Si teniu el fitxer .env configurat correctament:
+npx tsx apps/api/scripts/delete-all-instruments.ts
 
 # O passant la variable d'entorn directament:
-
 DATABASE_URL="mongodb+srv://..." npx tsx apps/api/scripts/delete-all-instruments.ts
-
 ```
 
 L'script realitzarà les següents accions:
@@ -69,4 +62,3 @@ L'script realitzarà les següents accions:
 ## 4. Verificació
 
 Un cop finalitzat l'script, podeu verificar que la base de dades està neta accedint-hi amb un client de MongoDB (com MongoDB Compass) o comprovant l'aplicació web. Els instruments haurien d'haver desaparegut.
-```
