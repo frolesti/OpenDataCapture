@@ -26,7 +26,7 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
                   es: 'Tiempo estimado',
                   en: 'Estimated Duration',
                   fr: 'Durée estimée'
-                })}
+                } as any)}
               </Heading>
               <p className="text-muted-foreground text-sm">{`${estimatedDuration} minute(s)`}</p>
             </>
@@ -40,7 +40,7 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
                 es: 'Instrucciones',
                 en: 'Instructions',
                 fr: 'Instructions'
-              })}
+              } as any)}
             </Heading>
             <p className="text-muted-foreground text-sm">{instructions!.join(', ')}</p>
           </div>
@@ -53,7 +53,7 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
           es: 'Comenzar',
           en: 'Begin',
           fr: 'Commencer'
-        })}
+        } as any)}
         variant="primary"
         onClick={() => {
           onNext();

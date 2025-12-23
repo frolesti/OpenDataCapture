@@ -29,6 +29,21 @@ export type ScalarInstrumentRendererProps = {
   target: Pick<ScalarInstrumentBundleContainer, 'bundle' | 'id'>;
 };
 
+const fixDates = (data: unknown): unknown => {
+  if (data instanceof Date) {
+    // Construct a UTC date using the local components of the input date
+    // We set time to 12:00 UTC to be safe against timezone shifts
+    return new Date(Date.UTC(data.getFullYear(), data.getMonth(), data.getDate(), 12, 0, 0));
+  } else if (Array.isArray(data)) {
+    return data.map(fixDates);
+  } else if (data instanceof Set) {
+    return new Set(Array.from(data).map(fixDates));
+  } else if (typeof data === 'object' && data !== null) {
+    return Object.fromEntries(Object.entries(data).map(([key, value]) => [key, fixDates(value)]));
+  }
+  return data;
+};
+
 export const ScalarInstrumentRenderer = ({
   className,
   onCompileError,
@@ -43,12 +58,13 @@ export const ScalarInstrumentRenderer = ({
   const { t } = useTranslation();
 
   const handleSubmit = async (data: unknown) => {
+    const fixedData = fixDates(data);
     await onSubmit({
-      data: JSON.parse(JSON.stringify(data, replacer)) as Json,
+      data: JSON.parse(JSON.stringify(fixedData, replacer)) as Json,
       instrumentId: target.id
     });
     setIndex(2);
-    setData(data);
+    setData(fixedData);
   };
 
   return (

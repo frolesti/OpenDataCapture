@@ -42,10 +42,17 @@ export async function getReleaseInfo(): Promise<ReleaseInfo> {
           .then(({ version }) => version!)
       } satisfies DevelopmentReleaseInfo);
     } else if (process.env.NODE_ENV === 'production') {
+      let version = process.env.RELEASE_VERSION;
+      if (!version) {
+        const packageJson = await fs
+          .readFile(path.resolve(import.meta.dirname, '../../../package.json'), 'utf-8')
+          .then((content) => JSON.parse(content) as PackageJson);
+        version = packageJson.version!;
+      }
       return $ProductionReleaseInfo.parseAsync({
         buildTime: Date.now(),
         type: 'production',
-        version: process.env.RELEASE_VERSION!
+        version
       } satisfies ProductionReleaseInfo);
     } else {
       throw new Error(`Unexpected value for process.env.NODE_ENV: ${process.env.NODE_ENV}`);

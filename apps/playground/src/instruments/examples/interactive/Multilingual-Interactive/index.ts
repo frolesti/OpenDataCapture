@@ -21,7 +21,7 @@ export default defineInstrument({
       translator.init();
 
       const changeLanguageButton = document.createElement('button');
-      changeLanguageButton.textContent = translator.t('changeLanguage');
+      changeLanguageButton.textContent = translator.t('changeLanguage' as any);
       document.body.appendChild(changeLanguageButton);
 
       changeLanguageButton.addEventListener('click', () => {
@@ -29,16 +29,16 @@ export default defineInstrument({
       });
 
       const submitButton = document.createElement('button');
-      submitButton.textContent = translator.t('submit');
+      submitButton.textContent = translator.t('submit' as any);
       document.body.appendChild(submitButton);
 
       translator.onLanguageChange = () => {
-        changeLanguageButton.textContent = translator.t('changeLanguage');
-        submitButton.textContent = translator.t('submit');
+        changeLanguageButton.textContent = translator.t('changeLanguage' as any);
+        submitButton.textContent = translator.t('submit' as any);
       };
 
       submitButton.addEventListener('click', () => {
-        done({ message: translator.t('greetings.hello') });
+        done({ message: translator.t('greetings.hello' as any) });
       });
     }
   },

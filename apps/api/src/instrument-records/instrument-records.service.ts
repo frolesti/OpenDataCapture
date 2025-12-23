@@ -15,7 +15,7 @@ import type {
   UploadInstrumentRecordsData
 } from '@opendatacapture/schemas/instrument-records';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import type { Session } from '@prisma/client';
 import { isNumber, mergeWith, pickBy } from 'lodash-es';
 
