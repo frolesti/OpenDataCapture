@@ -21,7 +21,21 @@ export const useAppStore = create(
       })),
       {
         name: 'app',
-        partialize: (state) => pick(state, ['isDisclaimerAccepted', 'isWalkthroughComplete']),
+        onRehydrateStorage: () => (state) => {
+          if (state?.accessToken) {
+            try {
+              const { currentGroup } = state;
+              state.login(state.accessToken);
+              if (currentGroup) {
+                state.changeGroup(currentGroup);
+              }
+            } catch (error) {
+              console.error('Failed to restore session:', error);
+            }
+          }
+        },
+        partialize: (state) =>
+          pick(state, ['accessToken', 'currentGroup', 'isDisclaimerAccepted', 'isWalkthroughComplete']),
         storage: createJSONStorage(() => localStorage),
         version: 1
       }

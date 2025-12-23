@@ -23,6 +23,7 @@ export const createAuthSlice: SliceCreator<AuthSlice> = (set) => ({
     });
   },
   logout: () => {
+    set({ accessToken: null, currentGroup: null, currentUser: null });
     window.location.reload();
   }
 });
