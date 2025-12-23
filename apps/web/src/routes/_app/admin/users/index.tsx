@@ -332,11 +332,10 @@ const RouteComponent = () => {
       setData({
         disableDelete: selectedUser?.username === currentUser?.username,
         groupOptions: Object.fromEntries(groups.map((group) => [group.id, group.name])),
-        initialValues: selectedUser?.additionalPermissions.length
-          ? {
-              additionalPermissions: selectedUser.additionalPermissions
-            }
-          : undefined
+        initialValues: {
+          additionalPermissions: selectedUser.additionalPermissions,
+          groupIds: new Set(selectedUser.groupIds)
+        }
       });
     }
   }, [groupsQuery.data, selectedUser]);
