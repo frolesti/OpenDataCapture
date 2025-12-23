@@ -482,6 +482,9 @@ function generateMedicationFields(medicationName: string, medicationLabel: strin
 const isValidDate = (val: string | undefined) => {
   if (!val) return true;
   const [day, month, year] = val.split('-').map(Number);
+  if (day === undefined || month === undefined || year === undefined) {
+    return false;
+  }
   const date = new Date(year, month - 1, day);
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 };
