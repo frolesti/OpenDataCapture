@@ -120,17 +120,11 @@ const UpdateUserForm: React.FC<{
             },
             title: t({
               ca: "Credencials d'inici de sessió",
-              en: 'Login Credentials',
-              es: 'Credenciales de inicio de sesión',
-              fr: 'Identifiants de connexion'
             })
           },
           {
             description: t({
               ca: "IMPORTANT: Aquests permisos no són específics de cap grup. Per gestionar permisos granulars, utilitzeu l'API.",
-              en: 'IMPORTANT: These permissions are not specific to any group. To manage granular permissions, please use the API.',
-              es: 'IMPORTANTE: Estos permisos no son específicos de ningún grupo. Para gestionar permisos granulares, utilice la API.',
-              fr: "IMPORTANT : Ces autorisations ne sont pas spécifiques à un groupe. Pour gérer des autorisations granulaires, veuillez utiliser l'API."
             }),
             fields: {
               additionalPermissions: {
@@ -139,40 +133,22 @@ const UpdateUserForm: React.FC<{
                     kind: 'string',
                     label: t({
                       ca: 'Acció',
-                      en: 'Action',
-                      es: 'Acción',
-                      fr: 'Action'
                     }),
                     options: {
                       create: t({
                         ca: 'Crear',
-                        en: 'Create',
-                        es: 'Crear',
-                        fr: 'Créer'
                       }),
                       delete: t({
                         ca: 'Eliminar',
-                        en: 'Delete',
-                        es: 'Eliminar',
-                        fr: 'Effacer'
                       }),
                       manage: t({
                         ca: 'Gestionar (Tot)',
-                        en: 'Manage (All)',
-                        es: 'Gestionar (Todo)',
-                        fr: 'Gérer (Tout)'
                       }),
                       read: t({
                         ca: 'Llegir',
-                        en: 'Read',
-                        es: 'Leer',
-                        fr: 'Lire'
                       }),
                       update: t({
                         ca: 'Actualitzar',
-                        en: 'Update',
-                        es: 'Actualizar',
-                        fr: 'Mettre à jour'
                       })
                     },
                     variant: 'select'
@@ -181,58 +157,31 @@ const UpdateUserForm: React.FC<{
                     kind: 'string',
                     label: t({
                       ca: 'Recurs',
-                      en: 'Resource',
-                      es: 'Recurso',
-                      fr: 'Resource'
                     }),
                     options: {
                       all: t({
                         ca: 'Tot',
-                        en: 'All',
-                        es: 'Todo',
-                        fr: 'Tous'
                       }),
                       Assignment: t({
                         ca: 'Assignació',
-                        en: 'Assignment',
-                        es: 'Asignación',
-                        fr: 'Devoir'
                       }),
                       Group: t({
                         ca: 'Grup',
-                        en: 'Group',
-                        es: 'Grupo',
-                        fr: 'Groupe'
                       }),
                       Instrument: t({
                         ca: 'Instrument',
-                        en: 'Instrument',
-                        es: 'Instrumento',
-                        fr: 'Instrument'
                       }),
                       InstrumentRecord: t({
                         ca: "Registre de l'instrument",
-                        en: 'Instrument Record',
-                        es: 'Registro del instrumento',
-                        fr: "Enregistrement de l'instrument"
                       }),
                       Session: t({
                         ca: 'Sessió',
-                        en: 'Session',
-                        es: 'Sesión',
-                        fr: 'Session'
                       }),
                       Subject: t({
                         ca: 'Subjecte',
-                        en: 'Subject',
-                        es: 'Sujeto',
-                        fr: 'Client'
                       }),
                       User: t({
                         ca: 'Usuari',
-                        en: 'User',
-                        es: 'Usuario',
-                        fr: 'Utilisateur'
                       })
                     },
                     variant: 'select'
@@ -241,17 +190,11 @@ const UpdateUserForm: React.FC<{
                 kind: 'record-array',
                 label: t({
                   ca: 'Permisos addicionals',
-                  en: 'Permission',
-                  es: 'Permisos adicionales',
-                  fr: 'Autorisations supplémentaires'
                 })
               }
             },
             title: t({
               ca: 'Autorització',
-              en: 'Authorization',
-              es: 'Autorización',
-              fr: 'Autorisation'
             })
           },
           {
@@ -265,9 +208,6 @@ const UpdateUserForm: React.FC<{
             },
             title: t({
               ca: 'Grups',
-              en: 'Groups',
-              es: 'Grupos',
-              fr: 'Groupes'
             })
           }
         ]}
@@ -285,17 +225,11 @@ const UpdateUserForm: React.FC<{
           <Dialog.Title>
             {t({
               ca: 'Esteu absolutament segur?',
-              en: 'Are you absolutely sure?',
-              es: '¿Está absolutamente seguro?',
-              fr: 'Êtes-vous absolument sûr ?'
             })}
           </Dialog.Title>
           <Dialog.Description>
             {t({
               ca: 'Aquesta acció eliminarà permanentment el compte i no es pot desfer.',
-              en: 'This action will permanently delete the account and cannot be undone.',
-              es: 'Esta acción eliminará permanentemente la cuenta y no se puede deshacer.',
-              fr: 'Cette action supprimera définitivement le compte et ne pourra pas être annulée.'
             })}
           </Dialog.Description>
         </Dialog.Header>
@@ -346,9 +280,6 @@ const RouteComponent = () => {
         <Heading className="text-center" variant="h2">
           {t({
             ca: 'Gestionar usuaris',
-            en: 'Manage Users',
-            es: 'Gestionar usuarios',
-            fr: 'Gérer les utilisateurs'
           })}
         </Heading>
       </PageHeader>
@@ -358,9 +289,6 @@ const RouteComponent = () => {
           data-testid="admin-users-search"
           placeholder={t({
             ca: "Cercar per nom d'usuari",
-            en: 'Search by Username',
-            es: 'Buscar por nombre de usuario',
-            fr: "Recherche par nom d'utilisateur"
           })}
           value={searchTerm}
           onValueChange={setSearchTerm}
@@ -369,9 +297,6 @@ const RouteComponent = () => {
           <Link to="/admin/users/create">
             {t({
               ca: 'Afegir usuari',
-              en: 'Add User',
-              es: 'Añadir usuario',
-              fr: 'Ajouter un utilisateur'
             })}
           </Link>
         </Button>
@@ -387,9 +312,6 @@ const RouteComponent = () => {
               if (!basePermissionLevel) {
                 return t({
                   ca: 'Cap',
-                  en: 'None',
-                  es: 'Ninguno',
-                  fr: 'Aucune'
                 });
               }
               return t(`common.${snakeToCamelCase(basePermissionLevel)}`);
@@ -409,9 +331,6 @@ const RouteComponent = () => {
           <Sheet.Description>
             {t({
               ca: 'Feu els canvis a aquest usuari aquí. Feu clic a desar quan hàgiu acabat.',
-              en: 'Make changes to this user here. Click save when you are done.',
-              es: 'Realice cambios en este usuario aquí. Haga clic en guardar cuando haya terminado.',
-              fr: 'Apportez des modifications à cet utilisateur ici. Cliquez sur enregistrer lorsque vous avez terminé.'
             })}
           </Sheet.Description>
         </Sheet.Header>

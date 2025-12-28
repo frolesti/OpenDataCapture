@@ -31,8 +31,7 @@ function translateOptions<T extends MultilingualOptions>(options: T, language: L
  */
 function formatTranslatedOptions<T extends MultilingualOptions>(options: T) {
   return {
-    en: translateOptions(options, 'en'),
-    fr: translateOptions(options, 'fr')
+    ca: translateOptions(options, 'ca')
   } satisfies FormattedOptions<T>;
 }
 
@@ -48,555 +47,551 @@ function extractKeysAsTuple<T extends { [key: string]: unknown }>(options: T) {
 
 const employmentStatus = {
   fullTime: {
-    en: 'Full-Time',
-    fr: 'Temps plein'
+    ca: 'Full-Time',
+
   },
   partTime: {
-    en: 'Part-Time',
-    fr: 'Temps partiel'
+    ca: 'Part-Time',
+
   },
   retired: {
-    en: 'Retired',
-    fr: 'Retraité'
+    ca: 'Retired',
+
   },
   student: {
-    en: 'Student',
-    fr: 'Étudiant'
+    ca: 'Student',
+
   },
   unemployed: {
-    en: 'Unemployed',
-    fr: 'Au chômage'
+    ca: 'Unemployed',
+
   }
 };
 
 const ethnicOrigin = {
   acadian: {
-    en: 'Acadian',
-    fr: 'Acadien'
+    ca: 'Acadian',
+
   },
   afghan: {
-    en: 'Afghan',
-    fr: 'Afghan'
+    ca: 'Afghan',
+
   },
   albanian: {
-    en: 'Albanian',
-    fr: 'Albanais'
+    ca: 'Albanian',
+
   },
   algerian: {
-    en: 'Algerian',
-    fr: 'Algérien'
+    ca: 'Algerian',
+
   },
   american: {
-    en: 'American',
-    fr: 'Américain'
+    ca: 'American',
+
   },
   arab: {
-    en: 'Arab, n.o.s.',
-    fr: 'Arabe, n.d.a.'
+    ca: 'Arab, n.o.s.',
+
   },
   armenian: {
-    en: 'Armenian',
-    fr: 'Arménien'
+    ca: 'Armenian',
+
   },
   australian: {
-    en: 'Australian',
-    fr: 'Australien'
+    ca: 'Australian',
+
   },
   austrian: {
-    en: 'Austrian',
-    fr: 'Autrichien'
+    ca: 'Austrian',
+
   },
   bangladeshi: {
-    en: 'Bangladeshi',
-    fr: 'Bangladeshi'
+    ca: 'Bangladeshi',
+
   },
   barbadian: {
-    en: 'Barbadian',
-    fr: 'Barbadien'
+    ca: 'Barbadian',
+
   },
   belgian: {
-    en: 'Belgian',
-    fr: 'Belge'
+    ca: 'Belgian',
+
   },
   berber: {
-    en: 'Berber',
-    fr: 'Berbère'
+    ca: 'Berber',
+
   },
   black: {
-    en: 'Black, n.o.s.',
-    fr: 'Noir, n.d.a.'
+    ca: 'Black, n.o.s.',
+
   },
   brazilian: {
-    en: 'Brazilian',
-    fr: 'Brésilien'
+    ca: 'Brazilian',
+
   },
   britishIslesOrigins: {
-    en: 'British Isles origins, n.i.e.',
-    fr: 'Origines des îles britanniques, n.i.a.'
+    ca: 'British Isles origins, n.i.e.',
+
   },
   bulgarian: {
-    en: 'Bulgarian',
-    fr: 'Bulgare'
+    ca: 'Bulgarian',
+
   },
   cambodian: {
-    en: 'Cambodian (Khmer)',
-    fr: 'Cambodgien (Khmer)'
+    ca: 'Cambodian (Khmer)',
+
   },
   canadian: {
-    en: 'Canadian',
-    fr: 'Canadien'
+    ca: 'Canadian',
+
   },
   caribbeanOrigins: {
-    en: 'Caribbean origins, n.i.e.',
-    fr: 'Origines des Caraïbes, n.i.a.'
+    ca: 'Caribbean origins, n.i.e.',
+
   },
   chilean: {
-    en: 'Chilean',
-    fr: 'Chilien'
+    ca: 'Chilean',
+
   },
   chinese: {
-    en: 'Chinese',
-    fr: 'Chinois'
+    ca: 'Chinese',
+
   },
   colombian: {
-    en: 'Colombian',
-    fr: 'Colombien'
+    ca: 'Colombian',
+
   },
   congolese: {
-    en: 'Congolese',
-    fr: 'Congolais'
+    ca: 'Congolese',
+
   },
   croatian: {
-    en: 'Croatian',
-    fr: 'Croate'
+    ca: 'Croatian',
+
   },
   cuban: {
-    en: 'Cuban',
-    fr: 'Cubain'
+    ca: 'Cuban',
+
   },
   czech: {
-    en: 'Czech',
-    fr: 'Tchèque'
+    ca: 'Czech',
+
   },
   czechoslovakian: {
-    en: 'Czechoslovakian, n.o.s.',
-    fr: 'Tchécoslovaque, n.d.a.'
+    ca: 'Czechoslovakian, n.o.s.',
+
   },
   danish: {
-    en: 'Danish',
-    fr: 'Danois'
+    ca: 'Danish',
+
   },
   dutch: {
-    en: 'Dutch',
-    fr: 'Hollandais'
+    ca: 'Dutch',
+
   },
   eastIndian: {
-    en: 'East Indian',
-    fr: "Indien de l'Inde"
+    ca: 'East Indian',
+
   },
   egyptian: {
-    en: 'Egyptian',
-    fr: 'Égyptien'
+    ca: 'Egyptian',
+
   },
   english: {
-    en: 'English',
-    fr: 'Anglais'
+    ca: 'English',
+
   },
   ethiopian: {
-    en: 'Ethiopian',
-    fr: 'Éthiopien'
+    ca: 'Ethiopian',
+
   },
   filipino: {
-    en: 'Filipino',
-    fr: 'Philippin'
+    ca: 'Filipino',
+
   },
   finnish: {
-    en: 'Finnish',
-    fr: 'Finlandais'
+    ca: 'Finnish',
+
   },
   firstNations: {
-    en: 'First Nations (North American Indian)',
-    fr: "Premières Nations (Indien de l'Amérique du Nord)"
+    ca: 'First Nations (North American Indian)',
+
   },
   french: {
-    en: 'French',
-    fr: 'Français'
+    ca: 'French',
+
   },
   german: {
-    en: 'German',
-    fr: 'Allemand'
+    ca: 'German',
+
   },
   ghanaian: {
-    en: 'Ghanaian',
-    fr: 'Ghanéen'
+    ca: 'Ghanaian',
+
   },
   greek: {
-    en: 'Greek',
-    fr: 'Grec'
+    ca: 'Greek',
+
   },
   guyanese: {
-    en: 'Guyanese',
-    fr: 'Guyanais'
+    ca: 'Guyanese',
+
   },
   haitian: {
-    en: 'Haitian',
-    fr: 'Haïtien'
+    ca: 'Haitian',
+
   },
   hungarian: {
-    en: 'Hungarian',
-    fr: 'Hongrois'
+    ca: 'Hungarian',
+
   },
   icelandic: {
-    en: 'Icelandic',
-    fr: 'Islandais'
+    ca: 'Icelandic',
+
   },
   inuit: {
-    en: 'Inuit',
-    fr: 'Inuit'
+    ca: 'Inuit',
+
   },
   iranian: {
-    en: 'Iranian',
-    fr: 'Iranien'
+    ca: 'Iranian',
+
   },
   iraqi: {
-    en: 'Iraqi',
-    fr: 'Irakien'
+    ca: 'Iraqi',
+
   },
   irish: {
-    en: 'Irish',
-    fr: 'Irlandais'
+    ca: 'Irish',
+
   },
   israeli: {
-    en: 'Israeli',
-    fr: 'Israélien'
+    ca: 'Israeli',
+
   },
   italian: {
-    en: 'Italian',
-    fr: 'Italien'
+    ca: 'Italian',
+
   },
   jamaican: {
-    en: 'Jamaican',
-    fr: 'Jamaïquain'
+    ca: 'Jamaican',
+
   },
   japanese: {
-    en: 'Japanese',
-    fr: 'Japonais'
+    ca: 'Japanese',
+
   },
   jewish: {
-    en: 'Jewish',
-    fr: 'Juif'
+    ca: 'Jewish',
+
   },
   korean: {
-    en: 'Korean',
-    fr: 'Coréen'
+    ca: 'Korean',
+
   },
   latinCentralAndSouthAmericanOrigins: {
-    en: 'Latin, Central and South American origins, n.i.e.',
-    fr: "Origines de l'Amérique latine, centrale et du Sud, n.i.a."
+    ca: 'Latin, Central and South American origins, n.i.e.',
+
   },
   latvian: {
-    en: 'Latvian',
-    fr: 'Letton'
+    ca: 'Latvian',
+
   },
   lebanese: {
-    en: 'Lebanese',
-    fr: 'Libanais'
+    ca: 'Lebanese',
+
   },
   lithuanian: {
-    en: 'Lithuanian',
-    fr: 'Lituanien'
+    ca: 'Lithuanian',
+
   },
   macedonian: {
-    en: 'Macedonian',
-    fr: 'Macédonien'
+    ca: 'Macedonian',
+
   },
   maltese: {
-    en: 'Maltese',
-    fr: 'Maltais'
+    ca: 'Maltese',
+
   },
   mexican: {
-    en: 'Mexican',
-    fr: 'Mexicain'
+    ca: 'Mexican',
+
   },
   mixed: {
-    en: 'Mixed origin',
-    fr: 'Origine mixte'
+    ca: 'Mixed origin',
+
   },
   moroccan: {
-    en: 'Moroccan',
-    fr: 'Marocain'
+    ca: 'Moroccan',
+
   },
   métis: {
-    en: 'Métis',
-    fr: 'Métis'
+    ca: 'Métis',
+
   },
   nigerian: {
-    en: 'Nigerian',
-    fr: 'Nigérian'
+    ca: 'Nigerian',
+
   },
   northernEuropeanOrigins: {
-    en: 'Northern European origins, n.i.e.',
-    fr: "Origines d'Europe du Nord, n.i.a."
+    ca: 'Northern European origins, n.i.e.',
+
   },
   norwegian: {
-    en: 'Norwegian',
-    fr: 'Norvégien'
+    ca: 'Norwegian',
+
   },
   otherAfricanOrigins: {
-    en: 'Other African origins, n.i.e.',
-    fr: 'Autres origines africaines, n.i.a.'
+    ca: 'Other African origins, n.i.e.',
+
   },
   otherEuropeanOrigins: {
-    en: 'Other European origins, n.i.e.',
-    fr: 'Autres origines européennes, n.i.a.'
+    ca: 'Other European origins, n.i.e.',
+
   },
   pakistani: {
-    en: 'Pakistani',
-    fr: 'Pakistanais'
+    ca: 'Pakistani',
+
   },
   palestinian: {
-    en: 'Palestinian',
-    fr: 'Palestinien'
+    ca: 'Palestinian',
+
   },
   peruvian: {
-    en: 'Peruvian',
-    fr: 'Péruvien'
+    ca: 'Peruvian',
+
   },
   polish: {
-    en: 'Polish',
-    fr: 'Polonais'
+    ca: 'Polish',
+
   },
   portuguese: {
-    en: 'Portuguese',
-    fr: 'Portugais'
+    ca: 'Portuguese',
+
   },
   punjabi: {
-    en: 'Punjabi',
-    fr: 'Pendjabi'
+    ca: 'Punjabi',
+
   },
   québécois: {
-    en: 'Québécois',
-    fr: 'Québécois'
+    ca: 'Québécois',
+
   },
   romanian: {
-    en: 'Romanian',
-    fr: 'Roumain'
+    ca: 'Romanian',
+
   },
   russian: {
-    en: 'Russian',
-    fr: 'Russe'
+    ca: 'Russian',
+
   },
   salvadorean: {
-    en: 'Salvadorean',
-    fr: 'Salvadorien'
+    ca: 'Salvadorean',
+
   },
   scottish: {
-    en: 'Scottish',
-    fr: 'Écossais'
+    ca: 'Scottish',
+
   },
   serbian: {
-    en: 'Serbian',
-    fr: 'Serbe'
+    ca: 'Serbian',
+
   },
   slovak: {
-    en: 'Slovak',
-    fr: 'Slovaque'
+    ca: 'Slovak',
+
   },
   slovenian: {
-    en: 'Slovenian',
-    fr: 'Slovène'
+    ca: 'Slovenian',
+
   },
   somali: {
-    en: 'Somali',
-    fr: 'Somalien'
+    ca: 'Somali',
+
   },
   southAfrican: {
-    en: 'South African',
-    fr: 'Sud-Africain'
+    ca: 'South African',
+
   },
   southAsianOrigins: {
-    en: 'South Asian origins, n.i.e.',
-    fr: 'Origines sud-asiatiques, n.i.a.'
+    ca: 'South Asian origins, n.i.e.',
+
   },
   spanish: {
-    en: 'Spanish',
-    fr: 'Espagnol'
+    ca: 'Spanish',
+
   },
   sriLankan: {
-    en: 'Sri Lankan',
-    fr: 'Sri-Lankais'
+    ca: 'Sri Lankan',
+
   },
   swedish: {
-    en: 'Swedish',
-    fr: 'Suédois'
+    ca: 'Swedish',
+
   },
   swiss: {
-    en: 'Swiss',
-    fr: 'Suisse'
+    ca: 'Swiss',
+
   },
   syrian: {
-    en: 'Syrian',
-    fr: 'Syrien'
+    ca: 'Syrian',
+
   },
   taiwanese: {
-    en: 'Taiwanese',
-    fr: 'Taïwanais'
+    ca: 'Taiwanese',
+
   },
   tamil: {
-    en: 'Tamil',
-    fr: 'Tamoul'
+    ca: 'Tamil',
+
   },
   trinidadianTobagonian: {
-    en: 'Trinidadian/Tobagonian',
-    fr: 'Trinidadien/Tobagonien'
+    ca: 'Trinidadian/Tobagonian',
+
   },
   turk: {
-    en: 'Turk',
-    fr: 'Turc'
+    ca: 'Turk',
+
   },
   ukrainian: {
-    en: 'Ukrainian',
-    fr: 'Ukrainien'
+    ca: 'Ukrainian',
+
   },
   vietnamese: {
-    en: 'Vietnamese',
-    fr: 'Vietnamien'
+    ca: 'Vietnamese',
+
   },
   welsh: {
-    en: 'Welsh',
-    fr: 'Gallois'
+    ca: 'Welsh',
+
   },
   westIndian: {
-    en: 'West Indian, n.o.s.',
-    fr: 'Antillais Britannique, n.d.a.'
+    ca: 'West Indian, n.o.s.',
+
   },
   yugoslavian: {
-    en: 'Yugoslavian, n.o.s.',
-    fr: 'Yougoslave, n.d.a.'
+    ca: 'Yugoslavian, n.o.s.',
+
   }
 };
 
 const firstLanguage = {
   english: {
-    en: 'English',
-    fr: 'Anglais'
+    ca: 'English',
+
   },
   french: {
-    en: 'French',
-    fr: 'Français'
+    ca: 'French',
+
   },
   other: {
-    en: 'Other',
-    fr: 'Autre'
+    ca: 'Other',
+
   }
 };
 
 const gender = {
   female: {
-    en: 'Woman',
-    fr: 'Femme'
+    ca: 'Woman',
+
   },
   male: {
-    en: 'Man',
-    fr: 'Homme'
+    ca: 'Man',
+
   },
   nonBinary: {
-    en: 'Non-Binary',
-    fr: 'Non-binaire'
+    ca: 'Non-Binary',
+
   }
 };
 
 const maritalStatus = {
   commonLaw: {
-    en: 'Living common law',
-    fr: 'Vivant en union libre'
+    ca: 'Living common law',
+
   },
   divorced: {
-    en: 'Divorced (not living common law)',
-    fr: 'Divorcé (ne vivant pas en union libre)'
+    ca: 'Divorced (not living common law)',
+
   },
   married: {
-    en: 'Married',
-    fr: 'Marié'
+    ca: 'Married',
+
   },
   neverMarried: {
-    en: 'Never married (not living common law)',
-    fr: 'Jamais marié (ne vivant pas en union libre)'
+    ca: 'Never married (not living common law)',
+
   },
   separated: {
-    en: 'Separated (not living common law)',
-    fr: 'Séparé (ne vivant pas en union libre)'
+    ca: 'Separated (not living common law)',
+
   },
   widowed: {
-    en: 'Widowed (not living common law)',
-    fr: 'Veuf (ne vivant pas en union libre)'
+    ca: 'Widowed (not living common law)',
+
   }
 };
 
 const religion = {
   agnostic: {
-    en: 'Agnostic',
-    fr: 'Agnostique'
+    ca: 'Agnostic',
+
   },
   buddhist: {
-    en: 'Buddhist',
-    fr: 'Bouddhiste'
+    ca: 'Buddhist',
+
   },
   christian: {
-    en: 'Christian',
-    fr: 'Chrétienne'
+    ca: 'Christian',
+
   },
   hindu: {
-    en: 'Hindu',
-    fr: 'Hindoue'
+    ca: 'Hindu',
+
   },
   indigenous: {
-    en: 'Traditional (North American Indigenous) spirituality',
-    fr: "Spiritualité traditionnelle (Autochtone d'Amérique du Nord)"
+    ca: 'Traditional (North American Indigenous) spirituality',
+
   },
   jewish: {
-    en: 'Jewish',
-    fr: 'Juive'
+    ca: 'Jewish',
+
   },
   muslim: {
-    en: 'Muslim',
-    fr: 'Musulmane'
+    ca: 'Muslim',
+
   },
   none: {
-    en: 'No religion and secular perspectives',
-    fr: 'Aucune religion et perspectives séculières'
+    ca: 'No religion and secular perspectives',
+
   },
   other: {
-    en: 'Other religions and spiritual traditions',
-    fr: 'Autres traditions religieuses et spirituelles'
+    ca: 'Other religions and spiritual traditions',
+
   },
   sikh: {
-    en: 'Sikh',
-    fr: 'Sikhe'
+    ca: 'Sikh',
+
   }
 };
 
 const yesNoOptions = /** @type {const} */ {
-  en: {
+  ca: {
     false: 'No',
     true: 'Yes'
-  },
-  fr: {
-    false: 'Non',
-    true: 'Oui'
   }
 };
 
 export default defineInstrument({
   kind: 'FORM',
-  language: ['en', 'fr'],
+  language: ['ca'],
   internal: {
     edition: 1,
     name: 'DNP_ENHANCED_DEMOGRAPHICS_QUESTIONNAIRE'
   },
   tags: {
-    en: ['Demographics'],
-    fr: ['Démographie']
+    ca: ['Demographics'],
+
   },
   content: [
     {
@@ -604,8 +599,8 @@ export default defineInstrument({
         ethnicOrigin: {
           kind: 'string',
           label: {
-            en: 'Ethnic Origin',
-            fr: 'Origine ethnique'
+            ca: 'Ethnic Origin',
+
           },
           options: formatTranslatedOptions(ethnicOrigin),
           variant: 'select'
@@ -613,8 +608,8 @@ export default defineInstrument({
         gender: {
           kind: 'string',
           label: {
-            en: 'Gender Identity',
-            fr: 'Identité de genre'
+            ca: 'Gender Identity',
+
           },
           options: formatTranslatedOptions(gender),
           variant: 'select'
@@ -622,16 +617,16 @@ export default defineInstrument({
         religion: {
           kind: 'string',
           label: {
-            en: 'Religion',
-            fr: 'Religion'
+            ca: 'Religion',
+
           },
           options: formatTranslatedOptions(religion),
           variant: 'select'
         }
       },
       title: {
-        en: 'Personal Characteristics',
-        fr: 'Caractéristiques individuelles'
+        ca: 'Personal Characteristics',
+
       }
     },
     {
@@ -639,8 +634,8 @@ export default defineInstrument({
         firstLanguage: {
           kind: 'string',
           label: {
-            en: 'First Language',
-            fr: 'Langue maternelle'
+            ca: 'First Language',
+
           },
           options: formatTranslatedOptions(firstLanguage),
           variant: 'select'
@@ -648,8 +643,8 @@ export default defineInstrument({
         speaksEnglish: {
           kind: 'boolean',
           label: {
-            en: 'Speak and Understand English',
-            fr: "Parler et comprendre l'anglais"
+            ca: 'Speak and Understand English',
+
           },
           options: yesNoOptions,
           variant: 'radio'
@@ -657,16 +652,16 @@ export default defineInstrument({
         speaksFrench: {
           kind: 'boolean',
           label: {
-            en: 'Speak and Understand French',
-            fr: 'Parler et comprendre le français'
+            ca: 'Speak and Understand French',
+
           },
           options: yesNoOptions,
           variant: 'radio'
         }
       },
       title: {
-        en: 'Language',
-        fr: 'Langue'
+        ca: 'Language',
+
       }
     },
     {
@@ -674,8 +669,8 @@ export default defineInstrument({
         householdSize: {
           kind: 'number',
           label: {
-            en: 'Household Size',
-            fr: 'Taille du ménage'
+            ca: 'Household Size',
+
           },
           max: 20,
           min: 0,
@@ -684,8 +679,8 @@ export default defineInstrument({
         maritalStatus: {
           kind: 'string',
           label: {
-            en: 'Martial Status',
-            fr: 'État matrimonial'
+            ca: 'Martial Status',
+
           },
           options: formatTranslatedOptions(maritalStatus),
           variant: 'select'
@@ -693,8 +688,8 @@ export default defineInstrument({
         numberChildren: {
           kind: 'number',
           label: {
-            en: 'Number of Children',
-            fr: "Nombre d'enfants"
+            ca: 'Number of Children',
+
           },
           max: 20,
           min: 0,
@@ -703,15 +698,15 @@ export default defineInstrument({
         postalCode: {
           kind: 'string',
           label: {
-            en: 'Postal Code',
-            fr: 'Code postal'
+            ca: 'Postal Code',
+
           },
           variant: 'input'
         }
       },
       title: {
-        en: 'Living Situation',
-        fr: 'Situation de vie'
+        ca: 'Living Situation',
+
       }
     },
     {
@@ -719,8 +714,8 @@ export default defineInstrument({
         annualIncome: {
           kind: 'number',
           label: {
-            en: 'Annual Income',
-            fr: 'Revenu annuel'
+            ca: 'Annual Income',
+
           },
           max: 1000000,
           min: 0,
@@ -729,16 +724,16 @@ export default defineInstrument({
         employmentStatus: {
           kind: 'string',
           label: {
-            en: 'Employment Status',
-            fr: "Statut de l'emploi"
+            ca: 'Employment Status',
+
           },
           options: formatTranslatedOptions(employmentStatus),
           variant: 'select'
         }
       },
       title: {
-        en: 'Economic Situation',
-        fr: 'Situation économique'
+        ca: 'Economic Situation',
+
       }
     },
     {
@@ -746,8 +741,8 @@ export default defineInstrument({
         yearsOfEducation: {
           kind: 'number',
           label: {
-            en: 'Years of Education',
-            fr: "Années d'études"
+            ca: 'Years of Education',
+
           },
           max: 30,
           min: 0,
@@ -755,8 +750,8 @@ export default defineInstrument({
         }
       },
       title: {
-        en: 'Education',
-        fr: 'Éducation'
+        ca: 'Education',
+
       }
     },
     {
@@ -764,8 +759,8 @@ export default defineInstrument({
         ageAtImmigration: {
           kind: 'number',
           label: {
-            en: 'Age at Immigration',
-            fr: "Âge à l'immigration (le cas échéant)"
+            ca: 'Age at Immigration',
+
           },
           max: 100,
           min: 1,
@@ -774,40 +769,37 @@ export default defineInstrument({
         isCanadianCitizen: {
           kind: 'boolean',
           label: {
-            en: 'Canadian Citizen',
-            fr: 'Citoyen canadien'
+            ca: 'Canadian Citizen',
+
           },
           options: yesNoOptions,
           variant: 'radio'
         }
       },
       title: {
-        en: 'Immigration',
-        fr: 'Immigration'
+        ca: 'Immigration',
+
       }
     }
   ],
   clientDetails: {
     estimatedDuration: 5,
     instructions: {
-      en: [
+      ca: [
         'Please provide the most accurate answer for the following questions. If there are more than one correct answers, select the one that is more applicable.'
-      ],
-      fr: [
-        "Veuillez fournir la réponse la plus précise aux questions suivantes. S'il y a plusieurs réponses correctes, choisissez celle qui s'applique le mieux."
       ]
     }
   },
   details: {
     description: {
-      en: 'This instrument is designed to capture more specific demographic data, beyond that which is required for initial subject registration. All questions are optional.',
-      fr: "Cet instrument est conçu pour recueillir des données démographiques plus spécifiques que celles requises pour l'enregistrement initial des sujets. celles qui sont requises pour l'enregistrement initial des sujets. Toutes les questions sont optionnelles."
+      ca: 'This instrument is designed to capture more specific demographic data, beyond that which is required for initial subject registration. All questions are optional.',
+
     },
 
     license: 'Apache-2.0',
     title: {
-      en: 'Enhanced Demographics Questionnaire',
-      fr: 'Questionnaire démographique détaillé'
+      ca: 'Enhanced Demographics Questionnaire',
+
     }
   },
   measures: {},

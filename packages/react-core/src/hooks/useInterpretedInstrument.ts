@@ -4,7 +4,7 @@ import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { InstrumentInterpreter } from '@opendatacapture/instrument-interpreter';
 import type { InterpretOptions } from '@opendatacapture/instrument-interpreter';
 import { translateInstrument } from '@opendatacapture/instrument-utils';
-import type { AnyInstrument, AnyUnilingualInstrument } from '@opendatacapture/runtime-core';
+import type { AnyInstrument, AnyUnilingualInstrument, Language } from '@opendatacapture/runtime-core';
 
 export type InterpretedInstrumentState =
   | { error: Error; status: 'ERROR' }
@@ -38,7 +38,7 @@ export function useInterpretedInstrument(bundle: string, options?: InterpretOpti
 
   useEffect(() => {
     if (instrument) {
-      setState({ instrument: translateInstrument(instrument, resolvedLanguage), status: 'DONE' });
+      setState({ instrument: translateInstrument(instrument, resolvedLanguage as Language), status: 'DONE' });
     }
   }, [resolvedLanguage, instrument]);
 

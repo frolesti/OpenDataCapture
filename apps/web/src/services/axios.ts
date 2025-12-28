@@ -21,9 +21,6 @@ axios.interceptors.request.use((config) => {
     config.timeout = 10000; // abort request after 10 seconds
     config.timeoutErrorMessage = i18n.t({
       ca: 'Error de xarxa',
-      en: 'Network Error',
-      es: 'Error de red',
-      fr: 'Erreur de réseau'
     });
   }
 
@@ -51,9 +48,6 @@ axios.interceptors.response.use(
       notifications.addNotification({
         message: i18n.t({
           ca: 'Error desconegut',
-          en: 'Unknown Error',
-          es: 'Error desconocido',
-          fr: 'Erreur inconnue'
         }),
         type: 'error'
       });
@@ -63,9 +57,6 @@ axios.interceptors.response.use(
     notifications.addNotification({
       message: i18n.t({
         ca: 'Sol·licitud HTTP fallida',
-        en: 'HTTP Request Failed',
-        es: 'Solicitud HTTP fallida',
-        fr: 'Échec de la requête HTTP'
       }),
       title: error.response?.status.toString(),
       type: 'error'

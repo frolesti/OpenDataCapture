@@ -62,8 +62,6 @@ const RouteComponent = () => {
       if (reformattedData.records.length > 1000) {
         addNotification({
           message: t({
-            en: 'Lots of entries loading, please wait...',
-            fr: 'Beaucoup de données, veuillez patienter...'
           }),
           type: 'info'
         });
@@ -105,8 +103,6 @@ const RouteComponent = () => {
             }}
           >
             {t({
-              en: 'Error Report',
-              fr: "Rapport d'erreur"
             })}
           </Button>
           <Button
@@ -117,8 +113,6 @@ const RouteComponent = () => {
             }}
           >
             {t({
-              en: 'Try Again',
-              fr: 'Réessayer'
             })}
           </Button>
         </div>
@@ -158,8 +152,6 @@ const RouteComponent = () => {
               <Button className="gap-1" disabled={!instrument} variant={'primary'} onClick={handleTemplateDownload}>
                 <DownloadIcon />
                 {t({
-                  en: 'Download Template',
-                  fr: 'Télécharger le modèle'
                 })}
               </Button>
               <Button
@@ -172,8 +164,6 @@ const RouteComponent = () => {
               >
                 <BadgeHelpIcon />
                 {t({
-                  en: 'Help',
-                  fr: 'Aide'
                 })}
               </Button>
             </div>
@@ -185,8 +175,6 @@ const RouteComponent = () => {
             <Spinner className="mx-auto size-1/2"></Spinner>
             <Heading className="text-center" variant="h3">
               {t({
-                en: 'Data currently uploading...',
-                fr: 'Données en cours de téléchargement...'
               })}
             </Heading>
           </div>

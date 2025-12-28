@@ -199,7 +199,7 @@ export default defineInstrument({
     name: 'BREAKOUT_TASK'
   },
   kind: 'INTERACTIVE',
-  language: 'en',
+  language: 'ca',
   measures: {
     livesRemaining: {
       kind: 'const',

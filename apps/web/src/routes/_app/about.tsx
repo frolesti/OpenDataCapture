@@ -14,46 +14,26 @@ import { setupStateQueryOptions, useSetupStateQuery } from '@/hooks/useSetupStat
 
 const translations = {
   branch: {
-    en: 'Branch',
-    fr: 'Branche'
   },
   buildDate: {
-    en: 'Build Date',
-    fr: 'Date de construction'
   },
   buildType: {
-    en: 'Build Type',
-    fr: 'Type de construction'
   },
   buildTypes: {
     development: {
-      en: 'Development',
-      fr: 'Développement'
     },
     production: {
-      en: 'Production',
-      fr: 'Production'
     },
     test: {
-      en: 'Test',
-      fr: 'Test'
     }
   },
   enabled: {
-    en: 'Enabled',
-    fr: 'Activé'
   },
   status: {
-    en: 'Status',
-    fr: 'Statut'
   },
   uptime: {
-    en: 'Uptime',
-    fr: 'Temps de fonctionnement'
   },
   version: {
-    en: 'Version',
-    fr: 'Version'
   }
 };
 
@@ -155,9 +135,6 @@ const RouteComponent = () => {
         <Heading className="text-center" variant="h2">
           {t({
             ca: 'Sobre Alta Medical Services',
-            es: 'Sobre Alta Medical Services',
-            en: 'About Alta Medical Services',
-            fr: "À propos d'Alta Medical Services"
           })}
         </Heading>
       </PageHeader>

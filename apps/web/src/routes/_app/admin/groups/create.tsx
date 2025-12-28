@@ -22,8 +22,6 @@ const RouteComponent = () => {
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            en: 'Add Group',
-            fr: 'Ajouter un groupe'
           })}
         </Heading>
       </PageHeader>

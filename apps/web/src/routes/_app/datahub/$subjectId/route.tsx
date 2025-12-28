@@ -43,8 +43,6 @@ const RouteComponent = () => {
         <Heading className="text-center" variant="h2">
           {t(
             {
-              en: 'Instrument Records for Subject {}',
-              fr: "Dossiers d'instruments pour le client {}"
             },
             {
               args: [removeSubjectIdScope(subjectId).slice(0, subjectIdDisplaySetting ?? 9)]

@@ -13,8 +13,8 @@ export const createAuthSlice: SliceCreator<AuthSlice> = (set) => ({
   currentGroup: null,
   currentUser: null,
   login: (accessToken) => {
-    const decoded = jwtDecode<TokenPayload & { sub: string; id?: string }>(accessToken);
-    const { groups, permissions, sub, id, ...rest } = decoded;
+    const decoded = jwtDecode<TokenPayload & { id?: string; sub: string; }>(accessToken);
+    const { groups, id, permissions, sub, ...rest } = decoded;
     const ability = createMongoAbility<PureAbility<[AppAction, AppSubjectName], any>>(permissions);
     set({
       accessToken,

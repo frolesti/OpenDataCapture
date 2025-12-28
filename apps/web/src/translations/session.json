@@ -1,64 +1,46 @@
 {
   "additionalData": {
     "title": {
-      "en": "Additional Data",
-      "fr": "Données supplémentaires",
-      "es": "Datos adicionales",
-      "ca": "Dades addicionals"
+      "ca": "Dades addicionals",
+      "es": "Datos adicionales"
     }
   },
   "dateAssessed": {
     "description": {
-      "en": "If the session took place on a date other than today, you can change it here.",
-      "fr": "Si la session a eu lieu à une autre date qu'aujourd'hui, vous pouvez la modifier ici.",
-      "es": "Si la sesión tuvo lugar en una fecha distinta a hoy, puede cambiarla aquí.",
-      "ca": "Si la sessió va tenir lloc en una data diferent d'avui, podeu canviar-la aquí."
+      "ca": "Si la sessió va tenir lloc en una data diferent d'avui, podeu canviar-la aquí.",
+      "es": "Si la sesión tuvo lugar en una fecha diferente a hoy, puede cambiarla aquí."
     },
     "label": {
-      "en": "Date Assessed",
-      "fr": "Date d'évaluation",
-      "es": "Fecha de evaluación",
-      "ca": "Data d'avaluació"
+      "ca": "Data d'avaluació",
+      "es": "Fecha de evaluación"
     }
   },
   "errors": {
     "assessmentMustBeInPast": {
-      "en": "The assessment must be in the past",
-      "fr": "L'évaluation doit être dans le passé",
-      "es": "La evaluación debe ser en el pasado",
-      "ca": "L'avaluació ha de ser en el passat"
+      "ca": "L'avaluació ha de ser en el passat",
+      "es": "La evaluación debe ser en el pasado"
     },
     "mustBeAdult": {
-      "en": "The subject must be at least 18 years old",
-      "fr": "Le client doit avoir au moins 18 ans",
-      "es": "El sujeto debe tener al menos 18 años",
-      "ca": "El subjecte ha de tenir almenys 18 anys"
+      "ca": "El subjecte ha de tenir almenys 18 anys",
+      "es": "El sujeto debe tener al menos 18 años"
     }
   },
   "startSession": {
-    "en": "Start Record",
-    "fr": "Commencer un enregistrement",
-    "es": "Iniciar Registro",
-    "ca": "Iniciar Registre"
+    "ca": "Iniciar Registre",
+    "es": "Iniciar Registro"
   },
   "type": {
     "in-person": {
-      "en": "In-Person",
-      "fr": "En personne",
-      "es": "En persona",
-      "ca": "En persona"
+      "ca": "En persona",
+      "es": "En persona"
     },
     "label": {
-      "en": "Type of Assessment",
-      "fr": "Type d'évaluation",
-      "es": "Tipo de evaluación",
-      "ca": "Tipus d'avaluació"
+      "ca": "Tipus d'avaluació",
+      "es": "Tipo de evaluación"
     },
     "retrospective": {
-      "en": "Retrospective",
-      "fr": "Rétrospective",
-      "es": "Retrospectivo",
-      "ca": "Retrospectiu"
+      "ca": "Retrospectiu",
+      "es": "Retrospectivo"
     }
   }
 }

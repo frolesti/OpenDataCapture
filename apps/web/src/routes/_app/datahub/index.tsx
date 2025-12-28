@@ -61,9 +61,6 @@ const RouteComponent = () => {
     addNotification({
       message: t({
         ca: 'Exportant entrades, si us plau, espereu...',
-        es: 'Exportando entradas, por favor espere...',
-        en: 'Exporting entries, please wait...',
-        fr: 'Téléchargement des entrées, veuillez patienter...'
       }),
       type: 'info'
     });
@@ -142,9 +139,6 @@ const RouteComponent = () => {
                 id="subject-lookup-search-bar"
                 placeholder={t({
                   ca: 'Feu clic per cercar',
-                  en: 'Click to Search',
-                  es: 'Haga clic para buscar',
-                  fr: 'Cliquer pour rechercher'
                 })}
                 readOnly={true}
               />
@@ -178,9 +172,6 @@ const RouteComponent = () => {
                   } else if (isHealthCenter) {
                     label = t({
                       ca: 'Centre Sanitari',
-                      en: 'Health Center',
-                      es: 'Centro de Salud',
-                      fr: 'Centre de Santé'
                     }).toUpperCase();
                   }
 
@@ -196,20 +187,10 @@ const RouteComponent = () => {
                       <Select.Content>
                         <Select.Item value="ALL">
                           {key === '__subjectId__'
-                            ? t({
-                                ca: 'Tots els subjectes',
-                                en: 'All Subjects',
-                                es: 'Todos los sujetos',
-                                fr: 'Tous les sujets'
-                              })
+                            ? t('datahub.filters.allSubjects')
                             : isHealthCenter
-                              ? t({
-                                  ca: 'Tots els centres sanitaris',
-                                  en: 'All Health Centers',
-                                  es: 'Todos los centros de salud',
-                                  fr: 'Tous les centres de santé'
-                                })
-                              : `${t({ ca: 'Tots', en: 'All', es: 'Todos', fr: 'Tous' })} ${key}`}
+                              ? t('datahub.filters.allHealthCenters')
+                              : `${t('datahub.filters.all')} ${key}`}
                         </Select.Item>
                         {Array.from(options).map((opt) => (
                           <Select.Item key={opt} value={opt}>
@@ -268,9 +249,6 @@ const RouteComponent = () => {
             <p>
               {t({
                 ca: "Seleccioneu un instrument per veure'n les dades",
-                en: 'Select an instrument to view data',
-                es: 'Seleccione un instrumento para ver los datos',
-                fr: 'Sélectionnez un instrument pour voir les données'
               })}
             </p>
           </div>

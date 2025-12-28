@@ -4,10 +4,10 @@ import { z } from '/runtime/v1/zod@3.x/v4';
 
 export default defineInstrument({
   kind: 'FORM',
-  language: ['en', 'fr'],
+  language: ['ca'],
   tags: {
-    en: ['Well-Being'],
-    fr: ['Bien-être']
+    ca: ['Well-Being'],
+
   },
   internal: {
     edition: 1,
@@ -16,13 +16,13 @@ export default defineInstrument({
   content: {
     personalLifeSatisfaction: {
       description: {
-        en: 'Please select a number from 1 to 10 (inclusive), where 1 is very dissatisfied and 10 is very satisfied.',
-        fr: 'Veuillez choisir un chiffre de 1 à 10 (inclus), où 1 correspond à très insatisfait et 10 à très satisfait.'
+        ca: 'Please select a number from 1 to 10 (inclusive), where 1 is very dissatisfied and 10 is very satisfied.',
+
       },
       kind: 'number',
       label: {
-        en: 'How satisfied are you with your personal life?',
-        fr: 'Dans quelle mesure êtes-vous satisfait de votre vie personnelle ?'
+        ca: 'How satisfied are you with your personal life?',
+
       },
       max: 10,
       min: 1,
@@ -30,13 +30,13 @@ export default defineInstrument({
     },
     professionalLifeSatisfaction: {
       description: {
-        en: 'Please select a number from 1 to 10 (inclusive), where 1 is very dissatisfied and 10 is very satisfied.',
-        fr: 'Veuillez choisir un chiffre de 1 à 10 (inclus), où 1 correspond à très insatisfait et 10 à très satisfait.'
+        ca: 'Please select a number from 1 to 10 (inclusive), where 1 is very dissatisfied and 10 is very satisfied.',
+
       },
       kind: 'number',
       label: {
-        en: 'How satisfied are you with your professional life?',
-        fr: 'Dans quelle mesure êtes-vous satisfait de votre vie professionnelle ?'
+        ca: 'How satisfied are you with your professional life?',
+
       },
       max: 10,
       min: 1,
@@ -45,17 +45,13 @@ export default defineInstrument({
     isSatisfiedOverall: {
       kind: 'boolean',
       label: {
-        en: 'Overall, would you say you are satisfied with your life?',
-        fr: "Dans l'ensemble, diriez-vous que vous êtes satisfait de votre vie ?"
+        ca: 'Overall, would you say you are satisfied with your life?',
+
       },
       options: {
-        en: {
+        ca: {
           true: 'Yes',
           false: 'No'
-        },
-        fr: {
-          true: 'Oui',
-          false: 'Non'
         }
       },
       variant: 'radio'
@@ -69,8 +65,8 @@ export default defineInstrument({
         }
         return {
           label: {
-            en: 'Why do you feel dissatisfied with your life?',
-            fr: 'Pourquoi vous sentez-vous insatisfait de votre vie ?'
+            ca: 'Why do you feel dissatisfied with your life?',
+
           },
           isRequired: false,
           kind: 'string',
@@ -87,24 +83,18 @@ export default defineInstrument({
         }
         return {
           label: {
-            en: 'Which of the following are causes of your dissatisfaction? ',
-            fr: "Parmi les causes suivantes, lesquelles sont à l'origine de votre insatisfaction ? "
+            ca: 'Which of the following are causes of your dissatisfaction? ',
+
           },
           isRequired: false,
           kind: 'set',
           variant: 'listbox',
           options: {
-            en: {
+            ca: {
               EXISTENTIAL_CRISIS: 'Existential Crisis',
               FRIENDS: 'Friends',
               ROMANTIC_PARTNER: 'Romantic Partner',
               MONEY: 'Money'
-            },
-            fr: {
-              EXISTENTIAL_CRISIS: 'Crise existentielle',
-              FRIENDS: 'Amis',
-              ROMANTIC_PARTNER: 'Partenaire romantique',
-              MONEY: "L'argent"
             }
           }
         };
@@ -114,23 +104,23 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 1,
     instructions: {
-      en: ['Please answer the questions based on your current feelings.'],
-      fr: ['Veuillez répondre àux questions en fonction de vos sentiments actuels.']
+      ca: ['Please answer the questions based on your current feelings.'],
+
     },
     title: {
-      en: 'Questionnaire on Happiness',
-      fr: 'Questionnaire relatif au bonheur'
+      ca: 'Questionnaire on Happiness',
+
     }
   },
   details: {
     description: {
-      en: 'The Happiness Questionnaire is a questionnaire about happiness.',
-      fr: 'Le questionnaire sur le bonheur est un questionnaire sur le bonheur.'
+      ca: 'The Happiness Questionnaire is a questionnaire about happiness.',
+
     },
     license: 'Apache-2.0',
     title: {
-      en: 'Happiness Questionnaire',
-      fr: 'Questionnaire sur le bonheur'
+      ca: 'Happiness Questionnaire',
+
     }
   },
   measures: {
@@ -138,23 +128,23 @@ export default defineInstrument({
       kind: 'const',
       ref: 'personalLifeSatisfaction',
       label: {
-        en: 'Satisfaction With Personal Life',
-        fr: "Satisfaction à l'égard de la vie personnelle"
+        ca: 'Satisfaction With Personal Life',
+
       }
     },
     professionalLifeSatisfaction: {
       kind: 'const',
       ref: 'professionalLifeSatisfaction',
       label: {
-        en: 'Satisfaction With Professional Life',
-        fr: "Satisfaction à l'égard de la vie professionnelle"
+        ca: 'Satisfaction With Professional Life',
+
       }
     },
     overallLifeSatisfaction: {
       kind: 'computed',
       label: {
-        en: 'Overall Satisfaction Score',
-        fr: 'Score global de satisfaction'
+        ca: 'Overall Satisfaction Score',
+
       },
       value(data) {
         return sum(Object.values(pick(data, ['personalLifeSatisfaction', 'professionalLifeSatisfaction'])));

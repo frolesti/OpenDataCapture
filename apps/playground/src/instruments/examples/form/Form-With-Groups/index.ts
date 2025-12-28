@@ -5,66 +5,66 @@ import { z } from '/runtime/v1/zod@3.x';
 
 export default defineInstrument({
   kind: 'FORM',
-  language: ['en', 'fr'],
+  language: ['ca'],
   internal: {
     edition: 1,
     name: 'HAPPINESS_QUESTIONNAIRE'
   },
   tags: {
-    en: ['Well-Being'],
-    fr: ['Bien-être']
+    ca: ['Well-Being'],
+
   },
   content: [
     {
       title: {
-        en: 'Personal Information',
-        fr: 'Renseignements personnels'
+        ca: 'Personal Information',
+
       },
       description: {
-        en: 'Please provide the following information for our records',
-        fr: 'Veuillez fournir les informations suivantes pour nos dossiers'
+        ca: 'Please provide the following information for our records',
+
       },
       fields: {
         firstName: {
           kind: 'string',
           label: {
-            en: 'First Name',
-            fr: 'Prénom'
+            ca: 'First Name',
+
           },
           variant: 'input'
         },
         lastName: {
           kind: 'string',
           label: {
-            en: 'Last Name',
-            fr: 'Nom'
+            ca: 'Last Name',
+
           },
           variant: 'input'
         },
         dateOfBirth: {
           kind: 'date',
           label: {
-            en: 'Date of Birth',
-            fr: 'Date de naissance'
+            ca: 'Date of Birth',
+
           }
         }
       }
     },
     {
       title: {
-        en: 'Questions Regarding Life',
-        fr: 'Questions sur la vie'
+        ca: 'Questions Regarding Life',
+
       },
       fields: {
         overallHappiness: {
           description: {
-            en: 'Overall happiness from 1 through 10 (inclusive)',
-            fr: 'Bonheur général de 1 à 10 (inclus)'
+            ca: 'Overall happiness from 1 through 10 (inclusive)',
+
           },
           kind: 'number',
           label: {
-            en: 'Overall Happiness',
-            fr: 'Bonheur général'
+            ca: 'Overall Happiness',
+
           },
           max: 10,
           min: 1,
@@ -79,8 +79,8 @@ export default defineInstrument({
             }
             return {
               label: {
-                en: 'Reason for Sadness',
-                fr: 'Raison de la tristesse'
+                ca: 'Reason for Sadness',
+
               },
               isRequired: false,
               kind: 'string',
@@ -94,19 +94,19 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 1,
     instructions: {
-      en: ['Please respond to all questions'],
-      fr: ['Veuillez répondre à toutes les questions']
+      ca: ['Please respond to all questions'],
+
     }
   },
   details: {
     description: {
-      en: 'This is an example of a multilingual grouped form',
-      fr: 'Voici un exemple de formulaire groupé multilingue'
+      ca: 'This is an example of a multilingual grouped form',
+
     },
     license: 'Apache-2.0',
     title: {
-      en: 'Happiness Questionnaire',
-      fr: 'Questionnaire sur le bonheur'
+      ca: 'Happiness Questionnaire',
+
     }
   },
   measures: {

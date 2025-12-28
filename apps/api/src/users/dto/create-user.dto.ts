@@ -15,7 +15,7 @@ import { z } from 'zod/v4';
       if (!result.success) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Insufficient password strength: ${result.score}`
+          message: `La contrasenya no és prou segura: ${result.score}`
         });
       }
     })

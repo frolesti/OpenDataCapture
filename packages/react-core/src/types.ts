@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 
 import type { Theme } from '@douglasneuroinformatics/libui/hooks';
-import type { Language } from '@douglasneuroinformatics/libui/i18n';
-import type { AnyUnilingualInstrument, Json, RuntimeNotification } from '@opendatacapture/runtime-core';
+import type { AnyUnilingualInstrument, Json, Language, RuntimeNotification } from '@opendatacapture/runtime-core';
 import type { Subject } from '@opendatacapture/schemas/subject';
 import type { Promisable } from 'type-fest';
 

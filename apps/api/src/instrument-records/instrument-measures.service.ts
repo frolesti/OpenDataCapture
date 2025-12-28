@@ -30,7 +30,7 @@ export class InstrumentMeasuresService {
       .with({ kind: 'const' }, (measure) => {
         if (!(data && typeof data === 'object')) {
           this.loggingService.error({ data, message: 'Invalid Data' });
-          const label = typeof measure.label === 'string' ? measure.label : (measure.label?.en ?? measure.label?.fr)!;
+          const label = typeof measure.label === 'string' ? measure.label : measure.label?.ca!;
           throw new InternalServerErrorException(`Failed to compute measure '${label}': data must be object'`);
         }
         return Reflect.get(data, measure.ref) as InstrumentMeasureValue;

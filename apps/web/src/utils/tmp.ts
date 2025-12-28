@@ -255,7 +255,7 @@ export namespace Zod4 {
       case 'set': {
         const set = extractSetEntry(entry);
         if (set.size === 0) {
-          throw new UploadError({ en: 'Empty set is not allowed', fr: "Un ensemble vide n'est pas autorisé" });
+          throw new UploadError({ });
         }
         return set;
       }
@@ -314,7 +314,6 @@ export namespace Zod4 {
   ) {
     if (!(instrumentSchema instanceof z4.ZodObject)) {
       throw new UploadError({
-        en: 'Expected schema to be instance of ZodObject'
       });
     }
 
@@ -338,7 +337,6 @@ export namespace Zod4 {
   ): Promise<FormTypes.Data[]> {
     if (!(instrument.validationSchema instanceof z4.ZodObject)) {
       throw new UploadError({
-        en: 'Expected schema to be instance of ZodObject'
       });
     }
 
@@ -362,8 +360,6 @@ export namespace Zod4 {
         if (!dataLines?.[0]) {
           return reject(
             new UploadError({
-              en: 'CSV does not contain any rows of data',
-              fr: 'Le fichier CSV ne contient aucune ligne de données'
             })
           );
         }
@@ -422,7 +418,6 @@ export namespace Zod4 {
             console.error(`Failed to parse data: ${JSON.stringify(jsonLine)}`);
             return reject(
               new UploadError({
-                en: 'Schema parsing failed: refer to the browser console for further details'
               })
             );
           }

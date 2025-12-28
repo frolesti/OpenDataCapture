@@ -8,6 +8,10 @@ import { generateToken } from '@/utils/auth';
 
 const router = Router();
 
+router.get('/', (_, res) => {
+  res.status(200).send('Open Data Capture Gateway');
+});
+
 router.get(
   '/assignments/:id',
   ah(async (req, res, next) => {

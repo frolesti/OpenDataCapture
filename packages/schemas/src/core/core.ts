@@ -33,7 +33,7 @@ export const $UserPermission = z.object({
 export type Permissions = z.infer<typeof $Permissions>;
 export const $Permissions = z.array($UserPermission);
 
-export const $Language: z.ZodType<Language> = z.enum(['en', 'fr']);
+export const $Language: z.ZodType<Language> = z.enum(['ca', 'en', 'es', 'fr']);
 
 export type BaseModel = z.infer<typeof $BaseModel>;
 export const $BaseModel = z.object({

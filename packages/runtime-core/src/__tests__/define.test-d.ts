@@ -89,14 +89,14 @@ expectTypeOf(
       name: 'HAPPINESS_QUESTIONNAIRE'
     },
     kind: 'FORM',
-    language: 'fr',
+    language: 'ca',
     measures: {},
     tags: ['Well-Being'],
     validationSchema: z4.object({
       overallHappiness: z4.number()
     })
   })
-).toMatchTypeOf<FormInstrument<{ overallHappiness: number }, 'fr'>>();
+).toMatchTypeOf<FormInstrument<{ overallHappiness: number }, 'ca'>>();
 
 expectTypeOf(
   defineInstrument({

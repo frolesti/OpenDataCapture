@@ -14,7 +14,7 @@
     "clean:workflows": "./scripts/clean-workflows.sh",
     "db:generate": "turbo run db:generate",
     "db:push": "turbo run db:push",
-    "dev": "pnpm dev:core",
+    "dev": "./scripts/dev-setup.sh",
     "dev:all": "NODE_ENV=development env-cmd turbo run dev",
     "dev:core": "NODE_ENV=development env-cmd pnpm exec turbo run dev --filter=@opendatacapture/api --filter=@opendatacapture/gateway --filter=@opendatacapture/web",
     "dev:test": "NODE_ENV=test env-cmd turbo run dev:test",

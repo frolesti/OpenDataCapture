@@ -1,12 +1,12 @@
 {
   "author": "Douglas Neuroinformatics Platform",
   "description": {
-    "en": "An open-source, easy-to-use web application for electronic data capture",
-    "fr": "Une application web conviviale à source ouverte pour la saisie électronique des données"
+    "ca": "Una aplicació web de codi obert i fàcil d'utilitzar per a la captura electrònica de dades",
+    "es": "Una aplicación web de código abierto y fácil de usar para la captura electrónica de datos"
   },
   "keywords": {
-    "en": "Data Collection, Data Capture, Electronic Data Capture, Clinical, Research",
-    "fr": "Collecte de données, Saisie de données, Saisie électronique de données, Clinique, Recherche"
+    "ca": "Recollida de dades, Captura de dades, Captura electrònica de dades, Clínic, Recerca",
+    "es": "Recopilación de datos, Captura de datos, Captura electrónica de datos, Clínico, Investigación"
   },
   "title": "Open Data Capture"
 }

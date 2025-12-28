@@ -7,7 +7,7 @@ export const seriesInstrument = await createInstrumentStub(async () => {
   return {
     __runtimeVersion: 1,
     kind: 'SERIES',
-    language: 'en',
+    language: 'ca',
     tags: ['Example', 'Useless'],
     content: [
       {

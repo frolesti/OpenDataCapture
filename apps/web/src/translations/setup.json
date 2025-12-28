@@ -1,84 +1,58 @@
 {
   "admin": {
     "description": {
-      "en": "To use the application, there must be at least one platform administrator. Ensure you remember these credentials, as failure to do so may result in data loss.",
-      "fr": "Pour utiliser l'application, il faut qu'il y ait au moins un administrateur. Assurez-vous de vous souvenir de ces informations d'identification, faute de quoi vous risquez de perdre des données.",
-      "es": "Para usar la aplicación, debe haber al menos un administrador de plataforma. Asegúrese de recordar estas credenciales, ya que no hacerlo puede resultar en pérdida de datos.",
-      "ca": "Per utilitzar l'aplicació, ha d'haver-hi almenys un administrador de plataforma. Assegureu-vos de recordar aquestes credencials, ja que no fer-ho pot resultar en pèrdua de dades."
+      "ca": "Per utilitzar l'aplicació, ha d'haver-hi almenys un administrador de plataforma. Assegureu-vos de recordar aquestes credencials, ja que no fer-ho pot resultar en pèrdua de dades.",
+      "es": "Para utilizar la aplicación, debe haber al menos un administrador de plataforma. Asegúrese de recordar estas credenciales, ya que no hacerlo puede resultar en pérdida de datos."
     },
     "password": {
-      "en": "Password",
-      "fr": "Mot de passe",
-      "es": "Contraseña",
-      "ca": "Contrasenya"
+      "ca": "Contrasenya",
+      "es": "Contraseña"
     },
     "title": {
-      "en": "Admin",
-      "fr": "Administrateur",
-      "es": "Administrador",
-      "ca": "Administrador"
+      "ca": "Administrador",
+      "es": "Administrador"
     },
     "username": {
-      "en": "Username",
-      "fr": "Nom d'utilisateur",
-      "es": "Nombre de usuario",
-      "ca": "Nom d'usuari"
+      "ca": "Nom d'usuari",
+      "es": "Nombre de usuario"
     }
   },
   "demo": {
     "description": {
-      "en": "If you're testing the platform, you have the option to populate the database with sample data.",
-      "fr": "Si vous testez la plateforme, vous avez la possibilité d'alimenter la base de données avec des échantillons de données.",
-      "es": "Si está probando la plataforma, tiene la opción de poblar la base de datos con datos de muestra.",
-      "ca": "Si esteu provant la plataforma, teniu l'opció de poblar la base de dades amb dades de mostra."
+      "ca": "Si esteu provant la plataforma, teniu l'opció de poblar la base de dades amb dades de mostra.",
+      "es": "Si está probando la plataforma, tiene la opción de poblar la base de datos con datos de muestra."
     },
     "dummySubjectCount": {
-      "en": "Number of Dummy Subjects",
-      "fr": "Nombre de clients fictifs",
-      "es": "Número de sujetos ficticios",
-      "ca": "Nombre de subjectes ficticis"
+      "ca": "Nombre de subjectes ficticis",
+      "es": "Número de sujetos ficticios"
     },
     "init": {
-      "en": "Initialize Demo",
-      "fr": "Initialiser la démonstration",
-      "es": "Inicializar demostración",
-      "ca": "Inicialitzar demostració"
+      "ca": "Inicialitzar demostració",
+      "es": "Inicializar demostración"
     },
     "recordsPerSubject": {
-      "en": "Records Per Subject",
-      "fr": "Enregistrements par sujet",
-      "es": "Registros por sujeto",
-      "ca": "Registres per subjecte"
+      "ca": "Registres per subjecte",
+      "es": "Registros por sujeto"
     },
     "title": {
-      "en": "Demo",
-      "fr": "Démonstration",
-      "es": "Demostración",
-      "ca": "Demostració"
+      "ca": "Demostració",
+      "es": "Demostración"
     }
   },
   "enableExperimentalFeatures": {
-    "en": "Enable Experimental Features (Not Recommended)",
-    "fr": "Activer les fonctionnalités expérimentales (Non recommandé)",
-    "es": "Habilitar funciones experimentales (No recomendado)",
-    "ca": "Habilitar funcions experimentals (No recomanat)"
+    "ca": "Habilitar funcions experimentals (No recomanat)",
+    "es": "Habilitar funciones experimentales (No recomendado)"
   },
   "loadingSubtitle": {
-    "en": "Please be patient, this may take a while...",
-    "fr": "Veuillez patienter, cela peut prendre un certain temps...",
-    "es": "Por favor sea paciente, esto puede tomar un tiempo...",
-    "ca": "Si us plau, segueu pacient, això pot trigar una estona..."
+    "ca": "Si us plau, segueu pacient, això pot trigar una estona...",
+    "es": "Por favor, sea paciente, esto puede tardar un rato..."
   },
   "loadingTitle": {
-    "en": "Initializing Application",
-    "fr": "Initialisation de l'application",
-    "es": "Inicializando aplicación",
-    "ca": "Inicialitzant aplicació"
+    "ca": "Inicialitzant aplicació",
+    "es": "Inicializando aplicación"
   },
   "pageTitle": {
-    "en": "Setup",
-    "fr": "Mise en service",
-    "es": "Configuración",
-    "ca": "Configuració"
+    "ca": "Configuració",
+    "es": "Configuración"
   }
 }

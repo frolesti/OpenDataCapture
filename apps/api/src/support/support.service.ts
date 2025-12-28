@@ -193,7 +193,7 @@ export class SupportService {
       this.logger.error(`Failed to send email: ${error}`);
       // Try sending without attachment if it fails (e.g. file not found)
       try {
-        delete mailOptions.attachments;
+        delete (mailOptions as any).attachments;
         // Remove image tag from html if attachment fails? Or just let it be broken image.
         // Better to try sending without attachment.
         await this.transporter.sendMail(mailOptions);

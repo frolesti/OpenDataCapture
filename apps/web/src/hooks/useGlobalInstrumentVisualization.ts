@@ -68,7 +68,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
   const [records, setRecords] = useState<InstrumentVisualizationRecord[]>([]);
   const [minDate, setMinDate] = useState<Date | null>(null);
   const [instrumentId, setInstrumentId] = useState<null | string>(null);
-  const [filters, setFilters] = useState<Record<string, string | null>>({});
+  const [filters, setFilters] = useState<{ [key: string]: null | string }>({});
 
   const instrument = useInstrument(instrumentId) as AnyUnilingualScalarInstrument;
 
@@ -87,7 +87,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
   });
 
   const filterOptions = useMemo(() => {
-    const options: Record<string, Set<string>> = {};
+    const options: { [key: string]: Set<string> } = {};
     if (records.length === 0) return options;
 
     const allKeys = new Set<string>();
@@ -343,7 +343,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     instrumentOptions,
     minDate,
     records: filteredRecords,
-    setFilter: (key: string, value: string | null) => setFilters((prev) => ({ ...prev, [key]: value })),
+    setFilter: (key: string, value: null | string) => setFilters((prev) => ({ ...prev, [key]: value })),
     setInstrumentId,
     setMinDate
   };

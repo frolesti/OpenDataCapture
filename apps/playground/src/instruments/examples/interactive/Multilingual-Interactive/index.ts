@@ -7,10 +7,10 @@ import { translator } from './translator.ts';
 
 export default defineInstrument({
   kind: 'INTERACTIVE',
-  language: ['en', 'fr'],
+  language: ['ca'],
   tags: {
-    en: ['<PLACEHOLDER>'],
-    fr: ['<PLACEHOLDER>']
+    ca: ['<PLACEHOLDER>'],
+
   },
   internal: {
     edition: 1,
@@ -20,20 +20,21 @@ export default defineInstrument({
     render(done) {
       translator.init();
 
-      const changeLanguageButton = document.createElement('button');
-      changeLanguageButton.textContent = translator.t('changeLanguage' as any);
-      document.body.appendChild(changeLanguageButton);
+      // Language toggle removed as we only support Catalan
+      // const changeLanguageButton = document.createElement('button');
+      // changeLanguageButton.textContent = translator.t('changeLanguage' as any);
+      // document.body.appendChild(changeLanguageButton);
 
-      changeLanguageButton.addEventListener('click', () => {
-        translator.changeLanguage(translator.resolvedLanguage === 'en' ? 'fr' : 'en');
-      });
+      // changeLanguageButton.addEventListener('click', () => {
+      //   translator.changeLanguage(translator.resolvedLanguage === 'en' ? 'fr' : 'en');
+      // });
 
       const submitButton = document.createElement('button');
       submitButton.textContent = translator.t('submit' as any);
       document.body.appendChild(submitButton);
 
       translator.onLanguageChange = () => {
-        changeLanguageButton.textContent = translator.t('changeLanguage' as any);
+        // changeLanguageButton.textContent = translator.t('changeLanguage' as any);
         submitButton.textContent = translator.t('submit' as any);
       };
 
@@ -45,19 +46,19 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 1,
     instructions: {
-      en: ['<PLACEHOLDER>'],
-      fr: ['<PLACEHOLDER>']
+      ca: ['<PLACEHOLDER>'],
+
     }
   },
   details: {
     description: {
-      en: '<PLACEHOLDER>',
-      fr: '<PLACEHOLDER>'
+      ca: '<PLACEHOLDER>',
+
     },
     license: 'Apache-2.0',
     title: {
-      en: '<PLACEHOLDER>',
-      fr: '<PLACEHOLDER>'
+      ca: '<PLACEHOLDER>',
+
     }
   },
   measures: {},

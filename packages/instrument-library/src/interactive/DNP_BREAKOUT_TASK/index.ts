@@ -263,7 +263,7 @@ export default defineInstrument({
     name: 'DNP_BREAKOUT_TASK'
   },
   kind: 'INTERACTIVE',
-  language: 'en',
+  language: 'ca',
   measures: {
     livesRemaining: {
       kind: 'const',

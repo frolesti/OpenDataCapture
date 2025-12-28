@@ -54,8 +54,8 @@ export const Header = () => {
           <LanguageToggle
             align="end"
             options={{
-              en: 'English',
-              fr: 'Français'
+              ca: 'Català',
+              es: 'Español'
             }}
             triggerClassName="h-9 w-9"
           />

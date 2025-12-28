@@ -1,23 +1,23 @@
 {
   "article": "Article",
   "caseStudy": {
-    "en": "Case Study",
-    "fr": "Étude de cas"
+    "ca": "Estudi de cas",
+    "es": "Estudio de caso"
   },
   "heading": {
-    "en": "Our Blog",
-    "fr": "Notre blogue"
+    "ca": "El nostre blog",
+    "es": "Nuestro blog"
   },
   "subheading": {
-    "en": "All the latest news on Open Data Capture and the open-source electronic data capture community",
-    "fr": "Toutes les dernières nouvelles sur Open Data Capture et la communauté de la saisie électronique de données open-source"
+    "ca": "Totes les últimes notícies sobre Open Data Capture i la comunitat de captura de dades electròniques de codi obert",
+    "es": "Todas las últimas noticias sobre Open Data Capture y la comunidad de captura de datos electrónicos de código abierto"
   },
   "title": {
-    "en": "Blog",
-    "fr": "Blogue"
+    "ca": "Blog",
+    "es": "Blog"
   },
   "video": {
-    "en": "Video",
-    "fr": "Vidéo"
+    "ca": "Vídeo",
+    "es": "Vídeo"
   }
 }

@@ -30,9 +30,6 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       kind: 'text',
       label: t({
         ca: 'Autors',
-        en: 'Authors',
-        es: 'Autores',
-        fr: 'Auteurs'
       }),
       text: instrument.details.authors?.join(', ')
     },
@@ -40,9 +37,6 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       kind: 'text',
       label: t({
         ca: 'Descripció',
-        en: 'Description',
-        es: 'Descripción',
-        fr: 'Description'
       }),
       text: instrument.details.description
     },
@@ -50,9 +44,6 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       kind: 'text',
       label: t({
         ca: 'Edició',
-        en: 'Edition',
-        es: 'Edición',
-        fr: 'Édition'
       }),
       text: instrument.internal?.edition.toString()
     },
@@ -60,21 +51,20 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       kind: 'text',
       label: t({
         ca: 'Idiomes',
-        en: 'Languages',
-        es: 'Idiomas',
-        fr: 'Langues'
       }),
       text: instrument.supportedLanguages
         .map((language) => {
           switch (language) {
             case 'ca':
               return 'Català';
-            case 'es':
-              return 'Español';
             case 'en':
               return 'English';
+            case 'es':
+              return 'Español';
             case 'fr':
               return 'Français';
+            default:
+              return language;
           }
         })
         .join(', ')
@@ -83,9 +73,6 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       kind: 'text',
       label: t({
         ca: 'Llicència',
-        en: 'License',
-        es: 'Licencia',
-        fr: 'Licence'
       }),
       text: license?.name ?? 'NA',
       tooltip: (
@@ -102,15 +89,9 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
               {license?.isOpenSource
                 ? t({
                     ca: 'Aquesta és una llicència lliure i de codi obert',
-                    en: 'This is a free and open-source license',
-                    es: 'Esta es una licencia libre y de código abierto',
-                    fr: "Il s'agit d'une licence libre"
                   })
                 : t({
                     ca: 'Aquesta no és una llicència lliure i de codi obert',
-                    en: 'This is not a free and open source license',
-                    es: 'Esta no es una licencia libre y de código abierto',
-                    fr: "Il ne s'agit pas d'une licence libre"
                   })}
             </p>
           </Tooltip.Content>
@@ -122,9 +103,6 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       kind: 'link',
       label: t({
         ca: 'Enllaç de referència',
-        en: 'Reference Link',
-        es: 'Enlace de referencia',
-        fr: 'Lien vers la référence'
       })
     },
     {
@@ -132,18 +110,12 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       kind: 'link',
       label: t({
         ca: 'Enllaç al codi font',
-        en: 'Source Link',
-        es: 'Enlace al código fuente',
-        fr: 'Lien vers le code source'
       })
     },
     {
       kind: 'text',
       label: t({
         ca: 'Etiquetes',
-        en: 'Tags',
-        es: 'Etiquetas',
-        fr: 'Étiquettes'
       }),
       text: instrument.tags.join(', ')
     }
@@ -175,7 +147,7 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
             return (
               <div className="flex items-center gap-1" key={item.label}>
                 <p className="line-clamp-3 leading-tight">
-                  <span className="font-medium">{item.label + t({ ca: ': ', en: ': ', es: ': ', fr: ' : ' })}</span>
+                  <span className="font-medium">{item.label + t({ ca: ': ', })}</span>
                   {item.kind === 'text' && <span className="text-muted-foreground">{item.text}</span>}
                   {item.kind === 'link' && (
                     <a

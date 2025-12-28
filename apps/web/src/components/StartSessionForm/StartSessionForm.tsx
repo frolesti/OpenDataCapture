@@ -59,15 +59,9 @@ export const StartSessionForm = ({
           {
             title: t({
               ca: 'Iniciar Registre',
-              en: 'Start Record',
-              es: 'Iniciar Registro',
-              fr: "Démarrer l'enregistrement"
             }),
             description: t({
               ca: "Seleccioneu la data per iniciar una nova sessió. Podreu afegir múltiples registres de pacients dins d'aquesta sessió.",
-              en: 'Select the date to start a new session. You will be able to add multiple patient records within this session.',
-              es: 'Seleccione la fecha para iniciar una nueva sesión. Podrá agregar múltiples registros de pacientes dentro de esta sesión.',
-              fr: 'Sélectionnez la date pour démarrer une nouvelle session. Vous pourrez ajouter plusieurs dossiers de patients dans cette session.'
             }),
             fields: {
               sessionDate: {
@@ -75,15 +69,9 @@ export const StartSessionForm = ({
                 disabled: true,
                 label: t({
                   ca: 'Data de la Sessió',
-                  en: 'Session Date',
-                  es: 'Fecha de la Sesión',
-                  fr: 'Date de la Session'
                 }),
                 description: t({
                   ca: 'La data en què es realitza aquesta sessió (Avui)',
-                  en: 'The date when this session is being conducted (Today)',
-                  es: 'La fecha en que se realiza esta sesión (Hoy)',
-                  fr: "La date à laquelle cette session est effectuée (Aujourd'hui)"
                 })
               } as any
             }
@@ -130,12 +118,7 @@ export const StartSessionForm = ({
           fields: {
             subjectIdentificationMethod: {
               kind: 'string',
-              label: t({
-                ca: 'Mètode',
-                en: 'Method',
-                es: 'Método',
-                fr: 'Méthode'
-              }),
+              label: t('common.method'),
               options: {
                 CUSTOM_ID: t('common.customIdentifier'),
                 PERSONAL_INFO: t('common.personalInfo')
@@ -263,8 +246,6 @@ export const StartSessionForm = ({
             .refine(
               (arg) => !arg.includes('$'),
               t({
-                en: 'Illegal character: $',
-                fr: 'Caractère illégal : $'
               })
             )
             .optional(),
@@ -311,10 +292,7 @@ export const StartSessionForm = ({
                     message:
                       errorMessageFromGroup ??
                       t({
-                        ca: `Ha de coincidir amb l'expressió regular: ${regex.source}`,
-                        en: `Must match regular expression: ${regex.source}`,
-                        es: `Debe coincidir con la expresión regular: ${regex.source}`,
-                        fr: `Doit correspondre à l'expression régulière : ${regex.source}`
+                        ca: `Ha de coincidir amb l'expressió regular: ${regex.source}`
                       }),
                     path: ['subjectId']
                   });

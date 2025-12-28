@@ -58,7 +58,7 @@ export const unilingualFormInstrument = await createInstrumentStub(async () => {
       }
     },
     kind: 'FORM',
-    language: 'en',
+    language: 'ca',
 
     tags: ['Example', 'Preferences'],
     validationSchema: z.object({
@@ -81,10 +81,10 @@ export const bilingualFormInstrument = await createInstrumentStub(async () => {
       favoriteNumber: {
         kind: 'number',
         label: {
+          ca: 'Número favorit',
           en: 'Favorite Number',
-          fr: 'Numéro préféré',
           es: 'Número favorito',
-          ca: 'Número favorit'
+          fr: 'Numéro favori'
         },
         variant: 'input'
       },
@@ -98,10 +98,10 @@ export const bilingualFormInstrument = await createInstrumentStub(async () => {
           return {
             kind: 'string',
             label: {
-              en: 'Why is Your Favorite Number Negative?',
-              fr: 'Pourquoi votre nombre préféré est-il négatif ?',
+              ca: 'Per què el teu número favorit és negatiu?',
+              en: 'Why is your favorite number negative?',
               es: '¿Por qué tu número favorito es negativo?',
-              ca: 'Per què el teu número favorit és negatiu?'
+              fr: 'Pourquoi votre numéro favori est-il négatif?'
             },
             variant: 'textarea'
           };
@@ -110,34 +110,34 @@ export const bilingualFormInstrument = await createInstrumentStub(async () => {
     },
     details: {
       description: {
+        ca: 'Aquest és un instrument de formulari bilingüe',
         en: 'This is a bilingual form instrument',
-        fr: "Il s'agit d'un instrument bilingue",
         es: 'Este es un instrumento de formulario bilingüe',
-        ca: 'Aquest és un instrument de formulari bilingüe'
+        fr: 'Ceci est un instrument de formulaire bilingue'
       },
       estimatedDuration: 1,
       instructions: {
+        ca: ['Si us plau, completeu totes les preguntes'],
         en: ['Please complete all questions'],
-        fr: ['Veuillez répondre à toutes les questions'],
-        es: ['Por favor complete todas las preguntas'],
-        ca: ['Si us plau, completeu totes les preguntes']
+        es: ['Por favor, complete todas las preguntas'],
+        fr: ['Veuillez répondre à toutes les questions']
       },
       license: 'Apache-2.0',
       title: {
+        ca: 'Formulari bilingüe',
         en: 'Bilingual Form',
-        fr: 'Formulaire bilingue',
         es: 'Formulario bilingüe',
-        ca: 'Formulari bilingüe'
+        fr: 'Formulaire bilingue'
       }
     },
     kind: 'FORM',
-    language: ['en', 'fr'],
+    language: ['ca', 'en', 'es', 'fr'],
 
     tags: {
+      ca: ['Exemple', 'Preferències'],
       en: ['Example', 'Preferences'],
-      fr: ['Exemple', 'Préférences'],
       es: ['Ejemplo', 'Preferencias'],
-      ca: ['Exemple', 'Preferències']
+      fr: ['Exemple', 'Préférences']
     },
     measures: {},
     validationSchema: z.object({

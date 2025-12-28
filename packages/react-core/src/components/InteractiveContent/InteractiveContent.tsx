@@ -26,10 +26,10 @@ export const InteractiveContent = React.memo<InteractiveContentProps>(function I
 
   const handleChangeLanguageEvent = useCallback(
     (event: CustomEvent<Language>) => {
-      if (event.detail === 'en' || event.detail === 'fr') {
-        void changeLanguage(event.detail);
+      if (event.detail === 'ca') {
+        void changeLanguage(event.detail as any);
       } else {
-        console.error(`Cannot change language: invalid language '${event.detail}', expected 'en' or 'fr'`);
+        console.error(`Cannot change language: invalid language '${event.detail}', expected 'ca'`);
       }
     },
     [updateTheme]

@@ -35,7 +35,7 @@ export default defineInstrument({
     name: 'INTERACTIVE_INSTRUMENT_STUB'
   },
   kind: 'INTERACTIVE',
-  language: 'en',
+  language: 'ca',
   measures: {},
   tags: ['Interactive'],
   validationSchema: z.any()

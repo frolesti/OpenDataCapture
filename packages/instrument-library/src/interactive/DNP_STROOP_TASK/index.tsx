@@ -29,7 +29,7 @@ export default defineInstrument({
     name: 'DNP_STROOP_TASK'
   },
   kind: 'INTERACTIVE',
-  language: 'en',
+  language: 'ca',
   measures: {
     score: {
       kind: 'const',

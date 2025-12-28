@@ -8,7 +8,7 @@ export const interactiveInstrument = await createInstrumentStub(async () => {
   return {
     __runtimeVersion: 1,
     kind: 'INTERACTIVE',
-    language: 'en',
+    language: 'ca',
     tags: ['Example', 'Useless'],
     internal: {
       edition: 1,

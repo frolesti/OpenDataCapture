@@ -1,39 +1,39 @@
 {
   "blog": {
-    "en": "Blog",
-    "fr": "Blogue"
+    "ca": "Blog",
+    "es": "Blog"
   },
   "changeLanguage": {
-    "en": "Change Language",
-    "fr": "Changer la langue"
+    "ca": "Canviar idioma",
+    "es": "Cambiar idioma"
   },
   "changeTheme": {
-    "en": "Change Theme",
-    "fr": "Changer le thème"
+    "ca": "Canviar tema",
+    "es": "Cambiar tema"
   },
   "docs": "Docs",
   "noContent": {
-    "en": "There is no content here at the moment",
-    "fr": "Il n'y a pas de contenu ici pour le moment"
+    "ca": "No hi ha contingut aquí en aquest moment",
+    "es": "No hay contenido aquí en este momento"
   },
   "overview": {
-    "en": "Overview",
-    "fr": "Accueil"
+    "ca": "Visió general",
+    "es": "Visión general"
   },
   "team": {
-    "en": "Team",
-    "fr": "L'équipe"
+    "ca": "Equip",
+    "es": "Equipo"
   },
   "faq": {
-    "en": "FAQ",
-    "fr": "FAQ"
+    "ca": "Preguntes freqüents",
+    "es": "Preguntas frecuentes"
   },
   "viewAltLangPrefix": {
-    "en": "You can also view our",
-    "fr": "Vous pouvez également consulter notre"
+    "ca": "També podeu veure el nostre",
+    "es": "También puede ver nuestro"
   },
   "viewAltLangSuffix": {
-    "en": "content in French",
-    "fr": "contenu en anglais"
+    "ca": "contingut en espanyol",
+    "es": "contenido en catalán"
   }
 }

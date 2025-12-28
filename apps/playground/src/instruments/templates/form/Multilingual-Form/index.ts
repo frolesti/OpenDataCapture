@@ -5,11 +5,11 @@ import { z } from '/runtime/v1/zod@3.x';
 
 export default defineInstrument({
   kind: 'FORM',
-  language: ['en', 'fr'],
+  language: ['ca'],
 
   tags: {
-    en: ['<PLACEHOLDER>'],
-    fr: ['<PLACEHOLDER>']
+    ca: ['<PLACEHOLDER>'],
+
   },
   internal: {
     edition: 1,
@@ -18,20 +18,20 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 1,
     instructions: {
-      en: ['<PLACEHOLDER>'],
-      fr: ['<PLACEHOLDER>']
+      ca: ['<PLACEHOLDER>'],
+
     }
   },
   content: {},
   details: {
     description: {
-      en: '<PLACEHOLDER>',
-      fr: '<PLACEHOLDER>'
+      ca: '<PLACEHOLDER>',
+
     },
     license: 'Apache-2.0',
     title: {
-      en: '<PLACEHOLDER>',
-      fr: '<PLACEHOLDER>'
+      ca: '<PLACEHOLDER>',
+
     }
   },
   measures: {},

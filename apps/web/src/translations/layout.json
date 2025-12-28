@@ -1,132 +1,110 @@
 {
   "branding": {
     "title": {
-      "en": "Open Data Capture",
-      "fr": "Open Data Capture",
-      "es": "Open Data Capture",
-      "ca": "Open Data Capture"
+      "ca": "Open Data Capture",
+      "es": "Open Data Capture"
     }
   },
   "endSessionModal": {
     "message": {
-      "en": "Are you sure you want to end the current session? If you choose to proceed, you'll be taken back to the begin session page.",
-      "fr": "Êtes-vous sûr de vouloir mettre fin à la session en cours ? Si vous décidez de continuer, vous serez ramené à la page de commencement d'une session.",
-      "es": "¿Está seguro de que desea finalizar la sesión actual? Si decide continuar, será redirigido a la página de inicio de sesión.",
-      "ca": "Esteu segur que voleu finalitzar la sessió actual? Si decidiu continuar, sereu redirigit a la pàgina d'inici de sessió."
+      "ca": "Esteu segur que voleu finalitzar la sessió actual? Si decidiu continuar, sereu redirigit a la pàgina d'inici de sessió.",
+      "es": "¿Está seguro de que desea finalizar la sesión actual? Si decide continuar, será redirigido a la página de inicio de sesión."
     },
     "title": {
-      "en": "End Session",
-      "fr": "Terminer la session en cours",
-      "es": "Finalizar sesión",
-      "ca": "Finalitzar sessió"
+      "ca": "Finalitzar sessió",
+      "es": "Finalizar sesión"
     }
   },
   "footer": {
     "contact": {
-      "en": "Contact Us",
-      "fr": "Contactez-nous",
-      "es": "Contáctenos",
-      "ca": "Contacteu-nos"
+      "ca": "Contacteu-nos",
+      "es": "Contáctenos"
     },
     "documentation": {
-      "en": "Documentation",
-      "fr": "Documentation",
-      "es": "Documentación",
-      "ca": "Documentació"
+      "ca": "Documentació",
+      "es": "Documentación"
     },
     "license": {
-      "en": "License",
-      "fr": "Licence",
-      "es": "Licencia",
-      "ca": "Llicència"
+      "ca": "Llicència",
+      "es": "Licencia"
     },
     "sourceCode": {
-      "en": "Source Code",
-      "fr": "Code source",
-      "es": "Código fuente",
-      "ca": "Codi font"
+      "ca": "Codi font",
+      "es": "Código fuente"
     }
   },
   "navLinks": {
     "accessibleInstruments": {
-      "en": "Select Study",
-      "fr": "Sélectionner une étude",
-      "es": "Seleccionar Estudio",
-      "ca": "Selecciona Estudi"
+      "ca": "Selecciona Estudi",
+      "es": "Seleccionar Estudio"
     },
     "appSettings": {
-      "en": "App Settings",
-      "fr": "Paramètres de l'application",
-      "es": "Configuración de la aplicación",
-      "ca": "Configuració de l'aplicació"
+      "ca": "Configuració de l'aplicació",
+      "es": "Configuración de la aplicación"
     },
     "createInstrument": {
-      "en": "Add Instrument",
-      "fr": "Ajouter un instrument",
-      "es": "Agregar instrumento",
-      "ca": "Afegir instrument"
+      "ca": "Afegir instrument",
+      "es": "Añadir instrumento"
     },
     "dashboard": {
-      "en": "Dashboard",
-      "fr": "Tableau de bord",
-      "es": "Panel de control",
-      "ca": "Tauler de control"
+      "ca": "Tauler de control",
+      "es": "Panel de control"
     },
     "datahub": {
-      "en": "Data Hub",
-      "fr": "Centre de données",
-      "es": "Centro de datos",
-      "ca": "Centre de dades"
+      "ca": "Centre de dades",
+      "es": "Centro de datos"
     },
     "upload": {
-      "en": "Upload Data",
-      "fr": "Téléverser les données",
-      "es": "Cargar datos",
-      "ca": "Carregar dades"
+      "ca": "Carregar dades",
+      "es": "Cargar datos"
     },
     "endSession": {
-      "en": "Close Current Record",
-      "fr": "Fermer l'enregistrement actuel",
-      "es": "Cerrar registro actual",
-      "ca": "Tanca registre actual"
+      "ca": "Tanca registre actual",
+      "es": "Cerrar registro actual"
     },
     "manageGroup": {
-      "en": "Manage Group",
-      "fr": "Gestion du groupe",
-      "es": "Gestionar grupo",
-      "ca": "Gestionar grup"
+      "ca": "Gestionar grup",
+      "es": "Gestionar grupo"
     },
     "manageGroups": {
-      "en": "Manage Groups",
-      "fr": "Gérer les groupes",
-      "es": "Gestionar grupos",
-      "ca": "Gestionar grups"
+      "ca": "Gestionar grups",
+      "es": "Gestionar grupos"
     },
     "manageUsers": {
-      "en": "Manage Users",
-      "fr": "Gérer les utilisateurs",
-      "es": "Gestionar usuarios",
-      "ca": "Gestionar usuaris"
+      "ca": "Gestionar usuaris",
+      "es": "Gestionar usuarios"
     },
     "startSession": {
-      "en": "Start Record",
-      "fr": "Démarrer un enregistrement",
-      "es": "Iniciar Registro",
-      "ca": "Inicia Registre"
+      "ca": "Inicia Registre",
+      "es": "Iniciar Registro"
     },
     "viewCurrentSubject": {
-      "en": "View Current Subject",
-      "fr": "Voir le client actuel",
-      "es": "Ver sujeto actual",
-      "ca": "Veure subjecte actual"
+      "ca": "Veure subjecte actual",
+      "es": "Ver sujeto actual"
+    },
+    "myProfile": {
+      "ca": "El meu perfil",
+      "es": "Mi perfil"
+    }
+  },
+  "userDropup": {
+    "info": {
+      "ca": "Informació",
+      "es": "Información"
+    },
+    "tutorial": {
+      "ca": "Tutorial",
+      "es": "Tutorial"
+    },
+    "logout": {
+      "ca": "Tancar sessió",
+      "es": "Cerrar sesión"
     }
   },
   "organization": {
     "name": {
-      "en": "Douglas Neuroinformatics Platform",
-      "fr": "Douglas Neuroinformatics Platform",
-      "es": "Douglas Neuroinformatics Platform",
-      "ca": "Douglas Neuroinformatics Platform"
+      "ca": "Douglas Neuroinformatics Platform",
+      "es": "Douglas Neuroinformatics Platform"
     }
   }
 }

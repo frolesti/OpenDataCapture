@@ -653,7 +653,7 @@ function generateAllMeasures() {
 
 export default defineInstrument({
   kind: 'FORM',
-  language: 'en',
+  language: 'ca',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
     edition: 6,

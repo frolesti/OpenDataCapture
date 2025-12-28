@@ -64,7 +64,7 @@ abstract class BaseTranslator<T extends { [key: string]: unknown } = { [key: str
 
   constructor({ fallbackLanguage, translations }: TranslatorOptions<T>) {
     this.currentDocumentLanguage = null;
-    this.fallbackLanguage = fallbackLanguage ?? 'en';
+    this.fallbackLanguage = fallbackLanguage ?? 'ca';
     this.handleLanguageChange = null;
     this.#isInitialized = false;
     this.translations = translations;
@@ -93,7 +93,7 @@ abstract class BaseTranslator<T extends { [key: string]: unknown } = { [key: str
   @InitializedOnly
   protected extractLanguageProperty(element: Element) {
     const lang = element.getAttribute('lang');
-    if (lang === 'en' || lang === 'fr') {
+    if (lang === 'ca') {
       return lang;
     }
     console.error(`Unexpected value for 'lang' attribute: '${lang}'`);

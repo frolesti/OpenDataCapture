@@ -1,10 +1,11 @@
+import { useState } from 'react';
+
 import { Card, Heading, LanguageToggle, ThemeToggle } from '@douglasneuroinformatics/libui/components';
 import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { Logo } from '@opendatacapture/react-core';
 import type { AuthPayload, LoginCredentials } from '@opendatacapture/schemas/auth';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
-import { useState } from 'react';
 
 import { DemoBanner } from '@/components/DemoBanner';
 import { LoginForm } from '@/components/LoginForm';
@@ -67,9 +68,7 @@ const RouteComponent = () => {
               align="start"
               options={{
                 ca: 'Català',
-                es: 'Español',
-                en: 'English',
-                fr: 'Français'
+                es: 'Español'
               }}
               triggerClassName="border p-2"
               variant="ghost"

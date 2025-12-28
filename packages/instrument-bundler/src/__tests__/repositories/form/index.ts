@@ -37,7 +37,7 @@ export default defineInstrument({
     name: 'FORM_INSTRUMENT_STUB'
   },
   kind: 'FORM',
-  language: 'en',
+  language: 'ca',
   measures: {},
   tags: ['<PLACEHOLDER>'],
   validationSchema: z.object({

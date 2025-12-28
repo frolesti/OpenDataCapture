@@ -84,12 +84,7 @@ export function useNavItems() {
 
     globalItems.push({
       icon: UserIcon,
-      label: t({
-        ca: 'El meu perfil',
-        en: 'My Profile',
-        es: 'Mi perfil',
-        fr: 'Mon profil'
-      }),
+      label: t('layout.navLinks.myProfile'),
       url: '/profile'
     });
 

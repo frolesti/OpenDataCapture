@@ -2,17 +2,11 @@ import { defineInstrument } from '/runtime/v1/@opendatacapture/runtime-core';
 import { z } from '/runtime/v1/zod@3.x';
 
 const likertOptions = {
-  en: {
+  ca: {
     0: 'Not at All',
     1: 'Several Days',
     2: 'More than half the days',
     3: 'Nearly every day'
-  },
-  fr: {
-    0: 'Jamais',
-    1: 'Plusieurs jours',
-    2: 'Plus de la moitié des jours',
-    3: 'Presque tous les jours'
   }
 };
 
@@ -30,25 +24,25 @@ const calculateGAD7total = (data: { [key: string]: unknown }) => {
 export default defineInstrument({
   details: {
     title: {
-      en: 'Generalized Anxiety Disorder-7 (GAD-7)',
-      fr: "Trouble d'anxiété générale-7 (GAD-7)"
+      ca: 'Generalized Anxiety Disorder-7 (GAD-7)',
+
     },
     description: {
-      en: 'The Generalized Anxiety Disorder 7 (GAD-7) is a self-reported questionnaire for screening and severity measuring of generalized anxiety disorder (GAD). The GAD7 asks for self-reported anxiety symptoms over the past two weeks.',
-      fr: "Le trouble d'anxiété généralisée 7 (GAD-7) est un questionnaire autodéclaré pour le dépistage et la mesure de la gravité du trouble d'anxiété généralisée (TAG). Le GAD7 demande les symptômes d’anxiété autodéclarés au cours des deux dernières semaines."
+      ca: 'The Generalized Anxiety Disorder 7 (GAD-7) is a self-reported questionnaire for screening and severity measuring of generalized anxiety disorder (GAD). The GAD7 asks for self-reported anxiety symptoms over the past two weeks.',
+
     },
     estimatedDuration: 1,
     instructions: {
-      en: ['Please complete all questions'],
-      fr: ['Veuillez répondre à toutes les questions']
+      ca: ['Please complete all questions'],
+
     },
     license: 'PUBLIC-DOMAIN'
   },
   kind: 'FORM',
-  language: ['en', 'fr'],
+  language: ['ca'],
   tags: {
-    en: ['Anxiety'],
-    fr: ['Anxiété']
+    ca: ['Anxiety'],
+
   },
   internal: {
     name: 'GAD_7',
@@ -57,18 +51,18 @@ export default defineInstrument({
   content: [
     {
       title: {
-        en: 'Over the last two weeks, how often have you been bothered by the following problems?',
-        fr: 'Au cours des 14 derniers jours, à quelle fréquence avez-vous été dérangé(e) par les problèmes suivants?'
+        ca: 'Over the last two weeks, how often have you been bothered by the following problems?',
+
       },
       fields: {
         nervousAnxiousOnEdge: {
           description: {
-            en: 'Over the last two weeks, how often have you been bothered by feeling nervous, anxious, or on edge?',
-            fr: "Au cours des 14 derniers jours, à quelle fréquence avez-vous été dérangé(e) par sentiment de nervosité, d'anxiété ou de tension?"
+            ca: 'Over the last two weeks, how often have you been bothered by feeling nervous, anxious, or on edge?',
+
           },
           label: {
-            en: 'Feeling nervous, anxious, or on edge',
-            fr: "Sentiment de nervosité, d'anxiété ou de tension"
+            ca: 'Feeling nervous, anxious, or on edge',
+
           },
           kind: 'number',
           options: likertOptions,
@@ -76,12 +70,12 @@ export default defineInstrument({
         },
         noStopControlWorrying: {
           description: {
-            en: 'Over the last two weeks, how often have you been bothered by not being able to stop or control worrying?',
-            fr: "Au cours des 14 derniers jours, à quelle fréquence avez-vous été dérangé(e) par incapable d'arrêter de vous inquiéter ou de contrôler vos inquiétudes?"
+            ca: 'Over the last two weeks, how often have you been bothered by not being able to stop or control worrying?',
+
           },
           label: {
-            en: 'Not being able to stop or control worrying',
-            fr: "Incapable d'arrêter de vous inquiéter ou de contrôler vos inquiétudes"
+            ca: 'Not being able to stop or control worrying',
+
           },
           kind: 'number',
           options: likertOptions,
@@ -89,12 +83,12 @@ export default defineInstrument({
         },
         worryingTooMuch: {
           description: {
-            en: 'Over the last two weeks, how often have you been bothered by worrying too much about different things?',
-            fr: 'Au cours des 14 derniers jours, à quelle fréquence avez-vous été dérangé(e) par inquiétudes excessives à propos de tout et de rien?'
+            ca: 'Over the last two weeks, how often have you been bothered by worrying too much about different things?',
+
           },
           label: {
-            en: 'Worrying too much about different things',
-            fr: 'Inquiétudes excessives à propos de tout et de rien'
+            ca: 'Worrying too much about different things',
+
           },
           kind: 'number',
           options: likertOptions,
@@ -102,12 +96,12 @@ export default defineInstrument({
         },
         troubleRelaxing: {
           description: {
-            en: 'Over the last two weeks, how often have you had trouble relaxing?',
-            fr: 'Au cours des deux dernières semaines, à quelle fréquence avez-vous eu du mal à vous détendre?'
+            ca: 'Over the last two weeks, how often have you had trouble relaxing?',
+
           },
           label: {
-            en: 'Have trouble relaxing',
-            fr: 'Difficulté à se détendre'
+            ca: 'Have trouble relaxing',
+
           },
           kind: 'number',
           options: likertOptions,
@@ -115,12 +109,12 @@ export default defineInstrument({
         },
         restless: {
           description: {
-            en: 'Over the last two weeks, how often have you been bothered by being so restless that it is hard to sit still?',
-            fr: "Au cours des 14 derniers jours, à quelle fréquence avez-vous été dérangé(e) par agitation telle qu'il est difficile de rester tranquille?"
+            ca: 'Over the last two weeks, how often have you been bothered by being so restless that it is hard to sit still?',
+
           },
           label: {
-            en: 'Being so restless that it is hard to sit still',
-            fr: "Agitation telle qu'il est difficile de rester tranquille"
+            ca: 'Being so restless that it is hard to sit still',
+
           },
           kind: 'number',
           options: likertOptions,
@@ -128,12 +122,12 @@ export default defineInstrument({
         },
         easilyAnnoyedIrritable: {
           description: {
-            en: 'Over the last two weeks, how often have you been bothered by becoming easily annoyed or irritable?',
-            fr: 'Au cours des 14 derniers jours, à quelle fréquence avez-vous été dérangé(e) par devenir facilement contrarié(e) ou irritable?'
+            ca: 'Over the last two weeks, how often have you been bothered by becoming easily annoyed or irritable?',
+
           },
           label: {
-            en: 'Becoming easily annoyed or irritable',
-            fr: 'Devenir facilement contrarié(e) ou irritable'
+            ca: 'Becoming easily annoyed or irritable',
+
           },
           kind: 'number',
           options: likertOptions,
@@ -141,12 +135,12 @@ export default defineInstrument({
         },
         afraidSomethingAwful: {
           description: {
-            en: 'Over the last two weeks, how often have you been bothered by feeling afraid, as if something awful might happen?',
-            fr: "Au cours des 14 derniers jours, à quelle fréquence avez-vous été dérangé(e) par avoir peur que quelque chose d'épouvantable puisse arriver?"
+            ca: 'Over the last two weeks, how often have you been bothered by feeling afraid, as if something awful might happen?',
+
           },
           label: {
-            en: 'Feeling afraid, as if something awful might happen',
-            fr: "Avoir peur que quelque chose d'épouvantable puisse arriver"
+            ca: 'Feeling afraid, as if something awful might happen',
+
           },
           kind: 'number',
           options: likertOptions,
@@ -156,8 +150,8 @@ export default defineInstrument({
     },
     {
       title: {
-        en: ' ',
-        fr: 'Difficulté à faire face'
+        ca: ' ',
+
       },
       fields: {
         difficultyCoping: {
@@ -187,26 +181,20 @@ export default defineInstrument({
             }
             return {
               description: {
-                en: 'Given your problems selected above, how difficult have they made it for you to do your work, take care of things at home, or get along with other people?',
-                fr: 'Compte tenu des problèmes sélectionnés ci-dessus, dans quelle mesure ceux-ci rendus plus difficile votre travail, vous occuper de vos affaires à la maison ou vous entendre avec les autres personnes?'
+                ca: 'Given your problems selected above, how difficult have they made it for you to do your work, take care of things at home, or get along with other people?',
+
               },
               label: {
-                en: 'Given your problems selected above, how difficult have they made it for you to do your work, take care of things at home, or get along with other people?',
-                fr: 'Compte tenu des problèmes sélectionnés ci-dessus, dans quelle mesure ceux-ci rendus plus difficile votre travail, vous occuper de vos affaires à la maison ou vous entendre avec les autres personnes?'
+                ca: 'Given your problems selected above, how difficult have they made it for you to do your work, take care of things at home, or get along with other people?',
+
               },
               kind: 'number',
               options: {
-                en: {
+                ca: {
                   0: 'Not difficult at all',
                   1: 'Somewhat difficult',
                   2: 'Very difficult',
                   3: 'Extremely difficult'
-                },
-                fr: {
-                  0: 'Pas difficile',
-                  1: 'Un peu difficile',
-                  2: 'Très difficile',
-                  3: 'Extrêmement difficile'
                 }
               },
               variant: 'radio'
@@ -252,8 +240,8 @@ export default defineInstrument({
     gad7Total: {
       kind: 'computed',
       label: {
-        en: 'Total of GAD7',
-        fr: ''
+        ca: 'Total of GAD7',
+
       },
       value: (data) => {
         return calculateGAD7total(data);

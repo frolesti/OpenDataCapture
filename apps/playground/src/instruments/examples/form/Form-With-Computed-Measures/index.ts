@@ -9,7 +9,7 @@ const LAST_YEAR = CURRENT_YEAR - 1;
 
 export default defineInstrument({
   kind: 'FORM',
-  language: 'en',
+  language: 'ca',
   internal: {
     edition: 1,
     name: 'HAPPINESS_QUESTIONNAIRE'

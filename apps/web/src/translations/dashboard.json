@@ -1,80 +1,54 @@
 {
   "activityOverTime": {
-    "en": "Activity over time",
-    "fr": "Activité au fil du temps",
-    "es": "Actividad a lo largo del tiempo",
-    "ca": "Activitat al llarg del temps"
+    "ca": "Activitat al llarg del temps",
+    "es": "Actividad a lo largo del tiempo"
   },
   "growthTrajectory": {
-    "en": "Growth trajectory",
-    "fr": "Trajectoire de croissance",
-    "es": "Trayectoria de crecimiento",
-    "ca": "Trajectòria de creixement"
+    "ca": "Trajectòria de creixement",
+    "es": "Trayectoria de crecimiento"
   },
   "overviewClinicalGroup": {
-    "en": "Overview of Your Clinic",
-    "fr": "Vue d'ensemble de votre clinique",
-    "es": "Resumen de su clínica",
-    "ca": "Resum de la vostra clínica"
+    "ca": "Resum de la vostra clínica",
+    "es": "Resumen de su clínica"
   },
   "overviewResearchGroup": {
-    "en": "Overview of Your Research Group",
-    "fr": "Vue d'ensemble de votre groupe de recherche",
-    "es": "Resumen de su grupo de investigación",
-    "ca": "Resum del vostre grup de recerca"
+    "ca": "Resum del vostre grup de recerca",
+    "es": "Resumen de su grupo de investigación"
   },
   "recordsSessionsTrend": {
-    "en": "Records & Sessions Trend",
-    "fr": "Tendance des enregistrements et sessions",
-    "es": "Tendencia de registros y sesiones",
-    "ca": "Tendència de registres i sessions"
+    "ca": "Tendència de registres i sessions",
+    "es": "Tendencia de registros y sesiones"
   },
   "subjects": {
-    "en": "Subjects",
-    "fr": "Sujets",
-    "es": "Sujetos",
-    "ca": "Subjectes"
+    "ca": "Subjectes",
+    "es": "Sujetos"
   },
   "subjectsGrowth": {
-    "en": "Subjects Growth",
-    "fr": "Croissance des sujets",
-    "es": "Crecimiento de sujetos",
-    "ca": "Creixement de subjectes"
+    "ca": "Creixement de subjectes",
+    "es": "Crecimiento de sujetos"
   },
   "summaryApplicationState": {
-    "en": "Summary of Application State",
-    "fr": "La cliente actuelle",
-    "es": "Resumen del estado de la aplicación",
-    "ca": "Resum de l'estat de l'aplicació"
+    "ca": "Resum de l'estat de l'aplicació",
+    "es": "Resumen del estado de la aplicación"
   },
   "title": {
-    "en": "Dashboard",
-    "fr": "Tableau de bord",
-    "es": "Panel de control",
-    "ca": "Tauler de control"
+    "ca": "Tauler de control",
+    "es": "Panel de control"
   },
   "totalInstruments": {
-    "en": "Total Instruments",
-    "fr": "Nombre d'instruments",
-    "es": "Total de instrumentos",
-    "ca": "Total d'instruments"
+    "ca": "Total d'instruments",
+    "es": "Total de instrumentos"
   },
   "totalRecords": {
-    "en": "Total Records",
-    "fr": "Nombre d'enregistrements",
-    "es": "Total de registros",
-    "ca": "Total de registres"
+    "ca": "Total de registres",
+    "es": "Total de registros"
   },
   "totalSubjects": {
-    "en": "Total Subjects",
-    "fr": "Nombre de clients",
-    "es": "Total de sujetos",
-    "ca": "Total de subjectes"
+    "ca": "Total de subjectes",
+    "es": "Total de sujetos"
   },
   "totalUsers": {
-    "en": "Total Users",
-    "fr": "Nombre d'utilisateurs",
-    "es": "Total de usuarios",
-    "ca": "Total d'usuaris"
+    "ca": "Total d'usuaris",
+    "es": "Total de usuarios"
   }
 }

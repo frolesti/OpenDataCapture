@@ -2,251 +2,179 @@
   "intro": {
     "text": {
       "ca": "Aquest tutorial proporciona una breu visió general de com utilitzar la plataforma.",
-      "en": "This tutorial provides a brief overview of how to use the platform.",
-      "es": "Este tutorial proporciona una breve descripción de cómo usar la plataforma.",
-      "fr": "Ce tutoriel donne un bref aperçu de l'utilisation de la plateforme."
+      "es": "Este tutorial proporciona una breve descripción general de cómo utilizar la plataforma."
     },
     "bold": {
       "ca": "Si us plau, completeu-lo abans de fer qualsevol pregunta sobre la plataforma.",
-      "en": "Please complete it before asking any questions about the platform.",
-      "es": "Por favor, complételo antes de hacer cualquier pregunta sobre la plataforma.",
-      "fr": "Veuillez le compléter avant de poser des questions sur la plateforme."
+      "es": "Por favor, complételo antes de hacer cualquier pregunta sobre la plataforma."
     },
     "popup": {
       "ca": "Després de completar el tutorial, aquesta finestra emergent ja no apareixerà quan inicieu sessió.",
-      "en": "After completing the tutorial, this popup will no longer appear when you log in.",
-      "es": "Después de completar el tutorial, esta ventana emergente ya no aparecerá cuando inicie sesión.",
-      "fr": "Après avoir suivi le tutoriel, cette fenêtre ne s'affichera plus lorsque vous vous connecterez à la plateforme."
+      "es": "Después de completar el tutorial, esta ventana emergente ya no aparecerá cuando inicie sesión."
     },
     "title": {
       "ca": "Benvingut a Alta Medical Services 👋",
-      "en": "Welcome to Alta Medical Services 👋",
-      "es": "Bienvenido a Alta Medical Services 👋",
-      "fr": "Bienvenue à Alta Medical Services 👋"
+      "es": "Bienvenido a Alta Medical Services 👋"
     }
   },
   "dashboard": {
     "content": {
       "ca": "En aquesta pàgina, podeu veure una visió general de les dades recollides pel vostre grup.",
-      "en": "On this page, you can see an overview of the data collected by your group.",
-      "es": "En esta página, puede ver una descripción general de los datos recopilados por su grupo.",
-      "fr": "Sur cette page, vous pouvez voir un aperçu des données collectées par votre groupe."
+      "es": "En esta página, puede ver una descripción general de los datos recopilados por su grupo."
     },
     "title": {
       "ca": "Tauler de control",
-      "en": "Dashboard",
-      "es": "Panel de control",
-      "fr": "Tableau de bord"
+      "es": "Panel de control"
     }
   },
   "dataHub": {
     "content": {
       "ca": "En aquesta pàgina, podeu visualitzar i exportar les dades que ha recollit el vostre grup.",
-      "en": "On this page, you can view and export the data your group has collected.",
-      "es": "En esta página, puede ver y exportar los datos que ha recopilado su grupo.",
-      "fr": "Sur cette page, vous pouvez visualiser et exporter les données collectées par votre groupe."
+      "es": "En esta página, puede visualizar y exportar los datos que ha recopilado su grupo."
     },
     "title": {
       "ca": "Centre de dades",
-      "en": "Data Hub",
-      "es": "Centro de datos",
-      "fr": "Centre de données"
+      "es": "Centro de datos"
     }
   },
   "subjectLookup": {
     "content": {
       "ca": "Aquí podeu cercar subjectes a la base de dades. Per començar, feu clic a la barra de cerca i apareixerà una finestra emergent on podreu introduir la consulta de cerca.",
-      "en": "Here, you can search for subjects in the database. To begin, click on the search bar, and a popup will appear where you can enter the search query.",
-      "es": "Aquí puede buscar sujetos en la base de datos. Para comenzar, haga clic en la barra de búsqueda y aparecerá una ventana emergente donde puede ingresar la consulta de búsqueda.",
-      "fr": "Ici, vous pouvez rechercher des clients dans la base de données. Pour commencer, cliquez sur la barre de recherche et une fenêtre contextuelle s'affichera pour vous permettre de saisir la requête de recherche."
+      "es": "Aquí puede buscar sujetos en la base de datos. Para comenzar, haga clic en la barra de búsqueda y aparecerá una ventana emergente donde podrá introducir la consulta de búsqueda."
     },
     "title": {
       "ca": "Cerca de subjecte",
-      "en": "Subject Lookup",
-      "es": "Búsqueda de sujeto",
-      "fr": "Recherche de client"
+      "es": "Búsqueda de sujeto"
     }
   },
   "bulkDataExport": {
     "content": {
       "ca": "Aquí podeu exportar totes les vostres dades en diversos formats.",
-      "en": "Here, you can export all your data in various formats.",
-      "es": "Aquí puede exportar todos sus datos en varios formatos.",
-      "fr": "Ici, vous pouvez exporter toutes vos données dans différents formats."
+      "es": "Aquí puede exportar todos sus datos en varios formatos."
     },
     "title": {
       "ca": "Exportació massiva de dades",
-      "en": "Bulk Data Export",
-      "es": "Exportación masiva de datos",
-      "fr": "Exportation de données"
+      "es": "Exportación masiva de datos"
     }
   },
   "startRecord": {
     "content": {
       "ca": "En aquesta pàgina, podeu iniciar una nova sessió per a un subjecte. Hi ha diverses opcions disponibles en funció del mètode d'identificació que trieu i del tipus de sessió.",
-      "en": "On this page, you can start a new session for a subject. Various options are available based on the identification method you choose and the type of session.",
-      "es": "En esta página, puede iniciar una nueva sesión para un sujeto. Hay varias opciones disponibles según el método de identificación que elija y el tipo de sesión.",
-      "fr": "Sur cette page, vous pouvez démarrer une nouvelle session pour un client. Différentes options sont disponibles en fonction de la méthode d'identification choisie et du type de session."
+      "es": "En esta página, puede iniciar una nueva sesión para un sujeto. Hay varias opciones disponibles en función del método de identificación que elija y del tipo de sesión."
     },
     "title": {
       "ca": "Iniciar Registre",
-      "en": "Start Record",
-      "es": "Iniciar Registro",
-      "fr": "Commencer un enregistrement"
+      "es": "Iniciar Registro"
     }
   },
   "identificationMethod": {
     "content": {
       "ca": "Podeu iniciar una sessió amb un ID personalitzat o deixar que el sistema en creï un utilitzant la informació personal del subjecte. Si trieu l'opció de generació automàtica, l'ID es crea al vostre navegador, de manera que el nom i cognoms del subjecte mai s'envien al nostre servidor.",
-      "en": "You can start a session with a custom ID or let the system create one using the subject's personal information. If you choose the auto-generate option, the ID is created in your browser, so the subject's first and last names are never sent to our server.",
-      "es": "Puede iniciar una sesión con un ID personalizado o dejar que el sistema cree uno usando la información personal del sujeto. Si elige la opción de generación automática, el ID se crea en su navegador, por lo que el nombre y apellidos del sujeto nunca se envían a nuestro servidor.",
-      "fr": "Vous pouvez démarrer une session avec un identifiant personnalisé ou laisser le système en créer un à l'aide des informations personnelles du client. Si vous choisissez l'option de génération automatique, l'identifiant est créé dans votre navigateur, de sorte que les nom et prénom du client ne sont jamais envoyés à notre serveur."
+      "es": "Puede iniciar una sesión con un ID personalizado o dejar que el sistema cree uno utilizando la información personal del sujeto. Si elige la opción de generación automática, el ID se crea en su navegador, por lo que el nombre y apellidos del sujeto nunca se envían a nuestro servidor."
     },
     "title": {
       "ca": "Mètode d'identificació",
-      "en": "Identification Method",
-      "es": "Método de identificación",
-      "fr": "Méthode d'identification"
+      "es": "Método de identificación"
     }
   },
   "identifier": {
     "content": {
       "ca": "Podeu utilitzar qualsevol ID que vulgueu; el nom del vostre grup s'afegirà automàticament per garantir que sigui únic.",
-      "en": "You can use any ID you like; your group name will automatically be appended to ensure it is unique.",
-      "es": "Puede usar cualquier ID que desee; el nombre de su grupo se agregará automáticamente para garantizar que sea único.",
-      "fr": "Vous pouvez utiliser l'identifiant de votre choix ; le nom de votre groupe sera automatiquement ajouté pour garantir son unicité."
+      "es": "Puede utilizar cualquier ID que desee; el nombre de su grupo se añadirá automáticamente para garantizar que sea único."
     },
     "title": {
       "ca": "Identificador",
-      "en": "Identifier",
-      "es": "Identificador",
-      "fr": "Identification du client"
+      "es": "Identificador"
     }
   },
   "assessmentType": {
     "content": {
       "ca": "Podeu triar una sessió presencial (per defecte) o una sessió retrospectiva per introduir dades recollides prèviament utilitzant un sistema diferent.",
-      "en": "You can choose either an in-person session (the default) or a retrospective session to enter data previously collected using a different system.",
-      "es": "Puede elegir una sesión presencial (predeterminada) o una sesión retrospectiva para ingresar datos recopilados previamente usando un sistema diferente.",
-      "fr": "Vous pouvez choisir une session en personne (par défaut) ou une session rétrospective pour saisir des données précédemment collectées à l'aide d'un autre système."
+      "es": "Puede elegir una sesión presencial (por defecto) o una sesión retrospectiva para introducir datos recopilados previamente utilizando un sistema diferente."
     },
     "title": {
       "ca": "Tipus d'avaluació",
-      "en": "Type of Assessment",
-      "es": "Tipo de evaluación",
-      "fr": "Type d'évaluation"
+      "es": "Tipo de evaluación"
     }
   },
   "sessionInProgress": {
     "content": {
       "ca": "Aquí podeu veure la sessió actual en curs.",
-      "en": "Here, you can see the current session in progress.",
-      "es": "Aquí puede ver la sesión actual en progreso.",
-      "fr": "Ici, vous pouvez voir la session en cours."
+      "es": "Aquí puede ver la sesión actual en curso."
     },
     "title": {
       "ca": "Sessió en curs",
-      "en": "Session in Progress",
-      "es": "Sesión en progreso",
-      "fr": "Session en cours"
+      "es": "Sesión en curso"
     }
   },
   "administerInstrument": {
     "content": {
       "ca": "En aquesta pàgina, podeu seleccionar l'instrument que voleu administrar.",
-      "en": "On this page, you can select the instrument you want to administer.",
-      "es": "En esta página, puede seleccionar el instrumento que desea administrar.",
-      "fr": "Sur cette page, vous pouvez sélectionner l'instrument que vous souhaitez administrer."
+      "es": "En esta página, puede seleccionar el instrumento que desea administrar."
     }
   },
   "viewSubject": {
     "content": {
       "ca": "En aquesta pàgina, podeu veure les dades del subjecte de la sessió actual. Per accedir a les dades d'altres subjectes, utilitzeu el botó de cerca a la pàgina del Centre de dades.",
-      "en": "On this page, you can view the data for the subject of the current session. To access data for other subjects, use the lookup button on the Data Hub page.",
-      "es": "En esta página, puede ver los datos del sujeto de la sesión actual. Para acceder a los datos de otros sujetos, use el botón de búsqueda en la página del Centro de datos.",
-      "fr": "Sur cette page, vous pouvez consulter les données du client pour lequel la session est en cours. Pour accéder aux données d'autres clients, utilisez le bouton de recherche sur la page du centre de données."
+      "es": "En esta página, puede ver los datos del sujeto de la sesión actual. Para acceder a los datos de otros sujetos, utilice el botón de búsqueda en la página del Centro de datos."
     },
     "title": {
       "ca": "Veure subjecte",
-      "en": "View Subject",
-      "es": "Ver sujeto",
-      "fr": "Voir le client"
+      "es": "Ver sujeto"
     }
   },
   "table": {
     "content": {
       "ca": "Aquí podeu veure els registres que aquest subjecte ha completat per a un instrument determinat.",
-      "en": "Here, you can view the records this subject has completed for a given instrument.",
-      "es": "Aquí puede ver los registros que este sujeto ha completado para un instrumento determinado.",
-      "fr": "Ici, vous pouvez voir les enregistrements que ce client a complétés pour un instrument donné"
+      "es": "Aquí puede ver los registros que este sujeto ha completado para un instrumento determinado."
     },
     "title": {
       "ca": "Taula",
-      "en": "Table",
-      "es": "Tabla",
-      "fr": "Tableau"
+      "es": "Tabla"
     }
   },
   "dataExport": {
     "content": {
       "ca": "Aquí podeu exportar les dades de la taula en format CSV o JSON.",
-      "en": "Here, you can export the data in the table to CSV or JSON format.",
-      "es": "Aquí puede exportar los datos de la tabla en formato CSV o JSON.",
-      "fr": "Ici, vous pouvez exporter les données du tableau au format CSV ou JSON."
+      "es": "Aquí puede exportar los datos de la tabla en formato CSV o JSON."
     },
     "title": {
       "ca": "Exportació de dades",
-      "en": "Data Export",
-      "es": "Exportación de datos",
-      "fr": "Exportation de données"
+      "es": "Exportación de datos"
     }
   },
   "graph": {
     "content": {
       "ca": "Aquí podeu crear gràfics personalitzats per visualitzar dades longitudinals per a un subjecte determinat.",
-      "en": "Here, you can create custom graphs to visualize longitudinal data for a given subject.",
-      "es": "Aquí puede crear gráficos personalizados para visualizar datos longitudinales para un sujeto determinado.",
-      "fr": "Ici, vous pouvez créer des graphiques personnalisés pour visualiser les données longitudinales d'un client donné."
+      "es": "Aquí puede crear gráficos personalizados para visualizar datos longitudinales para un sujeto determinado."
     },
     "title": {
       "ca": "Gràfic",
-      "en": "Graph",
-      "es": "Gráfico",
-      "fr": "Graphique"
+      "es": "Gráfico"
     }
   },
   "assignments": {
     "content": {
       "ca": "Aquí podeu crear i veure assignacions, que són instruments que el subjecte ha de completar a casa.",
-      "en": "Here, you can create and view assignments, which are instruments for a subject to complete at home.",
-      "es": "Aquí puede crear y ver asignaciones, que son instrumentos para que el sujeto complete en casa.",
-      "fr": "Ici, vous pouvez créer et visualiser des devoirs, qui sont des instruments que le client doit compléter à la maison."
+      "es": "Aquí puede crear y ver asignaciones, que son instrumentos que el sujeto debe completar en casa."
     },
     "title": {
       "ca": "Assignacions",
-      "en": "Assignments",
-      "es": "Asignaciones",
-      "fr": "Devoirs"
+      "es": "Asignaciones"
     }
   },
   "buttons": {
     "back": {
       "ca": "Enrere",
-      "en": "Back",
-      "es": "Atrás",
-      "fr": "Retour"
+      "es": "Atrás"
     },
     "done": {
       "ca": "Fet",
-      "en": "Done",
-      "es": "Hecho",
-      "fr": "Fin"
+      "es": "Hecho"
     },
     "next": {
       "ca": "Següent",
-      "en": "Next",
-      "es": "Siguiente",
-      "fr": "Suivant"
+      "es": "Siguiente"
     }
   }
 }

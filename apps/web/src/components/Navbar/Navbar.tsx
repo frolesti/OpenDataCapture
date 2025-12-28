@@ -92,8 +92,8 @@ export const Navbar = () => {
           <div className="flex justify-end gap-2">
             <LanguageToggle
               options={{
-                en: 'English',
-                fr: 'Français'
+                ca: 'Català',
+                es: 'Español'
               }}
               variant="outline"
             />

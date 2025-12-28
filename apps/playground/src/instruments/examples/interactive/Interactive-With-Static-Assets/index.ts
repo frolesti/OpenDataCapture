@@ -8,7 +8,7 @@ import smiley from './smiley.png';
 
 export default defineInstrument({
   kind: 'INTERACTIVE',
-  language: 'en',
+  language: 'ca',
   internal: {
     edition: 1,
     name: 'INTERACTIVE_WITH_STATIC_ASSETS'

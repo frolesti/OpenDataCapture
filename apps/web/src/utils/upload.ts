@@ -56,8 +56,6 @@ function parseSetEntry(entry: string): Set<string> {
   const set = extractSetEntry(entry);
   if (set.size === 0) {
     throw new UploadError({
-      en: 'Empty set is not allowed',
-      fr: "Un ensemble vide n'est pas autorisé"
     });
   }
   return set;
@@ -272,8 +270,6 @@ export namespace Zod3 {
     }
     if (listOfZodElements.length === 0) {
       throw new UploadError({
-        en: 'Failure to interpret Zod Object or Array',
-        fr: "Échec de l'interprétation de l'objet ou du tableau Zod"
       });
     }
     return {
@@ -288,7 +284,7 @@ export namespace Zod3 {
     const def: unknown = schema._def;
     if (!isZodTypeDef(def)) {
       console.error(`Cannot parse ZodType from schema: ${JSON.stringify(schema)}`);
-      throw new UploadError({ en: 'Unexpected Error', fr: 'Erreur inattendue' });
+      throw new UploadError({ });
     } else if (isZodOptionalDef(def)) {
       return getZodTypeName(def.innerType, true);
     } else if (isZodEnumDef(def)) {
@@ -303,8 +299,6 @@ export namespace Zod3 {
       const innerDef: unknown = def.valueType._def;
       if (!isZodTypeDef(innerDef)) {
         throw new UploadError({
-          en: 'Invalid inner type: ZodSet value type must have a valid type definition',
-          fr: 'Type interne invalide : le type de valeur ZodSet doit avoir une définition de type valide'
         });
       }
       if (isZodEnumDef(innerDef)) {
@@ -354,7 +348,6 @@ export namespace Zod3 {
           let possibleEnumOutputs = '';
           if (!enumValues) {
             throw new UploadError({
-              en: 'Enum values do not exist',
               fr: `Values d'Enum n'existe pas`
             });
           }
@@ -365,8 +358,6 @@ export namespace Zod3 {
           return formatOptionalEntry(possibleEnumOutputs, isOptional);
         } catch {
           throw new UploadError({
-            en: 'Invalid Enum error',
-            fr: 'Erreur Enum invalide'
           });
         }
       case 'ZodArray':
@@ -375,8 +366,6 @@ export namespace Zod3 {
           let multiString = 'RECORD_ARRAY( ';
           if (!(multiValues && multiKeys)) {
             throw new UploadError({
-              en: 'Record Array is empty or does not exist',
-              fr: 'Erreur record array invalide'
             });
           }
           for (let i = 0; i < multiValues.length; i++) {
@@ -414,8 +403,6 @@ export namespace Zod3 {
       case 'ZodObject':
         if (!convertResult.multiKeys || !convertResult.multiValues) {
           throw new UploadError({
-            en: 'Record Array keys or values do not exist',
-            fr: "Les clés ou valeurs du tableau d'enregistrements n'existent pas"
           });
         }
 
@@ -453,8 +440,6 @@ export namespace Zod3 {
   ) {
     if (!(isZodObject(instrumentSchema) || isZodEffectsObject(instrumentSchema))) {
       throw new UploadError({
-        en: 'Validation schema for this instrument is invalid',
-        fr: 'Le schéma de validation de cet instrument est invalide'
       });
     }
     const def = instrumentSchema._def;
@@ -489,8 +474,6 @@ export namespace Zod3 {
     if (isZodTypeDef(instrumentSchemaDef) && isZodEffectsDef(instrumentSchemaDef)) {
       if (!isZodObject(instrumentSchemaDef.schema)) {
         throw new UploadError({
-          en: 'Invalid instrument schema',
-          fr: "Schéma d'instrument invalide"
         });
       }
       instrumentSchemaWithInternal = instrumentSchemaDef.schema.extend({
@@ -520,8 +503,6 @@ export namespace Zod3 {
         if (!dataLines?.[0]) {
           return reject(
             new UploadError({
-              en: 'CSV does not contain any rows of data',
-              fr: 'Le fichier CSV ne contient aucune ligne de données'
             })
           );
         }
@@ -616,7 +597,6 @@ export namespace Zod3 {
             console.error(`Failed to parse data: ${JSON.stringify(jsonLine)}`);
             return reject(
               new UploadError({
-                en: 'Schema parsing failed: refer to the browser console for further details',
                 fr: `Échec de l'analyse du schéma : reportez-vous à la console du navigateur pour plus de détails`
               })
             );
@@ -824,8 +804,6 @@ export namespace Zod4 {
   ) {
     if (!(instrumentSchema instanceof z4.ZodObject)) {
       throw new UploadError({
-        en: 'Expected schema to be instance of ZodObject',
-        fr: 'Le schéma attendu doit être une instance de ZodObject'
       });
     }
 
@@ -849,8 +827,6 @@ export namespace Zod4 {
   ): Promise<FormTypes.Data[]> {
     if (!(instrument.validationSchema instanceof z4.ZodObject)) {
       throw new UploadError({
-        en: 'Expected schema to be instance of ZodObject',
-        fr: 'Le schéma attendu doit être une instance de ZodObject'
       });
     }
 
@@ -874,8 +850,6 @@ export namespace Zod4 {
         if (!dataLines?.[0]) {
           return reject(
             new UploadError({
-              en: 'CSV does not contain any rows of data',
-              fr: 'Le fichier CSV ne contient aucune ligne de données'
             })
           );
         }
@@ -969,7 +943,6 @@ export namespace Zod4 {
             console.error(`Failed to parse data: ${JSON.stringify(jsonLine)}`);
             return reject(
               new UploadError({
-                en: 'Schema parsing failed: refer to the browser console for further details',
                 fr: `Échec de l'analyse du schéma : reportez-vous à la console du navigateur pour plus de détails`
               })
             );

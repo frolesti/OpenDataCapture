@@ -23,18 +23,12 @@ export const InstrumentKindDropdown: React.FC<{
             key: 'FORM',
             label: t({
               ca: 'Formulari',
-              es: 'Formulario',
-              en: 'Form',
-              fr: 'Formulaire'
             })
           },
           {
             key: 'INTERACTIVE',
             label: t({
               ca: 'Interactiu',
-              es: 'Interactivo',
-              en: 'Interactive',
-              fr: 'Interactif'
             })
           },
           {
@@ -47,9 +41,6 @@ export const InstrumentKindDropdown: React.FC<{
       setSelected={setSelected}
       title={t({
         ca: 'Tipus',
-        es: 'Tipo',
-        en: 'Kind',
-        fr: 'Genre'
       })}
     />
   );

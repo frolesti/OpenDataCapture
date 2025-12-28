@@ -26,9 +26,6 @@ const RouteComponent = () => {
         <Heading className="text-center" variant="h2">
           {t({
             ca: "Modificar la configuració de l'aplicació",
-            en: 'Modify Application Settings',
-            es: 'Modificar la configuración de la aplicación',
-            fr: "Modifier les paramètres de l'application"
           })}
         </Heading>
       </PageHeader>
@@ -45,9 +42,6 @@ const RouteComponent = () => {
             },
             title: t({
               ca: 'Funcionalitats',
-              en: 'Features',
-              es: 'Funcionalidades',
-              fr: 'Fonctionnalités'
             })
           }
         ]}

@@ -57,12 +57,7 @@ export const UserDropup = () => {
             }}
           >
             <Info />
-            {t({
-              ca: 'Informació',
-              en: 'About',
-              es: 'Acerca de',
-              fr: 'Information'
-            })}
+            {t('userDropup.info')}
           </DropdownMenu.Item>
           {/* <DropdownMenu.Item
             className="gap-2 hover:bg-slate-700 hover:text-slate-100 focus:bg-slate-700 focus:text-slate-100"
@@ -74,9 +69,6 @@ export const UserDropup = () => {
             <SettingsIcon />
             {t({
               ca: 'Preferències',
-              en: 'Preferences',
-              es: 'Preferencias',
-              fr: 'Préférences'
             })}
           </DropdownMenu.Item> */}
           <DropdownMenu.Item
@@ -88,12 +80,7 @@ export const UserDropup = () => {
             }}
           >
             <SchoolIcon />
-            {t({
-              ca: 'Tutorial',
-              en: 'Tutorial',
-              es: 'Tutorial',
-              fr: 'Tutoriel'
-            })}
+            {t('userDropup.tutorial')}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="gap-2 hover:bg-slate-700 hover:text-slate-100 focus:bg-slate-700 focus:text-slate-100 focus:ring-0"
@@ -101,12 +88,7 @@ export const UserDropup = () => {
             onClick={logout}
           >
             <LogOutIcon />
-            {t({
-              ca: 'Tancar sessió',
-              en: 'Logout',
-              es: 'Cerrar sesión',
-              fr: 'Se déconnecter'
-            })}
+            {t('userDropup.logout')}
           </DropdownMenu.Item>
         </DropdownMenu.Group>
       </DropdownMenu.Content>

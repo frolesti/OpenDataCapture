@@ -60,8 +60,8 @@ export const Root = ({ id, initialSeriesIndex, target, token }: RootProps) => {
             <ThemeToggle className="h-9 w-9" />
             <LanguageToggle
               options={{
-                en: 'English',
-                fr: 'Français'
+                ca: 'Català',
+                es: 'Español'
               }}
               triggerClassName="h-9 w-9"
             />

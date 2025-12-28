@@ -13,7 +13,7 @@ export default { component: InstrumentShowcase } as Meta<typeof InstrumentShowca
 export const Default: Story = {
   args: {
     data: [...Object.values(forms), ...Object.values(interactive), ...Object.values(series)].map(({ instance }) =>
-      translateInstrumentInfo(instance, 'en')
+      translateInstrumentInfo(instance, 'ca')
     )
   }
 };

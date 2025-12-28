@@ -128,7 +128,7 @@ export default defineInstrument({
     name: 'REACTION_TIME_TASK'
   },
   kind: 'INTERACTIVE',
-  language: 'en',
+  language: 'ca',
   measures: {},
   tags: ['Interactive'],
   validationSchema: z.array(

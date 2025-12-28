@@ -43,8 +43,6 @@ const RouteComponent = () => {
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            en: 'Add User',
-            fr: 'Ajouter un utilisateur'
           })}
         </Heading>
       </PageHeader>
@@ -73,14 +71,10 @@ const RouteComponent = () => {
               }
             },
             title: t({
-              en: 'Login Credentials',
-              fr: 'Identifiants de connexion'
             })
           },
           {
             title: t({
-              en: 'Permissions',
-              fr: 'Autorisations'
             }),
             fields: {
               basePermissionLevel: {
@@ -137,8 +131,6 @@ const RouteComponent = () => {
               }
             },
             title: t({
-              en: 'Additional Information',
-              fr: 'Informations supplémentaires'
             })
           }
         ]}

@@ -29,7 +29,7 @@ export default defineInstrument({
     name: 'INTERACTIVE_INSTRUMENT'
   },
   kind: 'INTERACTIVE',
-  language: 'en',
+  language: 'ca',
   measures: {
     count: {
       kind: 'const',

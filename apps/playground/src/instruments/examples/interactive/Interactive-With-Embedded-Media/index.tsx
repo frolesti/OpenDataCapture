@@ -29,7 +29,7 @@ export default defineInstrument({
     name: 'CAT_VIDEO_TASK'
   },
   kind: 'INTERACTIVE',
-  language: 'en',
+  language: 'ca',
   measures: {
     score: {
       kind: 'computed',

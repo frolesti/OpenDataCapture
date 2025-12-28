@@ -43,16 +43,10 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
   };
 
   let language: string;
-  if (instrument.language === 'en') {
+  if (instrument.language === 'ca') {
     language = t({
-      en: 'English',
-      fr: 'Anglais'
-    });
-  } else if (instrument.language === 'fr') {
-    language = t({
-      en: 'French',
-      fr: 'Français'
-    });
+      ca: 'Català'
+    } as any);
   } else {
     language = instrument.language;
   }

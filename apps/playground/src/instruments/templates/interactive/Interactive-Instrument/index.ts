@@ -5,7 +5,7 @@ import { z } from '/runtime/v1/zod@3.x';
 
 export default defineInstrument({
   kind: 'INTERACTIVE',
-  language: 'en',
+  language: 'ca',
   tags: ['<PLACEHOLDER>'],
   internal: {
     edition: 1,

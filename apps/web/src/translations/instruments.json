@@ -1,118 +1,84 @@
 {
   "accessible": {
     "title": {
-      "en": "Select Study",
-      "fr": "Sélectionner une étude",
-      "es": "Seleccionar estudio",
-      "ca": "Seleccionar estudi"
+      "ca": "Seleccionar estudi",
+      "es": "Seleccionar estudio"
     }
   },
   "manage": {
     "title": {
-      "en": "Manage Instruments",
-      "fr": "Gérer les instruments",
-      "es": "Gestionar instrumentos",
-      "ca": "Gestionar instruments"
+      "ca": "Gestionar instruments",
+      "es": "Gestionar instrumentos"
     }
   },
   "overview": {
     "estimatedDuration": {
-      "en": "{{minutes}} minutes",
-      "fr": "{{minutes}} minutes",
-      "es": "{{minutes}} minutos",
-      "ca": "{{minutes}} minuts"
+      "ca": "{{minutes}} minuts",
+      "es": "{{minutes}} minutos"
     }
   },
   "props": {
     "description": {
-      "en": "Description",
-      "fr": "Description",
-      "es": "Descripción",
-      "ca": "Descripció"
+      "ca": "Descripció",
+      "es": "Descripción"
     },
     "details": {
-      "en": "Details",
-      "fr": "Détails",
-      "es": "Detalles",
-      "ca": "Detalls"
+      "ca": "Detalls",
+      "es": "Detalles"
     },
     "estimatedDuration": {
-      "en": "Estimated Duration",
-      "fr": "Durée estimée",
-      "es": "Duración estimada",
-      "ca": "Durada estimada"
+      "ca": "Durada estimada",
+      "es": "Duración estimada"
     },
     "instructions": {
-      "en": "Instructions",
-      "fr": "Instructions",
-      "es": "Instrucciones",
-      "ca": "Instruccions"
+      "ca": "Instruccions",
+      "es": "Instrucciones"
     },
     "name": {
-      "en": "Instrument Name",
-      "fr": "Nom de l'instrument",
-      "es": "Nombre del instrumento",
-      "ca": "Nom de l'instrument"
+      "ca": "Nom de l'instrument",
+      "es": "Nombre del instrumento"
     },
     "tag": {
-      "en": "Tag",
-      "fr": "Tag",
-      "es": "Etiqueta",
-      "ca": "Etiqueta"
+      "ca": "Etiqueta",
+      "es": "Etiqueta"
     },
     "tags": {
-      "en": "Tags",
-      "fr": "Tags",
-      "es": "Etiquetas",
-      "ca": "Etiquetes"
+      "ca": "Etiquetes",
+      "es": "Etiquetas"
     },
     "title": {
-      "en": "Title",
-      "fr": "Titre",
-      "es": "Título",
-      "ca": "Títol"
+      "ca": "Títol",
+      "es": "Título"
     },
     "version": {
-      "en": "Version",
-      "fr": "Version",
-      "es": "Versión",
-      "ca": "Versió"
+      "ca": "Versió",
+      "es": "Versión"
     }
   },
   "summary": {
     "subtitle": {
-      "en": "Completed on {{ dateCompleted }}",
-      "fr": "Remplie le {{ dateCompleted }}",
-      "es": "Completado el {{ dateCompleted }}",
-      "ca": "Completat el {{ dateCompleted }}"
+      "ca": "Completat el {{ dateCompleted }}",
+      "es": "Completado el {{ dateCompleted }}"
     },
     "title": {
-      "en": "Summary of Results for the {{title}}",
-      "fr": "{{title}} : résumé des résultats",
-      "es": "Resumen de resultados para {{title}}",
-      "ca": "Resum de resultats per a {{title}}"
+      "ca": "Resum de resultats per a {{title}}",
+      "es": "Resumen de resultados para {{title}}"
     }
   },
   "view": {
     "filters": {
       "language": {
-        "en": "Language",
-        "fr": "Langue",
-        "es": "Idioma",
-        "ca": "Idioma"
+        "ca": "Idioma",
+        "es": "Idioma"
       },
       "tags": {
-        "en": "Tags",
-        "fr": "Tags",
-        "es": "Etiquetas",
-        "ca": "Etiquetes"
+        "ca": "Etiquetes",
+        "es": "Etiquetas"
       }
     },
     "title": {
-      "en": "Instruments",
-      "fr": "Instruments",
-      "es": "Instrumentos",
-      "ca": "Instruments"
+      "ca": "Instruments",
+      "es": "Instrumentos"
     }
   }
 }

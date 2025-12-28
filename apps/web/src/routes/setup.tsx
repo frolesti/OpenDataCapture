@@ -177,9 +177,7 @@ const RouteComponent = () => {
               align="start"
               options={{
                 ca: 'Català',
-                es: 'Español',
-                en: 'English',
-                fr: 'Français'
+                es: 'Español'
               }}
               triggerClassName="border p-2"
               variant="ghost"

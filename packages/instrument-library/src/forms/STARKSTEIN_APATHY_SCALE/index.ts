@@ -3,23 +3,17 @@ import { z } from '/runtime/v1/zod@3.x';
 
 const $FieldOptionsValidation = z.number().int().gte(0).lte(3);
 const fieldOptionsLikertScale = {
-  en: {
+  ca: {
     0: 'Not at all',
     1: 'Slightly',
     2: 'Some',
     3: 'A lot'
-  },
-  fr: {
-    0: 'Pas du tout',
-    1: 'Un peut',
-    2: 'Assez',
-    3: 'Beaucoup'
   }
 };
 
 export default defineInstrument({
   kind: 'FORM',
-  language: ['en', 'fr'],
+  language: ['ca'],
   validationSchema: z.object({
     interestedInLearningNewThings: $FieldOptionsValidation,
     anythingInterestsYou: $FieldOptionsValidation,
@@ -38,22 +32,19 @@ export default defineInstrument({
   }),
   details: {
     description: {
-      en: 'For each question, choose the answer that best describes your thoughts, feelings, and behaviors in the last 4 weeks.',
-      fr: 'Pour chaque question, choisissez la réponse qui décrit le mieux vos pensées, sentiments et comportements au cours des 4 dernières semaines.'
+      ca: 'For each question, choose the answer that best describes your thoughts, feelings, and behaviors in the last 4 weeks.',
+
     },
     license: 'PUBLIC-DOMAIN',
     title: {
-      en: 'Starkstein Apathy Scale',
-      fr: "Échelle d'apathie de Starkstein"
+      ca: 'Starkstein Apathy Scale',
+
     },
     referenceUrl: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8467636/',
     estimatedDuration: 5,
     instructions: {
-      en: [
+      ca: [
         'For each question, choose the answer that best describes your thoughts, feelings, and behaviors in the last 4 weeks.'
-      ],
-      fr: [
-        'Pour chaque question, choisissez la réponse qui décrit le mieux vos pensées, sentiments et comportements au cours des 4 dernières semaines.'
       ]
     }
   },
@@ -62,8 +53,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Are you interested in learning new things?',
-        fr: 'Êtes-vous intéressé à apprendre de nouvelles choses?'
+        ca: 'Are you interested in learning new things?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -71,8 +62,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Does anything interest you?',
-        fr: "Est-ce qu'il y a des choses qui vous intéressent?"
+        ca: 'Does anything interest you?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -80,8 +71,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Are you concerned about your condition?',
-        fr: 'Êtes-vous préoccupé par votre état de santé ?'
+        ca: 'Are you concerned about your condition?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -89,8 +80,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Do you put much effort into things?',
-        fr: "Est-ce que vous mettez beaucoup d'effort dans ce que vous faites?"
+        ca: 'Do you put much effort into things?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -98,8 +89,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Are you always looking for something to do?',
-        fr: "Vous êtes toujours à la recherche d'une activité ?"
+        ca: 'Are you always looking for something to do?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -107,8 +98,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Do you have plans and goals for the future?',
-        fr: "Avez-vous des projets et des objectifs pour l'avenir ?"
+        ca: 'Do you have plans and goals for the future?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -116,8 +107,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Do you have motivation?',
-        fr: 'Êtes-vous motivé (e)?'
+        ca: 'Do you have motivation?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -125,8 +116,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Do you have the energy for daily activities?',
-        fr: "Avez-vous de l'énergie pour les activités quotidiennes? "
+        ca: 'Do you have the energy for daily activities?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -134,8 +125,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Does someone have to tell you what to do each day?',
-        fr: "Est-ce que quelqu'un doit vous dire quoi faire à chaque jour? "
+        ca: 'Does someone have to tell you what to do each day?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -143,8 +134,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Are you indifferent to things?',
-        fr: 'Est-ce que les choses vous laissent indifférent(e)s? '
+        ca: 'Are you indifferent to things?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -152,8 +143,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Are you unconcerned with many things?',
-        fr: 'Êtes-vous indifférent à beaucoup de choses ?'
+        ca: 'Are you unconcerned with many things?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -161,8 +152,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Do you need a push to get started on things?',
-        fr: "Avez-vous besoin d'être poussé(e) pour commencer des choses? "
+        ca: 'Do you need a push to get started on things?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -170,8 +161,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Are you neither happy nor sad, just in between?',
-        fr: "Vous n'êtes ni heureux ni triste, mais entre les deux ?"
+        ca: 'Are you neither happy nor sad, just in between?',
+
       },
       options: fieldOptionsLikertScale
     },
@@ -179,8 +170,8 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        en: 'Would you consider yourself apathetic?',
-        fr: 'Est-ce que vous vous considérez comme étant apathique?'
+        ca: 'Would you consider yourself apathetic?',
+
       },
       options: fieldOptionsLikertScale
     }
@@ -248,7 +239,7 @@ export default defineInstrument({
     }
   },
   tags: {
-    en: ['Apathy'],
-    fr: ['Apathie']
+    ca: ['Apathy'],
+
   }
 });

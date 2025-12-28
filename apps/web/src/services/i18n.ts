@@ -21,9 +21,7 @@ declare module '@douglasneuroinformatics/libui/i18n' {
   export namespace UserConfig {
     export interface LanguageOptions {
       ca: true;
-      en: true;
       es: true;
-      fr: true;
     }
     export interface Translations {
       auth: typeof auth;
@@ -44,7 +42,7 @@ declare module '@douglasneuroinformatics/libui/i18n' {
 }
 
 i18n.init({
-  defaultLanguage: 'en',
+  defaultLanguage: 'ca',
   translations: {
     auth,
     common,

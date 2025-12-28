@@ -5,21 +5,21 @@ import { z } from '/runtime/v1/zod@3.x';
 
 export default defineInstrument({
   kind: 'FORM',
-  language: ['en', 'fr'],
+  language: ['ca'],
   internal: {
     edition: 1,
     name: 'FAVORITE_COLOR'
   },
   tags: {
-    en: ['Dynamic'],
-    fr: ['Dynamique']
+    ca: ['Dynamic'],
+
   },
   content: {
     hasFavoriteColor: {
       kind: 'boolean',
       label: {
-        en: 'Do you have a favorite color?',
-        fr: 'Avez-vous une couleur préférée ?'
+        ca: 'Do you have a favorite color?',
+
       },
       variant: 'radio'
     },
@@ -33,19 +33,14 @@ export default defineInstrument({
         return {
           kind: 'string',
           label: {
-            en: 'Favorite Color',
-            fr: 'Couleur préférée'
+            ca: 'Favorite Color',
+
           },
           options: {
-            en: {
+            ca: {
               red: 'Red',
               green: 'Green',
               blue: 'Blue'
-            },
-            fr: {
-              red: 'Rouge',
-              green: 'Vert',
-              blue: 'Bleu'
             }
           },
           variant: 'select'
@@ -56,19 +51,19 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 1,
     instructions: {
-      en: ['Please respond to all questions'],
-      fr: ['Veuillez répondre à toutes les questions']
+      ca: ['Please respond to all questions'],
+
     }
   },
   details: {
     description: {
-      en: 'This is an example of a simple form with conditional rendering and validation logic',
-      fr: 'Voici un exemple de formulaire simple avec un rendu conditionnel et une logique de validation'
+      ca: 'This is an example of a simple form with conditional rendering and validation logic',
+
     },
     license: 'Apache-2.0',
     title: {
-      en: 'Favorite Color',
-      fr: 'Couleur préférée'
+      ca: 'Favorite Color',
+
     }
   },
   measures: {},

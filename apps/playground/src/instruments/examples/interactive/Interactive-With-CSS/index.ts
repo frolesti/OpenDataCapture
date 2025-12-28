@@ -9,7 +9,7 @@ import './styles.css';
 
 export default defineInstrument({
   kind: 'INTERACTIVE',
-  language: 'en',
+  language: 'ca',
   internal: {
     edition: 1,
     name: '<PLACEHOLDER>'

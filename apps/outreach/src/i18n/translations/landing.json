@@ -1,62 +1,62 @@
 {
   "startSession": {
     "description": {
-      "en": "Using state-of-the-art cryptographic algorithms, we compute patient identifiers based on core demographic characteristics. This innovative approach ensures zero personal data retention while enabling consistent cross-visit association.",
-      "fr": "Grâce à des algorithmes cryptographiques de pointe, nous calculons les identifiants des patients en fonction de leurs caractéristiques démographiques de base. Cette approche innovante garantit qu'aucune donnée personnelle n'est conservée tout en permettant une association cohérente entre les visites."
+      "ca": "Utilitzant algorismes criptogràfics d'última generació, calculem identificadors de pacients basats en característiques demogràfiques bàsiques. Aquest enfocament innovador garanteix la retenció zero de dades personals alhora que permet una associació consistent entre visites.",
+      "es": "Utilizando algoritmos criptográficos de última generación, calculamos identificadores de pacientes basados en características demográficas básicas. Este enfoque innovador garantiza la retención cero de datos personales al tiempo que permite una asociación consistente entre visitas."
     },
     "heading": {
-      "en": "Hash-Based Patient Identification",
-      "fr": "Identification des patients par hachage"
+      "ca": "Identificació de pacients basada en hash",
+      "es": "Identificación de pacientes basada en hash"
     },
     "subheading": {
-      "en": "Precision in Anonymity",
-      "fr": "La précision dans l'anonymat"
+      "ca": "Precisió en l'anonimat",
+      "es": "Precisión en el anonimato"
     },
     "startSessionScreenshot": {
-      "en": "Screenshot of the start session page",
-      "fr": "Capture d'écran de la page de démarrage d'une session"
+      "ca": "Captura de pantalla de la pàgina d'inici de sessió",
+      "es": "Captura de pantalla de la página de inicio de sesión"
     }
   },
   "dataManagement": {
     "description": {
-      "en": "When you're prepared to export, choose between CSV or TSV formats. With Open Data Capture, you're guaranteed access to the most recent version of your data. Move beyond scattered spreadsheets and embrace centralized, secure data storage.",
-      "fr": "Lorsque vous êtes prêt à exporter, choisissez entre les formats CSV ou TSV. Avec Open Data Capture, vous avez la garantie d'accéder à la version la plus récente de vos données. Laissez derrière vous les feuilles de calcul éparpillées et adoptez un stockage de données centralisé et sécurisé."
+      "ca": "Quan estigueu preparat per exportar, trieu entre els formats CSV o TSV. Amb Open Data Capture, teniu garantit l'accés a la versió més recent de les vostres dades. Aneu més enllà dels fulls de càlcul dispersos i adopteu l'emmagatzematge de dades centralitzat i segur.",
+      "es": "Cuando esté preparado para exportar, elija entre los formatos CSV o TSV. Con Open Data Capture, tiene garantizado el acceso a la versión más reciente de sus datos. Vaya más allá de las hojas de cálculo dispersas y adopte el almacenamiento de datos centralizado y seguro."
     },
     "heading": {
-      "en": "Effortless Data Management",
-      "fr": "Rationalisez la gestion de vos données"
+      "ca": "Gestió de dades sense esforç",
+      "es": "Gestión de datos sin esfuerzo"
     },
     "subheading": {
-      "en": "Excel at Data Management, Spreadsheets Not Required",
-      "fr": "Excel pour la gestion des données, feuilles de calcul non requises"
+      "ca": "Excel·lència en la gestió de dades, sense fulls de càlcul",
+      "es": "Excelencia en la gestión de datos, sin hojas de cálculo"
     },
     "dataHubScreenshot": {
-      "en": "Screenshot of the data hub page",
-      "fr": "Capture d'écran de la page du hub de données"
+      "ca": "Captura de pantalla de la pàgina del centre de dades",
+      "es": "Captura de pantalla de la página del centro de datos"
     }
   },
   "hero": {
     "heading": {
-      "en": "The Ultimate Data Capture Solution for Clinical Researchers",
-      "fr": "La solution ultime de capture de données pour les chercheurs cliniques"
+      "ca": "La solució definitiva de captura de dades per a investigadors clínics",
+      "es": "La solución definitiva de captura de datos para investigadores clínicos"
     },
     "learnMore": {
-      "en": "Learn More",
-      "fr": "En savoir plus"
+      "ca": "Saber-ne més",
+      "es": "Saber más"
     },
     "subheading": {
-      "en": "Open Data Capture is an open-source web platform for easily administering questionnaires and interactive tasks, whether remotely or in person.",
-      "fr": "Open Data Capture est une plateforme web open-source permettant d'administrer facilement des questionnaires et des tâches interactives, que ce soit à distance ou en personne."
+      "ca": "Open Data Capture és una plataforma web de codi obert per administrar fàcilment qüestionaris i tasques interactives, ja sigui de forma remota o en persona.",
+      "es": "Open Data Capture es una plataforma web de código abierto para administrar fácilmente cuestionarios y tareas interactivas, ya sea de forma remota o en persona."
     },
     "viewDemo": {
-      "en": "View Demo",
-      "fr": "Voir la démo"
+      "ca": "Veure demostració",
+      "es": "Ver demostración"
     }
   },
   "testimonials": {
     "heading": {
-      "en": "What People Say About Us",
-      "fr": "Ce que les gens disent de nous"
+      "ca": "Què diu la gent sobre nosaltres",
+      "es": "Qué dice la gente sobre nosotros"
     }
   }
 }

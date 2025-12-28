@@ -28,10 +28,9 @@ export default defineConfig({
   integrations: [
     sitemap({
       i18n: {
-        defaultLocale: 'en',
+        defaultLocale: 'ca',
         locales: {
-          en: 'en',
-          fr: 'fr'
+          ca: 'ca'
         }
       }
     }),
@@ -40,7 +39,7 @@ export default defineConfig({
         SiteTitle: path.resolve(import.meta.dirname, './src/components/common/SiteTitle.astro')
       },
       customCss: [path.resolve(import.meta.dirname, './src/styles/starlight.css')],
-      defaultLocale: 'en',
+      defaultLocale: 'ca',
       disable404Route: true,
       favicon: '/favicon.ico',
       head: [
@@ -53,11 +52,11 @@ export default defineConfig({
         }
       ],
       locales: {
-        en: {
-          label: 'English'
+        ca: {
+          label: 'Català'
         },
-        fr: {
-          label: 'Français'
+        es: {
+          label: 'Español'
         }
       },
       markdown: {
