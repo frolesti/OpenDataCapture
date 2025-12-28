@@ -5,8 +5,7 @@ const instrument: SeriesInstrument = {
   kind: 'SERIES',
   language: ['ca'],
   tags: {
-    ca: ['Well-Being'],
-
+    ca: ['Well-Being']
   },
   clientDetails: {
     instructions: {
@@ -17,13 +16,11 @@ const instrument: SeriesInstrument = {
   },
   details: {
     description: {
-      ca: 'The Happiness Questionnaire is a questionnaire about happiness.',
-
+      ca: 'The Happiness Questionnaire is a questionnaire about happiness.'
     },
     license: 'Apache-2.0',
     title: {
-      ca: 'Happiness Questionnaire (With General Consent)',
-
+      ca: 'Happiness Questionnaire (With General Consent)'
     }
   },
   content: [

@@ -1,6 +1,5 @@
 export const translations = {
   requiredField: {
-    ca: 'This field is required',
-
+    ca: 'This field is required'
   }
 };

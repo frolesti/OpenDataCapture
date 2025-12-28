@@ -13,28 +13,18 @@ import { PageHeader } from '@/components/PageHeader';
 import { setupStateQueryOptions, useSetupStateQuery } from '@/hooks/useSetupStateQuery';
 
 const translations = {
-  branch: {
-  },
-  buildDate: {
-  },
-  buildType: {
-  },
+  branch: {},
+  buildDate: {},
+  buildType: {},
   buildTypes: {
-    development: {
-    },
-    production: {
-    },
-    test: {
-    }
+    development: {},
+    production: {},
+    test: {}
   },
-  enabled: {
-  },
-  status: {
-  },
-  uptime: {
-  },
-  version: {
-  }
+  enabled: {},
+  status: {},
+  uptime: {},
+  version: {}
 };
 
 const loadGatewayHealthcheckData = async () => {
@@ -134,7 +124,7 @@ const RouteComponent = () => {
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            ca: 'Sobre Alta Medical Services',
+            ca: 'Sobre Alta Medical Services'
           })}
         </Heading>
       </PageHeader>

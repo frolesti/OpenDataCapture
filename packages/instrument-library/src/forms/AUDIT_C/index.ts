@@ -10,37 +10,31 @@ export default defineInstrument({
     edition: 1
   },
   tags: {
-    ca: ['Alcohol', 'Health', 'Disorder'],
-
+    ca: ['Alcohol', 'Health', 'Disorder']
   },
   clientDetails: {
     title: {
-      ca: 'Alcohol Use (AUDIT-C)',
-
+      ca: 'Alcohol Use (AUDIT-C)'
     }
   },
   details: {
     description: {
-      ca: 'The Alcohol Use Disorders Identification Test (AUDIT-C) is an alcohol screen that can help identify patients who are hazardous drinkers or have active alcohol use disorders (including alcohol abuse or dependence).',
-
+      ca: 'The Alcohol Use Disorders Identification Test (AUDIT-C) is an alcohol screen that can help identify patients who are hazardous drinkers or have active alcohol use disorders (including alcohol abuse or dependence).'
     },
     estimatedDuration: 2,
     instructions: {
-      ca: ['Please respond to every question'],
-
+      ca: ['Please respond to every question']
     },
     license: 'PUBLIC-DOMAIN',
     title: {
-      ca: 'Alcohol Use Disorders Identification Test (AUDIT-C)',
-
+      ca: 'Alcohol Use Disorders Identification Test (AUDIT-C)'
     }
   },
   content: {
     drinkingFrequency: {
       kind: 'number',
       label: {
-        ca: '1. How often do you have a drink containing alcohol?',
-
+        ca: '1. How often do you have a drink containing alcohol?'
       },
       options: {
         ca: {
@@ -56,8 +50,7 @@ export default defineInstrument({
     typicalDrinkQuantity: {
       kind: 'number',
       label: {
-        ca: '2. How many drinks containing alcohol do you have on a typical day when you are drinking?',
-
+        ca: '2. How many drinks containing alcohol do you have on a typical day when you are drinking?'
       },
       options: {
         ca: {
@@ -73,8 +66,7 @@ export default defineInstrument({
     bingeDrinkingFrequency: {
       kind: 'number',
       label: {
-        ca: '3. How often do you have six or more drinks on one occasion?',
-
+        ca: '3. How often do you have six or more drinks on one occasion?'
       },
       options: {
         ca: {
@@ -92,8 +84,7 @@ export default defineInstrument({
     auditCScore: {
       kind: 'computed',
       label: {
-        ca: 'Total Score',
-
+        ca: 'Total Score'
       },
       value: (data) => {
         return sum(Object.values(data));

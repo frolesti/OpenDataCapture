@@ -42,8 +42,7 @@ const RouteComponent = () => {
     <div>
       <PageHeader>
         <Heading className="text-center" variant="h2">
-          {t({
-          })}
+          {t({})}
         </Heading>
       </PageHeader>
       <Form
@@ -70,12 +69,10 @@ const RouteComponent = () => {
                 variant: 'password'
               }
             },
-            title: t({
-            })
+            title: t({})
           },
           {
-            title: t({
-            }),
+            title: t({}),
             fields: {
               basePermissionLevel: {
                 kind: 'string',
@@ -130,8 +127,7 @@ const RouteComponent = () => {
                 label: t('core.identificationData.dateOfBirth.label')
               }
             },
-            title: t({
-            })
+            title: t({})
           }
         ]}
         validationSchema={$CreateUserData

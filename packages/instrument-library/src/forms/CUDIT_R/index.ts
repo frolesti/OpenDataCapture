@@ -51,8 +51,7 @@ export default defineInstrument({
   kind: 'FORM',
   language: ['ca'],
   tags: {
-    ca: ['Cannabis', 'Addiction', 'Substance Abuse'],
-
+    ca: ['Cannabis', 'Addiction', 'Substance Abuse']
   },
   internal: {
     edition: 1,
@@ -61,31 +60,26 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 10,
     instructions: {
-      ca: ['Please fill out answer that best describe your cannabis usage.'],
-
+      ca: ['Please fill out answer that best describe your cannabis usage.']
     },
     title: {
-      ca: 'Cannabis Use Disorder Identification Test - Revised (CUDIT-R)',
-
+      ca: 'Cannabis Use Disorder Identification Test - Revised (CUDIT-R)'
     }
   },
   details: {
     description: {
-      ca: 'The CUDIT-R is an 8-item screening tool used to assess problematic cannabis use and identify individuals at risk of Cannabis Use Disorder (CUD). A score of 8 or higher suggests hazardous use, warranting further assessment or intervention.',
-
+      ca: 'The CUDIT-R is an 8-item screening tool used to assess problematic cannabis use and identify individuals at risk of Cannabis Use Disorder (CUD). A score of 8 or higher suggests hazardous use, warranting further assessment or intervention.'
     },
     license: 'PUBLIC-DOMAIN',
     title: {
-      ca: 'Cannabis Use Disorder Identification Test - Revised (CUDIT-R)',
-
+      ca: 'Cannabis Use Disorder Identification Test - Revised (CUDIT-R)'
     }
   },
   content: {
     isCannabisUsed: {
       kind: 'boolean',
       label: {
-        ca: 'Have you used any cannabis over the past six months?',
-
+        ca: 'Have you used any cannabis over the past six months?'
       },
       options: {
         ca: {
@@ -98,8 +92,7 @@ export default defineInstrument({
     cannabisFrequency: createDependentField({
       kind: 'number',
       label: {
-        ca: '1. How often do you use Cannabis?',
-
+        ca: '1. How often do you use Cannabis?'
       },
       options: {
         ca: {
@@ -115,8 +108,7 @@ export default defineInstrument({
     stonedTime: createDependentField({
       kind: 'number',
       label: {
-        ca: '2. How many hours were you "stoned" on a typical day when you were using cannabis?',
-
+        ca: '2. How many hours were you "stoned" on a typical day when you were using cannabis?'
       },
       options: {
         ca: {
@@ -132,8 +124,7 @@ export default defineInstrument({
     unableToStopUsage: createDependentField({
       kind: 'number',
       label: {
-        ca: '3. How often during the past 6 months did you find that you were not able to stop using cannabis once you had started?',
-
+        ca: '3. How often during the past 6 months did you find that you were not able to stop using cannabis once you had started?'
       },
       options: {
         ca: {
@@ -149,8 +140,7 @@ export default defineInstrument({
     cannabisInducedFailure: createDependentField({
       kind: 'number',
       label: {
-        ca: '4. How often during the past 6 months did you fail to do what was normally expected from you because of using cannabis?',
-
+        ca: '4. How often during the past 6 months did you fail to do what was normally expected from you because of using cannabis?'
       },
       options: {
         ca: {
@@ -166,8 +156,7 @@ export default defineInstrument({
     cannabisRelatedUsageTime: createDependentField({
       kind: 'number',
       label: {
-        ca: '5. How often in the past 6 months have you devoted a great deal of your time to getting, using, or recovering from cannabis?',
-
+        ca: '5. How often in the past 6 months have you devoted a great deal of your time to getting, using, or recovering from cannabis?'
       },
       options: {
         ca: {
@@ -183,8 +172,7 @@ export default defineInstrument({
     cannabisMemoryConcentration: createDependentField({
       kind: 'number',
       label: {
-        ca: '6. How often in the past 6 months have you had a problem with your memory or concentration after using cannabis?',
-
+        ca: '6. How often in the past 6 months have you had a problem with your memory or concentration after using cannabis?'
       },
       options: {
         ca: {
@@ -200,8 +188,7 @@ export default defineInstrument({
     cannabisHazards: createDependentField({
       kind: 'number',
       label: {
-        ca: '7. How often do you use cannabis in situations that could be physically hazardous, such as driving, operating machinery, or caring for children:',
-
+        ca: '7. How often do you use cannabis in situations that could be physically hazardous, such as driving, operating machinery, or caring for children:'
       },
       options: {
         ca: {
@@ -217,8 +204,7 @@ export default defineInstrument({
     cannabisReduction: createDependentField({
       kind: 'number',
       label: {
-        ca: '8. Have you ever thought about cutting down, or stopping, your use of cannabis?',
-
+        ca: '8. Have you ever thought about cutting down, or stopping, your use of cannabis?'
       },
       options: {
         ca: {
@@ -235,64 +221,56 @@ export default defineInstrument({
     cannabisFrequency: {
       kind: 'const',
       label: {
-        ca: 'Cannabis Frequency',
-
+        ca: 'Cannabis Frequency'
       },
       ref: 'cannabisFrequency'
     },
     stonedTime: {
       kind: 'const',
       label: {
-        ca: 'Time "Stoned"',
-
+        ca: 'Time "Stoned"'
       },
       ref: 'stonedTime'
     },
     unableToStopUsage: {
       kind: 'const',
       label: {
-        ca: 'Usage Reduction',
-
+        ca: 'Usage Reduction'
       },
       ref: 'unableToStopUsage'
     },
     cannabisInducedFailure: {
       kind: 'const',
       label: {
-        ca: 'Cannabis induced failure',
-
+        ca: 'Cannabis induced failure'
       },
       ref: 'cannabisInducedFailure'
     },
     cannabisRelatedUsageTime: {
       kind: 'const',
       label: {
-        ca: 'Cannabis usage time',
-
+        ca: 'Cannabis usage time'
       },
       ref: 'cannabisRelatedUsageTime'
     },
     cannabisMemoryConcentration: {
       kind: 'const',
       label: {
-        ca: 'Memory and Concentration',
-
+        ca: 'Memory and Concentration'
       },
       ref: 'cannabisMemoryConcentration'
     },
     cannabisHazards: {
       kind: 'const',
       label: {
-        ca: 'Cannabis Hazard Score',
-
+        ca: 'Cannabis Hazard Score'
       },
       ref: 'cannabisHazards'
     },
     cannabisReduction: {
       kind: 'const',
       label: {
-        ca: 'Cannabis Reduction',
-
+        ca: 'Cannabis Reduction'
       },
       ref: 'cannabisReduction'
     },
@@ -300,8 +278,7 @@ export default defineInstrument({
       kind: 'computed',
       hidden: true,
       label: {
-        ca: 'Cannabis use score',
-
+        ca: 'Cannabis use score'
       },
       value: (data) => {
         return calculateCannabisUse(data);
@@ -311,8 +288,7 @@ export default defineInstrument({
       kind: 'computed',
       hidden: true,
       label: {
-        ca: 'Cannabis use score interpretation',
-
+        ca: 'Cannabis use score interpretation'
       },
       value: (data) => {
         const score = calculateCannabisUse(data);

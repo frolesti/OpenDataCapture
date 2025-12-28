@@ -20,45 +20,38 @@ export default defineInstrument({
       items: {
         difficultyConcentrating: {
           label: {
-            ca: 'How often do you have difficulty concentrating on what people are saying to you even when they are speaking to you directly?',
-
+            ca: 'How often do you have difficulty concentrating on what people are saying to you even when they are speaking to you directly?'
           }
         },
         restlessInappropriately: {
           label: {
-            ca: 'How often do you leave your seat in meetings or other situations in which you are expected to remain seated?',
-
+            ca: 'How often do you leave your seat in meetings or other situations in which you are expected to remain seated?'
           }
         },
         difficultyRelaxing: {
           label: {
-            ca: 'How often do you have difficulty unwinding and relaxing when you have time to yourself?',
-
+            ca: 'How often do you have difficulty unwinding and relaxing when you have time to yourself?'
           }
         },
         sentenceCompletion: {
           label: {
-            ca: "When you're in a conversation, how often do you find yourself finishing the sentences of the people you are talking to before they can finish them themselves?",
-
+            ca: "When you're in a conversation, how often do you find yourself finishing the sentences of the people you are talking to before they can finish them themselves?"
           }
         },
         procrastination: {
           label: {
-            ca: 'How often do you put things off until the last minute?',
-
+            ca: 'How often do you put things off until the last minute?'
           }
         },
         relyOnOthers: {
           label: {
-            ca: 'How often do you depend on others to keep your life in order and attend to details?',
-
+            ca: 'How often do you depend on others to keep your life in order and attend to details?'
           }
         }
       },
       kind: 'number-record',
       label: {
-        ca: 'Check the box that best describes how you have felt and conducted yourself over the past 6 months.',
-
+        ca: 'Check the box that best describes how you have felt and conducted yourself over the past 6 months.'
       },
       options: likertScaleOptions,
       variant: 'likert'
@@ -78,14 +71,12 @@ export default defineInstrument({
     },
     estimatedDuration: 1,
     instructions: {
-      ca: ['This is a self-rated instrument, please answer all questions.'],
-
+      ca: ['This is a self-rated instrument, please answer all questions.']
     },
     license: 'CC-BY-4.0',
     referenceUrl: 'http://www.hcp.med.harvard.edu/ncs/asrs.php',
     title: {
-      ca: 'Adult ADHD Self-Report Screening Scale for DSM-5 (ASRS-5) v1.1',
-
+      ca: 'Adult ADHD Self-Report Screening Scale for DSM-5 (ASRS-5) v1.1'
     }
   },
   internal: {
@@ -134,8 +125,7 @@ export default defineInstrument({
     }
   },
   tags: {
-    ca: ['ADHD', 'ADD'],
-
+    ca: ['ADHD', 'ADD']
   },
   validationSchema: z.object({
     selfReportADHD: z.object({

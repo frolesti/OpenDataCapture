@@ -19,13 +19,11 @@ const UploadSelectTable: React.FC<{
       columns={[
         {
           field: (instrument) => instrument.details.title,
-          label: t({
-          })
+          label: t({})
         },
         {
           field: (instrument) => instrument.kind,
-          label: t({
-          })
+          label: t({})
         }
       ]}
       data={data}
@@ -52,17 +50,10 @@ const RouteComponent = () => {
     <React.Fragment>
       <PageHeader>
         <Heading className="text-center" variant="h2">
-          {t({
-          })}
+          {t({})}
         </Heading>
       </PageHeader>
-      <SearchBar
-        className="mb-3"
-        placeholder={t({
-        })}
-        value={searchTerm}
-        onValueChange={setSearchTerm}
-      />
+      <SearchBar className="mb-3" placeholder={t({})} value={searchTerm} onValueChange={setSearchTerm} />
       <UploadSelectTable
         data={filteredData}
         onSelect={(instrument) => {

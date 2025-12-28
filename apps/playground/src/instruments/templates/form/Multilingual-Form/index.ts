@@ -8,8 +8,7 @@ export default defineInstrument({
   language: ['ca'],
 
   tags: {
-    ca: ['<PLACEHOLDER>'],
-
+    ca: ['<PLACEHOLDER>']
   },
   internal: {
     edition: 1,
@@ -18,20 +17,17 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 1,
     instructions: {
-      ca: ['<PLACEHOLDER>'],
-
+      ca: ['<PLACEHOLDER>']
     }
   },
   content: {},
   details: {
     description: {
-      ca: '<PLACEHOLDER>',
-
+      ca: '<PLACEHOLDER>'
     },
     license: 'Apache-2.0',
     title: {
-      ca: '<PLACEHOLDER>',
-
+      ca: '<PLACEHOLDER>'
     }
   },
   measures: {},

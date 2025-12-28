@@ -55,8 +55,7 @@ function parseNumberEntry(entry: string): number {
 function parseSetEntry(entry: string): Set<string> {
   const set = extractSetEntry(entry);
   if (set.size === 0) {
-    throw new UploadError({
-    });
+    throw new UploadError({});
   }
   return set;
 }
@@ -269,8 +268,7 @@ export namespace Zod3 {
       }
     }
     if (listOfZodElements.length === 0) {
-      throw new UploadError({
-      });
+      throw new UploadError({});
     }
     return {
       isOptional: Boolean(isOptional),
@@ -284,7 +282,7 @@ export namespace Zod3 {
     const def: unknown = schema._def;
     if (!isZodTypeDef(def)) {
       console.error(`Cannot parse ZodType from schema: ${JSON.stringify(schema)}`);
-      throw new UploadError({ });
+      throw new UploadError({});
     } else if (isZodOptionalDef(def)) {
       return getZodTypeName(def.innerType, true);
     } else if (isZodEnumDef(def)) {
@@ -298,8 +296,7 @@ export namespace Zod3 {
     } else if (isZodSetDef(def)) {
       const innerDef: unknown = def.valueType._def;
       if (!isZodTypeDef(innerDef)) {
-        throw new UploadError({
-        });
+        throw new UploadError({});
       }
       if (isZodEnumDef(innerDef)) {
         return {
@@ -357,16 +354,14 @@ export namespace Zod3 {
           possibleEnumOutputs = possibleEnumOutputs.slice(0, -1);
           return formatOptionalEntry(possibleEnumOutputs, isOptional);
         } catch {
-          throw new UploadError({
-          });
+          throw new UploadError({});
         }
       case 'ZodArray':
       case 'ZodObject':
         try {
           let multiString = 'RECORD_ARRAY( ';
           if (!(multiValues && multiKeys)) {
-            throw new UploadError({
-            });
+            throw new UploadError({});
           }
           for (let i = 0; i < multiValues.length; i++) {
             const inputData = multiValues[i]!;
@@ -402,8 +397,7 @@ export namespace Zod3 {
       case 'ZodArray':
       case 'ZodObject':
         if (!convertResult.multiKeys || !convertResult.multiValues) {
-          throw new UploadError({
-          });
+          throw new UploadError({});
         }
 
         return extractRecordArrayEntry(entry).map((parsedRecord) => {
@@ -439,8 +433,7 @@ export namespace Zod3 {
     instrumentInternal: AnyUnilingualFormInstrument['internal']
   ) {
     if (!(isZodObject(instrumentSchema) || isZodEffectsObject(instrumentSchema))) {
-      throw new UploadError({
-      });
+      throw new UploadError({});
     }
     const def = instrumentSchema._def;
     const shape = (def.typeName === z3.ZodFirstPartyTypeKind.ZodObject ? def.shape() : def.schema._def.shape()) as {
@@ -473,8 +466,7 @@ export namespace Zod3 {
     const instrumentSchemaDef: unknown = instrumentSchema._def;
     if (isZodTypeDef(instrumentSchemaDef) && isZodEffectsDef(instrumentSchemaDef)) {
       if (!isZodObject(instrumentSchemaDef.schema)) {
-        throw new UploadError({
-        });
+        throw new UploadError({});
       }
       instrumentSchemaWithInternal = instrumentSchemaDef.schema.extend({
         date: z3.coerce.date(),
@@ -501,10 +493,7 @@ export namespace Zod3 {
         const [headers, ...dataLines] = parseResultCsv.data satisfies string[][] as [string[], ...string[][]];
 
         if (!dataLines?.[0]) {
-          return reject(
-            new UploadError({
-            })
-          );
+          return reject(new UploadError({}));
         }
 
         let rowNumber = 1;
@@ -803,8 +792,7 @@ export namespace Zod4 {
     instrumentInternal: AnyUnilingualFormInstrument['internal']
   ) {
     if (!(instrumentSchema instanceof z4.ZodObject)) {
-      throw new UploadError({
-      });
+      throw new UploadError({});
     }
 
     const csvColumns = [...INTERNAL_HEADERS];
@@ -826,8 +814,7 @@ export namespace Zod4 {
     instrument: AnyUnilingualFormInstrument
   ): Promise<FormTypes.Data[]> {
     if (!(instrument.validationSchema instanceof z4.ZodObject)) {
-      throw new UploadError({
-      });
+      throw new UploadError({});
     }
 
     const instrumentSchema = instrument.validationSchema.extend({
@@ -848,10 +835,7 @@ export namespace Zod4 {
         const [headers, ...dataLines] = parseResultCsv.data satisfies string[][] as [string[], ...string[][]];
 
         if (!dataLines?.[0]) {
-          return reject(
-            new UploadError({
-            })
-          );
+          return reject(new UploadError({}));
         }
 
         //remove sample data if included (account for old mongolian vowel separator templates)

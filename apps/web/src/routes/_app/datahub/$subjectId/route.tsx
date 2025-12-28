@@ -42,8 +42,7 @@ const RouteComponent = () => {
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t(
-            {
-            },
+            {},
             {
               args: [removeSubjectIdScope(subjectId).slice(0, subjectIdDisplaySetting ?? 9)]
             }

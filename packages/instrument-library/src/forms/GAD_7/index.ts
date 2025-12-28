@@ -24,25 +24,21 @@ const calculateGAD7total = (data: { [key: string]: unknown }) => {
 export default defineInstrument({
   details: {
     title: {
-      ca: 'Generalized Anxiety Disorder-7 (GAD-7)',
-
+      ca: 'Generalized Anxiety Disorder-7 (GAD-7)'
     },
     description: {
-      ca: 'The Generalized Anxiety Disorder 7 (GAD-7) is a self-reported questionnaire for screening and severity measuring of generalized anxiety disorder (GAD). The GAD7 asks for self-reported anxiety symptoms over the past two weeks.',
-
+      ca: 'The Generalized Anxiety Disorder 7 (GAD-7) is a self-reported questionnaire for screening and severity measuring of generalized anxiety disorder (GAD). The GAD7 asks for self-reported anxiety symptoms over the past two weeks.'
     },
     estimatedDuration: 1,
     instructions: {
-      ca: ['Please complete all questions'],
-
+      ca: ['Please complete all questions']
     },
     license: 'PUBLIC-DOMAIN'
   },
   kind: 'FORM',
   language: ['ca'],
   tags: {
-    ca: ['Anxiety'],
-
+    ca: ['Anxiety']
   },
   internal: {
     name: 'GAD_7',
@@ -51,18 +47,15 @@ export default defineInstrument({
   content: [
     {
       title: {
-        ca: 'Over the last two weeks, how often have you been bothered by the following problems?',
-
+        ca: 'Over the last two weeks, how often have you been bothered by the following problems?'
       },
       fields: {
         nervousAnxiousOnEdge: {
           description: {
-            ca: 'Over the last two weeks, how often have you been bothered by feeling nervous, anxious, or on edge?',
-
+            ca: 'Over the last two weeks, how often have you been bothered by feeling nervous, anxious, or on edge?'
           },
           label: {
-            ca: 'Feeling nervous, anxious, or on edge',
-
+            ca: 'Feeling nervous, anxious, or on edge'
           },
           kind: 'number',
           options: likertOptions,
@@ -70,12 +63,10 @@ export default defineInstrument({
         },
         noStopControlWorrying: {
           description: {
-            ca: 'Over the last two weeks, how often have you been bothered by not being able to stop or control worrying?',
-
+            ca: 'Over the last two weeks, how often have you been bothered by not being able to stop or control worrying?'
           },
           label: {
-            ca: 'Not being able to stop or control worrying',
-
+            ca: 'Not being able to stop or control worrying'
           },
           kind: 'number',
           options: likertOptions,
@@ -83,12 +74,10 @@ export default defineInstrument({
         },
         worryingTooMuch: {
           description: {
-            ca: 'Over the last two weeks, how often have you been bothered by worrying too much about different things?',
-
+            ca: 'Over the last two weeks, how often have you been bothered by worrying too much about different things?'
           },
           label: {
-            ca: 'Worrying too much about different things',
-
+            ca: 'Worrying too much about different things'
           },
           kind: 'number',
           options: likertOptions,
@@ -96,12 +85,10 @@ export default defineInstrument({
         },
         troubleRelaxing: {
           description: {
-            ca: 'Over the last two weeks, how often have you had trouble relaxing?',
-
+            ca: 'Over the last two weeks, how often have you had trouble relaxing?'
           },
           label: {
-            ca: 'Have trouble relaxing',
-
+            ca: 'Have trouble relaxing'
           },
           kind: 'number',
           options: likertOptions,
@@ -109,12 +96,10 @@ export default defineInstrument({
         },
         restless: {
           description: {
-            ca: 'Over the last two weeks, how often have you been bothered by being so restless that it is hard to sit still?',
-
+            ca: 'Over the last two weeks, how often have you been bothered by being so restless that it is hard to sit still?'
           },
           label: {
-            ca: 'Being so restless that it is hard to sit still',
-
+            ca: 'Being so restless that it is hard to sit still'
           },
           kind: 'number',
           options: likertOptions,
@@ -122,12 +107,10 @@ export default defineInstrument({
         },
         easilyAnnoyedIrritable: {
           description: {
-            ca: 'Over the last two weeks, how often have you been bothered by becoming easily annoyed or irritable?',
-
+            ca: 'Over the last two weeks, how often have you been bothered by becoming easily annoyed or irritable?'
           },
           label: {
-            ca: 'Becoming easily annoyed or irritable',
-
+            ca: 'Becoming easily annoyed or irritable'
           },
           kind: 'number',
           options: likertOptions,
@@ -135,12 +118,10 @@ export default defineInstrument({
         },
         afraidSomethingAwful: {
           description: {
-            ca: 'Over the last two weeks, how often have you been bothered by feeling afraid, as if something awful might happen?',
-
+            ca: 'Over the last two weeks, how often have you been bothered by feeling afraid, as if something awful might happen?'
           },
           label: {
-            ca: 'Feeling afraid, as if something awful might happen',
-
+            ca: 'Feeling afraid, as if something awful might happen'
           },
           kind: 'number',
           options: likertOptions,
@@ -150,8 +131,7 @@ export default defineInstrument({
     },
     {
       title: {
-        ca: ' ',
-
+        ca: ' '
       },
       fields: {
         difficultyCoping: {
@@ -181,12 +161,10 @@ export default defineInstrument({
             }
             return {
               description: {
-                ca: 'Given your problems selected above, how difficult have they made it for you to do your work, take care of things at home, or get along with other people?',
-
+                ca: 'Given your problems selected above, how difficult have they made it for you to do your work, take care of things at home, or get along with other people?'
               },
               label: {
-                ca: 'Given your problems selected above, how difficult have they made it for you to do your work, take care of things at home, or get along with other people?',
-
+                ca: 'Given your problems selected above, how difficult have they made it for you to do your work, take care of things at home, or get along with other people?'
               },
               kind: 'number',
               options: {
@@ -240,8 +218,7 @@ export default defineInstrument({
     gad7Total: {
       kind: 'computed',
       label: {
-        ca: 'Total of GAD7',
-
+        ca: 'Total of GAD7'
       },
       value: (data) => {
         return calculateGAD7total(data);

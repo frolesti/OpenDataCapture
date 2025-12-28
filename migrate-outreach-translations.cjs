@@ -25,7 +25,7 @@ function processFile(filePath) {
   console.log(`Updated ${filePath}`);
 }
 
-fs.readdirSync(translationsDir).forEach(file => {
+fs.readdirSync(translationsDir).forEach((file) => {
   if (file.endsWith('.json')) {
     processFile(path.join(translationsDir, file));
   }

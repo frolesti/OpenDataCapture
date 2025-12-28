@@ -61,8 +61,7 @@ const RouteComponent = () => {
       });
       if (reformattedData.records.length > 1000) {
         addNotification({
-          message: t({
-          }),
+          message: t({}),
           type: 'info'
         });
       }
@@ -102,8 +101,7 @@ const RouteComponent = () => {
               void download('error.json', JSON.stringify(serializeError(error), null, 2));
             }}
           >
-            {t({
-            })}
+            {t({})}
           </Button>
           <Button
             type="button"
@@ -112,8 +110,7 @@ const RouteComponent = () => {
               void navigate({ to: '.' });
             }}
           >
-            {t({
-            })}
+            {t({})}
           </Button>
         </div>
       </div>
@@ -151,8 +148,7 @@ const RouteComponent = () => {
             <div className="flex justify-between space-x-1">
               <Button className="gap-1" disabled={!instrument} variant={'primary'} onClick={handleTemplateDownload}>
                 <DownloadIcon />
-                {t({
-                })}
+                {t({})}
               </Button>
               <Button
                 className="gap-1"
@@ -163,8 +159,7 @@ const RouteComponent = () => {
                 }}
               >
                 <BadgeHelpIcon />
-                {t({
-                })}
+                {t({})}
               </Button>
             </div>
           </div>
@@ -174,8 +169,7 @@ const RouteComponent = () => {
           <div className="mx-auto flex w-full max-w-3xl grow flex-col justify-center">
             <Spinner className="mx-auto size-1/2"></Spinner>
             <Heading className="text-center" variant="h3">
-              {t({
-              })}
+              {t({})}
             </Heading>
           </div>
         </>

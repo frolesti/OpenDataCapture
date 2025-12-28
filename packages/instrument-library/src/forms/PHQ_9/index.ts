@@ -8,8 +8,7 @@ export default defineInstrument({
   kind: 'FORM',
   language: ['ca'],
   tags: {
-    ca: ['Health', 'Depression'],
-
+    ca: ['Health', 'Depression']
   },
   internal: {
     edition: 1,
@@ -18,73 +17,61 @@ export default defineInstrument({
   content: [
     {
       title: {
-        ca: 'Summary of Instructions',
-
+        ca: 'Summary of Instructions'
       },
       description: {
-        ca: 'Over the last 2 weeks, how often have you been bothered by any of the following problems?',
-
+        ca: 'Over the last 2 weeks, how often have you been bothered by any of the following problems?'
       },
       fields: {
         questions: {
           kind: 'number-record',
           label: {
-            ca: 'Questions',
-
+            ca: 'Questions'
           },
           items: {
             interestPleasure: {
               label: {
-                ca: '1. Little interest or pleasure in doing things',
-
+                ca: '1. Little interest or pleasure in doing things'
               }
             },
             feelingDown: {
               label: {
-                ca: '2. Feeling down, depressed, or hopeless',
-
+                ca: '2. Feeling down, depressed, or hopeless'
               }
             },
             sleepIssues: {
               label: {
-                ca: '3. Trouble falling or staying asleep, or sleeping too much',
-
+                ca: '3. Trouble falling or staying asleep, or sleeping too much'
               }
             },
             energyLevel: {
               label: {
-                ca: '4. Feeling tired or having little energy',
-
+                ca: '4. Feeling tired or having little energy'
               }
             },
             appetiteChanges: {
               label: {
-                ca: '5. Poor appetite or overeating',
-
+                ca: '5. Poor appetite or overeating'
               }
             },
             selfWorth: {
               label: {
-                ca: '6. Feeling bad about yourself — or that you are a failure or have let yourself or your family down',
-
+                ca: '6. Feeling bad about yourself — or that you are a failure or have let yourself or your family down'
               }
             },
             concentrationIssues: {
               label: {
-                ca: '7. Trouble concentrating on things, such as reading the newspaper or watching television',
-
+                ca: '7. Trouble concentrating on things, such as reading the newspaper or watching television'
               }
             },
             psychomotorChanges: {
               label: {
-                ca: '8. Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving around a lot more than usual',
-
+                ca: '8. Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving around a lot more than usual'
               }
             },
             suicidalThoughts: {
               label: {
-                ca: '9. Thoughts that you would be better off dead or of hurting yourself in some way',
-
+                ca: '9. Thoughts that you would be better off dead or of hurting yourself in some way'
               }
             }
           },
@@ -109,8 +96,7 @@ export default defineInstrument({
               disableAutoPrefix: true,
               kind: 'number',
               label: {
-                ca: 'How difficult have these problems made it for you to do your work, take care of things at home, or get along with other people?',
-
+                ca: 'How difficult have these problems made it for you to do your work, take care of things at home, or get along with other people?'
               },
               options: {
                 ca: {
@@ -137,22 +123,19 @@ export default defineInstrument({
   },
   details: {
     description: {
-      ca: 'The Patient Health Questionnaire (PHQ) is a diagnostic tool for mental health disorders used by health care professionals that is quick and easy for patients to complete. In the mid-1990s, Robert L. Spitzer, MD, Janet B.W. Williams, DSW, and Kurt Kroenke, MD, and colleagues at Columbia University developed the Primary Care Evaluation of Mental Disorders (PRIME-MD), a diagnostic tool containing modules on 12 different mental health disorders. They worked in collaboration with researchers at the Regenstrief Institute at Indiana University and with the support of an educational grant from Pfizer Inc. During the development of PRIME-MD, Drs. Spitzer, Williams and Kroenke, created the PHQ and GAD-7 screeners. The PHQ-9, a tool specific to depression, simply scores each of the 9 DSM-IV criteria based on the mood module from the original PRIME-MD.',
-
+      ca: 'The Patient Health Questionnaire (PHQ) is a diagnostic tool for mental health disorders used by health care professionals that is quick and easy for patients to complete. In the mid-1990s, Robert L. Spitzer, MD, Janet B.W. Williams, DSW, and Kurt Kroenke, MD, and colleagues at Columbia University developed the Primary Care Evaluation of Mental Disorders (PRIME-MD), a diagnostic tool containing modules on 12 different mental health disorders. They worked in collaboration with researchers at the Regenstrief Institute at Indiana University and with the support of an educational grant from Pfizer Inc. During the development of PRIME-MD, Drs. Spitzer, Williams and Kroenke, created the PHQ and GAD-7 screeners. The PHQ-9, a tool specific to depression, simply scores each of the 9 DSM-IV criteria based on the mood module from the original PRIME-MD.'
     },
 
     license: 'PUBLIC-DOMAIN',
     title: {
-      ca: 'Patient Health Questionnaire (PHQ-9)',
-
+      ca: 'Patient Health Questionnaire (PHQ-9)'
     }
   },
   measures: {
     interestPleasure: {
       kind: 'computed',
       label: {
-        ca: 'Little Interest/Pleasure',
-
+        ca: 'Little Interest/Pleasure'
       },
       value: ({ questions }) => questions.interestPleasure
     },

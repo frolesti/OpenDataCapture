@@ -20,7 +20,7 @@ axios.interceptors.request.use((config) => {
   ) {
     config.timeout = 10000; // abort request after 10 seconds
     config.timeoutErrorMessage = i18n.t({
-      ca: 'Error de xarxa',
+      ca: 'Error de xarxa'
     });
   }
 
@@ -47,7 +47,7 @@ axios.interceptors.response.use(
     if (!isAxiosError(error)) {
       notifications.addNotification({
         message: i18n.t({
-          ca: 'Error desconegut',
+          ca: 'Error desconegut'
         }),
         type: 'error'
       });
@@ -56,7 +56,7 @@ axios.interceptors.response.use(
     }
     notifications.addNotification({
       message: i18n.t({
-        ca: 'Sol·licitud HTTP fallida',
+        ca: 'Sol·licitud HTTP fallida'
       }),
       title: error.response?.status.toString(),
       type: 'error'

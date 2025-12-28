@@ -9,16 +9,14 @@ export default defineInstrument({
     edition: 1
   },
   tags: {
-    ca: ['social'],
-
+    ca: ['social']
   },
   content: {
     peopleYouKnowCanVisitTheirHome: {
       kind: 'string',
       variant: 'radio',
       label: {
-        ca: 'How many people do you know well enough to visit within their homes?',
-
+        ca: 'How many people do you know well enough to visit within their homes?'
       },
       options: {
         ca: {
@@ -34,8 +32,7 @@ export default defineInstrument({
       kind: 'string',
       variant: 'radio',
       label: {
-        ca: 'About how many times did you talk to someone (friends, relatives, or others) on the telephone in the past week? (either you called them or they called you) If you do not have a phone, the question still applies.',
-
+        ca: 'About how many times did you talk to someone (friends, relatives, or others) on the telephone in the past week? (either you called them or they called you) If you do not have a phone, the question still applies.'
       },
       options: {
         ca: {
@@ -51,8 +48,7 @@ export default defineInstrument({
       kind: 'string',
       variant: 'radio',
       label: {
-        ca: 'How many times during the past week did you spend some time with someone who does not live with you, that is you went to see them or they came to visit you or you went out to do things together?',
-
+        ca: 'How many times during the past week did you spend some time with someone who does not live with you, that is you went to see them or they came to visit you or you went out to do things together?'
       },
       options: {
         ca: {
@@ -68,8 +64,7 @@ export default defineInstrument({
       kind: 'string',
       variant: 'radio',
       label: {
-        ca: 'Do you have someone you trust and can confide in?',
-
+        ca: 'Do you have someone you trust and can confide in?'
       },
       options: {
         ca: {
@@ -83,8 +78,7 @@ export default defineInstrument({
       kind: 'string',
       variant: 'radio',
       label: {
-        ca: 'Do you find yourself feeling lonely quite often, sometimes or almost never?',
-
+        ca: 'Do you find yourself feeling lonely quite often, sometimes or almost never?'
       },
       options: {
         ca: {
@@ -99,8 +93,7 @@ export default defineInstrument({
       kind: 'string',
       variant: 'radio',
       label: {
-        ca: 'Do you see your relatives and friends as often as you want to or are you somewhat unhappy about how little you see them?',
-
+        ca: 'Do you see your relatives and friends as often as you want to or are you somewhat unhappy about how little you see them?'
       },
       options: {
         ca: {
@@ -114,8 +107,7 @@ export default defineInstrument({
       kind: 'string',
       variant: 'radio',
       label: {
-        ca: 'Do you have someone you trust and can confide in?',
-
+        ca: 'Do you have someone you trust and can confide in?'
       },
       options: {
         ca: {
@@ -134,8 +126,7 @@ export default defineInstrument({
               kind: 'string',
               variant: 'radio',
               label: {
-                ca: 'Is there someone who would take care of you as long as you needed, or only for a short time, or only someone who would help you now and then (for example, taking you to the doctor or fixing lunch occasionally, etc.)?',
-
+                ca: 'Is there someone who would take care of you as long as you needed, or only for a short time, or only someone who would help you now and then (for example, taking you to the doctor or fixing lunch occasionally, etc.)?'
               },
               options: {
                 ca: {
@@ -155,8 +146,7 @@ export default defineInstrument({
   },
   details: {
     description: {
-      ca: 'Social Support: Now, we will ask you some questions about your family and friends. Reference: https://osf.io/94qv5/',
-
+      ca: 'Social Support: Now, we will ask you some questions about your family and friends. Reference: https://osf.io/94qv5/'
     },
     estimatedDuration: 3,
     instructions: {
@@ -164,8 +154,7 @@ export default defineInstrument({
     },
     license: 'CC-BY-4.0',
     title: {
-      ca: 'Older Americans Resources and Services Social Resource Scale',
-
+      ca: 'Older Americans Resources and Services Social Resource Scale'
     }
   },
   validationSchema: z.object({
@@ -233,8 +222,7 @@ export default defineInstrument({
     someoneTakeCareOfYouAsLongAsYouNeed: {
       kind: 'computed',
       label: {
-        ca: 'Is there someone who would take care of you as long as you needed, or only for a short time, or only someone who would help you now and then (for example, taking you to the doctor or fixing lunch occasionally, etc.)?',
-
+        ca: 'Is there someone who would take care of you as long as you needed, or only for a short time, or only someone who would help you now and then (for example, taking you to the doctor or fixing lunch occasionally, etc.)?'
       },
       value: (data) => {
         return data.someoneTakeCareOfYouAsLongAsYouNeed ?? 'N/A';

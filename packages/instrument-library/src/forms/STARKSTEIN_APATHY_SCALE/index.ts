@@ -32,13 +32,11 @@ export default defineInstrument({
   }),
   details: {
     description: {
-      ca: 'For each question, choose the answer that best describes your thoughts, feelings, and behaviors in the last 4 weeks.',
-
+      ca: 'For each question, choose the answer that best describes your thoughts, feelings, and behaviors in the last 4 weeks.'
     },
     license: 'PUBLIC-DOMAIN',
     title: {
-      ca: 'Starkstein Apathy Scale',
-
+      ca: 'Starkstein Apathy Scale'
     },
     referenceUrl: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8467636/',
     estimatedDuration: 5,
@@ -53,8 +51,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Are you interested in learning new things?',
-
+        ca: 'Are you interested in learning new things?'
       },
       options: fieldOptionsLikertScale
     },
@@ -62,8 +59,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Does anything interest you?',
-
+        ca: 'Does anything interest you?'
       },
       options: fieldOptionsLikertScale
     },
@@ -71,8 +67,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Are you concerned about your condition?',
-
+        ca: 'Are you concerned about your condition?'
       },
       options: fieldOptionsLikertScale
     },
@@ -80,8 +75,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Do you put much effort into things?',
-
+        ca: 'Do you put much effort into things?'
       },
       options: fieldOptionsLikertScale
     },
@@ -89,8 +83,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Are you always looking for something to do?',
-
+        ca: 'Are you always looking for something to do?'
       },
       options: fieldOptionsLikertScale
     },
@@ -98,8 +91,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Do you have plans and goals for the future?',
-
+        ca: 'Do you have plans and goals for the future?'
       },
       options: fieldOptionsLikertScale
     },
@@ -107,8 +99,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Do you have motivation?',
-
+        ca: 'Do you have motivation?'
       },
       options: fieldOptionsLikertScale
     },
@@ -116,8 +107,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Do you have the energy for daily activities?',
-
+        ca: 'Do you have the energy for daily activities?'
       },
       options: fieldOptionsLikertScale
     },
@@ -125,8 +115,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Does someone have to tell you what to do each day?',
-
+        ca: 'Does someone have to tell you what to do each day?'
       },
       options: fieldOptionsLikertScale
     },
@@ -134,8 +123,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Are you indifferent to things?',
-
+        ca: 'Are you indifferent to things?'
       },
       options: fieldOptionsLikertScale
     },
@@ -143,8 +131,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Are you unconcerned with many things?',
-
+        ca: 'Are you unconcerned with many things?'
       },
       options: fieldOptionsLikertScale
     },
@@ -152,8 +139,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Do you need a push to get started on things?',
-
+        ca: 'Do you need a push to get started on things?'
       },
       options: fieldOptionsLikertScale
     },
@@ -161,8 +147,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Are you neither happy nor sad, just in between?',
-
+        ca: 'Are you neither happy nor sad, just in between?'
       },
       options: fieldOptionsLikertScale
     },
@@ -170,8 +155,7 @@ export default defineInstrument({
       kind: 'number',
       variant: 'radio',
       label: {
-        ca: 'Would you consider yourself apathetic?',
-
+        ca: 'Would you consider yourself apathetic?'
       },
       options: fieldOptionsLikertScale
     }
@@ -239,7 +223,6 @@ export default defineInstrument({
     }
   },
   tags: {
-    ca: ['Apathy'],
-
+    ca: ['Apathy']
   }
 });

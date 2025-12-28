@@ -17,23 +17,19 @@ export default defineInstrument({
     edition: 1
   },
   tags: {
-    ca: ['smoking', 'addiction', 'nicotine'],
-
+    ca: ['smoking', 'addiction', 'nicotine']
   },
   details: {
     description: {
-      ca: 'The Fagerström Test for Nicotine Dependence is a standard instrument for assessing the intensity of physical addiction to nicotine. The test was designed to provide an ordinal measure of nicotine dependence related to cigarette smoking. It contains six items that evaluate the quantity of cigarette consumption, the compulsion to use, and dependence.',
-
+      ca: 'The Fagerström Test for Nicotine Dependence is a standard instrument for assessing the intensity of physical addiction to nicotine. The test was designed to provide an ordinal measure of nicotine dependence related to cigarette smoking. It contains six items that evaluate the quantity of cigarette consumption, the compulsion to use, and dependence.'
     },
     estimatedDuration: 5,
     instructions: {
-      ca: ['Please respond to every question'],
-
+      ca: ['Please respond to every question']
     },
     license: 'PUBLIC-DOMAIN',
     title: {
-      ca: 'Fagerström Nicotine Dependence (FTND)',
-
+      ca: 'Fagerström Nicotine Dependence (FTND)'
     }
   },
 
@@ -42,8 +38,7 @@ export default defineInstrument({
       disableAutoPrefix: true,
       kind: 'number',
       label: {
-        ca: '1. How soon after waking do you smoke your first cigarette?',
-
+        ca: '1. How soon after waking do you smoke your first cigarette?'
       },
       options: {
         ca: {
@@ -59,8 +54,7 @@ export default defineInstrument({
       disableAutoPrefix: true,
       kind: 'number',
       label: {
-        ca: '2. Do you find it difficult to refrain from smoking in places where it is forbidden? e.g., Church, Library, etc.',
-
+        ca: '2. Do you find it difficult to refrain from smoking in places where it is forbidden? e.g., Church, Library, etc.'
       },
       options: yesNoOptions,
       variant: 'radio'
@@ -69,8 +63,7 @@ export default defineInstrument({
       disableAutoPrefix: true,
       kind: 'number',
       label: {
-        ca: '3. Which cigarette would you hate to give up?',
-
+        ca: '3. Which cigarette would you hate to give up?'
       },
       options: {
         ca: {
@@ -84,8 +77,7 @@ export default defineInstrument({
       disableAutoPrefix: true,
       kind: 'number',
       label: {
-        ca: '4. How many cigarettes a do you smoke?',
-
+        ca: '4. How many cigarettes a do you smoke?'
       },
       options: {
         ca: {
@@ -101,8 +93,7 @@ export default defineInstrument({
       disableAutoPrefix: true,
       kind: 'number',
       label: {
-        ca: '5. Do you smoke more frequently in the morning?',
-
+        ca: '5. Do you smoke more frequently in the morning?'
       },
       options: yesNoOptions,
       variant: 'radio'
@@ -111,8 +102,7 @@ export default defineInstrument({
       disableAutoPrefix: true,
       kind: 'number',
       label: {
-        ca: '6. Do you smoke even if you are sick in bed most of the day?',
-
+        ca: '6. Do you smoke even if you are sick in bed most of the day?'
       },
       options: yesNoOptions,
       variant: 'radio'
@@ -122,8 +112,7 @@ export default defineInstrument({
     auditCScore: {
       kind: 'computed',
       label: {
-        ca: 'Total Score:',
-
+        ca: 'Total Score:'
       },
       value: (data) => {
         return sum(Object.values(data));

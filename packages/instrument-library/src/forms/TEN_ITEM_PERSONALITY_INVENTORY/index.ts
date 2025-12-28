@@ -41,37 +41,31 @@ export default defineInstrument({
       'emotional',
       'stability',
       'openness'
-    ],
-
+    ]
   },
   details: {
     description: {
-      ca: 'The Ten-Item Personality Inventory (TIPI) is a brief instrument designed to assess the five-factor model (FFM) personality dimensions. It was specifically developed to provide a brief assessment option in situations where using more comprehensive FFM instruments would be unfeasible.',
-
+      ca: 'The Ten-Item Personality Inventory (TIPI) is a brief instrument designed to assess the five-factor model (FFM) personality dimensions. It was specifically developed to provide a brief assessment option in situations where using more comprehensive FFM instruments would be unfeasible.'
     },
     estimatedDuration: 5,
     instructions: {
-      ca: ['Please respond to every question'],
-
+      ca: ['Please respond to every question']
     },
     license: 'FREE-NOS',
     title: {
-      ca: 'Ten-Item Personality Inventory (TIPI)',
-
+      ca: 'Ten-Item Personality Inventory (TIPI)'
     }
   },
   content: [
     {
       description: {
-        ca: 'Here are a number of personality traits that may or may not apply to you. Please select a number next to each statement to indicate the extent to which you agree or disagree with that statement. You should rate the extent to which the pair of traits applies to you, even if one characteristic applies more strongly than the other.',
-
+        ca: 'Here are a number of personality traits that may or may not apply to you. Please select a number next to each statement to indicate the extent to which you agree or disagree with that statement. You should rate the extent to which the pair of traits applies to you, even if one characteristic applies more strongly than the other.'
       },
       fields: {
         extrovertedEnthusiastic: {
           kind: 'number',
           label: {
-            ca: '1. Extroverted, enthusiastic.',
-
+            ca: '1. Extroverted, enthusiastic.'
           },
           options: scaleOptions,
           variant: 'select'
@@ -79,8 +73,7 @@ export default defineInstrument({
         criticalQuarrelsome: {
           kind: 'number',
           label: {
-            ca: '2. Critical, quarrelsome.',
-
+            ca: '2. Critical, quarrelsome.'
           },
           options: scaleOptions,
           variant: 'select'
@@ -88,8 +81,7 @@ export default defineInstrument({
         dependableSelfDisciplined: {
           kind: 'number',
           label: {
-            ca: '3. Dependable, self-disciplined.',
-
+            ca: '3. Dependable, self-disciplined.'
           },
           options: scaleOptions,
           variant: 'select'
@@ -97,8 +89,7 @@ export default defineInstrument({
         anxiousEasilyUpset: {
           kind: 'number',
           label: {
-            ca: '4. Anxious, easily upset.',
-
+            ca: '4. Anxious, easily upset.'
           },
           options: scaleOptions,
           variant: 'select'
@@ -106,8 +97,7 @@ export default defineInstrument({
         newExperiencesComplex: {
           kind: 'number',
           label: {
-            ca: '5. Open to new experiences, complex.',
-
+            ca: '5. Open to new experiences, complex.'
           },
           options: scaleOptions,
           variant: 'select'
@@ -115,8 +105,7 @@ export default defineInstrument({
         reservedQuiet: {
           kind: 'number',
           label: {
-            ca: '6. Reserved, quiet.',
-
+            ca: '6. Reserved, quiet.'
           },
           options: scaleOptions,
           variant: 'select'
@@ -124,8 +113,7 @@ export default defineInstrument({
         sympatheticWarm: {
           kind: 'number',
           label: {
-            ca: '7. Sympathetic, warm.',
-
+            ca: '7. Sympathetic, warm.'
           },
           options: scaleOptions,
           variant: 'select'
@@ -133,8 +121,7 @@ export default defineInstrument({
         disorganizedCareless: {
           kind: 'number',
           label: {
-            ca: '8. Disorganized, careless.',
-
+            ca: '8. Disorganized, careless.'
           },
           options: scaleOptions,
           variant: 'select'
@@ -142,8 +129,7 @@ export default defineInstrument({
         calmEmotionallyStable: {
           kind: 'number',
           label: {
-            ca: '9. Calm, emotionally stable.',
-
+            ca: '9. Calm, emotionally stable.'
           },
           options: scaleOptions,
           variant: 'select'
@@ -151,8 +137,7 @@ export default defineInstrument({
         conventionalUncreative: {
           kind: 'number',
           label: {
-            ca: '10. Conventional, uncreative.',
-
+            ca: '10. Conventional, uncreative.'
           },
           options: scaleOptions,
           variant: 'select'
@@ -164,8 +149,7 @@ export default defineInstrument({
     extraversion: {
       kind: 'computed',
       label: {
-        ca: 'Extraversion (higher score = more extroverted, range 1-7)',
-
+        ca: 'Extraversion (higher score = more extroverted, range 1-7)'
       },
       value: (data) => {
         // calculate the score = (reverse(q6) + q1) / 2
@@ -177,8 +161,7 @@ export default defineInstrument({
     agreeableness: {
       kind: 'computed',
       label: {
-        ca: 'Agreeableness (higher score = more agreeable, range 1-7)',
-
+        ca: 'Agreeableness (higher score = more agreeable, range 1-7)'
       },
       value: (data) => {
         // calculate the score = (reverse(q2) + q7) / 2
@@ -190,8 +173,7 @@ export default defineInstrument({
     conscientiousness: {
       kind: 'computed',
       label: {
-        ca: 'Conscientiousness (higher score = more conscientious, range 1-7)',
-
+        ca: 'Conscientiousness (higher score = more conscientious, range 1-7)'
       },
       value: (data) => {
         // calculate the score = (reverse(q8) + q3) / 2
@@ -203,8 +185,7 @@ export default defineInstrument({
     emotionalStability: {
       kind: 'computed',
       label: {
-        ca: 'Emotional Stability (higher score = more stable, range 1-7)',
-
+        ca: 'Emotional Stability (higher score = more stable, range 1-7)'
       },
       value: (data) => {
         // calculate the score = (reverse(q4) + q9) / 2
@@ -216,8 +197,7 @@ export default defineInstrument({
     openessToExperience: {
       kind: 'computed',
       label: {
-        ca: 'Openness to Experience (higher score = more open, range 1-7)',
-
+        ca: 'Openness to Experience (higher score = more open, range 1-7)'
       },
       value: (data) => {
         // calculate the score = (reverse(q10) + q5) / 2

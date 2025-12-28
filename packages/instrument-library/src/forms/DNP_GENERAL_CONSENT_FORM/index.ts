@@ -5,8 +5,7 @@ export default defineInstrument({
   kind: 'FORM',
   language: ['ca'],
   tags: {
-    ca: ['Consent'],
-
+    ca: ['Consent']
   },
   internal: {
     edition: 1,
@@ -15,19 +14,16 @@ export default defineInstrument({
   content: [
     {
       title: {
-        ca: 'Terms and Conditions',
-
+        ca: 'Terms and Conditions'
       },
       description: {
-        ca: 'You agree that all data you enter into our system will become the property of the Douglas Neuroinformatics Platform. You grant us full ownership of this data, allowing us to use, analyze, distribute, and share it for any purpose, including but not limited to research and performance improvement.',
-
+        ca: 'You agree that all data you enter into our system will become the property of the Douglas Neuroinformatics Platform. You grant us full ownership of this data, allowing us to use, analyze, distribute, and share it for any purpose, including but not limited to research and performance improvement.'
       },
       fields: {
         consent: {
           kind: 'boolean',
           label: {
-            ca: 'I have read, understand, and agree to the above terms',
-
+            ca: 'I have read, understand, and agree to the above terms'
           },
           variant: 'checkbox'
         }
@@ -39,13 +35,11 @@ export default defineInstrument({
   },
   details: {
     description: {
-      ca: 'The general consent form asks participants if they consent to their data being used for any purpose. This is intended for demo purposes and is not recommended for real-world research projects.',
-
+      ca: 'The general consent form asks participants if they consent to their data being used for any purpose. This is intended for demo purposes and is not recommended for real-world research projects.'
     },
     license: 'Apache-2.0',
     title: {
-      ca: 'General Consent Form',
-
+      ca: 'General Consent Form'
     }
   },
   measures: null,

@@ -58,20 +58,20 @@ export const StartSessionForm = ({
         content={[
           {
             title: t({
-              ca: 'Iniciar Registre',
+              ca: 'Iniciar Registre'
             }),
             description: t({
-              ca: "Seleccioneu la data per iniciar una nova sessió. Podreu afegir múltiples registres de pacients dins d'aquesta sessió.",
+              ca: "Seleccioneu la data per iniciar una nova sessió. Podreu afegir múltiples registres de pacients dins d'aquesta sessió."
             }),
             fields: {
               sessionDate: {
                 kind: 'date',
                 disabled: true,
                 label: t({
-                  ca: 'Data de la Sessió',
+                  ca: 'Data de la Sessió'
                 }),
                 description: t({
-                  ca: 'La data en què es realitza aquesta sessió (Avui)',
+                  ca: 'La data en què es realitza aquesta sessió (Avui)'
                 })
               } as any
             }
@@ -243,11 +243,7 @@ export const StartSessionForm = ({
           subjectId: z
             .string()
             .min(1)
-            .refine(
-              (arg) => !arg.includes('$'),
-              t({
-              })
-            )
+            .refine((arg) => !arg.includes('$'), t({}))
             .optional(),
           subjectDateOfBirth: z
             .date()

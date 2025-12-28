@@ -21,8 +21,7 @@ const RouteComponent = () => {
     <div>
       <PageHeader>
         <Heading className="text-center" variant="h2">
-          {t({
-          })}
+          {t({})}
         </Heading>
       </PageHeader>
       <Form

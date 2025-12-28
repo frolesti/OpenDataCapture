@@ -255,7 +255,7 @@ export namespace Zod4 {
       case 'set': {
         const set = extractSetEntry(entry);
         if (set.size === 0) {
-          throw new UploadError({ });
+          throw new UploadError({});
         }
         return set;
       }
@@ -313,8 +313,7 @@ export namespace Zod4 {
     instrumentInternal: AnyUnilingualFormInstrument['internal']
   ) {
     if (!(instrumentSchema instanceof z4.ZodObject)) {
-      throw new UploadError({
-      });
+      throw new UploadError({});
     }
 
     const csvColumns = [...INTERNAL_HEADERS];
@@ -336,8 +335,7 @@ export namespace Zod4 {
     instrument: AnyUnilingualFormInstrument
   ): Promise<FormTypes.Data[]> {
     if (!(instrument.validationSchema instanceof z4.ZodObject)) {
-      throw new UploadError({
-      });
+      throw new UploadError({});
     }
 
     const instrumentSchema = instrument.validationSchema.extend({
@@ -358,10 +356,7 @@ export namespace Zod4 {
         const [headers, ...dataLines] = parseResultCsv.data satisfies string[][] as [string[], ...string[][]];
 
         if (!dataLines?.[0]) {
-          return reject(
-            new UploadError({
-            })
-          );
+          return reject(new UploadError({}));
         }
 
         //remove sample data if included
@@ -416,10 +411,7 @@ export namespace Zod4 {
           if (!zodCheck.success) {
             console.error(zodCheck.error.issues);
             console.error(`Failed to parse data: ${JSON.stringify(jsonLine)}`);
-            return reject(
-              new UploadError({
-              })
-            );
+            return reject(new UploadError({}));
           }
           result.push(zodCheck.data as FormTypes.Data);
           rowNumber++;

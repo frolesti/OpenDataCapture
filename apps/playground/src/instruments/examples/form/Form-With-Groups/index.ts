@@ -11,60 +11,51 @@ export default defineInstrument({
     name: 'HAPPINESS_QUESTIONNAIRE'
   },
   tags: {
-    ca: ['Well-Being'],
-
+    ca: ['Well-Being']
   },
   content: [
     {
       title: {
-        ca: 'Personal Information',
-
+        ca: 'Personal Information'
       },
       description: {
-        ca: 'Please provide the following information for our records',
-
+        ca: 'Please provide the following information for our records'
       },
       fields: {
         firstName: {
           kind: 'string',
           label: {
-            ca: 'First Name',
-
+            ca: 'First Name'
           },
           variant: 'input'
         },
         lastName: {
           kind: 'string',
           label: {
-            ca: 'Last Name',
-
+            ca: 'Last Name'
           },
           variant: 'input'
         },
         dateOfBirth: {
           kind: 'date',
           label: {
-            ca: 'Date of Birth',
-
+            ca: 'Date of Birth'
           }
         }
       }
     },
     {
       title: {
-        ca: 'Questions Regarding Life',
-
+        ca: 'Questions Regarding Life'
       },
       fields: {
         overallHappiness: {
           description: {
-            ca: 'Overall happiness from 1 through 10 (inclusive)',
-
+            ca: 'Overall happiness from 1 through 10 (inclusive)'
           },
           kind: 'number',
           label: {
-            ca: 'Overall Happiness',
-
+            ca: 'Overall Happiness'
           },
           max: 10,
           min: 1,
@@ -79,8 +70,7 @@ export default defineInstrument({
             }
             return {
               label: {
-                ca: 'Reason for Sadness',
-
+                ca: 'Reason for Sadness'
               },
               isRequired: false,
               kind: 'string',
@@ -94,19 +84,16 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 1,
     instructions: {
-      ca: ['Please respond to all questions'],
-
+      ca: ['Please respond to all questions']
     }
   },
   details: {
     description: {
-      ca: 'This is an example of a multilingual grouped form',
-
+      ca: 'This is an example of a multilingual grouped form'
     },
     license: 'Apache-2.0',
     title: {
-      ca: 'Happiness Questionnaire',
-
+      ca: 'Happiness Questionnaire'
     }
   },
   measures: {

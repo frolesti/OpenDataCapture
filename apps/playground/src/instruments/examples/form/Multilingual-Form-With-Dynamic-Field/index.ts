@@ -11,15 +11,13 @@ export default defineInstrument({
     name: 'FAVORITE_COLOR'
   },
   tags: {
-    ca: ['Dynamic'],
-
+    ca: ['Dynamic']
   },
   content: {
     hasFavoriteColor: {
       kind: 'boolean',
       label: {
-        ca: 'Do you have a favorite color?',
-
+        ca: 'Do you have a favorite color?'
       },
       variant: 'radio'
     },
@@ -33,8 +31,7 @@ export default defineInstrument({
         return {
           kind: 'string',
           label: {
-            ca: 'Favorite Color',
-
+            ca: 'Favorite Color'
           },
           options: {
             ca: {
@@ -51,19 +48,16 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 1,
     instructions: {
-      ca: ['Please respond to all questions'],
-
+      ca: ['Please respond to all questions']
     }
   },
   details: {
     description: {
-      ca: 'This is an example of a simple form with conditional rendering and validation logic',
-
+      ca: 'This is an example of a simple form with conditional rendering and validation logic'
     },
     license: 'Apache-2.0',
     title: {
-      ca: 'Favorite Color',
-
+      ca: 'Favorite Color'
     }
   },
   measures: {},

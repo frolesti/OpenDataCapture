@@ -1,4 +1,3 @@
-
 const fs = require('fs');
 const path = require('path');
 
@@ -11,7 +10,7 @@ function processObject(obj) {
 
   // Check if it's a translation object (has language keys)
   const keys = Object.keys(obj);
-  const hasLangKeys = keys.some(k => ['en', 'fr', 'es', 'ca'].includes(k));
+  const hasLangKeys = keys.some((k) => ['en', 'fr', 'es', 'ca'].includes(k));
 
   if (hasLangKeys) {
     // It's a translation node
@@ -31,14 +30,14 @@ function processObject(obj) {
   return newObj;
 }
 
-fs.readdirSync(translationsDir).forEach(file => {
+fs.readdirSync(translationsDir).forEach((file) => {
   if (!file.endsWith('.json')) return;
-  
+
   const filePath = path.join(translationsDir, file);
   const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  
+
   console.log(`Processing ${file}...`);
   const newContent = processObject(content);
-  
+
   fs.writeFileSync(filePath, JSON.stringify(newContent, null, 2) + '\n');
 });

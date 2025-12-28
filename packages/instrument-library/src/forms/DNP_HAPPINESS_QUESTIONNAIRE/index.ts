@@ -6,8 +6,7 @@ export default defineInstrument({
   kind: 'FORM',
   language: ['ca'],
   tags: {
-    ca: ['Well-Being'],
-
+    ca: ['Well-Being']
   },
   internal: {
     edition: 1,
@@ -16,13 +15,11 @@ export default defineInstrument({
   content: {
     personalLifeSatisfaction: {
       description: {
-        ca: 'Please select a number from 1 to 10 (inclusive), where 1 is very dissatisfied and 10 is very satisfied.',
-
+        ca: 'Please select a number from 1 to 10 (inclusive), where 1 is very dissatisfied and 10 is very satisfied.'
       },
       kind: 'number',
       label: {
-        ca: 'How satisfied are you with your personal life?',
-
+        ca: 'How satisfied are you with your personal life?'
       },
       max: 10,
       min: 1,
@@ -30,13 +27,11 @@ export default defineInstrument({
     },
     professionalLifeSatisfaction: {
       description: {
-        ca: 'Please select a number from 1 to 10 (inclusive), where 1 is very dissatisfied and 10 is very satisfied.',
-
+        ca: 'Please select a number from 1 to 10 (inclusive), where 1 is very dissatisfied and 10 is very satisfied.'
       },
       kind: 'number',
       label: {
-        ca: 'How satisfied are you with your professional life?',
-
+        ca: 'How satisfied are you with your professional life?'
       },
       max: 10,
       min: 1,
@@ -45,8 +40,7 @@ export default defineInstrument({
     isSatisfiedOverall: {
       kind: 'boolean',
       label: {
-        ca: 'Overall, would you say you are satisfied with your life?',
-
+        ca: 'Overall, would you say you are satisfied with your life?'
       },
       options: {
         ca: {
@@ -65,8 +59,7 @@ export default defineInstrument({
         }
         return {
           label: {
-            ca: 'Why do you feel dissatisfied with your life?',
-
+            ca: 'Why do you feel dissatisfied with your life?'
           },
           isRequired: false,
           kind: 'string',
@@ -83,8 +76,7 @@ export default defineInstrument({
         }
         return {
           label: {
-            ca: 'Which of the following are causes of your dissatisfaction? ',
-
+            ca: 'Which of the following are causes of your dissatisfaction? '
           },
           isRequired: false,
           kind: 'set',
@@ -104,23 +96,19 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 1,
     instructions: {
-      ca: ['Please answer the questions based on your current feelings.'],
-
+      ca: ['Please answer the questions based on your current feelings.']
     },
     title: {
-      ca: 'Questionnaire on Happiness',
-
+      ca: 'Questionnaire on Happiness'
     }
   },
   details: {
     description: {
-      ca: 'The Happiness Questionnaire is a questionnaire about happiness.',
-
+      ca: 'The Happiness Questionnaire is a questionnaire about happiness.'
     },
     license: 'Apache-2.0',
     title: {
-      ca: 'Happiness Questionnaire',
-
+      ca: 'Happiness Questionnaire'
     }
   },
   measures: {
@@ -128,23 +116,20 @@ export default defineInstrument({
       kind: 'const',
       ref: 'personalLifeSatisfaction',
       label: {
-        ca: 'Satisfaction With Personal Life',
-
+        ca: 'Satisfaction With Personal Life'
       }
     },
     professionalLifeSatisfaction: {
       kind: 'const',
       ref: 'professionalLifeSatisfaction',
       label: {
-        ca: 'Satisfaction With Professional Life',
-
+        ca: 'Satisfaction With Professional Life'
       }
     },
     overallLifeSatisfaction: {
       kind: 'computed',
       label: {
-        ca: 'Overall Satisfaction Score',
-
+        ca: 'Overall Satisfaction Score'
       },
       value(data) {
         return sum(Object.values(pick(data, ['personalLifeSatisfaction', 'professionalLifeSatisfaction'])));

@@ -29,28 +29,28 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
     {
       kind: 'text',
       label: t({
-        ca: 'Autors',
+        ca: 'Autors'
       }),
       text: instrument.details.authors?.join(', ')
     },
     {
       kind: 'text',
       label: t({
-        ca: 'Descripció',
+        ca: 'Descripció'
       }),
       text: instrument.details.description
     },
     {
       kind: 'text',
       label: t({
-        ca: 'Edició',
+        ca: 'Edició'
       }),
       text: instrument.internal?.edition.toString()
     },
     {
       kind: 'text',
       label: t({
-        ca: 'Idiomes',
+        ca: 'Idiomes'
       }),
       text: instrument.supportedLanguages
         .map((language) => {
@@ -72,7 +72,7 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
     {
       kind: 'text',
       label: t({
-        ca: 'Llicència',
+        ca: 'Llicència'
       }),
       text: license?.name ?? 'NA',
       tooltip: (
@@ -88,10 +88,10 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
             <p>
               {license?.isOpenSource
                 ? t({
-                    ca: 'Aquesta és una llicència lliure i de codi obert',
+                    ca: 'Aquesta és una llicència lliure i de codi obert'
                   })
                 : t({
-                    ca: 'Aquesta no és una llicència lliure i de codi obert',
+                    ca: 'Aquesta no és una llicència lliure i de codi obert'
                   })}
             </p>
           </Tooltip.Content>
@@ -102,20 +102,20 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       href: instrument.details.referenceUrl,
       kind: 'link',
       label: t({
-        ca: 'Enllaç de referència',
+        ca: 'Enllaç de referència'
       })
     },
     {
       href: instrument.details.sourceUrl,
       kind: 'link',
       label: t({
-        ca: 'Enllaç al codi font',
+        ca: 'Enllaç al codi font'
       })
     },
     {
       kind: 'text',
       label: t({
-        ca: 'Etiquetes',
+        ca: 'Etiquetes'
       }),
       text: instrument.tags.join(', ')
     }
@@ -147,7 +147,7 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
             return (
               <div className="flex items-center gap-1" key={item.label}>
                 <p className="line-clamp-3 leading-tight">
-                  <span className="font-medium">{item.label + t({ ca: ': ', })}</span>
+                  <span className="font-medium">{item.label + t({ ca: ': ' })}</span>
                   {item.kind === 'text' && <span className="text-muted-foreground">{item.text}</span>}
                   {item.kind === 'link' && (
                     <a

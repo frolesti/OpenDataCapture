@@ -60,7 +60,7 @@ const RouteComponent = () => {
     const baseFilename = `${currentUser!.username}_${new Date().toISOString()}`;
     addNotification({
       message: t({
-        ca: 'Exportant entrades, si us plau, espereu...',
+        ca: 'Exportant entrades, si us plau, espereu...'
       }),
       type: 'info'
     });
@@ -138,7 +138,7 @@ const RouteComponent = () => {
                 data-testid="datahub-subject-lookup-search"
                 id="subject-lookup-search-bar"
                 placeholder={t({
-                  ca: 'Feu clic per cercar',
+                  ca: 'Feu clic per cercar'
                 })}
                 readOnly={true}
               />
@@ -171,7 +171,7 @@ const RouteComponent = () => {
                     label = t('datahub.index.table.subject').toUpperCase();
                   } else if (isHealthCenter) {
                     label = t({
-                      ca: 'Centre Sanitari',
+                      ca: 'Centre Sanitari'
                     }).toUpperCase();
                   }
 
@@ -248,7 +248,7 @@ const RouteComponent = () => {
           <div className="flex grow flex-col items-center justify-center gap-2 text-slate-500">
             <p>
               {t({
-                ca: "Seleccioneu un instrument per veure'n les dades",
+                ca: "Seleccioneu un instrument per veure'n les dades"
               })}
             </p>
           </div>
