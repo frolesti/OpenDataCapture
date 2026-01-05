@@ -10,4 +10,7 @@ services:
       - '27017:27017'
       - '28017:28017'
     volumes:
-      - ./data/mongo:/data/db
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

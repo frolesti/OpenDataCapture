@@ -71,7 +71,7 @@ const ctx = await esbuild.context({
   tsconfig
 });
 
-await ctx.watch();
+await ctx.rebuild();
 console.log('Watching...');
 console.log('Temporarily disposing context. HMR is currently broken.');
 await ctx.dispose();

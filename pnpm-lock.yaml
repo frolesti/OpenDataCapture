@@ -756,6 +756,8 @@ importers:
         specifier: workspace:*
         version: link:../schemas
 
+  packages/evaluate-instrument: {}
+
   packages/instrument-bundler:
     dependencies:
       '@opendatacapture/runtime-internal':

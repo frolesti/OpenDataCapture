@@ -1,5 +1,17 @@
 #!/bin/bash
 
+# Kill any processes running on ports 3000, 3500, 5500 to prevent "EADDRINUSE" errors
+echo "Cleaning up ports 3000, 3500, 5500..."
+fuser -k 3000/tcp > /dev/null 2>&1
+fuser -k 3500/tcp > /dev/null 2>&1
+fuser -k 5500/tcp > /dev/null 2>&1
+
+# Check if node_modules exists, if not install dependencies
+if [ ! -d "node_modules" ]; then
+  echo "node_modules not found. Installing dependencies..."
+  pnpm install
+fi
+
 # Start MongoDB container
 docker-compose -f docker-compose.dev.yaml up -d mongo
 
