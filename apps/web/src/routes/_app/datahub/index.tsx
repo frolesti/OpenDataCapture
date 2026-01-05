@@ -205,7 +205,7 @@ const RouteComponent = () => {
                   widthFull
                   data-spotlight-type="export-data-dropdown"
                   disabled={!instrumentId}
-                  options={['TSV', 'JSON', 'CSV', 'Excel']}
+                  options={['CSV', 'Excel']}
                   title={t('core.download')}
                   triggerClassName="min-w-32"
                   onSelection={dl}
@@ -216,7 +216,7 @@ const RouteComponent = () => {
                 widthFull
                 data-spotlight-type="export-data-dropdown"
                 data-testid="datahub-export-dropdown"
-                options={['CSV', 'JSON', 'Excel']}
+                options={['CSV', 'Excel']}
                 title={t('datahub.index.table.export')}
                 onSelection={handleExportSelection}
               />
