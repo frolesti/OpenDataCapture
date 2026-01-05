@@ -1,6 +1,42 @@
 {
+  "downloadErrorLog": {
+    "ca": "Descarregar registre d'errors",
+    "es": "Descargar registro de errores"
+  },
+  "downloadTemplate": {
+    "ca": "Descarregar plantilla",
+    "es": "Descargar plantilla"
+  },
+  "goBack": {
+    "ca": "Tornar",
+    "es": "Volver"
+  },
+  "help": {
+    "ca": "Ajuda",
+    "es": "Ayuda"
+  },
+  "kind": {
+    "ca": "Tipus",
+    "es": "Tipo"
+  },
+  "largeFileWarning": {
+    "ca": "L'arxiu és gran, això pot trigar una estona.",
+    "es": "El archivo es grande, esto puede tardar un rato."
+  },
+  "pageTitle": {
+    "ca": "Pujar dades",
+    "es": "Subir datos"
+  },
+  "searchPlaceholder": {
+    "ca": "Cercar instruments...",
+    "es": "Buscar instrumentos..."
+  },
   "title": {
     "ca": "Títol de l'instrument",
     "es": "Título del instrumento"
+  },
+  "uploading": {
+    "ca": "Pujant...",
+    "es": "Subiendo..."
   }
 }

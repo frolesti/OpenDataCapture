@@ -12,6 +12,7 @@ import datahub from '../translations/datahub.json';
 import group from '../translations/group.json';
 import instruments from '../translations/instruments.json';
 import layout from '../translations/layout.json';
+import libui from '../translations/libui.json';
 import session from '../translations/session.json';
 import setup from '../translations/setup.json';
 import user from '../translations/user.json';
@@ -33,6 +34,7 @@ declare module '@douglasneuroinformatics/libui/i18n' {
       group: typeof group;
       instruments: typeof instruments;
       layout: typeof layout;
+      libui: typeof libui;
       session: typeof session;
       setup: typeof setup;
       user: typeof user;
@@ -53,6 +55,7 @@ i18n.init({
     group,
     instruments,
     layout,
+    libui,
     session,
     setup,
     user,

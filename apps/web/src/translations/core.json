@@ -295,6 +295,10 @@
     "ca": "Enviar",
     "es": "Enviar"
   },
+  "success": {
+    "ca": "Èxit",
+    "es": "Éxito"
+  },
   "summary": {
     "subtitle": {
       "ca": "Completat el {{ dateCompleted }}",

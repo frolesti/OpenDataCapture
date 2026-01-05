@@ -1,4 +1,10 @@
 {
+  "create": {
+    "title": {
+      "ca": "Afegir grup",
+      "es": "Añadir grupo"
+    }
+  },
   "manage": {
     "accessibleInstrumentDemoNote": {
       "ca": "Tingueu en compte que aquesta funció està desactivada en mode demostració per evitar interrompre altres usuaris.",
