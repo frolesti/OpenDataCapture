@@ -1,32 +1,32 @@
 {
   "message": {
-    "ca": "Missatge",
-    "es": "Mensaje"
+    "en": "Missatge",
+    "fr": "Mensaje"
   },
   "pageTitle": {
-    "ca": "Contacteu-nos",
-    "es": "Contáctenos"
+    "en": "Contacteu-nos",
+    "fr": "Contáctenos"
   },
   "reason": {
-    "ca": "Motiu",
-    "es": "Motivo"
+    "en": "Motiu",
+    "fr": "Motivo"
   },
   "reasons": {
     "bug": {
-      "ca": "Informe d'error",
-      "es": "Informe de error"
+      "en": "Informe d'error",
+      "fr": "Informe de error"
     },
     "feedback": {
-      "ca": "Comentaris",
-      "es": "Comentarios"
+      "en": "Comentaris",
+      "fr": "Comentarios"
     },
     "other": {
-      "ca": "Altre",
-      "es": "Otro"
+      "en": "Altre",
+      "fr": "Otro"
     },
     "request": {
-      "ca": "Sol·licitud",
-      "es": "Solicitud"
+      "en": "Sol·licitud",
+      "fr": "Solicitud"
     }
   }
 }

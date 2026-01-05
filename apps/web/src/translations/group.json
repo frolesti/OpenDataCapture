@@ -1,42 +1,42 @@
 {
   "create": {
     "title": {
-      "ca": "Afegir grup",
-      "es": "Añadir grupo"
+      "en": "Afegir grup",
+      "fr": "Añadir grupo"
     }
   },
   "manage": {
     "accessibleInstrumentDemoNote": {
-      "ca": "Tingueu en compte que aquesta funció està desactivada en mode demostració per evitar interrompre altres usuaris.",
-      "es": "Tenga en cuenta que esta función está desactivada en modo demostración para evitar interrumpir a otros usuarios."
+      "en": "Tingueu en compte que aquesta funció està desactivada en mode demostració per evitar interrompre altres usuaris.",
+      "fr": "Tenga en cuenta que esta función está desactivada en modo demostración para evitar interrumpir a otros usuarios."
     },
     "accessibleInstruments": {
-      "ca": "Instruments accessibles",
-      "es": "Instrumentos accesibles"
+      "en": "Instruments accessibles",
+      "fr": "Instrumentos accesibles"
     },
     "accessibleInstrumentsDesc": {
-      "ca": "Seleccioneu els instruments que es mostren a vostè i a altres membres del vostre grup. Això pot ser canviat per un gestor de grup en qualsevol moment.",
-      "es": "Seleccione los instrumentos que se muestran a usted y a otros miembros de su grupo. Esto puede ser cambiado por un gestor de grupo en cualquier momento."
+      "en": "Seleccioneu els instruments que es mostren a vostè i a altres membres del vostre grup. Això pot ser canviat per un gestor de grup en qualsevol moment.",
+      "fr": "Seleccione los instrumentos que se muestran a usted y a otros miembros de su grupo. Esto puede ser cambiado por un gestor de grupo en cualquier momento."
     },
     "defaultSubjectIdMethod": {
-      "ca": "Mètode d'identificació del subjecte (per defecte)",
-      "es": "Método de identificación del sujeto (por defecto)"
+      "en": "Mètode d'identificació del subjecte (per defecte)",
+      "fr": "Método de identificación del sujeto (por defecto)"
     },
     "forms": {
-      "ca": "Formularis",
-      "es": "Formularios"
+      "en": "Formularis",
+      "fr": "Formularios"
     },
     "groupSettings": {
-      "ca": "Configuració del grup",
-      "es": "Configuración del grupo"
+      "en": "Configuració del grup",
+      "fr": "Configuración del grupo"
     },
     "interactive": {
-      "ca": "Tasques interactives",
-      "es": "Tareas interactivas"
+      "en": "Tasques interactives",
+      "fr": "Tareas interactivas"
     },
     "pageTitle": {
-      "ca": "Gestionar grup",
-      "es": "Gestionar grupo"
+      "en": "Gestionar grup",
+      "fr": "Gestionar grupo"
     }
   }
 }

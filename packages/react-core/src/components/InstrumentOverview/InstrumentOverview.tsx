@@ -22,8 +22,8 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
             <>
               <Heading variant="h5">
                 {t({
-                  ca: 'Duració estimada',
-                  es: 'Tiempo estimado'
+                  en: 'Duració estimada',
+                  fr: 'Tiempo estimado'
                 })}
               </Heading>
               <p className="text-muted-foreground text-sm">{`${estimatedDuration} minute(s)`}</p>
@@ -34,8 +34,8 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
           <div>
             <Heading variant="h5">
               {t({
-                ca: 'Instruccions',
-                es: 'Instrucciones'
+                en: 'Instruccions',
+                fr: 'Instrucciones'
               })}
             </Heading>
             <p className="text-muted-foreground text-sm">{instructions!.join(', ')}</p>
@@ -45,8 +45,8 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
       <Button
         className="w-full"
         label={t({
-          ca: 'Començar',
-          es: 'Comenzar'
+          en: 'Començar',
+          fr: 'Comenzar'
         })}
         variant="primary"
         onClick={() => {

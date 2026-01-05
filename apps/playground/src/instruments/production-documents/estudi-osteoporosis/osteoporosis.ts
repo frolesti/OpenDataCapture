@@ -551,7 +551,7 @@ const fieldNameMappings: Record<string, string> = {
 
   // Risk factors
   imcMenor20: 'IMCm20',
-  etnicidadBlancaCaucasica: 'ethnicity_caucasian',
+  etnicidadBlancaCaucasien: 'ethnicity_caucasian',
   menopausiaPrecoz: 'early_menopause',
   fracturaPrevia: 'previous_fracture',
   antecedenteFracturaPaternoMaterno: 'parent_hip_fracture',
@@ -565,14 +565,14 @@ const fieldNameMappings: Record<string, string> = {
   hiperparatiroidismo: 'hyperparathyroidism',
   hipertiroidismo: 'hyperthyroidism',
   hipercortisolismo: 'hypercortisolism',
-  diabetes: 'diabetes',
+  diabetfr: 'diabetes',
   enfermedadInflamatoriaIntestinal: 'inflammatory_bowel_disease',
   malnutricion: 'malnutrition',
   nutricionParenteral: 'parenteral_nutrition',
   mielomaMultiple: 'myeloma',
-  otrosTrastornosMedulares: 'other_marrow_disorders',
+  otrosTrastornosMedularfr: 'other_marrow_disorders',
   epoc: 'copd',
-  enfermedadRenalCronica: 'chronic_kidney_disease',
+  enfermedadRenalCronien: 'chronic_kidney_disease',
 
   // Diagnosis
   pacienteDiagnosticado: 'diag',
@@ -639,7 +639,7 @@ const fieldNameMappings: Record<string, string> = {
   alendronatoFechaInicio3: 'alend_ini_date_3',
   alendronatoFechaFin3: 'alend_end_date_3',
   alendronatoMotivoInterrupcion3: 'alend_reason_end_3',
-  alendronatoDetallesAdicionales: 'alend_additional_details',
+  alendronatoDetallesAdicionalfr: 'alend_additional_details',
 
   // Medications - Risedronato
   risedronatoFechaInicio1: 'risedr_ini_date_1',
@@ -655,7 +655,7 @@ const fieldNameMappings: Record<string, string> = {
   risedronatoFechaInicio3: 'risedr_ini_date_3',
   risedronatoFechaFin3: 'risedr_end_date_3',
   risedronatoMotivoInterrupcion3: 'risedr_reason_end_3',
-  risedronatoDetallesAdicionales: 'risedr_additional_details',
+  risedronatoDetallesAdicionalfr: 'risedr_additional_details',
 
   // Medications - Ibandronato
   ibandronatoFechaInicio1: 'iband_ini_date_1',
@@ -671,7 +671,7 @@ const fieldNameMappings: Record<string, string> = {
   ibandronatoFechaInicio3: 'iband_ini_date_3',
   ibandronatoFechaFin3: 'iband_end_date_3',
   ibandronatoMotivoInterrupcion3: 'iband_reason_end_3',
-  ibandronatoDetallesAdicionales: 'iband_additional_details',
+  ibandronatoDetallesAdicionalfr: 'iband_additional_details',
 
   // Medications - Zoledronato
   zoledronatoFechaInicio1: 'zoledr_ini_date_1',
@@ -687,7 +687,7 @@ const fieldNameMappings: Record<string, string> = {
   zoledronatoFechaInicio3: 'zoledr_ini_date_3',
   zoledronatoFechaFin3: 'zoledr_end_date_3',
   zoledronatoMotivoInterrupcion3: 'zoledr_reason_end_3',
-  zoledronatoDetallesAdicionales: 'zoledr_additional_details',
+  zoledronatoDetallesAdicionalfr: 'zoledr_additional_details',
 
   // Medications - Denosumab
   denosumabFechaInicio1: 'denos_ini_date_1',
@@ -703,7 +703,7 @@ const fieldNameMappings: Record<string, string> = {
   denosumabFechaInicio3: 'denos_ini_date_3',
   denosumabFechaFin3: 'denos_end_date_3',
   denosumabMotivoInterrupcion3: 'denos_reason_end_3',
-  denosumabDetallesAdicionales: 'denos_additional_details',
+  denosumabDetallesAdicionalfr: 'denos_additional_details',
 
   // Medications - Raloxifeno
   raloxifenoFechaInicio1: 'ralox_ini_date_1',
@@ -719,7 +719,7 @@ const fieldNameMappings: Record<string, string> = {
   raloxifenoFechaInicio3: 'ralox_ini_date_3',
   raloxifenoFechaFin3: 'ralox_end_date_3',
   raloxifenoMotivoInterrupcion3: 'ralox_reason_end_3',
-  raloxifenoDetallesAdicionales: 'ralox_additional_details',
+  raloxifenoDetallesAdicionalfr: 'ralox_additional_details',
 
   // Medications - Bazedoxifeno
   bazedoxifenoFechaInicio1: 'bazed_ini_date_1',
@@ -735,7 +735,7 @@ const fieldNameMappings: Record<string, string> = {
   bazedoxifenoFechaInicio3: 'bazed_ini_date_3',
   bazedoxifenoFechaFin3: 'bazed_end_date_3',
   bazedoxifenoMotivoInterrupcion3: 'bazed_reason_end_3',
-  bazedoxifenoDetallesAdicionales: 'bazed_additional_details',
+  bazedoxifenoDetallesAdicionalfr: 'bazed_additional_details',
 
   // Medications - Tibolona
   tibolonaFechaInicio1: 'tibol_ini_date_1',
@@ -751,7 +751,7 @@ const fieldNameMappings: Record<string, string> = {
   tibolonaFechaInicio3: 'tibol_ini_date_3',
   tibolonaFechaFin3: 'tibol_end_date_3',
   tibolonaMotivoInterrupcion3: 'tibol_reason_end_3',
-  tibolonaDetallesAdicionales: 'tibol_additional_details',
+  tibolonaDetallesAdicionalfr: 'tibol_additional_details',
 
   // Medications - Teriparatida
   teriparatidaFechaInicio1: 'terip_ini_date_1',
@@ -767,7 +767,7 @@ const fieldNameMappings: Record<string, string> = {
   teriparatidaFechaInicio3: 'terip_ini_date_3',
   teriparatidaFechaFin3: 'terip_end_date_3',
   teriparatidaMotivoInterrupcion3: 'terip_reason_end_3',
-  teriparatidaDetallesAdicionales: 'terip_additional_details',
+  teriparatidaDetallesAdicionalfr: 'terip_additional_details',
 
   // Medications - Abaloparatida
   abaloparatidaFechaInicio1: 'abalop_ini_date_1',
@@ -783,7 +783,7 @@ const fieldNameMappings: Record<string, string> = {
   abaloparatidaFechaInicio3: 'abalop_ini_date_3',
   abaloparatidaFechaFin3: 'abalop_end_date_3',
   abaloparatidaMotivoInterrupcion3: 'abalop_reason_end_3',
-  abaloparatidaDetallesAdicionales: 'abalop_additional_details',
+  abaloparatidaDetallesAdicionalfr: 'abalop_additional_details',
 
   // Medications - Romosozumab
   romosozumabFechaInicio1: 'romos_ini_date_1',
@@ -799,7 +799,7 @@ const fieldNameMappings: Record<string, string> = {
   romosozumabFechaInicio3: 'romos_ini_date_3',
   romosozumabFechaFin3: 'romos_end_date_3',
   romosozumabMotivoInterrupcion3: 'romos_reason_end_3',
-  romosozumabDetallesAdicionales: 'romos_additional_details'
+  romosozumabDetallesAdicionalfr: 'romos_additional_details'
 };
 
 // Function to generate all measures (fields) for export
@@ -1314,7 +1314,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneca: 'Radio/cubito/muñeca',
+              radioMuneen: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -1355,7 +1355,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneca: 'Radio/cubito/muñeca',
+              radioMuneen: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -1396,7 +1396,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneca: 'Radio/cubito/muñeca',
+              radioMuneen: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -1437,7 +1437,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneca: 'Radio/cubito/muñeca',
+              radioMuneen: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -1478,7 +1478,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneca: 'Radio/cubito/muñeca',
+              radioMuneen: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -1519,7 +1519,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneca: 'Radio/cubito/muñeca',
+              radioMuneen: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',

@@ -67,8 +67,8 @@ const RouteComponent = () => {
             <LanguageToggle
               align="start"
               options={{
-                ca: 'Català',
-                es: 'Español'
+                en: 'Català',
+                fr: 'Español'
               }}
               triggerClassName="border p-2"
               variant="ghost"

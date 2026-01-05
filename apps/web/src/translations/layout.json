@@ -1,110 +1,110 @@
 {
   "branding": {
     "title": {
-      "ca": "Open Data Capture",
-      "es": "Open Data Capture"
+      "en": "Open Data Capture",
+      "fr": "Open Data Capture"
     }
   },
   "endSessionModal": {
     "message": {
-      "ca": "Esteu segur que voleu finalitzar la sessió actual? Si decidiu continuar, sereu redirigit a la pàgina d'inici de sessió.",
-      "es": "¿Está seguro de que desea finalizar la sesión actual? Si decide continuar, será redirigido a la página de inicio de sesión."
+      "en": "Esteu segur que voleu finalitzar la sessió actual? Si decidiu continuar, sereu redirigit a la pàgina d'inici de sessió.",
+      "fr": "¿Está seguro de que desea finalizar la sesión actual? Si decide continuar, será redirigido a la página de inicio de sesión."
     },
     "title": {
-      "ca": "Finalitzar sessió",
-      "es": "Finalizar sesión"
+      "en": "Finalitzar sessió",
+      "fr": "Finalizar sesión"
     }
   },
   "footer": {
     "contact": {
-      "ca": "Contacteu-nos",
-      "es": "Contáctenos"
+      "en": "Contacteu-nos",
+      "fr": "Contáctenos"
     },
     "documentation": {
-      "ca": "Documentació",
-      "es": "Documentación"
+      "en": "Documentació",
+      "fr": "Documentación"
     },
     "license": {
-      "ca": "Llicència",
-      "es": "Licencia"
+      "en": "Llicència",
+      "fr": "Licencia"
     },
     "sourceCode": {
-      "ca": "Codi font",
-      "es": "Código fuente"
+      "en": "Codi font",
+      "fr": "Código fuente"
     }
   },
   "navLinks": {
     "accessibleInstruments": {
-      "ca": "Selecciona Estudi",
-      "es": "Seleccionar Estudio"
+      "en": "Selecciona Estudi",
+      "fr": "Seleccionar Estudio"
     },
     "appSettings": {
-      "ca": "Configuració de l'aplicació",
-      "es": "Configuración de la aplicación"
+      "en": "Configuració de l'aplicació",
+      "fr": "Configuración de la aplicación"
     },
     "createInstrument": {
-      "ca": "Afegir instrument",
-      "es": "Añadir instrumento"
+      "en": "Afegir instrument",
+      "fr": "Añadir instrumento"
     },
     "dashboard": {
-      "ca": "Tauler de control",
-      "es": "Panel de control"
+      "en": "Tauler de control",
+      "fr": "Panel de control"
     },
     "datahub": {
-      "ca": "Centre de dades",
-      "es": "Centro de datos"
+      "en": "Centre de dades",
+      "fr": "Centro de datos"
     },
     "upload": {
-      "ca": "Carregar dades",
-      "es": "Cargar datos"
+      "en": "Carregar dades",
+      "fr": "Cargar datos"
     },
     "endSession": {
-      "ca": "Tanca registre actual",
-      "es": "Cerrar registro actual"
+      "en": "Tanca registre actual",
+      "fr": "Cerrar registro actual"
     },
     "manageGroup": {
-      "ca": "Gestionar grup",
-      "es": "Gestionar grupo"
+      "en": "Gestionar grup",
+      "fr": "Gestionar grupo"
     },
     "manageGroups": {
-      "ca": "Gestionar grups",
-      "es": "Gestionar grupos"
+      "en": "Gestionar grups",
+      "fr": "Gestionar grupos"
     },
     "manageUsers": {
-      "ca": "Gestionar usuaris",
-      "es": "Gestionar usuarios"
+      "en": "Gestionar usuaris",
+      "fr": "Gestionar usuarios"
     },
     "startSession": {
-      "ca": "Inicia Registre",
-      "es": "Iniciar Registro"
+      "en": "Inicia Registre",
+      "fr": "Iniciar Registro"
     },
     "viewCurrentSubject": {
-      "ca": "Veure subjecte actual",
-      "es": "Ver sujeto actual"
+      "en": "Veure subjecte actual",
+      "fr": "Ver sujeto actual"
     },
     "myProfile": {
-      "ca": "El meu perfil",
-      "es": "Mi perfil"
+      "en": "El meu perfil",
+      "fr": "Mi perfil"
     }
   },
   "userDropup": {
     "info": {
-      "ca": "Informació",
-      "es": "Información"
+      "en": "Informació",
+      "fr": "Información"
     },
     "tutorial": {
-      "ca": "Tutorial",
-      "es": "Tutorial"
+      "en": "Tutorial",
+      "fr": "Tutorial"
     },
     "logout": {
-      "ca": "Tancar sessió",
-      "es": "Cerrar sesión"
+      "en": "Tancar sessió",
+      "fr": "Cerrar sesión"
     }
   },
   "organization": {
     "name": {
-      "ca": "Douglas Neuroinformatics Platform",
-      "es": "Douglas Neuroinformatics Platform"
+      "en": "Douglas Neuroinformatics Platform",
+      "fr": "Douglas Neuroinformatics Platform"
     }
   }
 }

@@ -1,46 +1,46 @@
 {
   "additionalData": {
     "title": {
-      "ca": "Dades addicionals",
-      "es": "Datos adicionales"
+      "en": "Dades addicionals",
+      "fr": "Datos adicionales"
     }
   },
   "dateAssessed": {
     "description": {
-      "ca": "Si la sessió va tenir lloc en una data diferent d'avui, podeu canviar-la aquí.",
-      "es": "Si la sesión tuvo lugar en una fecha diferente a hoy, puede cambiarla aquí."
+      "en": "Si la sessió va tenir lloc en una data diferent d'avui, podeu canviar-la aquí.",
+      "fr": "Si la sesión tuvo lugar en una fecha diferente a hoy, puede cambiarla aquí."
     },
     "label": {
-      "ca": "Data d'avaluació",
-      "es": "Fecha de evaluación"
+      "en": "Data d'avaluació",
+      "fr": "Fecha de evaluación"
     }
   },
   "errors": {
     "assessmentMustBeInPast": {
-      "ca": "L'avaluació ha de ser en el passat",
-      "es": "La evaluación debe ser en el pasado"
+      "en": "L'avaluació ha de ser en el passat",
+      "fr": "La evaluación debe ser en el pasado"
     },
     "mustBeAdult": {
-      "ca": "El subjecte ha de tenir almenys 18 anys",
-      "es": "El sujeto debe tener al menos 18 años"
+      "en": "El subjecte ha de tenir almenys 18 anys",
+      "fr": "El sujeto debe tener al menos 18 años"
     }
   },
   "startSession": {
-    "ca": "Iniciar Registre",
-    "es": "Iniciar Registro"
+    "en": "Iniciar Registre",
+    "fr": "Iniciar Registro"
   },
   "type": {
     "in-person": {
-      "ca": "En persona",
-      "es": "En persona"
+      "en": "En persona",
+      "fr": "En persona"
     },
     "label": {
-      "ca": "Tipus d'avaluació",
-      "es": "Tipo de evaluación"
+      "en": "Tipus d'avaluació",
+      "fr": "Tipo de evaluación"
     },
     "retrospective": {
-      "ca": "Retrospectiu",
-      "es": "Retrospectivo"
+      "en": "Retrospectiu",
+      "fr": "Retrospectivo"
     }
   }
 }

@@ -1,54 +1,54 @@
 {
   "activityOverTime": {
-    "ca": "Activitat al llarg del temps",
-    "es": "Actividad a lo largo del tiempo"
+    "en": "Activitat al llarg del temps",
+    "fr": "Actividad a lo largo del tiempo"
   },
   "growthTrajectory": {
-    "ca": "Trajectòria de creixement",
-    "es": "Trayectoria de crecimiento"
+    "en": "Trajectòria de creixement",
+    "fr": "Trayectoria de crecimiento"
   },
   "overviewClinicalGroup": {
-    "ca": "Resum de la vostra clínica",
-    "es": "Resumen de su clínica"
+    "en": "Resum de la vostra clínica",
+    "fr": "Resumen de su clínica"
   },
   "overviewResearchGroup": {
-    "ca": "Resum del vostre grup de recerca",
-    "es": "Resumen de su grupo de investigación"
+    "en": "Resum del vostre grup de recerca",
+    "fr": "Resumen de su grupo de investigación"
   },
   "recordsSessionsTrend": {
-    "ca": "Tendència de registres i sessions",
-    "es": "Tendencia de registros y sesiones"
+    "en": "Tendència de registres i sessions",
+    "fr": "Tendencia de registros y sesiones"
   },
   "subjects": {
-    "ca": "Subjectes",
-    "es": "Sujetos"
+    "en": "Subjectes",
+    "fr": "Sujetos"
   },
   "subjectsGrowth": {
-    "ca": "Creixement de subjectes",
-    "es": "Crecimiento de sujetos"
+    "en": "Creixement de subjectes",
+    "fr": "Crecimiento de sujetos"
   },
   "summaryApplicationState": {
-    "ca": "Resum de l'estat de l'aplicació",
-    "es": "Resumen del estado de la aplicación"
+    "en": "Resum de l'estat de l'aplicació",
+    "fr": "Resumen del estado de la aplicación"
   },
   "title": {
-    "ca": "Tauler de control",
-    "es": "Panel de control"
+    "en": "Tauler de control",
+    "fr": "Panel de control"
   },
   "totalInstruments": {
-    "ca": "Total d'instruments",
-    "es": "Total de instrumentos"
+    "en": "Total d'instruments",
+    "fr": "Total de instrumentos"
   },
   "totalRecords": {
-    "ca": "Total de registres",
-    "es": "Total de registros"
+    "en": "Total de registres",
+    "fr": "Total de registros"
   },
   "totalSubjects": {
-    "ca": "Total de subjectes",
-    "es": "Total de sujetos"
+    "en": "Total de subjectes",
+    "fr": "Total de sujetos"
   },
   "totalUsers": {
-    "ca": "Total d'usuaris",
-    "es": "Total de usuarios"
+    "en": "Total d'usuaris",
+    "fr": "Total de usuarios"
   }
 }

@@ -1,84 +1,84 @@
 {
   "accessible": {
     "title": {
-      "ca": "Seleccionar estudi",
-      "es": "Seleccionar estudio"
+      "en": "Seleccionar estudi",
+      "fr": "Seleccionar estudio"
     }
   },
   "manage": {
     "title": {
-      "ca": "Gestionar instruments",
-      "es": "Gestionar instrumentos"
+      "en": "Gestionar instruments",
+      "fr": "Gestionar instrumentos"
     }
   },
   "overview": {
     "estimatedDuration": {
-      "ca": "{{minutes}} minuts",
-      "es": "{{minutes}} minutos"
+      "en": "{{minutes}} minuts",
+      "fr": "{{minutes}} minutos"
     }
   },
   "props": {
     "description": {
-      "ca": "Descripció",
-      "es": "Descripción"
+      "en": "Descripció",
+      "fr": "Descripción"
     },
     "details": {
-      "ca": "Detalls",
-      "es": "Detalles"
+      "en": "Detalls",
+      "fr": "Detalles"
     },
     "estimatedDuration": {
-      "ca": "Durada estimada",
-      "es": "Duración estimada"
+      "en": "Durada estimada",
+      "fr": "Duración estimada"
     },
     "instructions": {
-      "ca": "Instruccions",
-      "es": "Instrucciones"
+      "en": "Instruccions",
+      "fr": "Instrucciones"
     },
     "name": {
-      "ca": "Nom de l'instrument",
-      "es": "Nombre del instrumento"
+      "en": "Nom de l'instrument",
+      "fr": "Nombre del instrumento"
     },
     "tag": {
-      "ca": "Etiqueta",
-      "es": "Etiqueta"
+      "en": "Etiqueta",
+      "fr": "Etiqueta"
     },
     "tags": {
-      "ca": "Etiquetes",
-      "es": "Etiquetas"
+      "en": "Etiquetes",
+      "fr": "Etiquetas"
     },
     "title": {
-      "ca": "Títol",
-      "es": "Título"
+      "en": "Títol",
+      "fr": "Título"
     },
     "version": {
-      "ca": "Versió",
-      "es": "Versión"
+      "en": "Versió",
+      "fr": "Versión"
     }
   },
   "summary": {
     "subtitle": {
-      "ca": "Completat el {{ dateCompleted }}",
-      "es": "Completado el {{ dateCompleted }}"
+      "en": "Completat el {{ dateCompleted }}",
+      "fr": "Completado el {{ dateCompleted }}"
     },
     "title": {
-      "ca": "Resum de resultats per a {{title}}",
-      "es": "Resumen de resultados para {{title}}"
+      "en": "Resum de resultats per a {{title}}",
+      "fr": "Resumen de resultados para {{title}}"
     }
   },
   "view": {
     "filters": {
       "language": {
-        "ca": "Idioma",
-        "es": "Idioma"
+        "en": "Idioma",
+        "fr": "Idioma"
       },
       "tags": {
-        "ca": "Etiquetes",
-        "es": "Etiquetas"
+        "en": "Etiquetes",
+        "fr": "Etiquetas"
       }
     },
     "title": {
-      "ca": "Instruments",
-      "es": "Instrumentos"
+      "en": "Instruments",
+      "fr": "Instrumentos"
     }
   }
 }

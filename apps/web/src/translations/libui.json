@@ -1,184 +1,184 @@
 {
   "days": {
     "friday": {
-      "ca": "Divendres",
-      "es": "Viernes"
+      "en": "Divendres",
+      "fr": "Viernes"
     },
     "monday": {
-      "ca": "Dilluns",
-      "es": "Lunes"
+      "en": "Dilluns",
+      "fr": "Lunes"
     },
     "saturday": {
-      "ca": "Dissabte",
-      "es": "Sábado"
+      "en": "Dissabte",
+      "fr": "Sábado"
     },
     "sunday": {
-      "ca": "Diumenge",
-      "es": "Domingo"
+      "en": "Diumenge",
+      "fr": "Domingo"
     },
     "thursday": {
-      "ca": "Dijous",
-      "es": "Jueves"
+      "en": "Dijous",
+      "fr": "Jueves"
     },
     "tuesday": {
-      "ca": "Dimarts",
-      "es": "Martes"
+      "en": "Dimarts",
+      "fr": "Martes"
     },
     "wednesday": {
-      "ca": "Dimecres",
-      "es": "Miércoles"
+      "en": "Dimecres",
+      "fr": "Miércoles"
     }
   },
   "form": {
     "append": {
-      "ca": "Afegir",
-      "es": "Agregar"
+      "en": "Afegir",
+      "fr": "Agregar"
     },
     "radioLabels": {
       "false": {
-        "ca": "Fals",
-        "es": "Falso"
+        "en": "Fals",
+        "fr": "Falso"
       },
       "true": {
-        "ca": "Cert",
-        "es": "Verdadero"
+        "en": "Cert",
+        "fr": "Verdadero"
       }
     },
     "remove": {
-      "ca": "Eliminar",
-      "es": "Eliminar"
+      "en": "Eliminar",
+      "fr": "Eliminar"
     },
     "required": {
-      "ca": "Aquest camp és obligatori",
-      "es": "Este campo es obligatorio"
+      "en": "Aquest camp és obligatori",
+      "fr": "Este campo es obligatorio"
     },
     "reset": {
-      "ca": "Restablir",
-      "es": "Restablecer"
+      "en": "Restablir",
+      "fr": "Restablecer"
     },
     "submit": {
-      "ca": "Enviar",
-      "es": "Enviar"
+      "en": "Enviar",
+      "fr": "Enviar"
     }
   },
   "months": {
     "april": {
-      "ca": "Abril",
-      "es": "Abril"
+      "en": "Abril",
+      "fr": "Abril"
     },
     "august": {
-      "ca": "Agost",
-      "es": "Agosto"
+      "en": "Agost",
+      "fr": "Agosto"
     },
     "december": {
-      "ca": "Desembre",
-      "es": "Diciembre"
+      "en": "Desembre",
+      "fr": "Diciembre"
     },
     "february": {
-      "ca": "Febrer",
-      "es": "Febrero"
+      "en": "Febrer",
+      "fr": "Febrero"
     },
     "january": {
-      "ca": "Gener",
-      "es": "Enero"
+      "en": "Gener",
+      "fr": "Enero"
     },
     "july": {
-      "ca": "Juliol",
-      "es": "Julio"
+      "en": "Juliol",
+      "fr": "Julio"
     },
     "june": {
-      "ca": "Juny",
-      "es": "Junio"
+      "en": "Juny",
+      "fr": "Junio"
     },
     "march": {
-      "ca": "Març",
-      "es": "Marzo"
+      "en": "Març",
+      "fr": "Marzo"
     },
     "may": {
-      "ca": "Maig",
-      "es": "Mayo"
+      "en": "Maig",
+      "fr": "Mayo"
     },
     "november": {
-      "ca": "Novembre",
-      "es": "Noviembre"
+      "en": "Novembre",
+      "fr": "Noviembre"
     },
     "october": {
-      "ca": "Octubre",
-      "es": "Octubre"
+      "en": "Octubre",
+      "fr": "Octubre"
     },
     "september": {
-      "ca": "Setembre",
-      "es": "Septiembre"
+      "en": "Setembre",
+      "fr": "Septiembre"
     }
   },
   "no": {
-    "ca": "No",
-    "es": "No"
+    "en": "No",
+    "fr": "No"
   },
   "notifications": {
     "types": {
       "error": {
-        "ca": "Error",
-        "es": "Error"
+        "en": "Error",
+        "fr": "Error"
       },
       "info": {
-        "ca": "Informació",
-        "es": "Información"
+        "en": "Informació",
+        "fr": "Información"
       },
       "success": {
-        "ca": "Èxit",
-        "es": "Éxito"
+        "en": "Èxit",
+        "fr": "Éxito"
       },
       "warning": {
-        "ca": "Avís",
-        "es": "Advertencia"
+        "en": "Avís",
+        "fr": "Advertencia"
       }
     }
   },
   "oneTimePasswordInput": {
     "invalidCodeFormat": {
-      "ca": "Format de codi invàlid",
-      "es": "Formato de código inválido"
+      "en": "Format de codi invàlid",
+      "fr": "Formato de código inválido"
     }
   },
   "pagination": {
     "first": {
-      "ca": "Primera",
-      "es": "Primera"
+      "en": "Primera",
+      "fr": "Primera"
     },
     "firstPage": {
-      "ca": "<< Primera",
-      "es": "<< Primera"
+      "en": "<< Primera",
+      "fr": "<< Primera"
     },
     "info": {
-      "ca": "Mostrant {{first}} a {{last}} de {{total}} resultats",
-      "es": "Mostrando {{first}} a {{last}} de {{total}} resultados"
+      "en": "Mostrant {{first}} a {{last}} de {{total}} resultats",
+      "fr": "Mostrando {{first}} a {{last}} de {{total}} resultados"
     },
     "last": {
-      "ca": "Última",
-      "es": "Última"
+      "en": "Última",
+      "fr": "Última"
     },
     "lastPage": {
-      "ca": "Última >>",
-      "es": "Última >>"
+      "en": "Última >>",
+      "fr": "Última >>"
     },
     "next": {
-      "ca": "Següent",
-      "es": "Siguiente"
+      "en": "Següent",
+      "fr": "Siguiente"
     },
     "previous": {
-      "ca": "Anterior",
-      "es": "Anterior"
+      "en": "Anterior",
+      "fr": "Anterior"
     }
   },
   "searchBar": {
     "placeholder": {
-      "ca": "Cercar...",
-      "es": "Buscar..."
+      "en": "Cercar...",
+      "fr": "Buscar..."
     }
   },
   "yes": {
-    "ca": "Sí",
-    "es": "Sí"
+    "en": "Sí",
+    "fr": "Sí"
   }
 }

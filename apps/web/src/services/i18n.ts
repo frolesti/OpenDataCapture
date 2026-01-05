@@ -15,14 +15,15 @@ import layout from '../translations/layout.json';
 import libui from '../translations/libui.json';
 import session from '../translations/session.json';
 import setup from '../translations/setup.json';
+import upload from '../translations/upload.json';
 import user from '../translations/user.json';
 import walkthrough from '../translations/walkthrough.json';
 
 declare module '@douglasneuroinformatics/libui/i18n' {
   export namespace UserConfig {
     export interface LanguageOptions {
-      ca: true;
-      es: true;
+      en: true;
+      fr: true;
     }
     export interface Translations {
       auth: typeof auth;
@@ -37,6 +38,7 @@ declare module '@douglasneuroinformatics/libui/i18n' {
       libui: typeof libui;
       session: typeof session;
       setup: typeof setup;
+      upload: typeof upload;
       user: typeof user;
       walkthrough: typeof walkthrough;
     }
@@ -44,7 +46,7 @@ declare module '@douglasneuroinformatics/libui/i18n' {
 }
 
 i18n.init({
-  defaultLanguage: 'ca',
+  defaultLanguage: 'en',
   translations: {
     auth,
     common,
@@ -58,6 +60,7 @@ i18n.init({
     libui,
     session,
     setup,
+    upload,
     user,
     walkthrough
   }

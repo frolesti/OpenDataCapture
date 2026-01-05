@@ -78,7 +78,7 @@ describe('Zod3', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
-        notes: 'Good performance',
+        notfr: 'Good performance',
         score: 85,
         subjectID: 'subject1'
       });

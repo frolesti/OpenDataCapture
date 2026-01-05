@@ -238,13 +238,13 @@ const RouteComponent = () => {
                             <div className="space-y-1">
                               <p className="font-semibold text-blue-600 dark:text-blue-400">
                                 {t({
-                                  ca: 'Registres'
+                                  en: 'Registres'
                                 })}
                                 : {payload.find((p) => p.dataKey === 'records')?.value ?? 0}
                               </p>
                               <p className="font-semibold text-emerald-600 dark:text-emerald-400">
                                 {t({
-                                  ca: 'Sessions'
+                                  en: 'Sessions'
                                 })}
                                 : {payload.find((p) => p.dataKey === 'sessions')?.value ?? 0}
                               </p>
@@ -346,7 +346,7 @@ const RouteComponent = () => {
                             </p>
                             <p className="font-semibold text-amber-600 dark:text-amber-400">
                               {t({
-                                ca: 'Subjectes'
+                                en: 'Subjectes'
                               })}
                               : {payload[0]?.value}
                             </p>

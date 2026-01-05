@@ -22,7 +22,7 @@ const RouteComponent = () => {
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            ca: 'Gestionar grups'
+            en: 'Gestionar grups'
           })}
         </Heading>
       </PageHeader>
@@ -30,7 +30,7 @@ const RouteComponent = () => {
         <SearchBar
           className="grow"
           placeholder={t({
-            ca: 'Cercar per nom de grup'
+            en: 'Cercar per nom de grup'
           })}
           value={searchTerm}
           onValueChange={setSearchTerm}
@@ -38,7 +38,7 @@ const RouteComponent = () => {
         <Button asChild variant="outline">
           <Link to="/admin/groups/create">
             {t({
-              ca: 'Afegir grup'
+              en: 'Afegir grup'
             })}
           </Link>
         </Button>
@@ -71,7 +71,7 @@ const RouteComponent = () => {
           <Sheet.Title>{selectedGroup?.name}</Sheet.Title>
           <Sheet.Description>
             {t({
-              ca: 'Feu els canvis a aquest grup aquí. Feu clic a desar quan hàgiu acabat.'
+              en: 'Feu els canvis a aquest grup aquí. Feu clic a desar quan hàgiu acabat.'
             })}
           </Sheet.Description>
         </Sheet.Header>

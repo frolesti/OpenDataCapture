@@ -1,42 +1,42 @@
 {
   "downloadErrorLog": {
-    "ca": "Descarregar registre d'errors",
-    "es": "Descargar registro de errores"
+    "en": "Descarregar registre d'errors",
+    "fr": "Descargar registro de errores"
   },
   "downloadTemplate": {
-    "ca": "Descarregar plantilla",
-    "es": "Descargar plantilla"
+    "en": "Descarregar plantilla",
+    "fr": "Descargar plantilla"
   },
   "goBack": {
-    "ca": "Tornar",
-    "es": "Volver"
+    "en": "Tornar",
+    "fr": "Volver"
   },
   "help": {
-    "ca": "Ajuda",
-    "es": "Ayuda"
+    "en": "Ajuda",
+    "fr": "Ayuda"
   },
   "kind": {
-    "ca": "Tipus",
-    "es": "Tipo"
+    "en": "Tipus",
+    "fr": "Tipo"
   },
   "largeFileWarning": {
-    "ca": "L'arxiu és gran, això pot trigar una estona.",
-    "es": "El archivo es grande, esto puede tardar un rato."
+    "en": "L'arxiu és gran, això pot trigar una estona.",
+    "fr": "El archivo es grande, esto puede tardar un rato."
   },
   "pageTitle": {
-    "ca": "Pujar dades",
-    "es": "Subir datos"
+    "en": "Pujar dades",
+    "fr": "Subir datos"
   },
   "searchPlaceholder": {
-    "ca": "Cercar instruments...",
-    "es": "Buscar instrumentos..."
+    "en": "Cercar instruments...",
+    "fr": "Buscar instrumentos..."
   },
   "title": {
-    "ca": "Títol de l'instrument",
-    "es": "Título del instrumento"
+    "en": "Títol de l'instrument",
+    "fr": "Título del instrumento"
   },
   "uploading": {
-    "ca": "Pujant...",
-    "es": "Subiendo..."
+    "en": "Pujant...",
+    "fr": "Subiendo..."
   }
 }

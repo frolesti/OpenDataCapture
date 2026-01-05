@@ -32,8 +32,6 @@ const RouteComponent = () => {
           <Form
             content={[
               {
-                key: 'admin',
-                id: 'admin',
                 description: t('setup.admin.description'),
                 fields: {
                   firstName: {
@@ -68,8 +66,6 @@ const RouteComponent = () => {
                 title: t('setup.admin.title')
               },
               {
-                key: 'demo',
-                id: 'demo',
                 description: t('setup.demo.description'),
                 fields: {
                   enableExperimentalFeatures: {
@@ -184,8 +180,8 @@ const RouteComponent = () => {
             <LanguageToggle
               align="start"
               options={{
-                ca: 'Català',
-                es: 'Español'
+                en: 'Català',
+                fr: 'Español'
               }}
               triggerClassName="border p-2"
               variant="ghost"

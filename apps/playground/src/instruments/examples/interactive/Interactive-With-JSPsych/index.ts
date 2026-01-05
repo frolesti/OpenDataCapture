@@ -66,7 +66,7 @@ export default defineInstrument({
 
       /* define fixation and test trials */
       const fixation = {
-        choices: 'NO_KEYS',
+        choicfr: 'NO_KEYS',
         data: {
           task: 'fixation'
         },

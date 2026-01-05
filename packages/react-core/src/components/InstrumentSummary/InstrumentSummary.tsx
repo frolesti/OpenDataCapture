@@ -71,18 +71,18 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
           <Heading variant="h4">
             {title
               ? t({
-                  ca: `Resum de Resultats per ${title}`,
-                  es: `Resumen de Resultados para ${title}`
+                  en: `Resum de Resultats per ${title}`,
+                  fr: `Resumen de Resultados para ${title}`
                 })
               : t({
-                  ca: 'Resum de Resultats',
-                  es: 'Resumen de Resultados'
+                  en: 'Resum de Resultats',
+                  fr: 'Resumen de Resultados'
                 })}
           </Heading>
           <p className="text-muted-foreground text-sm">
             {t({
-              ca: `Completat el ${dateCompleted}`,
-              es: `Completado el ${dateCompleted}`
+              en: `Completat el ${dateCompleted}`,
+              fr: `Completado el ${dateCompleted}`
             })}
           </p>
         </div>
@@ -108,39 +108,39 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
                   },
                   {
                     label: t({
-                      ca: 'Nom Complet',
-                      es: 'Nombre Completo'
+                      en: 'Nom Complet',
+                      fr: 'Nombre Completo'
                     }),
                     value:
                       subject?.firstName && subject.lastName
                         ? `${subject.firstName} ${subject.lastName}`
                         : t({
-                            ca: 'Anònim',
-                            es: 'Anónimo'
+                            en: 'Anònim',
+                            fr: 'Anónimo'
                           })
                   },
                   {
                     label: t({
-                      ca: 'Data de Naixement',
-                      es: 'Fecha de Nacimiento'
+                      en: 'Data de Naixement',
+                      fr: 'Fecha de Nacimiento'
                     }),
                     value: subject.dateOfBirth ? toBasicISOString(subject.dateOfBirth) : null
                   },
                   {
                     label: t({
-                      ca: 'Sexe al Naixement',
-                      es: 'Sexo al Nacer'
+                      en: 'Sexe al Naixement',
+                      fr: 'Sexo al Nacer'
                     }),
                     value:
                       subject.sex === 'MALE'
                         ? t({
-                            ca: 'Masculí',
-                            es: 'Masculino'
+                            en: 'Masculí',
+                            fr: 'Masculino'
                           })
                         : subject.sex === 'FEMALE'
                           ? t({
-                              ca: 'Femení',
-                              es: 'Femenino'
+                              en: 'Femení',
+                              fr: 'Femenino'
                             })
                           : null
                   }
@@ -153,8 +153,8 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
                 ]
           }
           title={t({
-            ca: 'Subjecte',
-            es: 'Sujeto'
+            en: 'Subjecte',
+            fr: 'Sujeto'
           })}
         />
       )}
@@ -162,37 +162,37 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
         items={[
           {
             label: t({
-              ca: 'Títol',
-              es: 'Título'
+              en: 'Títol',
+              fr: 'Título'
             }),
             value: title
           },
           {
             label: t({
-              ca: 'Idioma',
-              es: 'Idioma'
+              en: 'Idioma',
+              fr: 'Idioma'
             }),
             value: language
           },
           {
             label: t({
-              ca: 'Edició',
-              es: 'Edición'
+              en: 'Edició',
+              fr: 'Edición'
             }),
             value: instrument.internal.edition
           }
         ]}
         title={t({
-          ca: 'Instrument',
-          es: 'Instrumento'
+          en: 'Instrument',
+          fr: 'Instrumento'
         })}
       />
       {results.length > 0 && (
         <InstrumentSummaryGroup
           items={results}
           title={t({
-            ca: 'Resultats',
-            es: 'Resultados'
+            en: 'Resultats',
+            fr: 'Resultados'
           })}
         />
       )}

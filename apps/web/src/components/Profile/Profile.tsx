@@ -44,8 +44,8 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            ca: 'El meu perfil',
-            es: 'Mi perfil'
+            en: 'El meu perfil',
+            fr: 'Mi perfil'
           })}
         </Heading>
       </PageHeader>
@@ -67,7 +67,7 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
                 {t({
-                  ca: 'Nom'
+                  en: 'Nom'
                 })}
               </label>
               <p className="text-lg font-medium">{currentUser.firstName || '-'}</p>
@@ -75,7 +75,7 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
                 {t({
-                  ca: 'Cognoms'
+                  en: 'Cognoms'
                 })}
               </label>
               <p className="text-lg font-medium">{currentUser.lastName || '-'}</p>
@@ -89,7 +89,7 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
                 {t({
-                  ca: 'Hospital'
+                  en: 'Hospital'
                 })}
               </label>
               <p className="text-lg font-medium">{currentGroup?.name || '-'}</p>
@@ -102,12 +102,12 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
           <div className="mb-4">
             <Heading variant="h4">
               {t({
-                ca: 'Seguretat'
+                en: 'Seguretat'
               })}
             </Heading>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {t({
-                ca: 'Actualitzeu la vostra contrasenya per mantenir el vostre compte segur.'
+                en: 'Actualitzeu la vostra contrasenya per mantenir el vostre compte segur.'
               })}
             </p>
           </div>
@@ -121,11 +121,11 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
                       return estimatePasswordStrength(password).score;
                     },
                     description: t({
-                      ca: 'La contrasenya ha de tenir almenys 8 caràcters, incloent majúscules, minúscules, números i símbols.'
+                      en: 'La contrasenya ha de tenir almenys 8 caràcters, incloent majúscules, minúscules, números i símbols.'
                     }),
                     kind: 'string',
                     label: t({
-                      ca: 'Nova contrasenya'
+                      en: 'Nova contrasenya'
                     }),
                     variant: 'password'
                   }
@@ -134,7 +134,7 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
               }
             ]}
             submitBtnLabel={t({
-              ca: 'Actualitzar contrasenya'
+              en: 'Actualitzar contrasenya'
             })}
             validationSchema={$ChangePasswordFormData}
             onSubmit={onSubmit}

@@ -3,15 +3,15 @@ import { Translator } from '/runtime/v1/@opendatacapture/runtime-core';
 export const translator = new Translator({
   translations: {
     changeLanguage: {
-      ca: 'Change Language'
+      en: 'Change Language'
     },
     greetings: {
       hello: {
-        ca: 'Hello'
+        en: 'Hello'
       }
     },
     submit: {
-      ca: 'Submit'
+      en: 'Submit'
     }
   }
 });

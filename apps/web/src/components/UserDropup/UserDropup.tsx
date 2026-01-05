@@ -68,7 +68,7 @@ export const UserDropup = () => {
           >
             <SettingsIcon />
             {t({
-              ca: 'Preferències',
+              en: 'Preferències',
             })}
           </DropdownMenu.Item> */}
           <DropdownMenu.Item

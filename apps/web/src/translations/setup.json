@@ -1,58 +1,58 @@
 {
   "admin": {
     "description": {
-      "ca": "Per utilitzar l'aplicació, ha d'haver-hi almenys un administrador de plataforma. Assegureu-vos de recordar aquestes credencials, ja que no fer-ho pot resultar en pèrdua de dades.",
-      "es": "Para utilizar la aplicación, debe haber al menos un administrador de plataforma. Asegúrese de recordar estas credenciales, ya que no hacerlo puede resultar en pérdida de datos."
+      "en": "Per utilitzar l'aplicació, ha d'haver-hi almenys un administrador de plataforma. Assegureu-vos de recordar aquestes credencials, ja que no fer-ho pot resultar en pèrdua de dades.",
+      "fr": "Para utilizar la aplicación, debe haber al menos un administrador de plataforma. Asegúrese de recordar estas credenciales, ya que no hacerlo puede resultar en pérdida de datos."
     },
     "password": {
-      "ca": "Contrasenya",
-      "es": "Contraseña"
+      "en": "Contrasenya",
+      "fr": "Contraseña"
     },
     "title": {
-      "ca": "Administrador",
-      "es": "Administrador"
+      "en": "Administrador",
+      "fr": "Administrador"
     },
     "username": {
-      "ca": "Nom d'usuari",
-      "es": "Nombre de usuario"
+      "en": "Nom d'usuari",
+      "fr": "Nombre de usuario"
     }
   },
   "demo": {
     "description": {
-      "ca": "Si esteu provant la plataforma, teniu l'opció de poblar la base de dades amb dades de mostra.",
-      "es": "Si está probando la plataforma, tiene la opción de poblar la base de datos con datos de muestra."
+      "en": "Si esteu provant la plataforma, teniu l'opció de poblar la base de dades amb dades de mostra.",
+      "fr": "Si está probando la plataforma, tiene la opción de poblar la base de datos con datos de muestra."
     },
     "dummySubjectCount": {
-      "ca": "Nombre de subjectes ficticis",
-      "es": "Número de sujetos ficticios"
+      "en": "Nombre de subjectes ficticis",
+      "fr": "Número de sujetos ficticios"
     },
     "init": {
-      "ca": "Inicialitzar demostració",
-      "es": "Inicializar demostración"
+      "en": "Inicialitzar demostració",
+      "fr": "Inicializar demostración"
     },
     "recordsPerSubject": {
-      "ca": "Registres per subjecte",
-      "es": "Registros por sujeto"
+      "en": "Registres per subjecte",
+      "fr": "Registros por sujeto"
     },
     "title": {
-      "ca": "Demostració",
-      "es": "Demostración"
+      "en": "Demostració",
+      "fr": "Demostración"
     }
   },
   "enableExperimentalFeatures": {
-    "ca": "Habilitar funcions experimentals (No recomanat)",
-    "es": "Habilitar funciones experimentales (No recomendado)"
+    "en": "Habilitar funcions experimentals (No recomanat)",
+    "fr": "Habilitar funciones experimentales (No recomendado)"
   },
   "loadingSubtitle": {
-    "ca": "Si us plau, segueu pacient, això pot trigar una estona...",
-    "es": "Por favor, sea paciente, esto puede tardar un rato..."
+    "en": "Si us plau, segueu pacient, això pot trigar una estona...",
+    "fr": "Por favor, sea paciente, esto puede tardar un rato..."
   },
   "loadingTitle": {
-    "ca": "Inicialitzant aplicació",
-    "es": "Inicializando aplicación"
+    "en": "Inicialitzant aplicació",
+    "fr": "Inicializando aplicación"
   },
   "pageTitle": {
-    "ca": "Configuració",
-    "es": "Configuración"
+    "en": "Configuració",
+    "fr": "Configuración"
   }
 }

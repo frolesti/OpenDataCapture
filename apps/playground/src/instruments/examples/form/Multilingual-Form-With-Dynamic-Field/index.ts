@@ -17,7 +17,7 @@ export default defineInstrument({
     hasFavoriteColor: {
       kind: 'boolean',
       label: {
-        ca: 'Do you have a favorite color?'
+        en: 'Do you have a favorite color?'
       },
       variant: 'radio'
     },
@@ -31,7 +31,7 @@ export default defineInstrument({
         return {
           kind: 'string',
           label: {
-            ca: 'Favorite Color'
+            en: 'Favorite Color'
           },
           options: {
             ca: {
@@ -53,11 +53,11 @@ export default defineInstrument({
   },
   details: {
     description: {
-      ca: 'This is an example of a simple form with conditional rendering and validation logic'
+      en: 'This is an example of a simple form with conditional rendering and validation logic'
     },
     license: 'Apache-2.0',
     title: {
-      ca: 'Favorite Color'
+      en: 'Favorite Color'
     }
   },
   measures: {},

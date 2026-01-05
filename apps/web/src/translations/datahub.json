@@ -1,206 +1,206 @@
 {
   "assignments": {
     "addAssignment": {
-      "ca": "Afegir assignació",
-      "es": "Añadir asignación"
+      "en": "Afegir assignació",
+      "fr": "Añadir asignación"
     },
     "addAssignmentDesc": {
-      "ca": "Si us plau, completeu el següent formulari per crear una assignació. Un cop creada l'assignació, podeu enviar l'enllaç generat al client.",
-      "es": "Por favor, complete el siguiente formulario para crear una asignación. Una vez creada la asignación, puede enviar el enlace generado al cliente."
+      "en": "Si us plau, completeu el següent formulari per crear una assignació. Un cop creada l'assignació, podeu enviar l'enllaç generat al client.",
+      "fr": "Por favor, complete el siguiente formulario para crear una asignación. Una vez creada la asignación, puede enviar el enlace generado al cliente."
     },
     "assignedAt": {
-      "ca": "Assignat",
-      "es": "Asignado"
+      "en": "Assignat",
+      "fr": "Asignado"
     },
     "assignedInstruments": {
-      "ca": "Instruments assignats",
-      "es": "Instrumentos asignados"
+      "en": "Instruments assignats",
+      "fr": "Instrumentos asignados"
     },
     "assignmentSliderDesc": {
-      "ca": "Consulteu aquí detalls addicionals relacionats amb aquesta assignació. Això inclou l'enllaç a l'assignació, que podeu enviar al client.",
-      "es": "Consulte aquí detalles adicionales relacionados con esta asignación. Esto incluye el enlace a la asignación, que puede enviar al cliente."
+      "en": "Consulteu aquí detalls addicionals relacionats amb aquesta assignació. Això inclou l'enllaç a l'assignació, que podeu enviar al client.",
+      "fr": "Consulte aquí detalles adicionales relacionados con esta asignación. Esto incluye el enlace a la asignación, que puede enviar al cliente."
     },
     "expiresAt": {
-      "ca": "Expira",
-      "es": "Expira"
+      "en": "Expira",
+      "fr": "Expira"
     },
     "link": {
-      "ca": "Enllaç a l'assignació",
-      "es": "Enlace a la asignación"
+      "en": "Enllaç a l'assignació",
+      "fr": "Enlace a la asignación"
     },
     "resendNotification": {
-      "ca": "Reenviar notificació",
-      "es": "Reenviar notificación"
+      "en": "Reenviar notificació",
+      "fr": "Reenviar notificación"
     },
     "status": {
-      "ca": "Estat",
-      "es": "Estado"
+      "en": "Estat",
+      "fr": "Estado"
     },
     "statusOptions": {
       "canceled": {
-        "ca": "Cancel·lat",
-        "es": "Cancelado"
+        "en": "Cancel·lat",
+        "fr": "Cancelado"
       },
       "complete": {
-        "ca": "Completat",
-        "es": "Completado"
+        "en": "Completat",
+        "fr": "Completado"
       },
       "expired": {
-        "ca": "Expirat",
-        "es": "Expirado"
+        "en": "Expirat",
+        "fr": "Expirado"
       },
       "outstanding": {
-        "ca": "Pendent",
-        "es": "Pendiente"
+        "en": "Pendent",
+        "fr": "Pendiente"
       }
     },
     "title": {
-      "ca": "Títol",
-      "es": "Título"
+      "en": "Títol",
+      "fr": "Título"
     }
   },
   "downloadInfo": {
     "allTime": {
-      "ca": "Període: Tot el temps",
-      "es": "Período: Todo el tiempo"
+      "en": "Període: Tot el temps",
+      "fr": "Período: Todo el tiempo"
     },
     "download": {
-      "ca": "Descarregar",
-      "es": "Descargar"
+      "en": "Descarregar",
+      "fr": "Descargar"
     },
     "measurement": {
-      "ca": "Mesures: ",
-      "es": "Medidas: "
+      "en": "Mesures: ",
+      "fr": "Medidas: "
     },
     "subjectText": {
-      "ca": "{} del subjecte: {}",
-      "es": "{} del sujeto: {}"
+      "en": "{} del subjecte: {}",
+      "fr": "{} del sujeto: {}"
     },
     "time": {
-      "ca": "Període: ",
-      "es": "Período: "
+      "en": "Període: ",
+      "fr": "Período: "
     }
   },
   "errors": {
     "expiryMustBeInFuture": {
-      "ca": "La data de caducitat ha de ser en el futur",
-      "es": "La fecha de caducidad debe ser en el futuro"
+      "en": "La data de caducitat ha de ser en el futur",
+      "fr": "La fecha de caducidad debe ser en el futuro"
     }
   },
   "index": {
     "lookup": {
       "title": {
-        "ca": "Cerca de subjecte",
-        "es": "Búsqueda de sujeto"
+        "en": "Cerca de subjecte",
+        "fr": "Búsqueda de sujeto"
       }
     },
     "table": {
       "export": {
-        "ca": "Exportar",
-        "es": "Exportar"
+        "en": "Exportar",
+        "fr": "Exportar"
       },
       "exportHelpText": {
-        "ca": "Aquestes dades es proporcionen en un format ultra llarg. Cada fila correspon al valor d'una sola mesura. Les files corresponents al mateix registre tindran identificadors de subjecte i marques de temps coincidents.",
-        "es": "Estos datos se proporcionan en un formato ultra largo. Cada fila corresponde al valor de una sola medida. Las filas correspondientes al mismo registro tendrán identificadores de sujeto y marcas de tiempo coincidentes."
+        "en": "Aquestes dades es proporcionen en un format ultra llarg. Cada fila correspon al valor d'una sola mesura. Les files corresponents al mateix registre tindran identificadors de subjecte i marques de temps coincidents.",
+        "fr": "Estos datos se proporcionan en un formato ultra largo. Cada fila corresponde al valor de una sola medida. Las filas correspondientes al mismo registro tendrán identificadores de sujeto y marcas de tiempo coincidentes."
       },
       "exportSuccess": {
-        "ca": "Exportació exitosa",
-        "es": "Exportación exitosa"
+        "en": "Exportació exitosa",
+        "fr": "Exportación exitosa"
       },
       "exportFailed": {
-        "ca": "Error d'exportació",
-        "es": "Error de exportación"
+        "en": "Error d'exportació",
+        "fr": "Error de exportación"
       },
       "filters": {
-        "ca": "Filtres",
-        "es": "Filtros"
+        "en": "Filtres",
+        "fr": "Filtros"
       },
       "subject": {
-        "ca": "Subjecte",
-        "es": "Sujeto"
+        "en": "Subjecte",
+        "fr": "Sujeto"
       }
     },
     "title": {
-      "ca": "Centre de dades",
-      "es": "Centro de datos"
+      "en": "Centre de dades",
+      "fr": "Centro de datos"
     }
   },
   "layout": {
     "tabs": {
       "assignments": {
-        "ca": "Assignacions",
-        "es": "Asignaciones"
+        "en": "Assignacions",
+        "fr": "Asignaciones"
       },
       "graph": {
-        "ca": "Gràfic",
-        "es": "Gráfico"
+        "en": "Gràfic",
+        "fr": "Gráfico"
       },
       "table": {
-        "ca": "Taula",
-        "es": "Tabla"
+        "en": "Taula",
+        "fr": "Tabla"
       }
     },
     "title": {
-      "ca": "Registres d'instruments per al subjecte {{id}}",
-      "es": "Registros de instrumentos para el sujeto {{id}}"
+      "en": "Registres d'instruments per al subjecte {{id}}",
+      "fr": "Registros de instrumentos para el sujeto {{id}}"
     }
   },
   "visualization": {
     "instrument": {
-      "ca": "Instrument",
-      "es": "Instrumento"
+      "en": "Instrument",
+      "fr": "Instrumento"
     },
     "measures": {
-      "ca": "Mesures",
-      "es": "Medidas"
+      "en": "Mesures",
+      "fr": "Medidas"
     },
     "selectInstrument": {
-      "ca": "Seleccioneu un instrument",
-      "es": "Seleccione un instrumento"
+      "en": "Seleccioneu un instrument",
+      "fr": "Seleccione un instrumento"
     },
     "selectMeasures": {
-      "ca": "Seleccioneu una o més mesures",
-      "es": "Seleccione una o más medidas"
+      "en": "Seleccioneu una o més mesures",
+      "fr": "Seleccione una o más medidas"
     },
     "timeframe": {
-      "ca": "Període",
-      "es": "Período"
+      "en": "Període",
+      "fr": "Período"
     },
     "timeframeOptions": {
       "all": {
-        "ca": "Tot el temps",
-        "es": "Todo el tiempo"
+        "en": "Tot el temps",
+        "fr": "Todo el tiempo"
       },
       "month": {
-        "ca": "Mes passat",
-        "es": "Mes pasado"
+        "en": "Mes passat",
+        "fr": "Mes pasado"
       },
       "year": {
-        "ca": "Any passat",
-        "es": "Año pasado"
+        "en": "Any passat",
+        "fr": "Año pasado"
       }
     },
     "xLabel": {
-      "ca": "Data de recollida",
-      "es": "Fecha de recogida"
+      "en": "Data de recollida",
+      "fr": "Fecha de recogida"
     },
     "yLabel": {
-      "ca": "Valor",
-      "es": "Valor"
+      "en": "Valor",
+      "fr": "Valor"
     }
   },
   "filters": {
     "allSubjects": {
-      "ca": "Tots els subjectes",
-      "es": "Todos los sujetos"
+      "en": "Tots els subjectes",
+      "fr": "Todos los sujetos"
     },
     "allHealthCenters": {
-      "ca": "Tots els centres sanitaris",
-      "es": "Todos los centros sanitarios"
+      "en": "Tots els centres sanitaris",
+      "fr": "Todos los centros sanitarios"
     },
     "all": {
-      "ca": "Tots",
-      "es": "Todos"
+      "en": "Tots",
+      "fr": "Todos"
     }
   }
 }

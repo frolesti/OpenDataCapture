@@ -76,12 +76,12 @@ export const SeriesInstrumentRenderer = ({
         .with({ status: 'ERROR' }, () => (
           <ContentPlaceholder
             message={t({
-              ca: "S'ha produït un error inesperat en carregar aquest instrument. Si us plau, contacteu amb l'administrador de la plataforma per obtenir més assistència.",
-              es: 'Se produjo un error inesperado al cargar este instrumento. Por favor, contacte con el administrador de la plataforma para obtener más asistencia.'
+              en: "S'ha produït un error inesperat en carregar aquest instrument. Si us plau, contacteu amb l'administrador de la plataforma per obtenir més assistència.",
+              fr: 'Se produjo un error inesperado al cargar este instrumento. Por favor, contacte con el administrador de la plataforma para obtener más asistencia.'
             })}
             title={t({
-              ca: "Error en carregar l'instrument",
-              es: 'Error al cargar el instrumento'
+              en: "Error en carregar l'instrument",
+              fr: 'Error al cargar el instrumento'
             })}
           />
         ))
@@ -92,14 +92,14 @@ export const SeriesInstrumentRenderer = ({
               <div className="flex grow flex-col items-center justify-center space-y-1 py-32 text-center">
                 <Heading variant="h4">
                   {t({
-                    ca: "Sèrie d'instruments en curs",
-                    es: 'Serie de instrumentos en curso'
+                    en: "Sèrie d'instruments en curs",
+                    fr: 'Serie de instrumentos en curso'
                   })}
                 </Heading>
                 <p className="text-muted-foreground text-sm">
                   {t({
-                    ca: `Instruments completats: ${currentItemIndex}/${target.items.length}`,
-                    es: `Instrumentos completados: ${currentItemIndex}/${target.items.length}`
+                    en: `Instruments completats: ${currentItemIndex}/${target.items.length}`,
+                    fr: `Instrumentos completados: ${currentItemIndex}/${target.items.length}`
                   })}
                 </p>
                 <div className="pt-2">
@@ -108,7 +108,7 @@ export const SeriesInstrumentRenderer = ({
                     type="button"
                     onClick={() => setIsInstrumentInProgress(true)}
                   >
-                    {t({ ca: 'Començar', es: 'Comenzar' })}
+                    {t({ en: 'Començar', fr: 'Comenzar' })}
                   </Button>
                 </div>
               </div>
@@ -118,12 +118,12 @@ export const SeriesInstrumentRenderer = ({
                 .with({ status: 'ERROR' }, () => (
                   <ContentPlaceholder
                     message={t({
-                      ca: "S'ha produït un error inesperat en carregar aquest instrument. Si us plau, contacteu amb l'administrador de la plataforma per obtenir més assistència.",
-                      es: 'Se produjo un error inesperado al cargar este instrumento. Por favor, contacte con el administrador de la plataforma para obtener más asistencia.'
+                      en: "S'ha produït un error inesperat en carregar aquest instrument. Si us plau, contacteu amb l'administrador de la plataforma per obtenir més assistència.",
+                      fr: 'Se produjo un error inesperado al cargar este instrumento. Por favor, contacte con el administrador de la plataforma para obtener más asistencia.'
                     })}
                     title={t({
-                      ca: "Error en carregar l'instrument",
-                      es: 'Error al cargar el instrumento'
+                      en: "Error en carregar l'instrument",
+                      fr: 'Error al cargar el instrumento'
                     })}
                   />
                 ))
@@ -148,14 +148,14 @@ export const SeriesInstrumentRenderer = ({
                 />
                 <Heading variant="h3">
                   {t({
-                    ca: 'Gràcies!',
-                    es: '¡Gracias!'
+                    en: 'Gràcies!',
+                    fr: '¡Gracias!'
                   })}
                 </Heading>
                 <p className="text-muted-foreground text-sm">
                   {t({
-                    ca: "Heu completat amb èxit tots els passos d'aquest instrument.",
-                    es: 'Ha completado con éxito todos los pasos de este instrumento.'
+                    en: "Heu completat amb èxit tots els passos d'aquest instrument.",
+                    fr: 'Ha completado con éxito todos los pasos de este instrumento.'
                   })}
                 </p>
               </div>

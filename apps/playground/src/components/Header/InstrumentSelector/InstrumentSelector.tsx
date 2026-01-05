@@ -14,20 +14,20 @@ const translations = {
   loadInstrument: {
     en: 'Load an instrument...',
     fr: 'Charger un instrument...',
-    es: 'Cargar un instrumento...',
-    ca: 'Carregar un instrument...'
+    fr: 'Cargar un instrumento...',
+    en: 'Carregar un instrument...'
   },
   noInstrumentsFound: {
     en: 'No Instruments Found',
     fr: 'Aucun instrument trouvé',
-    es: 'No se encontraron instrumentos',
-    ca: "No s'han trobat instruments"
+    fr: 'No se encontraron instrumentos',
+    en: "No s'han trobat instruments"
   },
   search: {
     en: 'Search...',
     fr: 'Rechercher...',
-    es: 'Buscar...',
-    ca: 'Cercar...'
+    fr: 'Buscar...',
+    en: 'Cercar...'
   }
 };
 

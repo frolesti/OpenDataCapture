@@ -1,20 +1,20 @@
 {
   "create": {
     "credentials": {
-      "ca": "Credencials",
-      "es": "Credenciales"
+      "en": "Credencials",
+      "fr": "Credenciales"
     },
     "permissions": {
-      "ca": "Permisos",
-      "es": "Permisos"
+      "en": "Permisos",
+      "fr": "Permisos"
     },
     "personalInfo": {
-      "ca": "Informació personal",
-      "es": "Información personal"
+      "en": "Informació personal",
+      "fr": "Información personal"
     },
     "title": {
-      "ca": "Afegir usuari",
-      "es": "Añadir usuario"
+      "en": "Afegir usuari",
+      "fr": "Añadir usuario"
     }
   }
 }

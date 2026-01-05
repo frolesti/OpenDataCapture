@@ -119,12 +119,12 @@ const UpdateUserForm: React.FC<{
               }
             },
             title: t({
-              ca: "Credencials d'inici de sessió"
+              en: "Credencials d'inici de sessió"
             })
           },
           {
             description: t({
-              ca: "IMPORTANT: Aquests permisos no són específics de cap grup. Per gestionar permisos granulars, utilitzeu l'API."
+              en: "IMPORTANT: Aquests permisos no són específics de cap grup. Per gestionar permisos granulars, utilitzeu l'API."
             }),
             fields: {
               additionalPermissions: {
@@ -132,23 +132,23 @@ const UpdateUserForm: React.FC<{
                   action: {
                     kind: 'string',
                     label: t({
-                      ca: 'Acció'
+                      en: 'Acció'
                     }),
                     options: {
                       create: t({
-                        ca: 'Crear'
+                        en: 'Crear'
                       }),
                       delete: t({
-                        ca: 'Eliminar'
+                        en: 'Eliminar'
                       }),
                       manage: t({
-                        ca: 'Gestionar (Tot)'
+                        en: 'Gestionar (Tot)'
                       }),
                       read: t({
-                        ca: 'Llegir'
+                        en: 'Llegir'
                       }),
                       update: t({
-                        ca: 'Actualitzar'
+                        en: 'Actualitzar'
                       })
                     },
                     variant: 'select'
@@ -156,32 +156,32 @@ const UpdateUserForm: React.FC<{
                   subject: {
                     kind: 'string',
                     label: t({
-                      ca: 'Recurs'
+                      en: 'Recurs'
                     }),
                     options: {
                       all: t({
-                        ca: 'Tot'
+                        en: 'Tot'
                       }),
                       Assignment: t({
-                        ca: 'Assignació'
+                        en: 'Assignació'
                       }),
                       Group: t({
-                        ca: 'Grup'
+                        en: 'Grup'
                       }),
                       Instrument: t({
-                        ca: 'Instrument'
+                        en: 'Instrument'
                       }),
                       InstrumentRecord: t({
-                        ca: "Registre de l'instrument"
+                        en: "Registre de l'instrument"
                       }),
                       Session: t({
-                        ca: 'Sessió'
+                        en: 'Sessió'
                       }),
                       Subject: t({
-                        ca: 'Subjecte'
+                        en: 'Subjecte'
                       }),
                       User: t({
-                        ca: 'Usuari'
+                        en: 'Usuari'
                       })
                     },
                     variant: 'select'
@@ -189,12 +189,12 @@ const UpdateUserForm: React.FC<{
                 },
                 kind: 'record-array',
                 label: t({
-                  ca: 'Permisos addicionals'
+                  en: 'Permisos addicionals'
                 })
               }
             },
             title: t({
-              ca: 'Autorització'
+              en: 'Autorització'
             })
           },
           {
@@ -207,7 +207,7 @@ const UpdateUserForm: React.FC<{
               }
             },
             title: t({
-              ca: 'Grups'
+              en: 'Grups'
             })
           }
         ]}
@@ -224,12 +224,12 @@ const UpdateUserForm: React.FC<{
         <Dialog.Header>
           <Dialog.Title>
             {t({
-              ca: 'Esteu absolutament segur?'
+              en: 'Esteu absolutament segur?'
             })}
           </Dialog.Title>
           <Dialog.Description>
             {t({
-              ca: 'Aquesta acció eliminarà permanentment el compte i no es pot desfer.'
+              en: 'Aquesta acció eliminarà permanentment el compte i no es pot desfer.'
             })}
           </Dialog.Description>
         </Dialog.Header>
@@ -279,7 +279,7 @@ const RouteComponent = () => {
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            ca: 'Gestionar usuaris'
+            en: 'Gestionar usuaris'
           })}
         </Heading>
       </PageHeader>
@@ -288,7 +288,7 @@ const RouteComponent = () => {
           className="grow"
           data-testid="admin-users-search"
           placeholder={t({
-            ca: "Cercar per nom d'usuari"
+            en: "Cercar per nom d'usuari"
           })}
           value={searchTerm}
           onValueChange={setSearchTerm}
@@ -296,7 +296,7 @@ const RouteComponent = () => {
         <Button variant="outline">
           <Link to="/admin/users/create">
             {t({
-              ca: 'Afegir usuari'
+              en: 'Afegir usuari'
             })}
           </Link>
         </Button>
@@ -311,7 +311,7 @@ const RouteComponent = () => {
             field: ({ basePermissionLevel }) => {
               if (!basePermissionLevel) {
                 return t({
-                  ca: 'Cap'
+                  en: 'Cap'
                 });
               }
               return t(`common.${snakeToCamelCase(basePermissionLevel)}`);
@@ -330,7 +330,7 @@ const RouteComponent = () => {
           <Sheet.Title>{selectedUser?.username}</Sheet.Title>
           <Sheet.Description>
             {t({
-              ca: 'Feu els canvis a aquest usuari aquí. Feu clic a desar quan hàgiu acabat.'
+              en: 'Feu els canvis a aquest usuari aquí. Feu clic a desar quan hàgiu acabat.'
             })}
           </Sheet.Description>
         </Sheet.Header>

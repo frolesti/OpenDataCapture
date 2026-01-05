@@ -58,20 +58,20 @@ export const StartSessionForm = ({
         content={[
           {
             title: t({
-              ca: 'Iniciar Registre'
+              en: 'Iniciar Registre'
             }),
             description: t({
-              ca: "Seleccioneu la data per iniciar una nova sessió. Podreu afegir múltiples registres de pacients dins d'aquesta sessió."
+              en: "Seleccioneu la data per iniciar una nova sessió. Podreu afegir múltiples registres de pacients dins d'aquesta sessió."
             }),
             fields: {
               sessionDate: {
                 kind: 'date',
                 disabled: true,
                 label: t({
-                  ca: 'Data de la Sessió'
+                  en: 'Data de la Sessió'
                 }),
                 description: t({
-                  ca: 'La data en què es realitza aquesta sessió (Avui)'
+                  en: 'La data en què es realitza aquesta sessió (Avui)'
                 })
               } as any
             }
@@ -246,9 +246,8 @@ export const StartSessionForm = ({
             .refine(
               (arg) => !arg.includes('$'),
               t({
-                en: "Character '$' is not allowed",
-                ca: "El caràcter '$' no està permès",
-                es: "El carácter '$' no está permitido"
+                en: "El caràcter '$' no està permès",
+                fr: "El carácter '$' no está permitido"
               })
             )
             .optional(),
@@ -295,7 +294,7 @@ export const StartSessionForm = ({
                     message:
                       errorMessageFromGroup ??
                       t({
-                        ca: `Ha de coincidir amb l'expressió regular: ${regex.source}`
+                        en: `Ha de coincidir amb l'expressió regular: ${regex.source}`
                       }),
                     path: ['subjectId']
                   });

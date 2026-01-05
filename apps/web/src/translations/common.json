@@ -1,274 +1,274 @@
 {
   "about": {
     "coreApi": {
-      "ca": "API principal",
-      "es": "API principal"
+      "en": "API principal",
+      "fr": "API principal"
     },
     "description": {
-      "ca": "Alta Medical Services proporciona una plataforma integral per realitzar assaigs clínics i recollir dades de recerca mèdica. Més informació sobre la plataforma i les seves capacitats a continuació.",
-      "es": "Alta Medical Services proporciona una plataforma integral para realizar ensayos clínicos y recopilar datos de investigación médica. Más información sobre la plataforma y sus capacidades a continuación."
+      "en": "Alta Medical Services proporciona una plataforma integral per realitzar assaigs clínics i recollir dades de recerca mèdica. Més informació sobre la plataforma i les seves capacitats a continuació.",
+      "fr": "Alta Medical Services proporciona una plataforma integral para realizar ensayos clínicos y recopilar datos de investigación médica. Más información sobre la plataforma y sus capacidades a continuación."
     },
     "platformOverview": {
       "title": {
-        "ca": "Descripció de la plataforma",
-        "es": "Descripción de la plataforma"
+        "en": "Descripció de la plataforma",
+        "fr": "Descripción de la plataforma"
       },
       "description": {
-        "ca": "Aquesta plataforma permet als professionals mèdics i investigadors clínics realitzar assaigs clínics, recollir dades de participants i gestionar estudis de recerca mitjançant instruments digitals estandarditzats. Proporciona eines integrals per a avaluacions de pacients, recollida de dades i compliment normatiu en entorns de recerca clínica.",
-        "es": "Esta plataforma permite a los profesionales médicos e investigadores clínicos realizar ensayos clínicos, recopilar datos de participantes y gestionar estudios de investigación mediante instrumentos digitales estandarizados. Proporciona herramientas integrales para evaluaciones de pacientes, recopilación de datos y cumplimiento normativo en entornos de investigación clínica."
+        "en": "Aquesta plataforma permet als professionals mèdics i investigadors clínics realitzar assaigs clínics, recollir dades de participants i gestionar estudis de recerca mitjançant instruments digitals estandarditzats. Proporciona eines integrals per a avaluacions de pacients, recollida de dades i compliment normatiu en entorns de recerca clínica.",
+        "fr": "Esta plataforma permite a los profesionales médicos e investigadores clínicos realizar ensayos clínicos, recopilar datos de participantes y gestionar estudios de investigación mediante instrumentos digitales estandarizados. Proporciona herramientas integrales para evaluaciones de pacientes, recopilación de datos y cumplimiento normativo en entornos de investigación clínica."
       }
     },
     "instruments": {
       "title": {
-        "ca": "Instruments d'avaluació clínica",
-        "es": "Instrumentos de evaluación clínica"
+        "en": "Instruments d'avaluació clínica",
+        "fr": "Instrumentos de evaluación clínica"
       },
       "description": {
-        "ca": "Els instruments clínics són eines d'avaluació estandarditzades, qüestionaris i formularis de recollida de dades utilitzats en assaigs clínics. Cada instrument està dissenyat per recollir dades clíniques específiques i pot incloure diversos tipus de preguntes, regles de validació mèdica i lògica condicional per garantir una recollida de dades precisa i fiable amb finalitats de recerca.",
-        "es": "Los instrumentos clínicos son herramientas de evaluación estandarizadas, cuestionarios y formularios de recopilación de datos utilizados en ensayos clínicos. Cada instrumento está diseñado para recopilar datos clínicos específicos y puede incluir varios tipos de preguntas, reglas de validación médica y lógica condicional para garantizar una recopilación de datos precisa y fiable con fines de investigación."
+        "en": "Els instruments clínics són eines d'avaluació estandarditzades, qüestionaris i formularis de recollida de dades utilitzats en assaigs clínics. Cada instrument està dissenyat per recollir dades clíniques específiques i pot incloure diversos tipus de preguntes, regles de validació mèdica i lògica condicional per garantir una recollida de dades precisa i fiable amb finalitats de recerca.",
+        "fr": "Los instrumentos clínicos son herramientas de evaluación estandarizadas, cuestionarios y formularios de recopilación de datos utilizados en ensayos clínicos. Cada instrumento está diseñado para recopilar datos clínicos específicos y puede incluir varios tipos de preguntas, reglas de validación médica y lógica condicional para garantizar una recopilación de datos precisa y fiable con fines de investigación."
       }
     },
     "keyFeatures": {
       "title": {
-        "ca": "Característiques clau",
-        "es": "Características clave"
+        "en": "Característiques clau",
+        "fr": "Características clave"
       },
       "sessions": {
         "title": {
-          "ca": "Sessions d'assaigs clínics",
-          "es": "Sesiones de ensayos clínicos"
+          "en": "Sessions d'assaigs clínics",
+          "fr": "Sesiones de ensayos clínicos"
         },
         "description": {
-          "ca": "Realitzar sessions de recollida de dades d'assaigs clínics amb participants utilitzant múltiples instruments d'avaluació en un entorn segur i controlat.",
-          "es": "Realizar sesiones de recopilación de datos de ensayos clínicos con participantes utilizando múltiples instrumentos de evaluación en un entorno seguro y controlado."
+          "en": "Realitzar sessions de recollida de dades d'assaigs clínics amb participants utilitzant múltiples instruments d'avaluació en un entorn segur i controlat.",
+          "fr": "Realizar sesiones de recopilación de datos de ensayos clínicos con participantes utilizando múltiples instrumentos de evaluación en un entorno seguro y controlado."
         }
       },
       "datahub": {
         "title": {
-          "ca": "Centre de dades clíniques",
-          "es": "Centro de datos clínicos"
+          "en": "Centre de dades clíniques",
+          "fr": "Centro de datos clínicos"
         },
         "description": {
-          "ca": "Accedir i analitzar les dades d'assaigs clínics recollides amb potents capacitats de filtratge, visualització i exportació per a anàlisi de recerca i informes reguladors.",
-          "es": "Acceder y analizar los datos de ensayos clínicos recopilados con potentes capacidades de filtrado, visualización y exportación para análisis de investigación e informes regulatorios."
+          "en": "Accedir i analitzar les dades d'assaigs clínics recollides amb potents capacitats de filtratge, visualització i exportació per a anàlisi de recerca i informes reguladors.",
+          "fr": "Acceder y analizar los datos de ensayos clínicos recopilados con potentes capacidades de filtrado, visualización y exportación para análisis de investigación e informes regulatorios."
         }
       },
       "groups": {
         "title": {
-          "ca": "Gestió de cohorts d'estudi",
-          "es": "Gestión de cohortes de estudio"
+          "en": "Gestió de cohorts d'estudi",
+          "fr": "Gestión de cohortes de estudio"
         },
         "description": {
-          "ca": "Organitzar els participants de l'assaig en cohorts d'estudi i grups de control per a anàlisi clíniques comparatives i protocols de recerca.",
-          "es": "Organizar los participantes del ensayo en cohortes de estudio y grupos de control para análisis clínicos comparativos y protocolos de investigación."
+          "en": "Organitzar els participants de l'assaig en cohorts d'estudi i grups de control per a anàlisi clíniques comparatives i protocols de recerca.",
+          "fr": "Organizar los participantes del ensayo en cohortes de estudio y grupos de control para análisis clínicos comparativos y protocolos de investigación."
         }
       },
       "security": {
         "title": {
-          "ca": "Seguretat i compliment",
-          "es": "Seguridad y cumplimiento"
+          "en": "Seguretat i compliment",
+          "fr": "Seguridad y cumplimiento"
         },
         "description": {
-          "ca": "Control d'accés basat en rols, emmagatzematge de dades xifrades i registre d'auditoria integral garanteixen la seguretat i el compliment de les regulacions de recerca clínica.",
-          "es": "Control de acceso basado en roles, almacenamiento de datos cifrados y registro de auditoría integral garantizan la seguridad y el cumplimiento de las regulaciones de investigación clínica."
+          "en": "Control d'accés basat en rols, emmagatzematge de dades xifrades i registre d'auditoria integral garanteixen la seguretat i el compliment de les regulacions de recerca clínica.",
+          "fr": "Control de acceso basado en roles, almacenamiento de datos cifrados y registro de auditoría integral garantizan la seguridad y el cumplimiento de las regulaciones de investigación clínica."
         }
       }
     },
     "technicalInfo": {
       "title": {
-        "ca": "Informació tècnica",
-        "es": "Información técnica"
+        "en": "Informació tècnica",
+        "fr": "Información técnica"
       },
       "description": {
-        "ca": "La informació següent es pot compartir amb el suport tècnic si trobeu algun problema.",
-        "es": "La siguiente información se puede compartir con el soporte técnico si encuentra algún problema."
+        "en": "La informació següent es pot compartir amb el suport tècnic si trobeu algun problema.",
+        "fr": "La siguiente información se puede compartir con el soporte técnico si encuentra algún problema."
       }
     },
     "gatewayService": {
-      "ca": "Servei de passarel·la",
-      "es": "Servicio de pasarela"
+      "en": "Servei de passarel·la",
+      "fr": "Servicio de pasarela"
     },
     "generatedOn": {
-      "ca": "Generat el",
-      "es": "Generado el"
+      "en": "Generat el",
+      "fr": "Generado el"
     },
     "webClient": {
-      "ca": "Client Web",
-      "es": "Cliente Web"
+      "en": "Client Web",
+      "fr": "Cliente Web"
     }
   },
   "admin": {
-    "ca": "Administrador",
-    "es": "Administrador"
+    "en": "Administrador",
+    "fr": "Administrador"
   },
   "basePermissionLevel": {
-    "ca": "Nivell de permisos base",
-    "es": "Nivel de permisos base"
+    "en": "Nivell de permisos base",
+    "fr": "Nivel de permisos base"
   },
   "clinical": {
-    "ca": "Clínic",
-    "es": "Clínico"
+    "en": "Clínic",
+    "fr": "Clínico"
   },
   "confirmPassword": {
-    "ca": "Confirmar contrasenya",
-    "es": "Confirmar contraseña"
+    "en": "Confirmar contrasenya",
+    "fr": "Confirmar contraseña"
   },
   "currentSession": {
-    "ca": "Sessió actual",
-    "es": "Sesión actual"
+    "en": "Sessió actual",
+    "fr": "Sesión actual"
   },
   "customIdentifier": {
-    "ca": "Identificador personalitzat",
-    "es": "Identificador personalizado"
+    "en": "Identificador personalitzat",
+    "fr": "Identificador personalizado"
   },
   "disclaimer": {
     "accept": {
-      "ca": "Acceptar",
-      "es": "Aceptar"
+      "en": "Acceptar",
+      "fr": "Aceptar"
     },
     "decline": {
-      "ca": "Rebutjar",
-      "es": "Rechazar"
+      "en": "Rebutjar",
+      "fr": "Rechazar"
     },
     "message": {
-      "ca": "Aquesta plataforma no és un registre mèdic electrònic. Els nostres termes de servei prohibeixen l'ús d'aquesta plataforma com a mecanisme principal per emmagatzemar dades clíniques.",
-      "es": "Esta plataforma no es un registro médico electrónico. Nuestros términos de servicio prohíben el uso de esta plataforma como mecanismo principal para almacenar datos clínicos."
+      "en": "Aquesta plataforma no és un registre mèdic electrònic. Els nostres termes de servei prohibeixen l'ús d'aquesta plataforma com a mecanisme principal per emmagatzemar dades clíniques.",
+      "fr": "Esta plataforma no es un registro médico electrónico. Nuestros términos de servicio prohíben el uso de esta plataforma como mecanismo principal para almacenar datos clínicos."
     },
     "title": {
-      "ca": "Descàrrec de responsabilitat",
-      "es": "Descargo de responsabilidad"
+      "en": "Descàrrec de responsabilitat",
+      "fr": "Descargo de responsabilidad"
     }
   },
   "errors": {
     "failedToChangeLanguage": {
-      "ca": "Error en canviar l'idioma",
-      "es": "Error al cambiar el idioma"
+      "en": "Error en canviar l'idioma",
+      "fr": "Error al cambiar el idioma"
     },
     "noDataToExport": {
-      "ca": "No hi ha dades per exportar",
-      "es": "No hay datos para exportar"
+      "en": "No hi ha dades per exportar",
+      "fr": "No hay datos para exportar"
     },
     "noInstrumentSelected": {
-      "ca": "Cap instrument seleccionat",
-      "es": "Ningún instrumento seleccionado"
+      "en": "Cap instrument seleccionat",
+      "fr": "Ningún instrumento seleccionado"
     }
   },
   "graph": {
-    "ca": "Gràfic",
-    "es": "Gráfico"
+    "en": "Gràfic",
+    "fr": "Gráfico"
   },
   "groupManager": {
-    "ca": "Gestor de grup",
-    "es": "Gestor de grupo"
+    "en": "Gestor de grup",
+    "fr": "Gestor de grupo"
   },
   "groupName": {
-    "ca": "Nom del grup",
-    "es": "Nombre del grupo"
+    "en": "Nom del grup",
+    "fr": "Nombre del grupo"
   },
   "groupTrend": {
-    "ca": "Tendència del grup",
-    "es": "Tendencia del grupo"
+    "en": "Tendència del grup",
+    "fr": "Tendencia del grupo"
   },
   "groupType": {
-    "ca": "Tipus de grup",
-    "es": "Tipo de grupo"
+    "en": "Tipus de grup",
+    "fr": "Tipo de grupo"
   },
   "groups": {
-    "ca": "Grups",
-    "es": "Grupos"
+    "en": "Grups",
+    "fr": "Grupos"
   },
   "identificationMethod": {
-    "ca": "Mètode d'identificació",
-    "es": "Método de identificación"
+    "en": "Mètode d'identificació",
+    "fr": "Método de identificación"
   },
   "identificationMethodDesc": {
-    "ca": "Seleccioneu el mètode pel qual s'identificarà el subjecte per a aquesta sessió.",
-    "es": "Seleccione el método por el cual se identificará el sujeto para esta sesión."
+    "en": "Seleccioneu el mètode pel qual s'identificarà el subjecte per a aquesta sessió.",
+    "fr": "Seleccione el método por el cual se identificará el sujeto para esta sesión."
   },
   "identifier": {
-    "ca": "Identificador",
-    "es": "Identificador"
+    "en": "Identificador",
+    "fr": "Identificador"
   },
   "insufficientPasswordStrength": {
-    "ca": "Contrasenya insuficientment segura",
-    "es": "Contraseña insuficientemente segura"
+    "en": "Contrasenya insuficientment segura",
+    "fr": "Contraseña insuficientemente segura"
   },
   "method": {
-    "ca": "Mètode",
-    "es": "Método"
+    "en": "Mètode",
+    "fr": "Método"
   },
   "password": {
-    "ca": "Contrasenya",
-    "es": "Contraseña"
+    "en": "Contrasenya",
+    "fr": "Contraseña"
   },
   "personalInfo": {
-    "ca": "Informació personal",
-    "es": "Información personal"
+    "en": "Informació personal",
+    "fr": "Información personal"
   },
   "research": {
-    "ca": "Recerca",
-    "es": "Investigación"
+    "en": "Recerca",
+    "fr": "Investigación"
   },
   "sessionInProgress": {
-    "ca": "Sessió en curs",
-    "es": "Sesión en curso"
+    "en": "Sessió en curs",
+    "fr": "Sesión en curso"
   },
   "standard": {
-    "ca": "Estàndard",
-    "es": "Estándar"
+    "en": "Estàndard",
+    "fr": "Estándar"
   },
   "passwordsMustMatch": {
-    "ca": "Les contrasenyes han de coincidir",
-    "es": "Las contraseñas deben coincidir"
+    "en": "Les contrasenyes han de coincidir",
+    "fr": "Las contraseñas deben coincidir"
   },
   "subjectIdentification": {
     "description": {
-      "ca": "Els elements següents s'utilitzen per calcular un identificador únic que permet una identificació consistent entre sessions.",
-      "es": "Los siguientes elementos se utilizan para calcular un identificador único que permite una identificación consistente entre sesiones."
+      "en": "Els elements següents s'utilitzen per calcular un identificador únic que permet una identificació consistent entre sessions.",
+      "fr": "Los siguientes elementos se utilizan para calcular un identificador único que permite una identificación consistente entre sesiones."
     },
     "firstName": {
       "description": {
-        "ca": "El nom del subjecte, tal com figura al seu certificat de naixement. Per a la identificació, s'eliminen els espais en blanc, caràcters especials i accents, tractant-se els caràcters accentuats com una transliteració ASCII fixa.",
-        "es": "El nombre del sujeto, tal como figura en su certificado de nacimiento. Para la identificación, se eliminan los espacios en blanco, caracteres especiales y acentos, tratándose los caracteres acentuados como una transliteración ASCII fija."
+        "en": "El nom del subjecte, tal com figura al seu certificat de naixement. Per a la identificació, s'eliminen els espais en blanc, caràcters especials i accents, tractant-se els caràcters accentuats com una transliteració ASCII fixa.",
+        "fr": "El nombre del sujeto, tal como figura en su certificado de nacimiento. Para la identificación, se eliminan los espacios en blanco, caracteres especiales y acentos, tratándose los caracteres acentuados como una transliteración ASCII fija."
       },
       "label": {
-        "ca": "Nom",
-        "es": "Nombre"
+        "en": "Nom",
+        "fr": "Nombre"
       }
     },
     "lastName": {
       "description": {
-        "ca": "El cognom del subjecte, tal com figura al seu certificat de naixement. Per a la identificació, s'eliminen els espais en blanc, caràcters especials i accents, tractant-se els caràcters accentuats com els seus equivalents ASCII.",
-        "es": "El apellido del sujeto, tal como figura en su certificado de nacimiento. Para la identificación, se eliminan los espacios en blanco, caracteres especiales y acentos, tratándose los caracteres acentuados como sus equivalentes ASCII."
+        "en": "El cognom del subjecte, tal com figura al seu certificat de naixement. Per a la identificació, s'eliminen els espais en blanc, caràcters especials i accents, tractant-se els caràcters accentuats com els seus equivalents ASCII.",
+        "fr": "El apellido del sujeto, tal como figura en su certificado de nacimiento. Para la identificación, se eliminan los espacios en blanco, caracteres especiales y acentos, tratándose los caracteres acentuados como sus equivalentes ASCII."
       },
       "label": {
-        "ca": "Cognom",
-        "es": "Apellido"
+        "en": "Cognom",
+        "fr": "Apellido"
       }
     },
     "title": {
-      "ca": "Identificació del subjecte",
-      "es": "Identificación del sujeto"
+      "en": "Identificació del subjecte",
+      "fr": "Identificación del sujeto"
     }
   },
   "tags": {
-    "ca": "Etiquetes",
-    "es": "Etiquetas"
+    "en": "Etiquetes",
+    "fr": "Etiquetas"
   },
   "timeCollected": {
-    "ca": "Hora de recollida",
-    "es": "Hora de recogida"
+    "en": "Hora de recollida",
+    "fr": "Hora de recogida"
   },
   "uploadSuccessful": {
-    "ca": "Càrrega exitosa",
-    "es": "Carga exitosa"
+    "en": "Càrrega exitosa",
+    "fr": "Carga exitosa"
   },
   "username": {
-    "ca": "Nom d'usuari",
-    "es": "Nombre de usuario"
+    "en": "Nom d'usuari",
+    "fr": "Nombre de usuario"
   },
   "usernameExists": {
-    "ca": "El nom d'usuari ja existeix",
-    "es": "El nombre de usuario ya existe"
+    "en": "El nom d'usuari ja existeix",
+    "fr": "El nombre de usuario ya existe"
   }
 }

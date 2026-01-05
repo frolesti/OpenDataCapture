@@ -16,46 +16,46 @@ export default defineInstrument({
   content: [
     {
       title: {
-        ca: 'Personal Information'
+        en: 'Personal Information'
       },
       description: {
-        ca: 'Please provide the following information for our records'
+        en: 'Please provide the following information for our records'
       },
       fields: {
         firstName: {
           kind: 'string',
           label: {
-            ca: 'First Name'
+            en: 'First Name'
           },
           variant: 'input'
         },
         lastName: {
           kind: 'string',
           label: {
-            ca: 'Last Name'
+            en: 'Last Name'
           },
           variant: 'input'
         },
         dateOfBirth: {
           kind: 'date',
           label: {
-            ca: 'Date of Birth'
+            en: 'Date of Birth'
           }
         }
       }
     },
     {
       title: {
-        ca: 'Questions Regarding Life'
+        en: 'Questions Regarding Life'
       },
       fields: {
         overallHappiness: {
           description: {
-            ca: 'Overall happiness from 1 through 10 (inclusive)'
+            en: 'Overall happiness from 1 through 10 (inclusive)'
           },
           kind: 'number',
           label: {
-            ca: 'Overall Happiness'
+            en: 'Overall Happiness'
           },
           max: 10,
           min: 1,
@@ -70,7 +70,7 @@ export default defineInstrument({
             }
             return {
               label: {
-                ca: 'Reason for Sadness'
+                en: 'Reason for Sadness'
               },
               isRequired: false,
               kind: 'string',
@@ -89,11 +89,11 @@ export default defineInstrument({
   },
   details: {
     description: {
-      ca: 'This is an example of a multilingual grouped form'
+      en: 'This is an example of a multilingual grouped form'
     },
     license: 'Apache-2.0',
     title: {
-      ca: 'Happiness Questionnaire'
+      en: 'Happiness Questionnaire'
     }
   },
   measures: {

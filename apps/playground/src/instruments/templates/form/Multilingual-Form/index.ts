@@ -23,11 +23,11 @@ export default defineInstrument({
   content: {},
   details: {
     description: {
-      ca: '<PLACEHOLDER>'
+      en: '<PLACEHOLDER>'
     },
     license: 'Apache-2.0',
     title: {
-      ca: '<PLACEHOLDER>'
+      en: '<PLACEHOLDER>'
     }
   },
   measures: {},
