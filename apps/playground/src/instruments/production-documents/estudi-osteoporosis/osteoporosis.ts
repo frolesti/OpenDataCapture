@@ -1,4 +1,3 @@
-import { title } from 'process';
 import { defineInstrument } from '/runtime/v1/@opendatacapture/runtime-core';
 import { z } from '/runtime/v1/zod@3.x';
 
@@ -532,6 +531,277 @@ function generateMedicationValidationSchemas(medicationName: string, maxTreatmen
   return schemas;
 }
 
+// Custom field name mappings for export
+const fieldNameMappings: Record<string, string> = {
+  // Criteria and IDs
+  codigoPaciente: 'patientID',
+  consentimientoInformado: 'informed_consent',
+  fechaConsentimiento: 'consent_date',
+  // Note: criterios individuales eliminados - s'exporten com sum_inclusion i sum_exclusion
+
+  // Patient characteristics
+  centroAtencionPrimaria: 'CAP',
+  sexoPaciente: 'sex',
+  edadPaciente: 'age',
+  pesoPaciente: 'weight',
+  alturaPaciente: 'height',
+  observaCifosis: 'cifosis',
+  perdidaAlturaDocumentada: 'height_loss',
+  estiloVida: 'lifestyle',
+
+  // Risk factors
+  imcMenor20: 'IMCm20',
+  etnicidadBlancaCaucasica: 'ethnicity_caucasian',
+  menopausiaPrecoz: 'early_menopause',
+  fracturaPrevia: 'previous_fracture',
+  antecedenteFracturaPaternoMaterno: 'parent_hip_fracture',
+  tabaquismoActivo: 'smoking',
+  ingestaAlcohol: 'alcohol',
+  nutricionPobre: 'poor_nutrition',
+  medicamentosAsociados: 'associated_medications',
+  artritisReumatoide: 'rheumatoid_arthritis',
+  otrasArtritisInflamatorias: 'other_inflammatory_arthritis',
+  lupusEritematoso: 'lupus',
+  hiperparatiroidismo: 'hyperparathyroidism',
+  hipertiroidismo: 'hyperthyroidism',
+  hipercortisolismo: 'hypercortisolism',
+  diabetes: 'diabetes',
+  enfermedadInflamatoriaIntestinal: 'inflammatory_bowel_disease',
+  malnutricion: 'malnutrition',
+  nutricionParenteral: 'parenteral_nutrition',
+  mielomaMultiple: 'myeloma',
+  otrosTrastornosMedulares: 'other_marrow_disorders',
+  epoc: 'copd',
+  enfermedadRenalCronica: 'chronic_kidney_disease',
+
+  // Diagnosis
+  pacienteDiagnosticado: 'diag',
+  fechaDiagnostico: 'diag_date',
+  metodoDiagnostico: 'Diag_method',
+  otroMetodoEspecificar: 'Diag_method_other',
+
+  // Non-pharmacological treatments
+  ejercicioFisico: 'exercise',
+  ejercicioFisicoContinua: 'exercise_cont',
+  suplementosCalcioVitaminaD: 'calcium_vitaminD',
+  suplementosCalcioVitaminaDContinua: 'calcium_vitaminD_cont',
+  dejarFumar: 'quit_smoking',
+  dejarFumarContinua: 'quit_smoking_cont',
+  reduccionConsumoAlcohol: 'alcohol_reduction',
+  reduccionConsumoAlcoholContinua: 'alcohol_reduction_cont',
+  protectoresCadera: 'hip_protectors',
+  protectoresCaderaContinua: 'hip_protectors_cont',
+  otroTratamiento: 'other_treatment',
+
+  // End of study
+  fechaFinEstudio: 'date_end_study',
+  pacienteCompletoEstudio: 'study_completion',
+  motivoNoCompletado: 'reason_not_completed',
+  otroMotivoEspecificar: 'reason_not_completed_other',
+  inicialesFinEstudio: 'Investigator_initials',
+
+  // Recent fractures
+  fechaFractura1: 'frac_rec_date',
+  localizacionFractura1: 'frac_rec_loc',
+  hospitalizacion1: 'frac_rec_hosp',
+  agregarFractura2: 'add_frac_2',
+  fechaFractura2: 'frac_rec_date_2',
+  localizacionFractura2: 'frac_rec_loc_2',
+  hospitalizacion2: 'frac_rec_hosp_2',
+  agregarFractura3: 'add_frac_3',
+  fechaFractura3: 'frac_rec_date_3',
+  localizacionFractura3: 'frac_rec_loc_3',
+  hospitalizacion3: 'frac_rec_hosp_3',
+  agregarFractura4: 'add_frac_4',
+  fechaFractura4: 'frac_rec_date_4',
+  localizacionFractura4: 'frac_rec_loc_4',
+  hospitalizacion4: 'frac_rec_hosp_4',
+  agregarFractura5: 'add_frac_5',
+  fechaFractura5: 'frac_rec_date_5',
+  localizacionFractura5: 'frac_rec_loc_5',
+  hospitalizacion5: 'frac_rec_hosp_5',
+  agregarFractura6: 'add_frac_6',
+  fechaFractura6: 'frac_rec_date_6',
+  localizacionFractura6: 'frac_rec_loc_6',
+  hospitalizacion6: 'frac_rec_hosp_6',
+
+  // Medications - Alendronato
+  alendronatoFechaInicio1: 'alend_ini_date_1',
+  alendronatoContinua1: 'alend_cont_1',
+  alendronatoFechaFin1: 'alend_end_date_1',
+  alendronatoMotivoInterrupcion1: 'alend_reason_end_1',
+  agregarTratamientoalendronato2: 'add_alend_2',
+  alendronatoFechaInicio2: 'alend_ini_date_2',
+  alendronatoContinua2: 'alend_cont_2',
+  alendronatoFechaFin2: 'alend_end_date_2',
+  alendronatoMotivoInterrupcion2: 'alend_reason_end_2',
+  agregarTratamientoalendronato3: 'add_alend_3',
+  alendronatoFechaInicio3: 'alend_ini_date_3',
+  alendronatoFechaFin3: 'alend_end_date_3',
+  alendronatoMotivoInterrupcion3: 'alend_reason_end_3',
+  alendronatoDetallesAdicionales: 'alend_additional_details',
+
+  // Medications - Risedronato
+  risedronatoFechaInicio1: 'risedr_ini_date_1',
+  risedronatoContinua1: 'risedr_cont_1',
+  risedronatoFechaFin1: 'risedr_end_date_1',
+  risedronatoMotivoInterrupcion1: 'risedr_reason_end_1',
+  agregarTratamientorisedronato2: 'add_risedr_2',
+  risedronatoFechaInicio2: 'risedr_ini_date_2',
+  risedronatoContinua2: 'risedr_cont_2',
+  risedronatoFechaFin2: 'risedr_end_date_2',
+  risedronatoMotivoInterrupcion2: 'risedr_reason_end_2',
+  agregarTratamientorisedronato3: 'add_risedr_3',
+  risedronatoFechaInicio3: 'risedr_ini_date_3',
+  risedronatoFechaFin3: 'risedr_end_date_3',
+  risedronatoMotivoInterrupcion3: 'risedr_reason_end_3',
+  risedronatoDetallesAdicionales: 'risedr_additional_details',
+
+  // Medications - Ibandronato
+  ibandronatoFechaInicio1: 'iband_ini_date_1',
+  ibandronatoContinua1: 'iband_cont_1',
+  ibandronatoFechaFin1: 'iband_end_date_1',
+  ibandronatoMotivoInterrupcion1: 'iband_reason_end_1',
+  agregarTratamientoibandronato2: 'add_iband_2',
+  ibandronatoFechaInicio2: 'iband_ini_date_2',
+  ibandronatoContinua2: 'iband_cont_2',
+  ibandronatoFechaFin2: 'iband_end_date_2',
+  ibandronatoMotivoInterrupcion2: 'iband_reason_end_2',
+  agregarTratamientoibandronato3: 'add_iband_3',
+  ibandronatoFechaInicio3: 'iband_ini_date_3',
+  ibandronatoFechaFin3: 'iband_end_date_3',
+  ibandronatoMotivoInterrupcion3: 'iband_reason_end_3',
+  ibandronatoDetallesAdicionales: 'iband_additional_details',
+
+  // Medications - Zoledronato
+  zoledronatoFechaInicio1: 'zoledr_ini_date_1',
+  zoledronatoContinua1: 'zoledr_cont_1',
+  zoledronatoFechaFin1: 'zoledr_end_date_1',
+  zoledronatoMotivoInterrupcion1: 'zoledr_reason_end_1',
+  agregarTratamientozoledronato2: 'add_zoledr_2',
+  zoledronatoFechaInicio2: 'zoledr_ini_date_2',
+  zoledronatoContinua2: 'zoledr_cont_2',
+  zoledronatoFechaFin2: 'zoledr_end_date_2',
+  zoledronatoMotivoInterrupcion2: 'zoledr_reason_end_2',
+  agregarTratamientozoledronato3: 'add_zoledr_3',
+  zoledronatoFechaInicio3: 'zoledr_ini_date_3',
+  zoledronatoFechaFin3: 'zoledr_end_date_3',
+  zoledronatoMotivoInterrupcion3: 'zoledr_reason_end_3',
+  zoledronatoDetallesAdicionales: 'zoledr_additional_details',
+
+  // Medications - Denosumab
+  denosumabFechaInicio1: 'denos_ini_date_1',
+  denosumabContinua1: 'denos_cont_1',
+  denosumabFechaFin1: 'denos_end_date_1',
+  denosumabMotivoInterrupcion1: 'denos_reason_end_1',
+  agregarTratamientodenosumab2: 'add_denos_2',
+  denosumabFechaInicio2: 'denos_ini_date_2',
+  denosumabContinua2: 'denos_cont_2',
+  denosumabFechaFin2: 'denos_end_date_2',
+  denosumabMotivoInterrupcion2: 'denos_reason_end_2',
+  agregarTratamientodenosumab3: 'add_denos_3',
+  denosumabFechaInicio3: 'denos_ini_date_3',
+  denosumabFechaFin3: 'denos_end_date_3',
+  denosumabMotivoInterrupcion3: 'denos_reason_end_3',
+  denosumabDetallesAdicionales: 'denos_additional_details',
+
+  // Medications - Raloxifeno
+  raloxifenoFechaInicio1: 'ralox_ini_date_1',
+  raloxifenoContinua1: 'ralox_cont_1',
+  raloxifenoFechaFin1: 'ralox_end_date_1',
+  raloxifenoMotivoInterrupcion1: 'ralox_reason_end_1',
+  agregarTratamientoraloxifeno2: 'add_ralox_2',
+  raloxifenoFechaInicio2: 'ralox_ini_date_2',
+  raloxifenoContinua2: 'ralox_cont_2',
+  raloxifenoFechaFin2: 'ralox_end_date_2',
+  raloxifenoMotivoInterrupcion2: 'ralox_reason_end_2',
+  agregarTratamientoraloxifeno3: 'add_ralox_3',
+  raloxifenoFechaInicio3: 'ralox_ini_date_3',
+  raloxifenoFechaFin3: 'ralox_end_date_3',
+  raloxifenoMotivoInterrupcion3: 'ralox_reason_end_3',
+  raloxifenoDetallesAdicionales: 'ralox_additional_details',
+
+  // Medications - Bazedoxifeno
+  bazedoxifenoFechaInicio1: 'bazed_ini_date_1',
+  bazedoxifenoContinua1: 'bazed_cont_1',
+  bazedoxifenoFechaFin1: 'bazed_end_date_1',
+  bazedoxifenoMotivoInterrupcion1: 'bazed_reason_end_1',
+  agregarTratamientobazedoxifeno2: 'add_bazed_2',
+  bazedoxifenoFechaInicio2: 'bazed_ini_date_2',
+  bazedoxifenoContinua2: 'bazed_cont_2',
+  bazedoxifenoFechaFin2: 'bazed_end_date_2',
+  bazedoxifenoMotivoInterrupcion2: 'bazed_reason_end_2',
+  agregarTratamientobazedoxifeno3: 'add_bazed_3',
+  bazedoxifenoFechaInicio3: 'bazed_ini_date_3',
+  bazedoxifenoFechaFin3: 'bazed_end_date_3',
+  bazedoxifenoMotivoInterrupcion3: 'bazed_reason_end_3',
+  bazedoxifenoDetallesAdicionales: 'bazed_additional_details',
+
+  // Medications - Tibolona
+  tibolonaFechaInicio1: 'tibol_ini_date_1',
+  tibolonaContinua1: 'tibol_cont_1',
+  tibolonaFechaFin1: 'tibol_end_date_1',
+  tibolonaMotivoInterrupcion1: 'tibol_reason_end_1',
+  agregarTratamientotibolona2: 'add_tibol_2',
+  tibolonaFechaInicio2: 'tibol_ini_date_2',
+  tibolonaContinua2: 'tibol_cont_2',
+  tibolonaFechaFin2: 'tibol_end_date_2',
+  tibolonaMotivoInterrupcion2: 'tibol_reason_end_2',
+  agregarTratamientotibolona3: 'add_tibol_3',
+  tibolonaFechaInicio3: 'tibol_ini_date_3',
+  tibolonaFechaFin3: 'tibol_end_date_3',
+  tibolonaMotivoInterrupcion3: 'tibol_reason_end_3',
+  tibolonaDetallesAdicionales: 'tibol_additional_details',
+
+  // Medications - Teriparatida
+  teriparatidaFechaInicio1: 'terip_ini_date_1',
+  teriparatidaContinua1: 'terip_cont_1',
+  teriparatidaFechaFin1: 'terip_end_date_1',
+  teriparatidaMotivoInterrupcion1: 'terip_reason_end_1',
+  agregarTratamientoteriparatida2: 'add_terip_2',
+  teriparatidaFechaInicio2: 'terip_ini_date_2',
+  teriparatidaContinua2: 'terip_cont_2',
+  teriparatidaFechaFin2: 'terip_end_date_2',
+  teriparatidaMotivoInterrupcion2: 'terip_reason_end_2',
+  agregarTratamientoteriparatida3: 'add_terip_3',
+  teriparatidaFechaInicio3: 'terip_ini_date_3',
+  teriparatidaFechaFin3: 'terip_end_date_3',
+  teriparatidaMotivoInterrupcion3: 'terip_reason_end_3',
+  teriparatidaDetallesAdicionales: 'terip_additional_details',
+
+  // Medications - Abaloparatida
+  abaloparatidaFechaInicio1: 'abalop_ini_date_1',
+  abaloparatidaContinua1: 'abalop_cont_1',
+  abaloparatidaFechaFin1: 'abalop_end_date_1',
+  abaloparatidaMotivoInterrupcion1: 'abalop_reason_end_1',
+  agregarTratamientoabaloparatida2: 'add_abalop_2',
+  abaloparatidaFechaInicio2: 'abalop_ini_date_2',
+  abaloparatidaContinua2: 'abalop_cont_2',
+  abaloparatidaFechaFin2: 'abalop_end_date_2',
+  abaloparatidaMotivoInterrupcion2: 'abalop_reason_end_2',
+  agregarTratamientoabaloparatida3: 'add_abalop_3',
+  abaloparatidaFechaInicio3: 'abalop_ini_date_3',
+  abaloparatidaFechaFin3: 'abalop_end_date_3',
+  abaloparatidaMotivoInterrupcion3: 'abalop_reason_end_3',
+  abaloparatidaDetallesAdicionales: 'abalop_additional_details',
+
+  // Medications - Romosozumab
+  romosozumabFechaInicio1: 'romos_ini_date_1',
+  romosozumabContinua1: 'romos_cont_1',
+  romosozumabFechaFin1: 'romos_end_date_1',
+  romosozumabMotivoInterrupcion1: 'romos_reason_end_1',
+  agregarTratamientoromosozumab2: 'add_romos_2',
+  romosozumabFechaInicio2: 'romos_ini_date_2',
+  romosozumabContinua2: 'romos_cont_2',
+  romosozumabFechaFin2: 'romos_end_date_2',
+  romosozumabMotivoInterrupcion2: 'romos_reason_end_2',
+  agregarTratamientoromosozumab3: 'add_romos_3',
+  romosozumabFechaInicio3: 'romos_ini_date_3',
+  romosozumabFechaFin3: 'romos_end_date_3',
+  romosozumabMotivoInterrupcion3: 'romos_reason_end_3',
+  romosozumabDetallesAdicionales: 'romos_additional_details'
+};
+
 // Function to generate all measures (fields) for export
 function generateAllMeasures() {
   const measures: Record<string, any> = {};
@@ -541,7 +811,8 @@ function generateAllMeasures() {
   };
 
   const add = (key: string) => {
-    const exportKey = camelToSnake(key);
+    // Use custom mapping if available, otherwise fall back to camelToSnake
+    const exportKey = fieldNameMappings[key] || camelToSnake(key);
     measures[exportKey] = {
       kind: 'computed',
       label: exportKey,
@@ -549,16 +820,36 @@ function generateAllMeasures() {
     };
   };
 
+  // Afegir camps calculats per criteris d'inclusió/exclusió
+  // Si el formulari s'ha completat, vol dir que els criteris són correctes
+  measures['sum_inclusion'] = {
+    kind: 'computed',
+    label: 'sum_inclusion',
+    value: (data: any) => {
+      // Si el formulari està completat, els criteris d'inclusió s'han validat correctament
+      return data.criterioInclusion1 === 'si' && data.criterioInclusion2 === 'si' ? 'si' : 'no';
+    }
+  };
+
+  measures['sum_exclusion'] = {
+    kind: 'computed',
+    label: 'sum_exclusion',
+    value: (data: any) => {
+      // Si el formulari està completat, cap criteri d'exclusió s'ha marcat
+      const noExclusions =
+        data.criterioExclusion1 === 'no' &&
+        data.criterioExclusion2 === 'no' &&
+        data.criterioExclusion3 === 'no' &&
+        data.criterioExclusion4 === 'no';
+      return noExclusions ? 'no' : 'si';
+    }
+  };
+
   const fields = [
     'codigoPaciente',
     'consentimientoInformado',
     'fechaConsentimiento',
-    'criterioInclusion1',
-    'criterioInclusion2',
-    'criterioExclusion1',
-    'criterioExclusion2',
-    'criterioExclusion3',
-    'criterioExclusion4',
+    // Criteris individuals no s'exporten - usem sum_inclusion i sum_exclusion
     'centroAtencionPrimaria',
     'sexoPaciente',
     'edadPaciente',
@@ -653,7 +944,7 @@ function generateAllMeasures() {
 
 export default defineInstrument({
   kind: 'FORM',
-  language: 'ca',
+  language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
     edition: 6,
