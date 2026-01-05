@@ -57,7 +57,6 @@ export const StartSessionForm = ({
         className="mx-auto max-w-3xl"
         content={[
           {
-            key: 'alta-health-session',
             title: t({
               ca: 'Iniciar Registre'
             }),
@@ -114,7 +113,6 @@ export const StartSessionForm = ({
       className="mx-auto max-w-3xl"
       content={[
         {
-          key: 'identification-method',
           title: t('common.identificationMethod'),
           description: t('common.identificationMethodDesc'),
           fields: {
@@ -130,7 +128,6 @@ export const StartSessionForm = ({
           }
         },
         {
-          key: 'subject-identification',
           title: t('common.subjectIdentification.title'),
           fields: {
             subjectId: {
@@ -207,7 +204,6 @@ export const StartSessionForm = ({
           }
         },
         {
-          key: 'additional-data',
           title: t('session.additionalData.title'),
           fields: {
             sessionType: {
