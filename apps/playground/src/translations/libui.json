@@ -1,0 +1,36 @@
+{
+  "pagination": {
+    "firstPage": {
+      "ca": "<< Primera",
+      "es": "<< Primera"
+    },
+    "first": {
+      "ca": "Primera",
+      "es": "Primera"
+    },
+    "info": {
+      "ca": "Mostrant {{first}} a {{last}} de {{total}} resultats",
+      "es": "Mostrando {{first}} a {{last}} de {{total}} resultados"
+    },
+    "lastPage": {
+      "ca": "Última >>",
+      "es": "Última >>"
+    },
+    "last": {
+      "ca": "Última",
+      "es": "Última"
+    },
+    "next": {
+      "ca": "Següent",
+      "es": "Siguiente"
+    },
+    "previous": {
+      "ca": "Anterior",
+      "es": "Anterior"
+    }
+  },
+  "submit": {
+    "ca": "Enviar",
+    "es": "Enviar"
+  }
+}

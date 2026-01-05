@@ -1,24 +1,166 @@
 {
-  "pagination": {
-    "firstPage": {
-      "ca": "<< Primera",
-      "es": "<< Primera"
+  "days": {
+    "friday": {
+      "ca": "Divendres",
+      "es": "Viernes"
     },
+    "monday": {
+      "ca": "Dilluns",
+      "es": "Lunes"
+    },
+    "saturday": {
+      "ca": "Dissabte",
+      "es": "Sábado"
+    },
+    "sunday": {
+      "ca": "Diumenge",
+      "es": "Domingo"
+    },
+    "thursday": {
+      "ca": "Dijous",
+      "es": "Jueves"
+    },
+    "tuesday": {
+      "ca": "Dimarts",
+      "es": "Martes"
+    },
+    "wednesday": {
+      "ca": "Dimecres",
+      "es": "Miércoles"
+    }
+  },
+  "form": {
+    "append": {
+      "ca": "Afegir",
+      "es": "Agregar"
+    },
+    "radioLabels": {
+      "false": {
+        "ca": "Fals",
+        "es": "Falso"
+      },
+      "true": {
+        "ca": "Cert",
+        "es": "Verdadero"
+      }
+    },
+    "remove": {
+      "ca": "Eliminar",
+      "es": "Eliminar"
+    },
+    "required": {
+      "ca": "Aquest camp és obligatori",
+      "es": "Este campo es obligatorio"
+    },
+    "reset": {
+      "ca": "Restablir",
+      "es": "Restablecer"
+    },
+    "submit": {
+      "ca": "Enviar",
+      "es": "Enviar"
+    }
+  },
+  "months": {
+    "april": {
+      "ca": "Abril",
+      "es": "Abril"
+    },
+    "august": {
+      "ca": "Agost",
+      "es": "Agosto"
+    },
+    "december": {
+      "ca": "Desembre",
+      "es": "Diciembre"
+    },
+    "february": {
+      "ca": "Febrer",
+      "es": "Febrero"
+    },
+    "january": {
+      "ca": "Gener",
+      "es": "Enero"
+    },
+    "july": {
+      "ca": "Juliol",
+      "es": "Julio"
+    },
+    "june": {
+      "ca": "Juny",
+      "es": "Junio"
+    },
+    "march": {
+      "ca": "Març",
+      "es": "Marzo"
+    },
+    "may": {
+      "ca": "Maig",
+      "es": "Mayo"
+    },
+    "november": {
+      "ca": "Novembre",
+      "es": "Noviembre"
+    },
+    "october": {
+      "ca": "Octubre",
+      "es": "Octubre"
+    },
+    "september": {
+      "ca": "Setembre",
+      "es": "Septiembre"
+    }
+  },
+  "no": {
+    "ca": "No",
+    "es": "No"
+  },
+  "notifications": {
+    "types": {
+      "error": {
+        "ca": "Error",
+        "es": "Error"
+      },
+      "info": {
+        "ca": "Informació",
+        "es": "Información"
+      },
+      "success": {
+        "ca": "Èxit",
+        "es": "Éxito"
+      },
+      "warning": {
+        "ca": "Avís",
+        "es": "Advertencia"
+      }
+    }
+  },
+  "oneTimePasswordInput": {
+    "invalidCodeFormat": {
+      "ca": "Format de codi invàlid",
+      "es": "Formato de código inválido"
+    }
+  },
+  "pagination": {
     "first": {
       "ca": "Primera",
       "es": "Primera"
+    },
+    "firstPage": {
+      "ca": "<< Primera",
+      "es": "<< Primera"
     },
     "info": {
       "ca": "Mostrant {{first}} a {{last}} de {{total}} resultats",
       "es": "Mostrando {{first}} a {{last}} de {{total}} resultados"
     },
-    "lastPage": {
-      "ca": "Última >>",
-      "es": "Última >>"
-    },
     "last": {
       "ca": "Última",
       "es": "Última"
+    },
+    "lastPage": {
+      "ca": "Última >>",
+      "es": "Última >>"
     },
     "next": {
       "ca": "Següent",
@@ -28,5 +170,15 @@
       "ca": "Anterior",
       "es": "Anterior"
     }
+  },
+  "searchBar": {
+    "placeholder": {
+      "ca": "Cercar...",
+      "es": "Buscar..."
+    }
+  },
+  "yes": {
+    "ca": "Sí",
+    "es": "Sí"
   }
 }
