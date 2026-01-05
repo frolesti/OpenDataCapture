@@ -32,6 +32,8 @@ const RouteComponent = () => {
           <Form
             content={[
               {
+                key: 'admin',
+                id: 'admin',
                 description: t('setup.admin.description'),
                 fields: {
                   firstName: {
@@ -66,11 +68,17 @@ const RouteComponent = () => {
                 title: t('setup.admin.title')
               },
               {
+                key: 'demo',
+                id: 'demo',
                 description: t('setup.demo.description'),
                 fields: {
                   enableExperimentalFeatures: {
                     kind: 'boolean',
                     label: t('setup.enableExperimentalFeatures'),
+                    options: {
+                      false: t('core.no'),
+                      true: t('core.yes')
+                    },
                     variant: 'radio'
                   },
                   initDemo: {

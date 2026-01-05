@@ -220,6 +220,7 @@ const RouteComponent = () => {
                 instrumentId: z.string()
               }) satisfies z.ZodType<Omit<CreateAssignmentData, 'subjectId'>>
             }
+            submitBtnLabel={t('core.submit')}
             onSubmit={async (data) => {
               await createAssignmentMutation.mutateAsync({
                 data: { ...data, groupId: currentGroup?.id, subjectId: params.subjectId }

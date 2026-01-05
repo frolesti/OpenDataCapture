@@ -180,6 +180,7 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
       initialValues={initialValues}
       preventResetValuesOnReset={true}
       readOnly={readOnly}
+      submitBtnLabel={t('core.submit')}
       validationSchema={z.object({
         accessibleFormInstrumentIds: z.set(z.string()),
         accessibleInteractiveInstrumentIds: z.set(z.string()),

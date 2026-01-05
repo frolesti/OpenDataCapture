@@ -38,6 +38,7 @@ const ContactForm = ({ onSubmit }: ContactFormProps) => {
           variant: 'textarea'
         }
       }}
+      submitBtnLabel={t('core.submit')}
       validationSchema={z.object({
         contactReason: z.enum(['bug', 'feedback', 'other', 'request']),
         message: z.string().min(1)

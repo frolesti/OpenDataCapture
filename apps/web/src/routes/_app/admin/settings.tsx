@@ -47,6 +47,7 @@ const RouteComponent = () => {
         ]}
         initialValues={setupStateQuery.data}
         preventResetValuesOnReset={true}
+        submitBtnLabel={t('core.submit')}
         validationSchema={
           z.object({
             customLogoSvg: z.string().optional(),

@@ -57,6 +57,7 @@ export const StartSessionForm = ({
         className="mx-auto max-w-3xl"
         content={[
           {
+            key: 'alta-health-session',
             title: t({
               ca: 'Iniciar Registre'
             }),
@@ -113,6 +114,7 @@ export const StartSessionForm = ({
       className="mx-auto max-w-3xl"
       content={[
         {
+          key: 'identification-method',
           title: t('common.identificationMethod'),
           description: t('common.identificationMethodDesc'),
           fields: {
@@ -128,6 +130,7 @@ export const StartSessionForm = ({
           }
         },
         {
+          key: 'subject-identification',
           title: t('common.subjectIdentification.title'),
           fields: {
             subjectId: {
@@ -204,6 +207,7 @@ export const StartSessionForm = ({
           }
         },
         {
+          key: 'additional-data',
           title: t('session.additionalData.title'),
           fields: {
             sessionType: {
@@ -243,7 +247,14 @@ export const StartSessionForm = ({
           subjectId: z
             .string()
             .min(1)
-            .refine((arg) => !arg.includes('$'), t({}))
+            .refine(
+              (arg) => !arg.includes('$'),
+              t({
+                en: "Character '$' is not allowed",
+                ca: "El caràcter '$' no està permès",
+                es: "El carácter '$' no está permitido"
+              })
+            )
             .optional(),
           subjectDateOfBirth: z
             .date()

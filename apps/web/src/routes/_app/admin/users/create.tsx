@@ -42,7 +42,7 @@ const RouteComponent = () => {
     <div>
       <PageHeader>
         <Heading className="text-center" variant="h2">
-          {t({})}
+          {t('user.create.title')}
         </Heading>
       </PageHeader>
       <Form
@@ -69,10 +69,10 @@ const RouteComponent = () => {
                 variant: 'password'
               }
             },
-            title: t({})
+            title: t('user.create.credentials')
           },
           {
-            title: t({}),
+            title: t('user.create.permissions'),
             fields: {
               basePermissionLevel: {
                 kind: 'string',
@@ -127,7 +127,7 @@ const RouteComponent = () => {
                 label: t('core.identificationData.dateOfBirth.label')
               }
             },
-            title: t({})
+            title: t('user.create.personalInfo')
           }
         ]}
         validationSchema={$CreateUserData
@@ -159,6 +159,7 @@ const RouteComponent = () => {
               });
             }
           })}
+        submitBtnLabel={t('core.submit')}
         onSubmit={(data) => handleSubmit({ ...data, groupIds: Array.from(data.groupIds ?? []) })}
       />
     </div>

@@ -21,7 +21,7 @@ const RouteComponent = () => {
     <div>
       <PageHeader>
         <Heading className="text-center" variant="h2">
-          {t({})}
+          {t('group.create.title')}
         </Heading>
       </PageHeader>
       <Form
@@ -42,6 +42,7 @@ const RouteComponent = () => {
             variant: 'select'
           }
         }}
+        submitBtnLabel={t('core.submit')}
         validationSchema={$CreateGroupData.omit({ settings: true })}
         onSubmit={handleSubmit}
       />
