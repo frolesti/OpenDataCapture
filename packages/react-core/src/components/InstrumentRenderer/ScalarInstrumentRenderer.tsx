@@ -78,12 +78,12 @@ export const ScalarInstrumentRenderer = ({
           return (
             <ContentPlaceholder
               message={t({
-                en: 'An unexpected error occurred while loading this instrument. Please contact the platform administrator for further assistance.',
-                fr: "Une erreur inattendue s'est produite lors du chargement de cet instrument. Veuillez contacter l'administrateur de la plateforme pour obtenir de l'aide."
+                ca: "S'ha produït un error inesperat en carregar aquest instrument. Si us plau, contacteu amb l'administrador de la plataforma per obtenir més assistència.",
+                es: 'Se produjo un error inesperado al cargar este instrumento. Por favor, contacte con el administrador de la plataforma para obtener más asistencia.'
               })}
               title={t({
-                en: 'Failed to Load Instrument',
-                fr: "Échec du chargement de l'instrument"
+                ca: "Error en carregar l'instrument",
+                es: 'Error al cargar el instrumento'
               })}
             />
           );

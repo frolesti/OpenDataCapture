@@ -23,10 +23,8 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
               <Heading variant="h5">
                 {t({
                   ca: 'Duració estimada',
-                  es: 'Tiempo estimado',
-                  en: 'Estimated Duration',
-                  fr: 'Durée estimée'
-                } as any)}
+                  es: 'Tiempo estimado'
+                })}
               </Heading>
               <p className="text-muted-foreground text-sm">{`${estimatedDuration} minute(s)`}</p>
             </>
@@ -37,10 +35,8 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
             <Heading variant="h5">
               {t({
                 ca: 'Instruccions',
-                es: 'Instrucciones',
-                en: 'Instructions',
-                fr: 'Instructions'
-              } as any)}
+                es: 'Instrucciones'
+              })}
             </Heading>
             <p className="text-muted-foreground text-sm">{instructions!.join(', ')}</p>
           </div>
@@ -50,10 +46,8 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
         className="w-full"
         label={t({
           ca: 'Començar',
-          es: 'Comenzar',
-          en: 'Begin',
-          fr: 'Commencer'
-        } as any)}
+          es: 'Comenzar'
+        })}
         variant="primary"
         onClick={() => {
           onNext();

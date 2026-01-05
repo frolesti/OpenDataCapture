@@ -21,22 +21,22 @@ export const InstrumentRendererContainer = ({ children, className, index }: Inst
       {
         icon: FileCheckIcon,
         label: t({
-          en: 'Overview',
-          fr: 'Aperçu'
+          ca: 'Visió General',
+          es: 'Visión General'
         })
       },
       {
         icon: MonitorIcon,
         label: t({
-          en: 'Content',
-          fr: 'Contenu'
+          ca: 'Contingut',
+          es: 'Contenido'
         })
       },
       {
         icon: PrinterIcon,
         label: t({
-          en: 'Summary',
-          fr: 'Résumé'
+          ca: 'Resum',
+          es: 'Resumen'
         })
       }
     ],
