@@ -44,6 +44,10 @@ axios.interceptors.response.use(
   },
   (error) => {
     const notifications = useNotificationsStore.getState();
+    if (isAxiosError(error) && error.response?.status === 401) {
+      useAppStore.getState().logout();
+      return Promise.reject(error);
+    }
     if (!isAxiosError(error)) {
       notifications.addNotification({
         message: i18n.t({
