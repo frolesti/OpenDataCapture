@@ -54,7 +54,7 @@ export function useNavItems() {
         url: '/dashboard'
       });
     }
-    if (ability?.can('read', 'Subject') && ability.can('read', 'InstrumentRecord')) {
+    if (ability?.can('read', 'Subject')) {
       globalItems.push({
         icon: DatabaseIcon,
         label: t('layout.navLinks.datahub'),
