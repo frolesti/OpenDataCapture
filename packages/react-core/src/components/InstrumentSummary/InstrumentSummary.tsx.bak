@@ -225,23 +225,6 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
           })}
         />
       )}
-      {instrument.internal.name === 'OMEGA_FF_AP_2025' && (
-        <>
-          <p className="text-center text-lg font-semibold text-green-700">
-            Gracias por su tiempo, el formulario se ha guardado correctamente
-          </p>
-          <div className="rounded-md border border-blue-200 bg-blue-50 p-4 text-sm">
-            <p className="mb-2 font-semibold text-blue-900">Próximos pasos:</p>
-            <ul className="list-inside list-disc space-y-1 text-blue-800">
-              <li>
-                Para introducir datos de otro paciente, cierre el registro actual en el menú lateral haciendo clic en
-                "Tanca registre actual"
-              </li>
-              <li>Para consultar las datos de los pacientes, acceda al "Llistat de pacients" en el menú lateral</li>
-            </ul>
-          </div>
-        </>
-      )}
     </div>
   );
 };
