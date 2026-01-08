@@ -375,7 +375,7 @@ function generateMedicationFields(medicationName: string, medicationLabel: strin
       fields[`${medicationName}Continua${i}`] = requiresMedicationStartDate(
         {
           kind: 'string',
-          label: `${treatmentLabel} - Continúa`,
+          label: `${treatmentLabel} - Continúa *`,
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -551,7 +551,7 @@ const fieldNameMappings: Record<string, string> = {
 
   // Risk factors
   imcMenor20: 'IMCm20',
-  etnicidadBlancaCaucasien: 'ethnicity_caucasian',
+  etnicidadBlancaCaucasica: 'ethnicity_caucasian',
   menopausiaPrecoz: 'early_menopause',
   fracturaPrevia: 'previous_fracture',
   antecedenteFracturaPaternoMaterno: 'parent_hip_fracture',
@@ -565,14 +565,14 @@ const fieldNameMappings: Record<string, string> = {
   hiperparatiroidismo: 'hyperparathyroidism',
   hipertiroidismo: 'hyperthyroidism',
   hipercortisolismo: 'hypercortisolism',
-  diabetfr: 'diabetes',
+  diabetes: 'diabetes',
   enfermedadInflamatoriaIntestinal: 'inflammatory_bowel_disease',
   malnutricion: 'malnutrition',
   nutricionParenteral: 'parenteral_nutrition',
   mielomaMultiple: 'myeloma',
-  otrosTrastornosMedularfr: 'other_marrow_disorders',
+  otrosTrastornosMedulares: 'other_marrow_disorders',
   epoc: 'copd',
-  enfermedadRenalCronien: 'chronic_kidney_disease',
+  enfermedadRenalCronica: 'chronic_kidney_disease',
 
   // Diagnosis
   pacienteDiagnosticado: 'diag',
@@ -639,7 +639,7 @@ const fieldNameMappings: Record<string, string> = {
   alendronatoFechaInicio3: 'alend_ini_date_3',
   alendronatoFechaFin3: 'alend_end_date_3',
   alendronatoMotivoInterrupcion3: 'alend_reason_end_3',
-  alendronatoDetallesAdicionalfr: 'alend_additional_details',
+  alendronatoDetallesAdicionales: 'alend_additional_details',
 
   // Medications - Risedronato
   risedronatoFechaInicio1: 'risedr_ini_date_1',
@@ -655,7 +655,7 @@ const fieldNameMappings: Record<string, string> = {
   risedronatoFechaInicio3: 'risedr_ini_date_3',
   risedronatoFechaFin3: 'risedr_end_date_3',
   risedronatoMotivoInterrupcion3: 'risedr_reason_end_3',
-  risedronatoDetallesAdicionalfr: 'risedr_additional_details',
+  risedronatoDetallesAdicionales: 'risedr_additional_details',
 
   // Medications - Ibandronato
   ibandronatoFechaInicio1: 'iband_ini_date_1',
@@ -671,7 +671,7 @@ const fieldNameMappings: Record<string, string> = {
   ibandronatoFechaInicio3: 'iband_ini_date_3',
   ibandronatoFechaFin3: 'iband_end_date_3',
   ibandronatoMotivoInterrupcion3: 'iband_reason_end_3',
-  ibandronatoDetallesAdicionalfr: 'iband_additional_details',
+  ibandronatoDetallesAdicionales: 'iband_additional_details',
 
   // Medications - Zoledronato
   zoledronatoFechaInicio1: 'zoledr_ini_date_1',
@@ -687,7 +687,7 @@ const fieldNameMappings: Record<string, string> = {
   zoledronatoFechaInicio3: 'zoledr_ini_date_3',
   zoledronatoFechaFin3: 'zoledr_end_date_3',
   zoledronatoMotivoInterrupcion3: 'zoledr_reason_end_3',
-  zoledronatoDetallesAdicionalfr: 'zoledr_additional_details',
+  zoledronatoDetallesAdicionales: 'zoledr_additional_details',
 
   // Medications - Denosumab
   denosumabFechaInicio1: 'denos_ini_date_1',
@@ -703,7 +703,7 @@ const fieldNameMappings: Record<string, string> = {
   denosumabFechaInicio3: 'denos_ini_date_3',
   denosumabFechaFin3: 'denos_end_date_3',
   denosumabMotivoInterrupcion3: 'denos_reason_end_3',
-  denosumabDetallesAdicionalfr: 'denos_additional_details',
+  denosumabDetallesAdicionales: 'denos_additional_details',
 
   // Medications - Raloxifeno
   raloxifenoFechaInicio1: 'ralox_ini_date_1',
@@ -719,7 +719,7 @@ const fieldNameMappings: Record<string, string> = {
   raloxifenoFechaInicio3: 'ralox_ini_date_3',
   raloxifenoFechaFin3: 'ralox_end_date_3',
   raloxifenoMotivoInterrupcion3: 'ralox_reason_end_3',
-  raloxifenoDetallesAdicionalfr: 'ralox_additional_details',
+  raloxifenoDetallesAdicionales: 'ralox_additional_details',
 
   // Medications - Bazedoxifeno
   bazedoxifenoFechaInicio1: 'bazed_ini_date_1',
@@ -735,7 +735,7 @@ const fieldNameMappings: Record<string, string> = {
   bazedoxifenoFechaInicio3: 'bazed_ini_date_3',
   bazedoxifenoFechaFin3: 'bazed_end_date_3',
   bazedoxifenoMotivoInterrupcion3: 'bazed_reason_end_3',
-  bazedoxifenoDetallesAdicionalfr: 'bazed_additional_details',
+  bazedoxifenoDetallesAdicionales: 'bazed_additional_details',
 
   // Medications - Tibolona
   tibolonaFechaInicio1: 'tibol_ini_date_1',
@@ -751,7 +751,7 @@ const fieldNameMappings: Record<string, string> = {
   tibolonaFechaInicio3: 'tibol_ini_date_3',
   tibolonaFechaFin3: 'tibol_end_date_3',
   tibolonaMotivoInterrupcion3: 'tibol_reason_end_3',
-  tibolonaDetallesAdicionalfr: 'tibol_additional_details',
+  tibolonaDetallesAdicionales: 'tibol_additional_details',
 
   // Medications - Teriparatida
   teriparatidaFechaInicio1: 'terip_ini_date_1',
@@ -767,7 +767,7 @@ const fieldNameMappings: Record<string, string> = {
   teriparatidaFechaInicio3: 'terip_ini_date_3',
   teriparatidaFechaFin3: 'terip_end_date_3',
   teriparatidaMotivoInterrupcion3: 'terip_reason_end_3',
-  teriparatidaDetallesAdicionalfr: 'terip_additional_details',
+  teriparatidaDetallesAdicionales: 'terip_additional_details',
 
   // Medications - Abaloparatida
   abaloparatidaFechaInicio1: 'abalop_ini_date_1',
@@ -783,7 +783,7 @@ const fieldNameMappings: Record<string, string> = {
   abaloparatidaFechaInicio3: 'abalop_ini_date_3',
   abaloparatidaFechaFin3: 'abalop_end_date_3',
   abaloparatidaMotivoInterrupcion3: 'abalop_reason_end_3',
-  abaloparatidaDetallesAdicionalfr: 'abalop_additional_details',
+  abaloparatidaDetallesAdicionales: 'abalop_additional_details',
 
   // Medications - Romosozumab
   romosozumabFechaInicio1: 'romos_ini_date_1',
@@ -799,7 +799,7 @@ const fieldNameMappings: Record<string, string> = {
   romosozumabFechaInicio3: 'romos_ini_date_3',
   romosozumabFechaFin3: 'romos_end_date_3',
   romosozumabMotivoInterrupcion3: 'romos_reason_end_3',
-  romosozumabDetallesAdicionalfr: 'romos_additional_details'
+  romosozumabDetallesAdicionales: 'romos_additional_details'
 };
 
 // Function to generate all measures (fields) for export
@@ -1119,12 +1119,12 @@ export default defineInstrument({
         }),
         pesoPaciente: requiresConsent({
           kind: 'number',
-          label: 'Indique el peso (kg) *',
+          label: 'Indique el peso (kg)*',
           variant: 'input'
         }),
         alturaPaciente: requiresConsent({
           kind: 'number',
-          label: 'Indique la altura (cm) *',
+          label: 'Indique la altura (cm)*',
           variant: 'input'
         }),
         observaCifosis: requiresConsent({
@@ -1616,7 +1616,7 @@ export default defineInstrument({
         _warningTratamientoNoFarmacologico: consentWarning() as any,
         ejercicioFisico: requiresConsent({
           kind: 'string',
-          label: 'Ejercicio físico - ¿Lo ha recibido?',
+          label: 'Ejercicio físico - ¿Lo ha recibido? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -1626,7 +1626,7 @@ export default defineInstrument({
         ejercicioFisicoContinua: requiresRecibido(
           {
             kind: 'string',
-            label: 'Ejercicio físico - Continúa',
+            label: 'Ejercicio físico - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1637,7 +1637,7 @@ export default defineInstrument({
         ),
         suplementosCalcioVitaminaD: requiresConsent({
           kind: 'string',
-          label: 'Suplementos de calcio / vitamina D - ¿Lo ha recibido?',
+          label: 'Suplementos de calcio / vitamina D - ¿Lo ha recibido? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -1647,7 +1647,7 @@ export default defineInstrument({
         suplementosCalcioVitaminaDContinua: requiresRecibido(
           {
             kind: 'string',
-            label: 'Suplementos de calcio / vitamina D - Continúa',
+            label: 'Suplementos de calcio / vitamina D - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1658,7 +1658,7 @@ export default defineInstrument({
         ),
         dejarFumar: requiresConsent({
           kind: 'string',
-          label: 'Dejar de fumar - ¿Lo ha recibido?',
+          label: 'Dejar de fumar - ¿Lo ha recibido? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -1668,7 +1668,7 @@ export default defineInstrument({
         dejarFumarContinua: requiresRecibido(
           {
             kind: 'string',
-            label: 'Dejar de fumar - Continúa',
+            label: 'Dejar de fumar - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1679,7 +1679,7 @@ export default defineInstrument({
         ),
         reduccionConsumoAlcohol: requiresConsent({
           kind: 'string',
-          label: 'Reducción de consumo de alcohol - ¿Lo ha recibido?',
+          label: 'Reducción de consumo de alcohol - ¿Lo ha recibido? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -1689,7 +1689,7 @@ export default defineInstrument({
         reduccionConsumoAlcoholContinua: requiresRecibido(
           {
             kind: 'string',
-            label: 'Reducción de consumo de alcohol - Continúa',
+            label: 'Reducción de consumo de alcohol - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1700,7 +1700,7 @@ export default defineInstrument({
         ),
         protectoresCadera: requiresConsent({
           kind: 'string',
-          label: 'Protectores de cadera - ¿Lo ha recibido?',
+          label: 'Protectores de cadera - ¿Lo ha recibido? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -1710,7 +1710,7 @@ export default defineInstrument({
         protectoresCaderaContinua: requiresRecibido(
           {
             kind: 'string',
-            label: 'Protectores de cadera - Continúa',
+            label: 'Protectores de cadera - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -2004,6 +2004,118 @@ export default defineInstrument({
       inicialesFinEstudio: z.string().optional()
     })
     .superRefine((data, ctx) => {
+      // Validar campos obligatorios que tienen * en el label
+      if (data.consentimientoInformado === 'si') {
+        const requiredFields = [
+          'fechaConsentimiento',
+          'criterioInclusion1',
+          'criterioInclusion2',
+          'criterioExclusion1',
+          'criterioExclusion2',
+          'criterioExclusion3',
+          'criterioExclusion4',
+          'centroAtencionPrimaria',
+          'sexoPaciente',
+          'edadPaciente',
+          'pesoPaciente',
+          'alturaPaciente',
+          'observaCifosis',
+          'perdidaAlturaDocumentada',
+          'estiloVida',
+          'fechaFractura1',
+          'localizacionFractura1',
+          'hospitalizacion1',
+          'pacienteDiagnosticado',
+          'ejercicioFisico',
+          'suplementosCalcioVitaminaD',
+          'dejarFumar',
+          'reduccionConsumoAlcohol',
+          'protectoresCadera',
+          'fechaFinEstudio',
+          'pacienteCompletoEstudio',
+          'inicialesFinEstudio'
+        ];
+
+        for (const field of requiredFields) {
+          const value = data[field as keyof typeof data];
+          if (value === undefined || value === null || value === '') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Este campo es obligatorio',
+              path: [field]
+            });
+          }
+        }
+
+        // Validar tratamientos no farmacológicos secundarios (Continúa)
+        if (data.ejercicioFisico === 'si' && !data.ejercicioFisicoContinua) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Este campo es obligatorio',
+            path: ['ejercicioFisicoContinua']
+          });
+        }
+        if (data.suplementosCalcioVitaminaD === 'si' && !data.suplementosCalcioVitaminaDContinua) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Este campo es obligatorio',
+            path: ['suplementosCalcioVitaminaDContinua']
+          });
+        }
+        if (data.dejarFumar === 'si' && !data.dejarFumarContinua) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Este campo es obligatorio',
+            path: ['dejarFumarContinua']
+          });
+        }
+        if (data.reduccionConsumoAlcohol === 'si' && !data.reduccionConsumoAlcoholContinua) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Este campo es obligatorio',
+            path: ['reduccionConsumoAlcoholContinua']
+          });
+        }
+        if (data.protectoresCadera === 'si' && !data.protectoresCaderaContinua) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Este campo es obligatorio',
+            path: ['protectoresCaderaContinua']
+          });
+        }
+
+        if (data.pacienteDiagnosticado === 'si') {
+          if (!data.fechaDiagnostico)
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Este campo es obligatorio',
+              path: ['fechaDiagnostico']
+            });
+          if (!data.metodoDiagnostico)
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Este campo es obligatorio',
+              path: ['metodoDiagnostico']
+            });
+        }
+
+        if (data.pacienteCompletoEstudio === 'no') {
+          if (!data.motivoNoCompletado)
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Este campo es obligatorio',
+              path: ['motivoNoCompletado']
+            });
+          if (data.motivoNoCompletado === 'otro' && !data.otroMotivoEspecificar) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Este campo es obligatorio',
+              path: ['otroMotivoEspecificar']
+            });
+          }
+        }
+      }
+
       // Validar que fecha inicio no sea mayor que fecha fin para todos los tratamientos
       const medications = [
         { name: 'alendronato', label: 'Alendronato' },
@@ -2020,36 +2132,52 @@ export default defineInstrument({
       ];
 
       for (const med of medications) {
-        const fechaInicioKey = `${med.name}FechaInicio` as keyof typeof data;
-        const fechaFinKey = `${med.name}FechaFin` as keyof typeof data;
-        const fechaInicioStr = data[fechaInicioKey] as string | undefined;
-        const fechaFinStr = data[fechaFinKey] as string | undefined;
+        for (let i = 1; i <= 3; i++) {
+          const fechaInicioKey = `${med.name}FechaInicio${i}` as keyof typeof data;
+          const fechaFinKey = `${med.name}FechaFin${i}` as keyof typeof data;
+          const continuaKey = `${med.name}Continua${i}` as keyof typeof data;
 
-        if (fechaInicioStr && fechaFinStr) {
-          const partsInicio = fechaInicioStr.split('-').map(Number);
-          const partsFin = fechaFinStr.split('-').map(Number);
+          const fechaInicioStr = data[fechaInicioKey] as string | undefined;
+          const fechaFinStr = data[fechaFinKey] as string | undefined;
 
-          if (partsInicio.length === 3 && partsFin.length === 3) {
-            const [dayInicio, monthInicio, yearInicio] = partsInicio;
-            const [dayFin, monthFin, yearFin] = partsFin;
+          // Validar que "Continúa" sea obligatorio si hay fecha de inicio (solo para tratamiento 1 y 2)
+          if (fechaInicioStr && i < 3) {
+            const continua = data[continuaKey];
+            if (!continua) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Este campo es obligatorio',
+                path: [continuaKey as string]
+              });
+            }
+          }
 
-            if (
-              dayInicio !== undefined &&
-              monthInicio !== undefined &&
-              yearInicio !== undefined &&
-              dayFin !== undefined &&
-              monthFin !== undefined &&
-              yearFin !== undefined
-            ) {
-              const fechaInicio = new Date(yearInicio, monthInicio - 1, dayInicio);
-              const fechaFin = new Date(yearFin, monthFin - 1, dayFin);
+          if (fechaInicioStr && fechaFinStr) {
+            const partsInicio = fechaInicioStr.split('-').map(Number);
+            const partsFin = fechaFinStr.split('-').map(Number);
 
-              if (fechaInicio > fechaFin) {
-                ctx.addIssue({
-                  code: z.ZodIssueCode.custom,
-                  message: `La fecha de inicio no puede ser posterior a la fecha de fin`,
-                  path: [fechaFinKey as string]
-                });
+            if (partsInicio.length === 3 && partsFin.length === 3) {
+              const [dayInicio, monthInicio, yearInicio] = partsInicio;
+              const [dayFin, monthFin, yearFin] = partsFin;
+
+              if (
+                dayInicio !== undefined &&
+                monthInicio !== undefined &&
+                yearInicio !== undefined &&
+                dayFin !== undefined &&
+                monthFin !== undefined &&
+                yearFin !== undefined
+              ) {
+                const fechaInicio = new Date(yearInicio, monthInicio - 1, dayInicio);
+                const fechaFin = new Date(yearFin, monthFin - 1, dayFin);
+
+                if (fechaInicio > fechaFin) {
+                  ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: `La fecha de inicio no puede ser posterior a la fecha de fin`,
+                    path: [fechaFinKey as string]
+                  });
+                }
               }
             }
           }
