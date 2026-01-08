@@ -44,7 +44,14 @@ const RouteComponent = () => {
       sessionId: currentSession!.id,
       subjectId: currentSession!.subject.id
     } satisfies CreateInstrumentRecordData);
-    notifications.addNotification({ type: 'success' });
+    notifications.addNotification({
+      message: t({
+        ca: 'Formulari desat correctament',
+        en: 'Form saved successfully',
+        es: 'Formulario guardado correctamente'
+      } as any),
+      type: 'success'
+    });
   };
 
   if (!instrumentBundleQuery.data) {

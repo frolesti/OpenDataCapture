@@ -21,6 +21,7 @@ import { IdentificationForm } from '@/components/IdentificationForm';
 import { PageHeader } from '@/components/PageHeader';
 import { SelectInstrument } from '@/components/SelectInstrument';
 import { useGlobalInstrumentVisualization } from '@/hooks/useGlobalInstrumentVisualization';
+import { useSubjectsQuery } from '@/hooks/useSubjectsQuery';
 import { useAppStore } from '@/store';
 import { downloadExcel } from '@/utils/excel';
 
@@ -46,6 +47,9 @@ const RouteComponent = () => {
     setInstrumentId,
     setMinDate
   } = useGlobalInstrumentVisualization();
+  const { data: subjects } = useSubjectsQuery({ params: { groupId: currentGroup?.id } });
+
+  const isStandardUser = currentUser?.basePermissionLevel === 'STANDARD';
 
   const getExportRecords = async () => {
     const response = await axios.get<InstrumentRecordsExport>('/v1/instrument-records/export', {
@@ -150,80 +154,102 @@ const RouteComponent = () => {
               <IdentificationForm onSubmit={(data) => void lookupSubject(data)} />
             </Dialog.Content>
           </Dialog>
-          <div className="min-w-60">
-            <SelectInstrument options={instrumentOptions} onSelect={setInstrumentId} />
-          </div>
-          <div className="flex min-w-60 gap-2 lg:shrink">
-            {instrumentId ? (
-              <React.Fragment>
-                {Object.entries(filterOptions).map(([key, options]) => {
-                  if (currentUser?.basePermissionLevel === 'STANDARD') {
-                    return null;
-                  }
-                  const normalizedKey = key.toUpperCase();
-                  const isHealthCenter =
-                    normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
-                    normalizedKey === 'CENTRO_SANITARIO' ||
-                    (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'));
+          {!isStandardUser && (
+            <React.Fragment>
+              <div className="min-w-60">
+                <SelectInstrument options={instrumentOptions} onSelect={setInstrumentId} />
+              </div>
+              <div className="flex min-w-60 gap-2 lg:shrink">
+                {instrumentId ? (
+                  <React.Fragment>
+                    {Object.entries(filterOptions).map(([key, options]) => {
+                      if (currentUser?.basePermissionLevel === 'STANDARD') {
+                        return null;
+                      }
+                      const normalizedKey = key.toUpperCase();
+                      const isHealthCenter =
+                        normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
+                        normalizedKey === 'CENTRO_SANITARIO' ||
+                        (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'));
 
-                  let label = key;
-                  if (key === '__subjectId__') {
-                    label = t('datahub.index.table.subject').toUpperCase();
-                  } else if (isHealthCenter) {
-                    label = t({
-                      en: 'Centre Sanitari'
-                    }).toUpperCase();
-                  }
+                      let label = key;
+                      if (key === '__subjectId__') {
+                        label = t('datahub.index.table.subject').toUpperCase();
+                      } else if (isHealthCenter) {
+                        label = t({
+                          en: 'Centre Sanitari'
+                        }).toUpperCase();
+                      }
 
-                  return (
-                    <Select
-                      key={key}
-                      value={filters[key] ?? 'ALL'}
-                      onValueChange={(val) => setFilter(key, val === 'ALL' ? null : val)}
-                    >
-                      <Select.Trigger className="min-w-32">
-                        <Select.Value placeholder={label} />
-                      </Select.Trigger>
-                      <Select.Content>
-                        <Select.Item value="ALL">
-                          {key === '__subjectId__'
-                            ? t('datahub.filters.allSubjects')
-                            : isHealthCenter
-                              ? t('datahub.filters.allHealthCenters')
-                              : `${t('datahub.filters.all')} ${key}`}
-                        </Select.Item>
-                        {Array.from(options).map((opt) => (
-                          <Select.Item key={opt} value={opt}>
-                            {key === '__subjectId__' ? removeSubjectIdScope(opt) : opt}
-                          </Select.Item>
-                        ))}
-                      </Select.Content>
-                    </Select>
-                  );
-                })}
-                <ActionDropdown
-                  widthFull
-                  data-spotlight-type="export-data-dropdown"
-                  disabled={!instrumentId}
-                  options={['CSV', 'Excel']}
-                  title={t('core.download')}
-                  triggerClassName="min-w-32"
-                  onSelection={dl}
-                />
-              </React.Fragment>
-            ) : (
-              <ActionDropdown
-                widthFull
-                data-spotlight-type="export-data-dropdown"
-                data-testid="datahub-export-dropdown"
-                options={['CSV', 'Excel']}
-                title={t('datahub.index.table.export')}
-                onSelection={handleExportSelection}
-              />
-            )}
-          </div>
+                      return (
+                        <Select
+                          key={key}
+                          value={filters[key] ?? 'ALL'}
+                          onValueChange={(val) => setFilter(key, val === 'ALL' ? null : val)}
+                        >
+                          <Select.Trigger className="min-w-32">
+                            <Select.Value placeholder={label} />
+                          </Select.Trigger>
+                          <Select.Content>
+                            <Select.Item value="ALL">
+                              {key === '__subjectId__'
+                                ? t('datahub.filters.allSubjects')
+                                : isHealthCenter
+                                  ? t('datahub.filters.allHealthCenters')
+                                  : `${t('datahub.filters.all')} ${key}`}
+                            </Select.Item>
+                            {Array.from(options).map((opt) => (
+                              <Select.Item key={opt} value={opt}>
+                                {key === '__subjectId__' ? removeSubjectIdScope(opt) : opt}
+                              </Select.Item>
+                            ))}
+                          </Select.Content>
+                        </Select>
+                      );
+                    })}
+                    <ActionDropdown
+                      widthFull
+                      data-spotlight-type="export-data-dropdown"
+                      disabled={!instrumentId}
+                      options={['CSV', 'Excel']}
+                      title={t('core.download')}
+                      triggerClassName="min-w-32"
+                      onSelection={dl}
+                    />
+                  </React.Fragment>
+                ) : (
+                  <ActionDropdown
+                    widthFull
+                    data-spotlight-type="export-data-dropdown"
+                    data-testid="datahub-export-dropdown"
+                    options={['CSV', 'Excel']}
+                    title={t('datahub.index.table.export')}
+                    onSelection={handleExportSelection}
+                  />
+                )}
+              </div>
+            </React.Fragment>
+          )}
         </div>
-        {instrumentId ? (
+        {isStandardUser ? (
+          <ClientTable
+            columns={[
+              {
+                field: 'id',
+                formatter: (value: string) => removeSubjectIdScope(value),
+                label: 'SUBJECT_ID'
+              },
+              {
+                field: 'createdAt',
+                formatter: (value: Date) => toBasicISOString(new Date(value)),
+                label: 'DATE_CREATED'
+              }
+            ]}
+            data={subjects}
+            entriesPerPage={15}
+            minRows={15}
+          />
+        ) : instrumentId ? (
           <ClientTable
             noWrap
             columns={[
