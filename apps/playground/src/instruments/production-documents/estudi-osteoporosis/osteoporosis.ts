@@ -244,7 +244,7 @@ function showAddMedicationButton(medicationName: string, medicationLabel: string
       ) {
         return {
           kind: 'string' as const,
-          label: `¿Desea agregar ${treatmentNumber === 1 ? 'un segundo' : treatmentNumber === 2 ? 'un tercer' : 'otro'} tratamiento de ${medicationLabel}?`,
+          label: `¿Desea agregar ${treatmentNumber === 1 ? 'un segundo' : treatmentNumber === 2 ? 'un tercer' : 'otro'} tratamiento de ${medicationLabel}? *`,
           variant: 'radio' as const,
           options: {
             si: 'Sí',
@@ -2148,6 +2148,22 @@ export default defineInstrument({
                 code: z.ZodIssueCode.custom,
                 message: 'Este campo es obligatorio',
                 path: [continuaKey as string]
+              });
+            }
+
+            // Validar "¿Desea agregar otro tratamiento?" sea obligatorio si el tratamiento actual está "completo"
+            // (Ya sea porque continúa activos o porque ha finalizado con todos los datos)
+            const motivoKey = `${med.name}MotivoInterrupcion${i}` as keyof typeof data;
+            const motivo = data[motivoKey];
+            const agregarKey = `agregarTratamiento${med.name}${i + 1}` as keyof typeof data;
+
+            const isTreatmentComplete = continua === 'si' || (continua === 'no' && fechaFinStr && motivo);
+
+            if (isTreatmentComplete && !data[agregarKey]) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Este campo es obligatorio',
+                path: [agregarKey as string]
               });
             }
           }
