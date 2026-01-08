@@ -1119,12 +1119,12 @@ export default defineInstrument({
         }),
         pesoPaciente: requiresConsent({
           kind: 'number',
-          label: 'Indique el peso (kg)*',
+          label: 'Indique el peso (kg) (utilice punto "." para los decimales) *',
           variant: 'input'
         }),
         alturaPaciente: requiresConsent({
           kind: 'number',
-          label: 'Indique la altura (cm)*',
+          label: 'Indique la altura (cm) (utilice punto "." para los decimales) *',
           variant: 'input'
         }),
         observaCifosis: requiresConsent({
