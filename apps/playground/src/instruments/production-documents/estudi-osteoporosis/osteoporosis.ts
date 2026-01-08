@@ -526,7 +526,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 9,
+    edition: 11,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -742,7 +742,7 @@ export default defineInstrument({
       description: 'Indique si el paciente presenta alguno de los siguientes factores de riesgo',
       fields: {
         _warningFactoresRiesgo: consentWarning() as any,
-        IMCm20: requiresConsent({
+        imc_below_20: requiresConsent({
           kind: 'boolean',
           label: 'IMC (< 20 kg/m²)',
           variant: 'checkbox'
@@ -1361,7 +1361,6 @@ export default defineInstrument({
     authors: ['Equipo de Investigación Osteoporosis']
   },
   measures: {
-    ...generateAllMeasures(),
     imc: {
       kind: 'computed',
       label: 'Índice de Masa Corporal',
