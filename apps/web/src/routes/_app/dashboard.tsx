@@ -380,6 +380,10 @@ export const Route = createFileRoute('/_app/dashboard')({
   loader: async ({ context }) => {
     const { currentGroup, currentUser } = useAppStore.getState();
 
+    if (currentUser?.basePermissionLevel === 'STANDARD') {
+      throw redirect({ to: '/datahub' });
+    }
+
     const ability = currentUser?.ability;
     const subjects: AppSubjectName[] = ['Instrument', 'InstrumentRecord', 'Session', 'Subject', 'User'];
     const isAuthorized = subjects.every((subject) => ability?.can('read', subject));

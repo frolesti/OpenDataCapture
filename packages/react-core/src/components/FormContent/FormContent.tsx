@@ -2,7 +2,7 @@ import { Button, Dialog, Form, Heading } from '@douglasneuroinformatics/libui/co
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { AnyUnilingualFormInstrument, FormInstrument } from '@opendatacapture/runtime-core';
 import { InfoIcon } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import type { Promisable } from 'type-fest';
 
 export type FormContentProps = {
@@ -13,33 +13,28 @@ export type FormContentProps = {
 export const FormContent = ({ instrument, onSubmit }: FormContentProps) => {
   const { t } = useTranslation();
   const formRef = useRef<HTMLDivElement>(null);
+  const hasScrolledToErrorRef = useRef(false);
   const instructions = instrument.clientDetails?.instructions ?? instrument.details.instructions;
 
-  useEffect(() => {
-    // Add mutation observer to detect validation errors and scroll to first error
-    const observer = new MutationObserver(() => {
+  const scrollToFirstError = () => {
+    if (hasScrolledToErrorRef.current) {
+      return; // Already scrolled once, don't scroll again
+    }
+
+    setTimeout(() => {
       const firstError = formRef.current?.querySelector('[role="alert"], .text-destructive, [aria-invalid="true"]');
       if (firstError) {
         firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        hasScrolledToErrorRef.current = true;
+
         // Focus on the input field if possible
         const inputElement = firstError.closest('[data-field]')?.querySelector('input, select, textarea');
         if (inputElement && inputElement instanceof HTMLElement) {
           setTimeout(() => inputElement.focus(), 300);
         }
       }
-    });
-
-    if (formRef.current) {
-      observer.observe(formRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['aria-invalid', 'role']
-      });
-    }
-
-    return () => observer.disconnect();
-  }, []);
+    }, 100);
+  };
 
   return (
     <div ref={formRef} className="space-y-6">
@@ -72,7 +67,11 @@ export const FormContent = ({ instrument, onSubmit }: FormContentProps) => {
         data-testid="form-content"
         initialValues={instrument.initialValues}
         validationSchema={instrument.validationSchema}
-        onSubmit={(data) => void onSubmit(data)}
+        onSubmit={(data) => {
+          hasScrolledToErrorRef.current = false; // Reset for next submit attempt
+          void onSubmit(data);
+        }}
+        onSubmitInvalid={scrollToFirstError}
       />
     </div>
   );

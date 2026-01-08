@@ -38,10 +38,17 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
   });
 
   const handleDownload = () => {
-    const filename = `${instrument.internal.name}_${instrument.internal.edition}_${new Date(timeCollected).toISOString()}.json`;
-    void download(filename, () => JSON.stringify(data, replacer, 2));
+    const filename = `${instrument.internal.name}_${instrument.internal.edition}_${new Date(timeCollected).toISOString()}.csv`;
+    const csvContent = [
+      ['Variable', 'Value'],
+      ...Object.values(computedMeasures).map(({ label, value }) => [label, value?.toString() ?? 'NA'])
+    ]
+      .map((row) => row.map((cell) => `"${cell?.replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    void download(filename, () => `\uFEFF${csvContent}`);
   };
 
+  /*
   let language: string;
   if (instrument.language === 'ca') {
     language = t({
@@ -50,9 +57,10 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
   } else {
     language = instrument.language;
   }
+  */
 
   const copyText = Object.values(computedMeasures)
-    .map(({ label, value }) => `${label}: ${value?.toString() ?? 'NA'}`)
+    .map(({ label, value }) => `${label}\t${value?.toString() ?? 'NA'}`)
     .join('\n');
 
   const results = Object.values(computedMeasures);
@@ -104,7 +112,7 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
               ? [
                   {
                     label: 'ID',
-                    value: subject.id
+                    value: data?.codigoPaciente ?? subject.id
                   },
                   {
                     label: t({
@@ -148,7 +156,7 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
               : [
                   {
                     label: 'ID',
-                    value: removeSubjectIdScope(subject.id)
+                    value: data?.codigoPaciente ?? removeSubjectIdScope(subject.id)
                   }
                 ]
           }
@@ -166,13 +174,6 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
               fr: 'Título'
             }),
             value: title
-          },
-          {
-            label: t({
-              en: 'Idioma',
-              fr: 'Idioma'
-            }),
-            value: language
           },
           {
             label: t({

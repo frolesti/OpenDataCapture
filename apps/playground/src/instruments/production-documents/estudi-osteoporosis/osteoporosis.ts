@@ -187,7 +187,7 @@ function showAddFractureButton(fractureNumber: number): any {
       if (data.consentimientoInformado === 'si' && isCurrentComplete && fractureNumber < 6) {
         return {
           kind: 'string' as const,
-          label: `¿Desea agregar ${fractureNumber === 1 ? 'una segunda' : fractureNumber === 2 ? 'una tercera' : fractureNumber === 3 ? 'una cuarta' : fractureNumber === 4 ? 'una quinta' : 'una sexta'} fractura por fragilidad?`,
+          label: `¿Desea agregar ${fractureNumber === 1 ? 'una segunda' : fractureNumber === 2 ? 'una tercera' : fractureNumber === 3 ? 'una cuarta' : fractureNumber === 4 ? 'una quinta' : 'una sexta'} fractura por fragilidad? *`,
           variant: 'radio' as const,
           options: {
             si: 'Sí',
@@ -947,7 +947,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 6,
+    edition: 8,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [

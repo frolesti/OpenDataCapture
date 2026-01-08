@@ -44,8 +44,9 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            en: 'El meu perfil',
-            fr: 'Mi perfil'
+            ca: 'El meu perfil',
+            es: 'Mi perfil',
+            en: 'My Profile'
           })}
         </Heading>
       </PageHeader>
@@ -67,7 +68,9 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
                 {t({
-                  en: 'Nom'
+                  ca: 'Nom',
+                  es: 'Nombre',
+                  en: 'First Name'
                 })}
               </label>
               <p className="text-lg font-medium">{currentUser.firstName || '-'}</p>
@@ -75,7 +78,9 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
                 {t({
-                  en: 'Cognoms'
+                  ca: 'Cognoms',
+                  es: 'Apellidos',
+                  en: 'Last Name'
                 })}
               </label>
               <p className="text-lg font-medium">{currentUser.lastName || '-'}</p>
@@ -89,6 +94,8 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
                 {t({
+                  ca: 'Hospital',
+                  es: 'Hospital',
                   en: 'Hospital'
                 })}
               </label>
@@ -102,12 +109,16 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
           <div className="mb-4">
             <Heading variant="h4">
               {t({
-                en: 'Seguretat'
+                ca: 'Seguretat',
+                es: 'Seguridad',
+                en: 'Security'
               })}
             </Heading>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {t({
-                en: 'Actualitzeu la vostra contrasenya per mantenir el vostre compte segur.'
+                ca: 'Actualitzeu la vostra contrasenya per mantenir el vostre compte segur.',
+                es: 'Actualice su contraseña para mantener su cuenta segura.',
+                en: 'Update your password to keep your account secure.'
               })}
             </p>
           </div>
@@ -121,11 +132,15 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
                       return estimatePasswordStrength(password).score;
                     },
                     description: t({
-                      en: 'La contrasenya ha de tenir almenys 8 caràcters, incloent majúscules, minúscules, números i símbols.'
+                      ca: 'La contrasenya ha de tenir almenys 8 caràcters, incloent majúscules, minúscules, números i símbols.',
+                      es: 'La contraseña debe tener al menos 8 caracteres, incluyendo mayúsculas, minúsculas, números y símbolos.',
+                      en: 'The password must have at least 8 characters, including uppercase, lowercase, numbers and symbols.'
                     }),
                     kind: 'string',
                     label: t({
-                      en: 'Nova contrasenya'
+                      ca: 'Nova contrasenya',
+                      es: 'Nueva contraseña',
+                      en: 'New Password'
                     }),
                     variant: 'password'
                   }
@@ -134,7 +149,9 @@ export const Profile = ({ currentGroup, currentUser, onSubmit }: ProfileProps) =
               }
             ]}
             submitBtnLabel={t({
-              en: 'Actualitzar contrasenya'
+              ca: 'Actualitzar contrasenya',
+              es: 'Actualizar contraseña',
+              en: 'Update Password'
             })}
             validationSchema={$ChangePasswordFormData}
             onSubmit={onSubmit}
