@@ -1153,7 +1153,7 @@ export default defineInstrument({
             otro: 'Otro'
           }
         }),
-        Diag_method_other: {
+        diag_method_other: {
           kind: 'dynamic' as const,
           deps: ['diag', 'diag_method'] as const,
           render(data: any) {
@@ -1202,7 +1202,7 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        exercise_cont: requiresRecibido(
+        NPT_exercise_cont: requiresRecibido(
           {
             kind: 'string',
             label: 'Ejercicio físico - Continúa *',
@@ -1223,7 +1223,7 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        calcium_vitaminD_cont: requiresRecibido(
+        NPT_calcium_vitaminD_cont: requiresRecibido(
           {
             kind: 'string',
             label: 'Suplementos de calcio / vitamina D - Continúa *',
@@ -1244,7 +1244,7 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        quit_smoking_cont: requiresRecibido(
+        NPT_quit_smoking_cont: requiresRecibido(
           {
             kind: 'string',
             label: 'Dejar de fumar - Continúa *',
@@ -1265,7 +1265,7 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        alcohol_reduction_cont: requiresRecibido(
+        NPT_alcohol_reduction_cont: requiresRecibido(
           {
             kind: 'string',
             label: 'Reducción de consumo de alcohol - Continúa *',
@@ -1286,7 +1286,7 @@ export default defineInstrument({
             no: 'No'
           }
         }),
-        hip_protectors_cont: requiresRecibido(
+        NPT_hip_protectors_cont: requiresRecibido(
           {
             kind: 'string',
             label: 'Protectores de cadera - Continúa *',
@@ -1531,7 +1531,7 @@ export default defineInstrument({
         .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
         .optional(),
       diag_method: z.enum(['dxa', 'clinico', 'frax', 'hallazgo', 'presuntivo', 'otro']).optional(),
-      Diag_method_other: z.string().optional(),
+      diag_method_other: z.string().optional(),
 
       // TRATAMIENTOS (todos opcionales)
       ...generateMedicationValidationSchemas('alend'),
@@ -1548,15 +1548,15 @@ export default defineInstrument({
 
       // TRATAMIENTO NO FARMACOLÓGICO
       NPT_exercise: z.enum(['si', 'no']).optional(),
-      exercise_cont: z.enum(['si', 'no']).optional(),
+      NPT_exercise_cont: z.enum(['si', 'no']).optional(),
       NPT_calcium_vitaminD: z.enum(['si', 'no']).optional(),
-      calcium_vitaminD_cont: z.enum(['si', 'no']).optional(),
+      NPT_calcium_vitaminD_cont: z.enum(['si', 'no']).optional(),
       NPT_quit_smoking: z.enum(['si', 'no']).optional(),
-      quit_smoking_cont: z.enum(['si', 'no']).optional(),
+      NPT_quit_smoking_cont: z.enum(['si', 'no']).optional(),
       NPT_alcohol_reduction: z.enum(['si', 'no']).optional(),
-      alcohol_reduction_cont: z.enum(['si', 'no']).optional(),
+      NPT_alcohol_reduction_cont: z.enum(['si', 'no']).optional(),
       NPT_hip_protectors: z.enum(['si', 'no']).optional(),
-      hip_protectors_cont: z.enum(['si', 'no']).optional(),
+      NPT_hip_protectors_cont: z.enum(['si', 'no']).optional(),
       other_treatment: z.string().optional(),
 
       // FIN DE ESTUDIO
@@ -1612,39 +1612,39 @@ export default defineInstrument({
         }
 
         // Validar tratamientos no farmacológicos secundarios (Continúa)
-        if (data.NPT_exercise === 'si' && !data.exercise_cont) {
+        if (data.NPT_exercise === 'si' && !data.NPT_exercise_cont) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Este campo es obligatorio',
-            path: ['exercise_cont']
+            path: ['NPT_exercise_cont']
           });
         }
-        if (data.NPT_calcium_vitaminD === 'si' && !data.calcium_vitaminD_cont) {
+        if (data.NPT_calcium_vitaminD === 'si' && !data.NPT_calcium_vitaminD_cont) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Este campo es obligatorio',
-            path: ['calcium_vitaminD_cont']
+            path: ['NPT_calcium_vitaminD_cont']
           });
         }
-        if (data.NPT_quit_smoking === 'si' && !data.quit_smoking_cont) {
+        if (data.NPT_quit_smoking === 'si' && !data.NPT_quit_smoking_cont) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Este campo es obligatorio',
-            path: ['quit_smoking_cont']
+            path: ['NPT_quit_smoking_cont']
           });
         }
-        if (data.NPT_alcohol_reduction === 'si' && !data.alcohol_reduction_cont) {
+        if (data.NPT_alcohol_reduction === 'si' && !data.NPT_alcohol_reduction_cont) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Este campo es obligatorio',
-            path: ['alcohol_reduction_cont']
+            path: ['NPT_alcohol_reduction_cont']
           });
         }
-        if (data.NPT_hip_protectors === 'si' && !data.hip_protectors_cont) {
+        if (data.NPT_hip_protectors === 'si' && !data.NPT_hip_protectors_cont) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Este campo es obligatorio',
-            path: ['hip_protectors_cont']
+            path: ['NPT_hip_protectors_cont']
           });
         }
 
