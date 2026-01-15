@@ -128,9 +128,9 @@ function requiresPreviousFracture<T extends Record<string, any>>(field: T, fract
     kind: 'dynamic' as const,
     deps: [
       'informed_consent',
-      `frac_rec_date${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`,
-      `frac_rec_loc${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`,
-      `frac_rec_hosp${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`,
+      `frac_rec_date_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`,
+      `frac_rec_loc_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`,
+      `frac_rec_hosp_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`,
       `add_frac_${fractureNumber}`
     ] as const,
     render(data: any): any {
@@ -145,9 +145,9 @@ function requiresPreviousFracture<T extends Record<string, any>>(field: T, fract
       // For subsequent fractures, check if:
       // 1. Previous fracture is completed (all 3 fields)
       // 2. User wants to add this fracture
-      const prevFechaKey = `frac_rec_date${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`;
-      const prevLocalizacionKey = `frac_rec_loc${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`;
-      const prevHospitalizacionKey = `frac_rec_hosp${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`;
+      const prevFechaKey = `frac_rec_date_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`;
+      const prevLocalizacionKey = `frac_rec_loc_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`;
+      const prevHospitalizacionKey = `frac_rec_hosp_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`;
       const agregarKey = `add_frac_${fractureNumber}`;
 
       const isPreviousComplete = data[prevFechaKey] && data[prevLocalizacionKey] && data[prevHospitalizacionKey];
@@ -168,14 +168,14 @@ function showAddFractureButton(fractureNumber: number): any {
     kind: 'dynamic' as const,
     deps: [
       'informed_consent',
-      `frac_rec_date${fractureNumber === 1 ? '' : '_' + fractureNumber}`,
-      `frac_rec_loc${fractureNumber === 1 ? '' : '_' + fractureNumber}`,
-      `frac_rec_hosp${fractureNumber === 1 ? '' : '_' + fractureNumber}`
+      `frac_rec_date_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`,
+      `frac_rec_loc_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`,
+      `frac_rec_hosp_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`
     ] as const,
     render(data: any): any {
-      const fechaKey = `frac_rec_date${fractureNumber === 1 ? '' : '_' + fractureNumber}`;
-      const localizacionKey = `frac_rec_loc${fractureNumber === 1 ? '' : '_' + fractureNumber}`;
-      const frac_rec_hospKey = `frac_rec_hosp${fractureNumber === 1 ? '' : '_' + fractureNumber}`;
+      const fechaKey = `frac_rec_date_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`;
+      const localizacionKey = `frac_rec_loc_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`;
+      const frac_rec_hospKey = `frac_rec_hosp_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`;
 
       // Show button only if current fracture is complete
       const isCurrentComplete = data[fechaKey] && data[localizacionKey] && data[frac_rec_hospKey];
@@ -455,7 +455,7 @@ function generateMedicationFields(medicationName: string, medicationLabel: strin
         return {
           kind: 'string',
           variant: 'textarea',
-          label: `En caso de que tenga más de tres tratamientos de ${medicationLabel}, especificar los detalles a continuación`,
+          label: `En caso de que tenga más de tres tratamientos de ${medicationLabel}, especifique la fecha de inicio, si continua o no (en caso que no continúe, fecha de fin y motivo de interrupción de todas las pautas que tenga del fármaco)a continuación`,
           rows: 3
         };
       }
@@ -539,7 +539,7 @@ export default defineInstrument({
     {
       title: 'CÓDIGO DEL PACIENTE',
       fields: {
-        patientid: {
+        patientID: {
           kind: 'string',
           variant: 'input',
           label:
@@ -742,48 +742,48 @@ export default defineInstrument({
       description: 'Indique si el paciente presenta alguno de los siguientes factores de riesgo',
       fields: {
         _warningFactoresRiesgo: consentWarning() as any,
-        imc_below_20: requiresConsent({
+        RF_IMCm20: requiresConsent({
           kind: 'boolean',
           label: 'IMC (< 20 kg/m²)',
           variant: 'checkbox'
         }),
-        ethnicity_caucasian: requiresConsent({
+        RF_ethnicity: requiresConsent({
           kind: 'boolean',
           label: 'Etnicidad (paciente blanco/a caucásico/a)',
           variant: 'checkbox'
         }),
-        early_menopause: requiresConsent({
+        RF_early_menopause: requiresConsent({
           kind: 'boolean',
           label: 'Menopausia precoz (<45 años)',
           variant: 'checkbox'
         }),
-        previous_fracture: requiresConsent({
+        RF_prev_frac: requiresConsent({
           kind: 'boolean',
           label: 'Fractura previa',
           variant: 'checkbox'
         }),
-        parent_hip_fracture: requiresConsent({
+        RF_hist_fem_frac: requiresConsent({
           kind: 'boolean',
           label: 'Antecedente paterno/materno de fractura femoral',
           variant: 'checkbox'
         }),
-        smoking: requiresConsent({
+        RF_smoking: requiresConsent({
           kind: 'boolean',
           label: 'Tabaquismo activo',
           variant: 'checkbox'
         }),
-        alcohol: requiresConsent({
+        RF_alcohol: requiresConsent({
           kind: 'boolean',
           label: 'Ingesta de alcohol ≥3 unidades/día',
           variant: 'checkbox'
         }),
-        poor_nutrition: requiresConsent({
+        RF_poor_nutrition: requiresConsent({
           kind: 'boolean',
           label:
             'Nutrición pobre - dieta baja en calcio (definiéndose como ingesta baja en calcio un aporte de < 3 unidades de calcio diarias; siendo 1 vaso de leche, 1 yogur o 40 g de queso 1 unidad)',
           variant: 'checkbox'
         }),
-        associated_medications: requiresConsent({
+        RF_assoc_medications: requiresConsent({
           kind: 'boolean',
           label:
             'Medicamentos asociados (glucocorticoides orales, inhibidores de la aromatasa, análogos de la GnRH, anticonvulsivos, inhibidores de la bomba de protones, fármacos antihipertensivos y estatinas)',
@@ -796,72 +796,72 @@ export default defineInstrument({
       description: 'Indique si el paciente presenta alguna de las siguientes comorbilidades',
       fields: {
         _warningComorbilidades: consentWarning() as any,
-        rheumatoid_arthritis: requiresConsent({
+        com_rheum_arthritis: requiresConsent({
           kind: 'boolean',
           label: 'Artritis reumatoide',
           variant: 'checkbox'
         }),
-        other_inflammatory_arthritis: requiresConsent({
+        com_other_inflam_arthritis: requiresConsent({
           kind: 'boolean',
           label: 'Otras artritis inflamatorias',
           variant: 'checkbox'
         }),
-        lupus: requiresConsent({
+        com_lupus: requiresConsent({
           kind: 'boolean',
           label: 'Lupus eritematoso sistémico',
           variant: 'checkbox'
         }),
-        hyperparathyroidism: requiresConsent({
+        com_hyperparathyroidism: requiresConsent({
           kind: 'boolean',
           label: 'Hiperparatiroidismo',
           variant: 'checkbox'
         }),
-        hyperthyroidism: requiresConsent({
+        com_hyperthyroidism: requiresConsent({
           kind: 'boolean',
           label: 'Hipertiroidismo',
           variant: 'checkbox'
         }),
-        hypercortisolism: requiresConsent({
+        com_hypercortisolism: requiresConsent({
           kind: 'boolean',
           label: 'Hipercortisolismo/Cushing',
           variant: 'checkbox'
         }),
-        diabetes: requiresConsent({
+        com_diabetes: requiresConsent({
           kind: 'boolean',
           label: 'Diabetes (tipos 1 y 2)',
           variant: 'checkbox'
         }),
-        inflammatory_bowel_disease: requiresConsent({
+        com_inflam_bowel: requiresConsent({
           kind: 'boolean',
           label: 'Enfermedad inflamatoria intestinal',
           variant: 'checkbox'
         }),
-        malnutrition: requiresConsent({
+        com_malnutrition: requiresConsent({
           kind: 'boolean',
           label: 'Malnutrición',
           variant: 'checkbox'
         }),
-        parenteral_nutrition: requiresConsent({
+        com_parent_nutrition: requiresConsent({
           kind: 'boolean',
           label: 'Nutrición parenteral',
           variant: 'checkbox'
         }),
-        myeloma: requiresConsent({
+        com_myeloma: requiresConsent({
           kind: 'boolean',
           label: 'Mieloma múltiple',
           variant: 'checkbox'
         }),
-        other_marrow_disorders: requiresConsent({
+        com_other_spinal_cord: requiresConsent({
           kind: 'boolean',
           label: 'Otros trastornos medulares',
           variant: 'checkbox'
         }),
-        copd: requiresConsent({
+        com_COPD: requiresConsent({
           kind: 'boolean',
           label: 'Enfermedad pulmonar obstructiva crónica (EPOC)',
           variant: 'checkbox'
         }),
-        chronic_kidney_disease: requiresConsent({
+        com_CKD: requiresConsent({
           kind: 'boolean',
           label: 'Enfermedad renal crónica (ERC)',
           variant: 'checkbox'
@@ -875,25 +875,25 @@ export default defineInstrument({
       fields: {
         _warningFractura: consentWarning() as any,
         // Primera fractura
-        frac_rec_date: requiresPreviousFracture(
+        frac_rec_date_1: requiresPreviousFracture(
           {
             kind: 'string',
             variant: 'input',
             placeholder: 'DD-MM-YYYY',
-            label: 'Fecha de la Fractura por Fragilidad (DD-MM-YYYY) *'
+            label: 'Fecha de la Fractura por Fragilidad (DD-MM-YYYY)'
           },
           1
         ),
-        frac_rec_loc: requiresPreviousFracture(
+        frac_rec_loc_1: requiresPreviousFracture(
           {
             kind: 'string',
-            label: 'Localización de la fractura por fragilidad - Elegir una opción *',
+            label: 'Localización de la fractura por fragilidad - Elegir una opción',
             variant: 'select',
             options: {
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneen: 'Radio/cubito/muñeca',
+              radioMuneca: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -902,10 +902,10 @@ export default defineInstrument({
           },
           1
         ),
-        frac_rec_hosp: requiresPreviousFracture(
+        frac_rec_hosp_1: requiresPreviousFracture(
           {
             kind: 'string',
-            label: '¿Requirió hospitalización? *',
+            label: '¿Requirió hospitalización?',
             variant: 'select',
             options: {
               si: 'Sí',
@@ -934,7 +934,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneen: 'Radio/cubito/muñeca',
+              radioMuneca: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -975,7 +975,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneen: 'Radio/cubito/muñeca',
+              radioMuneca: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -1016,7 +1016,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneen: 'Radio/cubito/muñeca',
+              radioMuneca: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -1057,7 +1057,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneen: 'Radio/cubito/muñeca',
+              radioMuneca: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -1098,7 +1098,7 @@ export default defineInstrument({
               vertebral: 'Vertebral',
               femoral: 'Femoral',
               humero: 'Húmero',
-              radioMuneen: 'Radio/cubito/muñeca',
+              radioMuneca: 'Radio/cubito/muñeca',
               pelvis: 'Pelvis',
               costilla: 'Costilla',
               tobillopie: 'Tobillo/pie',
@@ -1140,7 +1140,7 @@ export default defineInstrument({
           placeholder: 'DD-MM-YYYY',
           label: '¿Cuál fue la fecha en la que tuvo lugar el diagnóstico? (DD-MM-YYYY) *'
         }),
-        Diag_method: requiresDiagnosis({
+        diag_method: requiresDiagnosis({
           kind: 'string',
           label: '¿Qué método principal se empleó para el diagnóstico? *',
           variant: 'radio',
@@ -1155,9 +1155,9 @@ export default defineInstrument({
         }),
         Diag_method_other: {
           kind: 'dynamic' as const,
-          deps: ['diag', 'Diag_method'] as const,
+          deps: ['diag', 'diag_method'] as const,
           render(data: any) {
-            if (data.diag === 'si' && data.Diag_method === 'otro') {
+            if (data.diag === 'si' && data.diag_method === 'otro') {
               return {
                 kind: 'string' as const,
                 label: 'Otro (especificar):',
@@ -1177,15 +1177,15 @@ export default defineInstrument({
         // All medications with up to 3 treatments each
         ...generateMedicationFields('alend', 'Alendronato'),
         ...generateMedicationFields('risedr', 'Risedronato'),
-        ...generateMedicationFields('iband', 'Ibandronato'),
-        ...generateMedicationFields('zoledr', 'Zoledronato'),
+        ...generateMedicationFields('iban', 'Ibandronato'),
+        ...generateMedicationFields('zoled', 'Zoledronato'),
         ...generateMedicationFields('denos', 'Denosumab'),
         ...generateMedicationFields('ralox', 'Raloxifeno'),
         ...generateMedicationFields('bazed', 'Bazedoxifeno'),
         ...generateMedicationFields('tibol', 'Tibolona'),
         ...generateMedicationFields('terip', 'Teriparatida'),
-        ...generateMedicationFields('abalop', 'Abaloparatida'),
-        ...generateMedicationFields('romos', 'Romosozumab')
+        ...generateMedicationFields('abal', 'Abaloparatida'),
+        ...generateMedicationFields('romo', 'Romosozumab')
       }
     },
     {
@@ -1193,7 +1193,7 @@ export default defineInstrument({
       description: 'Indique los tratamientos no farmacológicos recibidos',
       fields: {
         _warningTratamientoNoFarmacologico: consentWarning() as any,
-        exercise: requiresConsent({
+        NPT_exercise: requiresConsent({
           kind: 'string',
           label: 'Ejercicio físico - ¿Lo ha recibido? *',
           variant: 'radio',
@@ -1212,9 +1212,9 @@ export default defineInstrument({
               no: 'No'
             }
           },
-          'exercise'
+          'NPT_exercise'
         ),
-        calcium_vitaminD: requiresConsent({
+        NPT_calcium_vitaminD: requiresConsent({
           kind: 'string',
           label: 'Suplementos de calcio / vitamina D - ¿Lo ha recibido? *',
           variant: 'radio',
@@ -1233,9 +1233,9 @@ export default defineInstrument({
               no: 'No'
             }
           },
-          'calcium_vitaminD'
+          'NPT_calcium_vitaminD'
         ),
-        quit_smoking: requiresConsent({
+        NPT_quit_smoking: requiresConsent({
           kind: 'string',
           label: 'Dejar de fumar - ¿Lo ha recibido? *',
           variant: 'radio',
@@ -1254,9 +1254,9 @@ export default defineInstrument({
               no: 'No'
             }
           },
-          'quit_smoking'
+          'NPT_quit_smoking'
         ),
-        alcohol_reduction: requiresConsent({
+        NPT_alcohol_reduction: requiresConsent({
           kind: 'string',
           label: 'Reducción de consumo de alcohol - ¿Lo ha recibido? *',
           variant: 'radio',
@@ -1275,9 +1275,9 @@ export default defineInstrument({
               no: 'No'
             }
           },
-          'alcohol_reduction'
+          'NPT_alcohol_reduction'
         ),
-        hip_protectors: requiresConsent({
+        NPT_hip_protectors: requiresConsent({
           kind: 'string',
           label: 'Protectores de cadera - ¿Lo ha recibido? *',
           variant: 'radio',
@@ -1296,7 +1296,7 @@ export default defineInstrument({
               no: 'No'
             }
           },
-          'hip_protectors'
+          'NPT_hip_protectors'
         ),
         other_treatment: requiresConsent({
           kind: 'string',
@@ -1361,24 +1361,6 @@ export default defineInstrument({
     authors: ['Equipo de Investigación Osteoporosis']
   },
   measures: {
-    imc: {
-      kind: 'computed',
-      label: 'Índice de Masa Corporal',
-      value: (data) => {
-        if (data.weight && data.height) {
-          const peso = data.weight;
-          const altura = data.height;
-
-          if (altura === 0) {
-            return undefined;
-          }
-
-          const alturaMetros = altura / 100;
-          return Math.round((peso / (alturaMetros * alturaMetros)) * 100) / 100;
-        }
-        return undefined;
-      }
-    },
     cumple_criterios_inclusion: {
       kind: 'computed',
       label: 'Cumple Criterios de Inclusión',
@@ -1415,7 +1397,7 @@ export default defineInstrument({
       _warningFinEstudio: z.any().optional(),
 
       // SELECCIÓN DEL PACIENTE
-      patientid: z.string().min(1, 'El código del paciente es obligatorio'),
+      patientID: z.string().min(1, 'El código del paciente es obligatorio'),
       informed_consent: z.enum(['si', 'no']).refine((val) => val === 'si', {
         message: 'El consentimiento informado debe ser Sí'
       }),
@@ -1452,42 +1434,44 @@ export default defineInstrument({
       height_loss: z.enum(['si', 'no']).optional(),
       lifestyle: z.enum(['sedentario', 'activo', 'equilibrado', 'riesgo']).optional(),
       presentaFactoresRiesgo: z.enum(['si', 'no']).optional(),
-      imc_below_20: z.boolean().optional(),
-      ethnicity_caucasian: z.boolean().optional(),
-      early_menopause: z.boolean().optional(),
-      previous_fracture: z.boolean().optional(),
-      parent_hip_fracture: z.boolean().optional(),
-      smoking: z.boolean().optional(),
-      alcohol: z.boolean().optional(),
-      poor_nutrition: z.boolean().optional(),
-      associated_medications: z.boolean().optional(),
+      RF_IMCm20: z.boolean().optional(),
+      RF_ethnicity: z.boolean().optional(),
+      RF_early_menopause: z.boolean().optional(),
+      RF_prev_frac: z.boolean().optional(),
+      RF_hist_fem_frac: z.boolean().optional(),
+      RF_smoking: z.boolean().optional(),
+      RF_alcohol: z.boolean().optional(),
+      RF_poor_nutrition: z.boolean().optional(),
+      RF_assoc_medications: z.boolean().optional(),
 
       // COMORBILIDADES
-      rheumatoid_arthritis: z.boolean().optional(),
-      other_inflammatory_arthritis: z.boolean().optional(),
-      lupus: z.boolean().optional(),
-      hyperparathyroidism: z.boolean().optional(),
-      hyperthyroidism: z.boolean().optional(),
-      hypercortisolism: z.boolean().optional(),
-      diabetes: z.boolean().optional(),
-      inflammatory_bowel_disease: z.boolean().optional(),
-      malnutrition: z.boolean().optional(),
-      parenteral_nutrition: z.boolean().optional(),
-      myeloma: z.boolean().optional(),
-      other_marrow_disorders: z.boolean().optional(),
-      copd: z.boolean().optional(),
-      chronic_kidney_disease: z.boolean().optional(),
+      com_rheum_arthritis: z.boolean().optional(),
+      com_other_inflam_arthritis: z.boolean().optional(),
+      com_lupus: z.boolean().optional(),
+      com_hyperparathyroidism: z.boolean().optional(),
+      com_hyperthyroidism: z.boolean().optional(),
+      com_hypercortisolism: z.boolean().optional(),
+      com_diabetes: z.boolean().optional(),
+      com_inflam_bowel: z.boolean().optional(),
+      com_malnutrition: z.boolean().optional(),
+      com_parent_nutrition: z.boolean().optional(),
+      com_myeloma: z.boolean().optional(),
+      com_other_spinal_cord: z.boolean().optional(),
+      com_COPD: z.boolean().optional(),
+      com_CKD: z.boolean().optional(),
 
       // FRACTURA
-      frac_rec_date: z
+      frac_rec_date_1: z
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
         .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .or(z.literal(''))
         .optional(),
-      frac_rec_loc: z
+      frac_rec_loc_1: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
+        .or(z.literal(''))
         .optional(),
-      frac_rec_hosp: z.enum(['si', 'no']).optional(),
+      frac_rec_hosp_1: z.enum(['si', 'no']).or(z.literal('')).optional(),
       add_frac_2: z.enum(['si', 'no']).optional(),
       frac_rec_date_2: z
         .string()
@@ -1546,32 +1530,32 @@ export default defineInstrument({
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
         .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
         .optional(),
-      Diag_method: z.enum(['dxa', 'clinico', 'frax', 'hallazgo', 'presuntivo', 'otro']).optional(),
+      diag_method: z.enum(['dxa', 'clinico', 'frax', 'hallazgo', 'presuntivo', 'otro']).optional(),
       Diag_method_other: z.string().optional(),
 
       // TRATAMIENTOS (todos opcionales)
       ...generateMedicationValidationSchemas('alend'),
       ...generateMedicationValidationSchemas('risedr'),
-      ...generateMedicationValidationSchemas('iband'),
-      ...generateMedicationValidationSchemas('zoledr'),
+      ...generateMedicationValidationSchemas('iban'),
+      ...generateMedicationValidationSchemas('zoled'),
       ...generateMedicationValidationSchemas('denos'),
       ...generateMedicationValidationSchemas('ralox'),
       ...generateMedicationValidationSchemas('bazed'),
       ...generateMedicationValidationSchemas('tibol'),
       ...generateMedicationValidationSchemas('terip'),
-      ...generateMedicationValidationSchemas('abalop'),
-      ...generateMedicationValidationSchemas('romos'),
+      ...generateMedicationValidationSchemas('abal'),
+      ...generateMedicationValidationSchemas('romo'),
 
       // TRATAMIENTO NO FARMACOLÓGICO
-      exercise: z.enum(['si', 'no']).optional(),
+      NPT_exercise: z.enum(['si', 'no']).optional(),
       exercise_cont: z.enum(['si', 'no']).optional(),
-      calcium_vitaminD: z.enum(['si', 'no']).optional(),
+      NPT_calcium_vitaminD: z.enum(['si', 'no']).optional(),
       calcium_vitaminD_cont: z.enum(['si', 'no']).optional(),
-      quit_smoking: z.enum(['si', 'no']).optional(),
+      NPT_quit_smoking: z.enum(['si', 'no']).optional(),
       quit_smoking_cont: z.enum(['si', 'no']).optional(),
-      alcohol_reduction: z.enum(['si', 'no']).optional(),
+      NPT_alcohol_reduction: z.enum(['si', 'no']).optional(),
       alcohol_reduction_cont: z.enum(['si', 'no']).optional(),
-      hip_protectors: z.enum(['si', 'no']).optional(),
+      NPT_hip_protectors: z.enum(['si', 'no']).optional(),
       hip_protectors_cont: z.enum(['si', 'no']).optional(),
       other_treatment: z.string().optional(),
 
@@ -1605,15 +1589,12 @@ export default defineInstrument({
           'cifosis',
           'height_loss',
           'lifestyle',
-          'frac_rec_date',
-          'frac_rec_loc',
-          'frac_rec_hosp',
           'diag',
-          'exercise',
-          'calcium_vitaminD',
-          'quit_smoking',
-          'alcohol_reduction',
-          'hip_protectors',
+          'NPT_exercise',
+          'NPT_calcium_vitaminD',
+          'NPT_quit_smoking',
+          'NPT_alcohol_reduction',
+          'NPT_hip_protectors',
           'date_end_study',
           'study_completion',
           'Investigator_initials'
@@ -1631,35 +1612,35 @@ export default defineInstrument({
         }
 
         // Validar tratamientos no farmacológicos secundarios (Continúa)
-        if (data.exercise === 'si' && !data.exercise_cont) {
+        if (data.NPT_exercise === 'si' && !data.exercise_cont) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Este campo es obligatorio',
             path: ['exercise_cont']
           });
         }
-        if (data.calcium_vitaminD === 'si' && !data.calcium_vitaminD_cont) {
+        if (data.NPT_calcium_vitaminD === 'si' && !data.calcium_vitaminD_cont) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Este campo es obligatorio',
             path: ['calcium_vitaminD_cont']
           });
         }
-        if (data.quit_smoking === 'si' && !data.quit_smoking_cont) {
+        if (data.NPT_quit_smoking === 'si' && !data.quit_smoking_cont) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Este campo es obligatorio',
             path: ['quit_smoking_cont']
           });
         }
-        if (data.alcohol_reduction === 'si' && !data.alcohol_reduction_cont) {
+        if (data.NPT_alcohol_reduction === 'si' && !data.alcohol_reduction_cont) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Este campo es obligatorio',
             path: ['alcohol_reduction_cont']
           });
         }
-        if (data.hip_protectors === 'si' && !data.hip_protectors_cont) {
+        if (data.NPT_hip_protectors === 'si' && !data.hip_protectors_cont) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Este campo es obligatorio',
@@ -1674,11 +1655,11 @@ export default defineInstrument({
               message: 'Este campo es obligatorio',
               path: ['diag_date']
             });
-          if (!data.Diag_method)
+          if (!data.diag_method)
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: 'Este campo es obligatorio',
-              path: ['Diag_method']
+              path: ['diag_method']
             });
         }
 
@@ -1703,15 +1684,15 @@ export default defineInstrument({
       const medications = [
         { name: 'alend', label: 'Alendronato' },
         { name: 'risedr', label: 'Risedronato' },
-        { name: 'iband', label: 'Ibandronato' },
-        { name: 'zoledr', label: 'Zoledronato' },
+        { name: 'iban', label: 'Ibandronato' },
+        { name: 'zoled', label: 'Zoledronato' },
         { name: 'denos', label: 'Denosumab' },
         { name: 'ralox', label: 'Raloxifeno' },
         { name: 'bazed', label: 'Bazedoxifeno' },
         { name: 'tibol', label: 'Tibolona' },
         { name: 'terip', label: 'Teriparatida' },
-        { name: 'abalop', label: 'Abaloparatida' },
-        { name: 'romos', label: 'Romosozumab' }
+        { name: 'abal', label: 'Abaloparatida' },
+        { name: 'romo', label: 'Romosozumab' }
       ];
 
       for (const med of medications) {
@@ -1794,17 +1775,23 @@ export default defineInstrument({
       ];
 
       for (const fractura of fracturas) {
-        const fechaKey = `frac_rec_date${fractura.num}` as keyof typeof data;
-        const localizacionKey = `frac_rec_loc${fractura.num}` as keyof typeof data;
-        const frac_rec_hospKey = `frac_rec_hosp${fractura.num}` as keyof typeof data;
+        const fechaKey = (
+          fractura.num === 1 ? 'frac_rec_date_1' : `frac_rec_date_${fractura.num}`
+        ) as keyof typeof data;
+        const localizacionKey = (
+          fractura.num === 1 ? 'frac_rec_loc_1' : `frac_rec_loc_${fractura.num}`
+        ) as keyof typeof data;
+        const frac_rec_hospKey = (
+          fractura.num === 1 ? 'frac_rec_hosp_1' : `frac_rec_hosp_${fractura.num}`
+        ) as keyof typeof data;
 
         const fecha = data[fechaKey];
         const localizacion = data[localizacionKey];
-        const frac_rec_hosp = data[frac_rec_hospKey];
+        const frac_rec_hosp_1 = data[frac_rec_hospKey];
 
         // Si algún campo está lleno, todos deben estarlo
-        const hasSomeData = fecha || localizacion || frac_rec_hosp;
-        const hasAllData = fecha && localizacion && frac_rec_hosp;
+        const hasSomeData = fecha || localizacion || frac_rec_hosp_1;
+        const hasAllData = fecha && localizacion && frac_rec_hosp_1;
 
         if (hasSomeData && !hasAllData) {
           if (!fecha) {
@@ -1821,7 +1808,7 @@ export default defineInstrument({
               path: [localizacionKey as string]
             });
           }
-          if (!frac_rec_hosp) {
+          if (!frac_rec_hosp_1) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: `La ${fractura.label} fractura está incompleta. Debe completar la hospitalización o borrar todos los campos (fecha, localización y hospitalización) para eliminarla.`,
