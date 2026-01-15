@@ -30,7 +30,7 @@ export const Sidebar = () => {
         <Branding className="h-12" fontSize="md" logoVariant="light" />
       </div>
       <hr className="my-2 h-[1px] border-none bg-slate-700" />
-      <nav className="flex w-full flex-col divide-y divide-slate-700">
+      <nav className="flex w-full flex-1 flex-col divide-y divide-slate-700 overflow-y-auto">
         {navItems.map((items, i) => (
           <div className="flex flex-col py-1 first:pt-0 last:pb-0" key={i}>
             {items.map(({ disabled, url, ...props }) => (
