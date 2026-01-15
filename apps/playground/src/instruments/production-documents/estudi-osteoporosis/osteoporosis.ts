@@ -363,99 +363,61 @@ function generateMedicationFields(medicationName: string, medicationLabel: strin
       i
     );
 
-    // Continúa (only for treatments 1 and 2)
-    if (i < maxTreatments) {
-      fields[`${medicationName}_cont_${i}`] = requiresMedicationStartDate(
-        {
-          kind: 'string',
-          label: `${treatmentLabel} - Continúa *`,
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        },
-        medicationName,
-        i
-      );
-    }
+    // Continúa
+    fields[`${medicationName}_cont_${i}`] = requiresMedicationStartDate(
+      {
+        kind: 'string',
+        label: `${treatmentLabel} - Continúa *`,
+        variant: 'radio',
+        options: {
+          si: 'Sí',
+          no: 'No'
+        }
+      },
+      medicationName,
+      i
+    );
 
     // Fecha fin
-    // For the last treatment (3), we show Fecha Fin directly without asking "Continua"
-    // For others, it depends on "Continua" being "No"
-    if (i === maxTreatments) {
-      fields[`${medicationName}_end_date_${i}`] = requiresMedicationStartDate(
-        {
-          kind: 'string',
-          variant: 'input',
-          placeholder: 'DD-MM-YYYY',
-          label: `${treatmentLabel} - Fecha fin (DD-MM-YYYY)`
-        },
-        medicationName,
-        i
-      );
-    } else {
-      fields[`${medicationName}_end_date_${i}`] = requiresMedicationDiscontinuation(
-        {
-          kind: 'string',
-          variant: 'input',
-          placeholder: 'DD-MM-YYYY',
-          label: `${treatmentLabel} - Fecha fin (DD-MM-YYYY)`
-        },
-        medicationName,
-        i
-      );
-    }
+    fields[`${medicationName}_end_date_${i}`] = requiresMedicationDiscontinuation(
+      {
+        kind: 'string',
+        variant: 'input',
+        placeholder: 'DD-MM-YYYY',
+        label: `${treatmentLabel} - Fecha fin (DD-MM-YYYY)`
+      },
+      medicationName,
+      i
+    );
 
     // Motivo interrupción
-    // Same logic as Fecha Fin
-    if (i === maxTreatments) {
-      fields[`${medicationName}_reason_end_${i}`] = requiresMedicationStartDate(
-        {
-          kind: 'string',
-          label: `${treatmentLabel} - Motivo interrupción`,
-          variant: 'select',
-          options: motivoOptions
-        },
-        medicationName,
-        i
-      );
-    } else {
-      fields[`${medicationName}_reason_end_${i}`] = requiresMedicationDiscontinuation(
-        {
-          kind: 'string',
-          label: `${treatmentLabel} - Motivo interrupción`,
-          variant: 'select',
-          options: motivoOptions
-        },
-        medicationName,
-        i
-      );
-    }
+    fields[`${medicationName}_reason_end_${i}`] = requiresMedicationDiscontinuation(
+      {
+        kind: 'string',
+        label: `${treatmentLabel} - Motivo interrupción`,
+        variant: 'select',
+        options: motivoOptions
+      },
+      medicationName,
+      i
+    );
 
-    // Add treatment button (except for last treatment)
-    if (i < maxTreatments) {
-      fields[`add_${medicationName}_${i + 1}`] = showAddMedicationButton(medicationName, medicationLabel, i);
-    }
+    // Add treatment button (including after the last treatment to trigger additional details)
+    fields[`add_${medicationName}_${i + 1}`] = showAddMedicationButton(medicationName, medicationLabel, i);
   }
 
   // Add open text field for details if more than 3 treatments
   fields[`${medicationName}_additional_details`] = {
     kind: 'dynamic' as const,
-    deps: [
-      'informed_consent',
-      `${medicationName}_ini_date_${maxTreatments}`,
-      `${medicationName}_end_date_${maxTreatments}`
-    ] as const,
+    deps: ['informed_consent', `add_${medicationName}_${maxTreatments + 1}`] as const,
     render(data: any): any {
-      const lastStartKey = `${medicationName}_ini_date_${maxTreatments}`;
-      const lastEndKey = `${medicationName}_end_date_${maxTreatments}`;
+      const addKey = `add_${medicationName}_${maxTreatments + 1}`;
 
-      if (data.informed_consent === 'si' && data[lastStartKey] && data[lastEndKey]) {
+      if (data.informed_consent === 'si' && data[addKey] === 'si') {
         return {
           kind: 'string',
           variant: 'textarea',
-          label: `En caso de que tenga más de tres tratamientos de ${medicationLabel}, especifique la fecha de inicio, si continua o no (en caso que no continúe, fecha de fin y motivo de interrupción de todas las pautas que tenga del fármaco)a continuación`,
+          label: `En caso de que tenga más de tres tratamientos de ${medicationLabel}, especifique la fecha de inicio, si continua o no (en caso que no continúe, fecha de fin y motivo de interrupción de todas las pautas que tenga del fármaco) a continuación`,
           rows: 3
         };
       }
@@ -499,9 +461,7 @@ function generateMedicationValidationSchemas(medicationName: string, maxTreatmen
       .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
       .optional();
 
-    if (i < maxTreatments) {
-      schemas[`${medicationName}_cont_${i}`] = z.enum(['si', 'no']).optional();
-    }
+    schemas[`${medicationName}_cont_${i}`] = z.enum(['si', 'no']).optional();
 
     schemas[`${medicationName}_end_date_${i}`] = z
       .string()
@@ -510,9 +470,8 @@ function generateMedicationValidationSchemas(medicationName: string, maxTreatmen
       .optional();
     schemas[`${medicationName}_reason_end_${i}`] = motivoEnum.optional();
 
-    if (i < maxTreatments) {
-      schemas[`add_${medicationName}_${i + 1}`] = z.enum(['si', 'no']).optional();
-    }
+    // Field to add next treatment (or additional details for the last one)
+    schemas[`add_${medicationName}_${i + 1}`] = z.enum(['si', 'no']).optional();
   }
 
   schemas[`${medicationName}_additional_details`] = z.string().optional();
@@ -1697,15 +1656,15 @@ export default defineInstrument({
 
       for (const med of medications) {
         for (let i = 1; i <= 3; i++) {
-          const fechaInicioKey = `${med.name}FechaInicio${i}` as keyof typeof data;
-          const fechaFinKey = `${med.name}FechaFin${i}` as keyof typeof data;
-          const continuaKey = `${med.name}Continua${i}` as keyof typeof data;
+          const fechaInicioKey = `${med.name}_ini_date_${i}` as keyof typeof data;
+          const fechaFinKey = `${med.name}_end_date_${i}` as keyof typeof data;
+          const continuaKey = `${med.name}_cont_${i}` as keyof typeof data;
 
           const fechaInicioStr = data[fechaInicioKey] as string | undefined;
           const fechaFinStr = data[fechaFinKey] as string | undefined;
 
-          // Validar que "Continúa" sea obligatorio si hay fecha de inicio (solo para tratamiento 1 y 2)
-          if (fechaInicioStr && i < 3) {
+          // Validar que "Continúa" sea obligatorio si hay fecha de inicio (para todos los tratamientos)
+          if (fechaInicioStr) {
             const continua = data[continuaKey];
             if (!continua) {
               ctx.addIssue({
@@ -1717,9 +1676,9 @@ export default defineInstrument({
 
             // Validar "¿Desea agregar otro tratamiento?" sea obligatorio si el tratamiento actual está "completo"
             // (Ya sea porque continúa activos o porque ha finalizado con todos los datos)
-            const motivoKey = `${med.name}MotivoInterrupcion${i}` as keyof typeof data;
+            const motivoKey = `${med.name}_reason_end_${i}` as keyof typeof data;
             const motivo = data[motivoKey];
-            const agregarKey = `add_${med.name}${i + 1}` as keyof typeof data;
+            const agregarKey = `add_${med.name}_${i + 1}` as keyof typeof data;
 
             const isTreatmentComplete = continua === 'si' || (continua === 'no' && fechaFinStr && motivo);
 
