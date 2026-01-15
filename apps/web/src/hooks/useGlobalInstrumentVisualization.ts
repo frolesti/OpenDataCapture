@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toBasicISOString } from '@douglasneuroinformatics/libjs';
 import { useDownload, useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { AnyUnilingualScalarInstrument, InstrumentKind } from '@opendatacapture/runtime-core';
+import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
 import { omit } from 'lodash-es';
 import { unparse } from 'papaparse';
 
@@ -148,7 +149,14 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
   }, [records]);
 
   const filteredRecords = useMemo(() => {
-    return records.filter((record) => {
+    let currentRecords = records;
+    if (currentUser?.basePermissionLevel === 'STANDARD') {
+      currentRecords = currentRecords.filter((record) => {
+        return removeSubjectIdScope(record.__subjectId__) === currentUser.username;
+      });
+    }
+
+    return currentRecords.filter((record) => {
       return Object.entries(filters).every(([key, value]) => {
         if (!value) return true;
         return record[key] === value;
