@@ -42,10 +42,9 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
     const csvContent = [
       ['Variable', 'Value'],
       ...Object.values(computedMeasures).map(({ label, value }) => [label, value?.toString() ?? 'NA']),
-      ...Object.entries(data).map(([key, value]) => [
-        key,
-        typeof value === 'object' ? JSON.stringify(value) : String(value ?? '')
-      ])
+      ...Object.entries(data)
+        .filter(([key]) => !key.startsWith('_warning'))
+        .map(([key, value]) => [key, typeof value === 'object' ? JSON.stringify(value) : String(value ?? '')])
     ]
       .map((row) => row.map((cell) => `"${cell?.replace(/"/g, '""')}"`).join(','))
       .join('\n');
