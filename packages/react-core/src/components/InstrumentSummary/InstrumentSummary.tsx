@@ -264,9 +264,9 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
             <ul className="list-inside list-disc space-y-1 text-blue-800">
               <li>
                 Para introducir datos de otro paciente, cierre el registro actual en el menú lateral haciendo clic en
-                "Tanca registre actual"
+                "Cierra registro actual"
               </li>
-              <li>Para consultar las datos de los pacientes, acceda al "Llistat de pacients" en el menú lateral</li>
+              <li>Para consultar las datos de los pacientes, acceda al "Centro de datos" en el menú lateral</li>
             </ul>
           </div>
         </>
