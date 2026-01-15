@@ -77,13 +77,13 @@ const Walkthrough = () => {
           </p>
         ),
         navigateOptions: {
-          to: '/dashboard'
+          to: '/datahub'
         },
         position: 'bottom-left',
         target: '#sidebar-branding-container',
         title: t('walkthrough.intro.title')
       },
-      {
+      /* {
         content: <p>{t('walkthrough.dashboard.content')}</p>,
         navigateOptions: {
           to: '/dashboard'
@@ -91,7 +91,7 @@ const Walkthrough = () => {
         position: 'bottom-left',
         target: 'button[data-nav-url="/dashboard"]',
         title: t('walkthrough.dashboard.title')
-      },
+      }, */
       {
         content: <p>{t('walkthrough.dataHub.content')}</p>,
         navigateOptions: {

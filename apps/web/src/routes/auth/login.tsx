@@ -45,7 +45,7 @@ const RouteComponent = () => {
       return;
     }
     login(result.accessToken);
-    await navigate({ to: '/dashboard' });
+    await navigate({ to: '/datahub' });
   };
 
   return (
@@ -94,7 +94,7 @@ export const Route = createFileRoute('/auth/login')({
       }
       login(response.accessToken);
       throw redirect({
-        to: '/dashboard'
+        to: '/datahub'
       });
     }
   },

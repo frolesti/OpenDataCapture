@@ -42,7 +42,7 @@ export function useNavItems() {
   useEffect(() => {
     const ability = currentUser?.ability;
     const globalItems: NavItem[] = [];
-    if (
+    /* if (
       ability?.can('read', 'Instrument') &&
       ability.can('read', 'InstrumentRecord') &&
       ability.can('read', 'Subject') &&
@@ -53,7 +53,7 @@ export function useNavItems() {
         label: t('layout.navLinks.dashboard'),
         url: '/dashboard'
       });
-    }
+    } */
     if (ability?.can('read', 'Subject')) {
       globalItems.push({
         icon: DatabaseIcon,
