@@ -41,7 +41,11 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
     const filename = `${instrument.internal.name}_${instrument.internal.edition}_${new Date(timeCollected).toISOString()}.csv`;
     const csvContent = [
       ['Variable', 'Value'],
-      ...Object.values(computedMeasures).map(({ label, value }) => [label, value?.toString() ?? 'NA'])
+      ...Object.values(computedMeasures).map(({ label, value }) => [label, value?.toString() ?? 'NA']),
+      ...Object.entries(data).map(([key, value]) => [
+        key,
+        typeof value === 'object' ? JSON.stringify(value) : String(value ?? '')
+      ])
     ]
       .map((row) => row.map((cell) => `"${cell?.replace(/"/g, '""')}"`).join(','))
       .join('\n');
