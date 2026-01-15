@@ -183,11 +183,17 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       const columnNames = Object.keys(exportRecords[0]!);
       return exportRecords.map((item) => {
         const obj: { [key: string]: any } = {
-          GroupID: currentGroup ? currentGroup.id : 'root',
-          subjectId: item.__subjectId__
+          subjectId: removeSubjectIdScope(item.__subjectId__ as string),
+          Date: ''
         };
+
+        // Add patientID first if it exists
+        if (item.patientID !== undefined) {
+          obj.patientID = item.patientID;
+        }
+
         for (const key of columnNames) {
-          if (key === '__subjectId__') continue;
+          if (key === '__subjectId__' || key === 'patientID') continue;
           const val = item[key];
           if (key === '__date__') {
             obj.Date = toBasicISOString(val as Date);
@@ -220,10 +226,9 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
             objVal.forEach((arrayItem) => {
               Object.entries(arrayItem as object).forEach(([arrKey, arrItem]) => {
                 longRecord.push({
-                  GroupID: currentGroup ? currentGroup.id : 'root',
                   // eslint-disable-next-line perfectionist/sort-objects
                   Date: toBasicISOString(date),
-                  SubjectID: subjectId,
+                  SubjectID: removeSubjectIdScope(subjectId),
                   Variable: `${objKey}-${arrKey}`,
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, perfectionist/sort-objects
                   Value: arrItem
@@ -232,10 +237,9 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
             });
           } else {
             longRecord.push({
-              GroupID: currentGroup ? currentGroup.id : 'root',
               // eslint-disable-next-line perfectionist/sort-objects
               Date: toBasicISOString(date),
-              SubjectID: subjectId,
+              SubjectID: removeSubjectIdScope(subjectId),
               Value: objVal,
               Variable: objKey
             });
