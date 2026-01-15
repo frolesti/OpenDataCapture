@@ -128,9 +128,9 @@ function requiresPreviousFracture<T extends Record<string, any>>(field: T, fract
     kind: 'dynamic' as const,
     deps: [
       'informed_consent',
-      `frac_rec_date_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`,
-      `frac_rec_loc_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`,
-      `frac_rec_hosp_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`,
+      `frac_rec_date_${fractureNumber - 1}`,
+      `frac_rec_loc_${fractureNumber - 1}`,
+      `frac_rec_hosp_${fractureNumber - 1}`,
       `add_frac_${fractureNumber}`
     ] as const,
     render(data: any): any {
@@ -145,9 +145,9 @@ function requiresPreviousFracture<T extends Record<string, any>>(field: T, fract
       // For subsequent fractures, check if:
       // 1. Previous fracture is completed (all 3 fields)
       // 2. User wants to add this fracture
-      const prevFechaKey = `frac_rec_date_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`;
-      const prevLocalizacionKey = `frac_rec_loc_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`;
-      const prevHospitalizacionKey = `frac_rec_hosp_1${fractureNumber - 1 === 1 ? '' : '_' + (fractureNumber - 1)}`;
+      const prevFechaKey = `frac_rec_date_${fractureNumber - 1}`;
+      const prevLocalizacionKey = `frac_rec_loc_${fractureNumber - 1}`;
+      const prevHospitalizacionKey = `frac_rec_hosp_${fractureNumber - 1}`;
       const agregarKey = `add_frac_${fractureNumber}`;
 
       const isPreviousComplete = data[prevFechaKey] && data[prevLocalizacionKey] && data[prevHospitalizacionKey];
@@ -168,14 +168,14 @@ function showAddFractureButton(fractureNumber: number): any {
     kind: 'dynamic' as const,
     deps: [
       'informed_consent',
-      `frac_rec_date_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`,
-      `frac_rec_loc_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`,
-      `frac_rec_hosp_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`
+      `frac_rec_date_${fractureNumber}`,
+      `frac_rec_loc_${fractureNumber}`,
+      `frac_rec_hosp_${fractureNumber}`
     ] as const,
     render(data: any): any {
-      const fechaKey = `frac_rec_date_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`;
-      const localizacionKey = `frac_rec_loc_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`;
-      const frac_rec_hospKey = `frac_rec_hosp_1${fractureNumber === 1 ? '' : '_' + fractureNumber}`;
+      const fechaKey = `frac_rec_date_${fractureNumber}`;
+      const localizacionKey = `frac_rec_loc_${fractureNumber}`;
+      const frac_rec_hospKey = `frac_rec_hosp_${fractureNumber}`;
 
       // Show button only if current fracture is complete
       const isCurrentComplete = data[fechaKey] && data[localizacionKey] && data[frac_rec_hospKey];
@@ -485,7 +485,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 11,
+    edition: 14,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
