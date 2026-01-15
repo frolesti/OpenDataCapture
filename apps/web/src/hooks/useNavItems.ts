@@ -61,7 +61,7 @@ export function useNavItems() {
         url: '/datahub'
       });
     }
-    if (
+    /* if (
       currentGroup &&
       ability?.can('manage', 'Group') &&
       ability?.can('read', 'Subject') &&
@@ -73,14 +73,14 @@ export function useNavItems() {
         label: t(`layout.navLinks.upload`),
         url: '/upload'
       });
-    }
-    if (currentGroup && ability?.can('manage', 'Group')) {
+    } */
+    /* if (currentGroup && ability?.can('manage', 'Group')) {
       globalItems.push({
         icon: UsersIcon,
         label: t('layout.navLinks.manageGroup'),
         url: '/group/manage'
       });
-    }
+    } */
 
     globalItems.push({
       icon: UserIcon,
