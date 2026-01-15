@@ -133,66 +133,95 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
         </div>
       </div>
       <Separator />
-      {subject && (
-        <InstrumentSummaryGroup
-          items={
-            isSubjectWithPersonalInfo(subject)
-              ? [
-                  {
-                    label: 'ID',
-                    value: data?.codigoPaciente ?? subject.id
-                  },
-                  {
-                    label: t({
-                      en: 'Nom Complet',
-                      fr: 'Nombre Completo'
-                    }),
-                    value:
-                      subject?.firstName && subject.lastName
-                        ? `${subject.firstName} ${subject.lastName}`
-                        : t({
-                            en: 'Anònim',
-                            fr: 'Anónimo'
-                          })
-                  },
-                  {
-                    label: t({
-                      en: 'Data de Naixement',
-                      fr: 'Fecha de Nacimiento'
-                    }),
-                    value: subject.dateOfBirth ? toBasicISOString(subject.dateOfBirth) : null
-                  },
-                  {
-                    label: t({
-                      en: 'Sexe al Naixement',
-                      fr: 'Sexo al Nacer'
-                    }),
-                    value:
-                      subject.sex === 'MALE'
-                        ? t({
-                            en: 'Masculí',
-                            fr: 'Masculino'
-                          })
-                        : subject.sex === 'FEMALE'
-                          ? t({
-                              en: 'Femení',
-                              fr: 'Femenino'
+      {subject && instrument.internal.name === 'OMEGA_FF_AP_2025' ? (
+        <>
+          <InstrumentSummaryGroup
+            items={[
+              {
+                label: 'ID',
+                value: removeSubjectIdScope(subject.id)
+              }
+            ]}
+            title={t({
+              en: 'Investigador',
+              fr: 'Investigador'
+            })}
+          />
+          <InstrumentSummaryGroup
+            items={[
+              {
+                label: 'ID',
+                value: data?.patientID ?? data?.codigoPaciente ?? 'N/A'
+              }
+            ]}
+            title={t({
+              en: 'Pacient',
+              fr: 'Paciente'
+            })}
+          />
+        </>
+      ) : (
+        subject && (
+          <InstrumentSummaryGroup
+            items={
+              isSubjectWithPersonalInfo(subject)
+                ? [
+                    {
+                      label: 'ID',
+                      value: data?.codigoPaciente ?? subject.id
+                    },
+                    {
+                      label: t({
+                        en: 'Nom Complet',
+                        fr: 'Nombre Completo'
+                      }),
+                      value:
+                        subject?.firstName && subject.lastName
+                          ? `${subject.firstName} ${subject.lastName}`
+                          : t({
+                              en: 'Anònim',
+                              fr: 'Anónimo'
                             })
-                          : null
-                  }
-                ]
-              : [
-                  {
-                    label: 'ID',
-                    value: data?.codigoPaciente ?? removeSubjectIdScope(subject.id)
-                  }
-                ]
-          }
-          title={t({
-            en: 'Subjecte',
-            fr: 'Sujeto'
-          })}
-        />
+                    },
+                    {
+                      label: t({
+                        en: 'Data de Naixement',
+                        fr: 'Fecha de Nacimiento'
+                      }),
+                      value: subject.dateOfBirth ? toBasicISOString(subject.dateOfBirth) : null
+                    },
+                    {
+                      label: t({
+                        en: 'Sexe al Naixement',
+                        fr: 'Sexo al Nacer'
+                      }),
+                      value:
+                        subject.sex === 'MALE'
+                          ? t({
+                              en: 'Masculí',
+                              fr: 'Masculino'
+                            })
+                          : subject.sex === 'FEMALE'
+                            ? t({
+                                en: 'Femení',
+                                fr: 'Femenino'
+                              })
+                            : null
+                    }
+                  ]
+                : [
+                    {
+                      label: 'ID',
+                      value: data?.codigoPaciente ?? removeSubjectIdScope(subject.id)
+                    }
+                  ]
+            }
+            title={t({
+              en: 'Subjecte',
+              fr: 'Sujeto'
+            })}
+          />
+        )
       )}
       <InstrumentSummaryGroup
         items={[
