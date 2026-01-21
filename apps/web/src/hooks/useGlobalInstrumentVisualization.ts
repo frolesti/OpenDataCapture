@@ -323,20 +323,42 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
 
   useEffect(() => {
     if (recordsQuery.data) {
+      const allKeys = new Set<string>();
+      if (instrument && instrument.kind === 'FORM') {
+        if (Array.isArray(instrument.content)) {
+          for (const group of instrument.content) {
+            for (const key of Object.keys(group.fields)) {
+              allKeys.add(key);
+            }
+          }
+        } else {
+          for (const key of Object.keys(instrument.content)) {
+            allKeys.add(key);
+          }
+        }
+      }
+
       const records: InstrumentVisualizationRecord[] = [];
       for (const record of recordsQuery.data) {
         const props = record.data && typeof record.data === 'object' ? record.data : {};
+
+        const paddedProps: { [key: string]: unknown } = {};
+        allKeys.forEach((key) => {
+          paddedProps[key] = undefined;
+        });
+
         records.push({
           __date__: record.date,
           __subjectId__: record.subjectId,
           __time__: record.date.getTime(),
+          ...paddedProps,
           ...record.computedMeasures,
           ...props
         });
       }
       setRecords(records);
     }
-  }, [recordsQuery.data]);
+  }, [recordsQuery.data, instrument]);
 
   const instrumentOptions: { [key: string]: string } = useMemo(() => {
     const options: { [key: string]: string } = {};
