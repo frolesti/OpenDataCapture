@@ -167,10 +167,51 @@ export class InstrumentRecordsService {
       const rawData =
         typeof record.data === 'object' && record.data !== null && !Array.isArray(record.data) ? record.data : {};
       const computedMeasures = record.computedMeasures || {};
-      const mergedData = { ...rawData, ...computedMeasures };
+      const mergedData = { ...computedMeasures, ...rawData };
 
-      for (const [measureKey, measureValue] of Object.entries(mergedData)) {
-        if (measureValue == null) {
+      // Ensure all measures from the instrument definition are present in the export
+      const allMeasureKeys = new Set([...Object.keys(mergedData)]);
+      if (instrument.measures) {
+        Object.keys(instrument.measures).forEach((key) => allMeasureKeys.add(key));
+      }
+
+      let schema: any = instrument.validationSchema;
+      while (
+        schema &&
+        (schema._def?.typeName === 'ZodEffects' ||
+          schema._def?.typeName === 'ZodOptional' ||
+          schema._def?.typeName === 'ZodNullable')
+      ) {
+        if (schema._def.typeName === 'ZodEffects') {
+          schema = schema._def.schema;
+        } else {
+          schema = schema._def.innerType;
+        }
+      }
+
+      if (schema && schema._def?.typeName === 'ZodObject') {
+        Object.keys(schema.shape).forEach((key) => allMeasureKeys.add(key));
+      }
+
+      for (const measureKey of allMeasureKeys) {
+        const measureValue = mergedData[measureKey];
+
+        if (measureValue === undefined || measureValue === null) {
+          // Push empty string for missing values to ensure column existence
+          data.push({
+            groupId: record.subject.groupIds[0] ?? DEFAULT_GROUP_NAME,
+            instrumentEdition: instrument.internal.edition,
+            instrumentName: instrument.internal.name,
+            measure: measureKey,
+            sessionDate: record.session.date.toISOString(),
+            sessionId: record.session.id,
+            sessionType: record.session.type,
+            subjectAge: record.subject.dateOfBirth ? yearsPassed(record.subject.dateOfBirth) : null,
+            subjectId: removeSubjectIdScope(record.subject.id),
+            subjectSex: record.subject.sex,
+            timestamp: record.date.toISOString(),
+            value: ''
+          });
           continue;
         }
 
