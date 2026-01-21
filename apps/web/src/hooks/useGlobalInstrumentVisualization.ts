@@ -328,12 +328,16 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
         if (Array.isArray(instrument.content)) {
           for (const group of instrument.content) {
             for (const key of Object.keys(group.fields)) {
-              allKeys.add(key);
+              if (!key.startsWith('_warning')) {
+                allKeys.add(key);
+              }
             }
           }
         } else {
           for (const key of Object.keys(instrument.content)) {
-            allKeys.add(key);
+            if (!key.startsWith('_warning')) {
+              allKeys.add(key);
+            }
           }
         }
       }
@@ -341,6 +345,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       const records: InstrumentVisualizationRecord[] = [];
       for (const record of recordsQuery.data) {
         const props = record.data && typeof record.data === 'object' ? record.data : {};
+        const cleanProps = Object.fromEntries(Object.entries(props).filter(([k]) => !k.startsWith('_warning')));
 
         const paddedProps: { [key: string]: unknown } = {};
         allKeys.forEach((key) => {
@@ -353,7 +358,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
           __time__: record.date.getTime(),
           ...paddedProps,
           ...record.computedMeasures,
-          ...props
+          ...cleanProps
         });
       }
       setRecords(records);
