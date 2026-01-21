@@ -156,9 +156,6 @@ export class InstrumentRecordsService {
 
     const instruments = new Map<string, ScalarInstrument>();
     for (const record of records) {
-      if (!record.computedMeasures) {
-        continue;
-      }
       let instrument: ScalarInstrument;
       if (instruments.has(record.instrumentId)) {
         instrument = instruments.get(record.instrumentId)!;
@@ -166,7 +163,13 @@ export class InstrumentRecordsService {
         instrument = (await this.instrumentsService.findById(record.instrumentId)) as ScalarInstrument;
         instruments.set(record.instrumentId, instrument);
       }
-      for (const [measureKey, measureValue] of Object.entries(record.computedMeasures)) {
+
+      const rawData =
+        typeof record.data === 'object' && record.data !== null && !Array.isArray(record.data) ? record.data : {};
+      const computedMeasures = record.computedMeasures || {};
+      const mergedData = { ...rawData, ...computedMeasures };
+
+      for (const [measureKey, measureValue] of Object.entries(mergedData)) {
         if (measureValue == null) {
           continue;
         }
