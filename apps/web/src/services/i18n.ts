@@ -46,7 +46,7 @@ declare module '@douglasneuroinformatics/libui/i18n' {
 }
 
 i18n.init({
-  defaultLanguage: 'en',
+  defaultLanguage: 'fr',
   translations: {
     auth,
     common,
