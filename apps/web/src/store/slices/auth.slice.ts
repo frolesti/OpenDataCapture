@@ -13,7 +13,14 @@ export const createAuthSlice: SliceCreator<AuthSlice> = (set) => ({
   currentGroup: null,
   currentUser: null,
   login: (accessToken) => {
-    const decoded = jwtDecode<TokenPayload & { id?: string; sub: string }>(accessToken);
+    const decoded = jwtDecode<TokenPayload & { exp?: number; id?: string; sub: string }>(accessToken);
+
+    // Check if token is expired
+    if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+      set({ accessToken: null, currentGroup: null, currentUser: null });
+      throw new Error('Token expired');
+    }
+
     const { groups, id, permissions, sub, ...rest } = decoded;
     const ability = createMongoAbility<PureAbility<[AppAction, AppSubjectName], any>>(permissions);
     set({
