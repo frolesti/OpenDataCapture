@@ -497,7 +497,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 18,
+    edition: 19,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -1144,7 +1144,7 @@ export default defineInstrument({
           render(data: any) {
             if (data.diag === 'si' && data.diag_method === 'dxa') {
               return {
-                kind: 'number' as const,
+                kind: 'string' as const,
                 label: 'T-score columna total',
                 variant: 'input' as const,
                 description: 'Indique el valor de T-score de columna total'
@@ -1159,7 +1159,7 @@ export default defineInstrument({
           render(data: any) {
             if (data.diag === 'si' && data.diag_method === 'dxa') {
               return {
-                kind: 'number' as const,
+                kind: 'string' as const,
                 label: 'T-score fémur total / cuello femoral',
                 variant: 'input' as const,
                 description: 'Indique el valor de T-score de fémur total o cuello femoral'
@@ -1535,8 +1535,8 @@ export default defineInstrument({
         .optional(),
       diag_method: z.enum(['dxa', 'clinico', 'frax', 'hallazgo', 'presuntivo', 'otro']).optional(),
       diag_method_other: z.string().optional(),
-      tscore_columna_total: z.number().optional(),
-      tscore_femur_total: z.number().optional(),
+      tscore_columna_total: z.string().optional(),
+      tscore_femur_total: z.string().optional(),
 
       // TRATAMIENTOS (todos opcionales)
       ...generateMedicationValidationSchemas('alend'),
