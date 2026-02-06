@@ -58,20 +58,24 @@ export const StartSessionForm = ({
         content={[
           {
             title: t({
-              en: 'Iniciar Registre'
+              en: 'Iniciar Registre',
+              fr: 'Iniciar Registro'
             }),
             description: t({
-              en: "Seleccioneu la data per iniciar una nova sessió. Podreu afegir múltiples registres de pacients dins d'aquesta sessió."
+              en: "Seleccioneu la data per iniciar una nova sessió. Podreu afegir múltiples registres de pacients dins d'aquesta sessió.",
+              fr: 'Seleccione la fecha para iniciar una nueva sesión. Podrá añadir múltiples registros de pacientes dentro de esta sesión.'
             }),
             fields: {
               sessionDate: {
                 kind: 'date',
                 disabled: true,
                 label: t({
-                  en: 'Data de la Sessió'
+                  en: 'Data de la Sessió',
+                  fr: 'Fecha de la Sesión'
                 }),
                 description: t({
-                  en: 'La data en què es realitza aquesta sessió (Avui)'
+                  en: 'La data en què es realitza aquesta sessió (Avui)',
+                  fr: 'La fecha en que se realiza esta sesión (Hoy)'
                 })
               } as any
             }
