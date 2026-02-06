@@ -497,7 +497,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 14,
+    edition: 18,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -1137,12 +1137,43 @@ export default defineInstrument({
             }
             return null;
           }
+        },
+        tscore_columna_total: {
+          kind: 'dynamic' as const,
+          deps: ['diag', 'diag_method'] as const,
+          render(data: any) {
+            if (data.diag === 'si' && data.diag_method === 'dxa') {
+              return {
+                kind: 'number' as const,
+                label: 'T-score columna total',
+                variant: 'input' as const,
+                description: 'Indique el valor de T-score de columna total'
+              };
+            }
+            return null;
+          }
+        },
+        tscore_femur_total: {
+          kind: 'dynamic' as const,
+          deps: ['diag', 'diag_method'] as const,
+          render(data: any) {
+            if (data.diag === 'si' && data.diag_method === 'dxa') {
+              return {
+                kind: 'number' as const,
+                label: 'T-score fémur total / cuello femoral',
+                variant: 'input' as const,
+                description: 'Indique el valor de T-score de fémur total o cuello femoral'
+              };
+            }
+            return null;
+          }
         }
       }
     },
     {
       title: 'PRESCRIPCIÓN DEL TRATAMIENTO DE OSTEOPOROSIS',
-      description: 'Indique los tratamientos prescritos. Si un tratamiento no aplica, no es necesario contestar.',
+      description:
+        'MEDICACIÓN OSTEOPOROSIS. Indique los tratamientos que el paciente ha recibido para la osteoporosis y la duración de cada uno de ellos: Si continúa con la medicación no rellene la fecha fin y marque la casilla “continúa”. Si no continúa, complete el“motivo de interrupción de la medicación”. Cuando proceda, dentro de cada medicación, introduzca los tratamientos en orden cronológico, desde el más antiguo hasta el más reciente.',
       fields: {
         _warningTratamiento: consentWarning() as any,
         // All medications with up to 3 treatments each
@@ -1161,7 +1192,8 @@ export default defineInstrument({
     },
     {
       title: 'TRATAMIENTO NO FARMACOLÓGICO OSTEOPOROSIS',
-      description: 'Indique los tratamientos no farmacológicos recibidos',
+      description:
+        'Indique los tratamientos no farmacológicos que el paciente ha recibido para la osteoporosis . Además, en aquellos en los que aplique, indique si actualmente continúa con ellos:',
       fields: {
         _warningTratamientoNoFarmacologico: consentWarning() as any,
         NPT_exercise: requiresConsent({
@@ -1208,7 +1240,7 @@ export default defineInstrument({
         ),
         NPT_quit_smoking: requiresConsent({
           kind: 'string',
-          label: 'Dejar de fumar - ¿Lo ha recibido? *',
+          label: 'Consejo antitabáquico - ¿Lo ha recibido? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -1218,7 +1250,7 @@ export default defineInstrument({
         NPT_quit_smoking_cont: requiresRecibido(
           {
             kind: 'string',
-            label: 'Dejar de fumar - Continúa *',
+            label: 'Consejo antitabáquico - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1503,6 +1535,8 @@ export default defineInstrument({
         .optional(),
       diag_method: z.enum(['dxa', 'clinico', 'frax', 'hallazgo', 'presuntivo', 'otro']).optional(),
       diag_method_other: z.string().optional(),
+      tscore_columna_total: z.number().optional(),
+      tscore_femur_total: z.number().optional(),
 
       // TRATAMIENTOS (todos opcionales)
       ...generateMedicationValidationSchemas('alend'),

@@ -55,12 +55,12 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
     // Download the CRF PDF file for OMEGA osteoporosis study
     if (instrument.internal.name === 'OMEGA_FF_AP_2025') {
       try {
-        const response = await fetch('/instruments/production-documents/CRF Osteoporosis 010925-versió final.pdf');
+        const response = await fetch('/instruments/production-documents/CRD OMEGA Vdef.pdf');
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'CRF Osteoporosis 010925-versió final.pdf';
+        a.download = 'CRD OMEGA Vdef.pdf';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
