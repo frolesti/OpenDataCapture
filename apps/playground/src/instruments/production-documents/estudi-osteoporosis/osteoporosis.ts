@@ -234,7 +234,19 @@ function showAddMedicationButton(medicationName: string, medicationLabel: string
       `${medicationName}_reason_end_${treatmentNumber}`
     ] as const,
     render(data: any): any {
-      if (data.informed_consent === 'si' && isMedicationTreatmentComplete(data, medicationName, treatmentNumber)) {
+      const fechaInicioKey = `${medicationName}_ini_date_${treatmentNumber}`;
+      const continuaKey = `${medicationName}_cont_${treatmentNumber}`;
+      const fechaFinKey = `${medicationName}_end_date_${treatmentNumber}`;
+      const motivoKey = `${medicationName}_reason_end_${treatmentNumber}`;
+
+      // Only show "Add another treatment?" if the treatment has ended (continua = 'no' and has end date + reason)
+      if (
+        data.informed_consent === 'si' &&
+        data[fechaInicioKey] &&
+        data[continuaKey] === 'no' &&
+        data[fechaFinKey] &&
+        data[motivoKey]
+      ) {
         return {
           kind: 'string' as const,
           label: `¿Desea agregar ${treatmentNumber === 1 ? 'un segundo' : treatmentNumber === 2 ? 'un tercer' : 'otro'} tratamiento de ${medicationLabel}? *`,
