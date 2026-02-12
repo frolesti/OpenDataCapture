@@ -20,7 +20,8 @@ axios.interceptors.request.use((config) => {
   ) {
     config.timeout = 10000; // abort request after 10 seconds
     config.timeoutErrorMessage = i18n.t({
-      en: 'Error de xarxa'
+      en: 'Error de xarxa',
+      fr: 'Error de red'
     });
   }
 
