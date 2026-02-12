@@ -47,7 +47,9 @@ const CENTROS_SANITARIOS = [
 
 type InstrumentVisualizationRecord = {
   [key: string]: unknown;
+  __data__: Record<string, unknown>;
   __date__: Date;
+  __id__: string;
   __subjectId__: string;
   __time__: number;
 };
@@ -177,7 +179,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       instrument.internal.edition
     }_${new Date().toISOString()}`;
 
-    const exportRecords = filteredRecords.map((record) => omit(record, ['__time__']));
+    const exportRecords = filteredRecords.map((record) => omit(record, ['__time__', '__id__', '__data__']));
 
     const makeWideRows = () => {
       const columnNames = Object.keys(exportRecords[0]!);
@@ -353,7 +355,9 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
         });
 
         records.push({
+          __data__: record.data as Record<string, unknown>,
           __date__: record.date,
+          __id__: record.id,
           __subjectId__: record.subjectId,
           __time__: record.date.getTime(),
           ...paddedProps,

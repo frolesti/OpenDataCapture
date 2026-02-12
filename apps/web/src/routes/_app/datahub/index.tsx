@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { camelToSnakeCase, toBasicISOString } from '@douglasneuroinformatics/libjs';
 import {
   ActionDropdown,
+  Button,
   ClientTable,
   Dialog,
   Heading,
@@ -15,6 +16,7 @@ import type { Subject } from '@opendatacapture/schemas/subject';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
+import { Edit } from 'lucide-react';
 import { unparse } from 'papaparse';
 
 import { IdentificationForm } from '@/components/IdentificationForm';
@@ -24,6 +26,13 @@ import { useGlobalInstrumentVisualization } from '@/hooks/useGlobalInstrumentVis
 import { useSubjectsQuery } from '@/hooks/useSubjectsQuery';
 import { useAppStore } from '@/store';
 import { downloadExcel } from '@/utils/excel';
+
+const DialogTrigger = Dialog.Trigger as unknown as React.ComponentType<React.PropsWithChildren<{ className?: string }>>;
+const DialogTitle = Dialog.Title as unknown as React.ComponentType<React.PropsWithChildren<unknown>>;
+
+const SelectTrigger = Select.Trigger as unknown as React.ComponentType<React.PropsWithChildren<{ className?: string }>>;
+const SelectContent = Select.Content as unknown as React.ComponentType<React.PropsWithChildren<unknown>>;
+const SelectItem = Select.Item as unknown as React.ComponentType<React.PropsWithChildren<{ value: string }>>;
 
 const RouteComponent = () => {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
@@ -40,6 +49,7 @@ const RouteComponent = () => {
     dl,
     filterOptions,
     filters,
+    instrument,
     instrumentId,
     instrumentOptions,
     records,
@@ -136,7 +146,7 @@ const RouteComponent = () => {
       <div className="flex grow flex-col">
         <div className="mb-3 flex flex-col justify-between gap-3 lg:flex-row">
           <Dialog open={isLookupOpen} onOpenChange={setIsLookupOpen}>
-            <Dialog.Trigger className="grow">
+            <DialogTrigger className="grow">
               <SearchBar
                 className="[&>input]:text-foreground [&>input]:placeholder-foreground"
                 data-testid="datahub-subject-lookup-search"
@@ -146,10 +156,10 @@ const RouteComponent = () => {
                 })}
                 readOnly={true}
               />
-            </Dialog.Trigger>
+            </DialogTrigger>
             <Dialog.Content data-spotlight-type="subject-lookup-modal" data-testid="datahub-subject-lookup-dialog">
               <Dialog.Header>
-                <Dialog.Title>{t('datahub.index.lookup.title')}</Dialog.Title>
+                <DialogTitle>{t('datahub.index.lookup.title')}</DialogTitle>
               </Dialog.Header>
               <IdentificationForm onSubmit={(data) => void lookupSubject(data)} />
             </Dialog.Content>
@@ -183,23 +193,23 @@ const RouteComponent = () => {
                         value={filters[key] ?? 'ALL'}
                         onValueChange={(val) => setFilter(key, val === 'ALL' ? null : val)}
                       >
-                        <Select.Trigger className="min-w-32">
+                        <SelectTrigger className="min-w-32">
                           <Select.Value placeholder={label} />
-                        </Select.Trigger>
-                        <Select.Content>
-                          <Select.Item value="ALL">
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">
                             {key === '__subjectId__'
                               ? t('datahub.filters.allSubjects')
                               : isHealthCenter
                                 ? t('datahub.filters.allHealthCenters')
                                 : `${t('datahub.filters.all')} ${key}`}
-                          </Select.Item>
+                          </SelectItem>
                           {Array.from(options).map((opt) => (
-                            <Select.Item key={opt} value={opt}>
+                            <SelectItem key={opt} value={opt}>
                               {key === '__subjectId__' ? removeSubjectIdScope(opt) : opt}
-                            </Select.Item>
+                            </SelectItem>
                           ))}
-                        </Select.Content>
+                        </SelectContent>
                       </Select>
                     );
                   })}
@@ -232,6 +242,44 @@ const RouteComponent = () => {
           <ClientTable
             noWrap
             columns={[
+              {
+                field: '__id__',
+                // @ts-expect-error - Formatter can return a React Node
+                formatter: (id: string) => {
+                  const record = records.find((r) => r.__id__ === id);
+                  if (!record || removeSubjectIdScope(record.__subjectId__ as string) !== currentUser?.username) {
+                    return <div className="w-9" />;
+                  }
+                  return (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => {
+                        const rawData = record && typeof record === 'object' ? record.__data__ : undefined;
+                        // Ensure empty objects are treated as undefined to trigger fetch in target page
+                        const initialData = rawData && Object.keys(rawData).length > 0 ? rawData : undefined;
+
+                        void navigate({
+                          params: { id: instrumentId },
+                          search: { recordId: id },
+                          state: {
+                            info: instrument,
+                            initialData: initialData,
+                            recordId: id
+                          },
+                          to: '/instruments/render/$id'
+                        });
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  );
+                },
+                label: t({
+                  en: 'Accions',
+                  fr: 'Acciones'
+                })
+              },
               {
                 field: '__date__',
                 formatter: (value: Date) => toBasicISOString(value),
