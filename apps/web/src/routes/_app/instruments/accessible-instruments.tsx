@@ -34,6 +34,9 @@ const RouteComponent = () => {
           onSelect: (instrument) => {
             void navigate({
               params: { id: instrument.id },
+              search: {
+                recordId: undefined
+              },
               state: { info: instrument },
               to: `/instruments/render/$id`
             });

@@ -100,7 +100,7 @@ export const FormContent = ({ initialValues, instrument, onSubmit }: FormContent
           preventResetValuesOnReset
           content={instrument.content}
           data-testid="form-content"
-          initialValues={initialValues ?? instrument.initialValues}
+          initialValues={(initialValues ?? instrument.initialValues) as any}
           validationSchema={instrument.validationSchema}
           onSubmit={handleSubmit}
         />
