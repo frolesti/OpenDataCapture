@@ -5,9 +5,10 @@ import type { AnyUnilingualInstrument } from '@opendatacapture/runtime-core';
 export type InstrumentOverviewProps = {
   instrument: AnyUnilingualInstrument;
   onNext: () => void;
+  isResuming?: boolean;
 };
 
-export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewProps) => {
+export const InstrumentOverview = ({ instrument, onNext, isResuming }: InstrumentOverviewProps) => {
   const { t } = useTranslation();
 
   const estimatedDuration = instrument.clientDetails?.estimatedDuration ?? instrument.details.estimatedDuration;
@@ -45,8 +46,8 @@ export const InstrumentOverview = ({ instrument, onNext }: InstrumentOverviewPro
       <Button
         className="w-full"
         label={t({
-          en: 'Començar',
-          fr: 'Comenzar'
+          en: isResuming ? 'Continuar formulari' : 'Començar',
+          fr: isResuming ? 'Continuar formulario' : 'Comenzar'
         })}
         variant="primary"
         onClick={() => {

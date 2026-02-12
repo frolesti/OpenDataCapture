@@ -20,6 +20,7 @@ import type { InstrumentSubmitHandler, SubjectDisplayInfo } from '../../types';
 export type SeriesInstrumentRendererProps = {
   className?: string;
   initialSeriesIndex?: number;
+  isResuming?: boolean;
   onSubmit: InstrumentSubmitHandler;
   subject?: SubjectDisplayInfo;
   target: SeriesInstrumentBundleContainer;
@@ -28,6 +29,7 @@ export type SeriesInstrumentRendererProps = {
 export const SeriesInstrumentRenderer = ({
   className,
   initialSeriesIndex,
+  isResuming,
   onSubmit,
   target
 }: SeriesInstrumentRendererProps) => {
@@ -87,7 +89,9 @@ export const SeriesInstrumentRenderer = ({
         ))
         .with({ status: 'DONE' }, ({ instrument }) =>
           match({ index, instrument, isInstrumentInProgress })
-            .with({ index: 0 }, () => <InstrumentOverview instrument={instrument} onNext={() => setIndex(1)} />)
+            .with({ index: 0 }, () => (
+              <InstrumentOverview instrument={instrument} isResuming={isResuming} onNext={() => setIndex(1)} />
+            ))
             .with({ index: 1, isInstrumentInProgress: false }, () => (
               <div className="flex grow flex-col items-center justify-center space-y-1 py-32 text-center">
                 <Heading variant="h4">
@@ -108,7 +112,10 @@ export const SeriesInstrumentRenderer = ({
                     type="button"
                     onClick={() => setIsInstrumentInProgress(true)}
                   >
-                    {t({ en: 'Començar', fr: 'Comenzar' })}
+                    {t({
+                      en: 'Continuar',
+                      fr: 'Continuar'
+                    })}
                   </Button>
                 </div>
               </div>

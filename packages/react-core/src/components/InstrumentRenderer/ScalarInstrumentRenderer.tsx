@@ -20,6 +20,8 @@ import type { InstrumentSubmitHandler, SubjectDisplayInfo } from '../../types';
 
 export type ScalarInstrumentRendererProps = {
   className?: string;
+  initialData?: Record<string, unknown>;
+  isResuming?: boolean;
   /** @deprecated */
   onCompileError?: (error: Error) => void;
   onSubmit: InstrumentSubmitHandler;
@@ -46,6 +48,8 @@ const fixDates = (data: unknown): unknown => {
 
 export const ScalarInstrumentRenderer = ({
   className,
+  initialData,
+  isResuming,
   onCompileError,
   onSubmit,
   options,
@@ -90,9 +94,20 @@ export const ScalarInstrumentRenderer = ({
         })
         .with({ status: 'DONE' }, ({ instrument }) =>
           match({ index, instrument })
-            .with({ index: 0 }, () => <InstrumentOverview instrument={instrument} onNext={() => setIndex(1)} />)
+            .with({ index: 0 }, () => (
+              <InstrumentOverview
+                instrument={instrument}
+                isResuming={isResuming ?? Boolean(initialData)}
+                onNext={() => setIndex(1)}
+              />
+            ))
             .with({ index: 1, instrument: { kind: 'FORM' } }, ({ instrument }) => (
-              <FormContent instrument={instrument} onSubmit={handleSubmit} />
+              <FormContent
+                key={initialData ? 'loaded' : 'new'}
+                initialValues={initialData}
+                instrument={instrument}
+                onSubmit={handleSubmit}
+              />
             ))
             .with({ index: 1, instrument: { kind: 'INTERACTIVE' } }, () => (
               <InteractiveContent bundle={target.bundle} onSubmit={handleSubmit} />

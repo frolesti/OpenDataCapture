@@ -6,11 +6,12 @@ import { useEffect, useRef } from 'react';
 import type { Promisable } from 'type-fest';
 
 export type FormContentProps = {
+  initialValues?: Record<string, unknown>;
   instrument: AnyUnilingualFormInstrument;
   onSubmit: (data: FormInstrument.Data) => Promisable<void>;
 };
 
-export const FormContent = ({ instrument, onSubmit }: FormContentProps) => {
+export const FormContent = ({ initialValues, instrument, onSubmit }: FormContentProps) => {
   const { t } = useTranslation();
   const formRef = useRef<HTMLDivElement>(null);
   const isSubmittingRef = useRef(false);
@@ -99,7 +100,7 @@ export const FormContent = ({ instrument, onSubmit }: FormContentProps) => {
           preventResetValuesOnReset
           content={instrument.content}
           data-testid="form-content"
-          initialValues={instrument.initialValues}
+          initialValues={initialValues ?? instrument.initialValues}
           validationSchema={instrument.validationSchema}
           onSubmit={handleSubmit}
         />
