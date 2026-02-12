@@ -5,6 +5,7 @@ import type { AppAbility } from '@douglasneuroinformatics/libnest';
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { InstrumentKind } from '@opendatacapture/runtime-core';
+import type { User } from '@prisma/client';
 import { z } from 'zod/v4';
 
 import { CreateInstrumentRecordDto } from './dto/create-instrument-record.dto';
@@ -20,15 +21,23 @@ export class InstrumentRecordsController {
   @ApiOperation({ summary: 'Create Instrument Record' })
   @Post()
   @RouteAccess({ action: 'create', subject: 'InstrumentRecord' })
-  create(@Body() data: CreateInstrumentRecordDto, @CurrentUser('ability') ability: AppAbility) {
-    return this.instrumentRecordsService.create(data, { ability });
+  create(
+    @Body() data: CreateInstrumentRecordDto,
+    @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: User
+  ) {
+    return this.instrumentRecordsService.create(data, { ability, user });
   }
 
   @ApiOperation({ summary: 'Upload Multiple Instrument Records' })
   @Post('upload')
   @RouteAccess({ action: 'create', subject: 'InstrumentRecord' })
-  upload(@Body() data: UploadInstrumentRecordsDto, @CurrentUser('ability') ability: AppAbility) {
-    return this.instrumentRecordsService.upload(data, { ability });
+  upload(
+    @Body() data: UploadInstrumentRecordsDto,
+    @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: User
+  ) {
+    return this.instrumentRecordsService.upload(data, { ability, user });
   }
 
   @ApiOperation({ summary: 'Get Records for Instrument ' })
@@ -49,6 +58,9 @@ export class InstrumentRecordsController {
     @Query('instrumentId') instrumentId?: string,
     @Query('subjectId') subjectId?: string
   ) {
+    if (kind) {
+      // debug log to ensure controller is fresh
+    }
     return this.instrumentRecordsService.find({ groupId, instrumentId, kind, minDate, subjectId }, { ability });
   }
 
@@ -80,12 +92,13 @@ export class InstrumentRecordsController {
 
   @ApiOperation({ summary: 'Update Instrument Record' })
   @Patch(':id')
-  @RouteAccess({ action: 'delete', subject: 'InstrumentRecord' })
+  @RouteAccess({ action: 'update', subject: 'InstrumentRecord' })
   updateById(
     @Param('id', ValidObjectIdPipe) id: string,
     @Body() { data }: UpdateInstrumentRecordDto,
-    @CurrentUser('ability') ability: AppAbility
+    @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: User
   ) {
-    return this.instrumentRecordsService.updateById(id, data, { ability });
+    return this.instrumentRecordsService.updateById(id, data, { ability, user });
   }
 }

@@ -1,7 +1,7 @@
-import { RouteAccess } from '@douglasneuroinformatics/libnest';
+import { CurrentUser, RouteAccess } from '@douglasneuroinformatics/libnest';
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
-import type { Session } from '@prisma/client';
+import type { Session, User } from '@prisma/client';
 
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SessionsService } from './sessions.service';
@@ -13,7 +13,7 @@ export class SessionsController {
   @ApiOperation({ description: 'Create Session' })
   @Post()
   @RouteAccess({ action: 'create', subject: 'Session' })
-  create(@Body() data: CreateSessionDto): Promise<Session> {
-    return this.sessionsService.create(data);
+  create(@Body() data: CreateSessionDto, @CurrentUser() user: User): Promise<Session> {
+    return this.sessionsService.create({ ...data, username: user.username });
   }
 }

@@ -2,7 +2,13 @@ import { replacer, reviver, yearsPassed } from '@douglasneuroinformatics/libjs';
 import { accessibleQuery, InjectModel } from '@douglasneuroinformatics/libnest';
 import type { Model } from '@douglasneuroinformatics/libnest';
 import { linearRegression } from '@douglasneuroinformatics/libstats';
-import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException
+} from '@nestjs/common';
 import type { Json, ScalarInstrument } from '@opendatacapture/runtime-core';
 import { DEFAULT_GROUP_NAME } from '@opendatacapture/schemas/core';
 import { $RecordArrayFieldValue } from '@opendatacapture/schemas/instrument';
@@ -261,9 +267,12 @@ export class InstrumentRecordsService {
   }
 
   async find(
-    { groupId, instrumentId, kind, minDate, subjectId }: InstrumentRecordQueryParams,
-    { ability }: EntityOperationOptions = {}
+    query: any, // InstrumentRecordQueryParams
+    options: EntityOperationOptions = {}
   ): Promise<InstrumentRecord[]> {
+    const { ability } = options;
+    const { groupId, instrumentId, kind, minDate, subjectId } = query;
+    console.log('Finding records with query:', query);
     if (groupId) {
       await this.groupsService.findById(groupId);
     }
@@ -342,12 +351,21 @@ export class InstrumentRecordsService {
     return results;
   }
 
-  async updateById(id: string, data: unknown[] | { [key: string]: unknown }, { ability }: EntityOperationOptions = {}) {
+  async updateById(
+    id: string,
+    data: unknown[] | { [key: string]: unknown },
+    { ability, user }: EntityOperationOptions = {}
+  ) {
     const instrumentRecord = await this.instrumentRecordModel.findFirst({
+      include: { session: true },
       where: { id }
     });
     if (!instrumentRecord) {
       throw new NotFoundException(`Could not find record with ID '${id}'`);
+    }
+
+    if (user && instrumentRecord.session.userId !== user.id) {
+      throw new ForbiddenException('Only the owner of the record can edit it.');
     }
 
     if (Array.isArray(instrumentRecord.data) && !Array.isArray(data)) {
@@ -359,7 +377,7 @@ export class InstrumentRecordsService {
 
     const updatedData = mergeWith(instrumentRecord.data, data, (updatedValue: unknown, sourceValue: unknown) => {
       if (Array.isArray(sourceValue)) {
-        return updatedValue;
+        return sourceValue;
       }
       return undefined;
     });
@@ -379,7 +397,7 @@ export class InstrumentRecordsService {
           : null,
         data: parseResult.data
       },
-      where: { AND: [accessibleQuery(ability, 'delete', 'InstrumentRecord')], id }
+      where: { AND: [accessibleQuery(ability, 'update', 'InstrumentRecord')], id }
     });
   }
 
@@ -426,7 +444,8 @@ export class InstrumentRecordsService {
             date: date,
             groupId: groupId ?? null,
             subjectData: { id: subjectId },
-            type: 'RETROSPECTIVE'
+            type: 'RETROSPECTIVE',
+            username: options?.user?.username
           });
 
           createdSessionsArray.push(session);
