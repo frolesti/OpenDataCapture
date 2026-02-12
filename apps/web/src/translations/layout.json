@@ -7,8 +7,8 @@
   },
   "endSessionModal": {
     "message": {
-      "en": "Esteu segur que voleu finalitzar la sessió actual? Si decidiu continuar, sereu redirigit a la pàgina d'inici de sessió.",
-      "fr": "¿Está seguro de que desea finalizar la sesión actual? Si decide continuar, será redirigido a la página de inicio de sesión."
+      "en": "Esteu segur que voleu finalitzar la sessió actual? Si decidiu continuar, sereu redirigit a la selecció d'instruments.",
+      "fr": "¿Está seguro de que desea finalizar la sesión actual? Si decide continuar, será redirigido a la selección de instrumentos."
     },
     "title": {
       "en": "Finalitzar sessió",
