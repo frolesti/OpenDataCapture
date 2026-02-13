@@ -37,7 +37,7 @@ const RouteComponent = () => {
               search: {
                 recordId: undefined
               },
-              state: { info: instrument },
+              state: { instrumentTitle: instrument.details.title },
               to: `/instruments/render/$id`
             });
           }

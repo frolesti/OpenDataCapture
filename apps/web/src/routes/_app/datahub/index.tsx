@@ -266,7 +266,7 @@ const RouteComponent = () => {
                           params: { id: instrumentId },
                           search: { recordId: id },
                           state: {
-                            info: instrument,
+                            instrumentTitle: instrument?.clientDetails?.title ?? instrument?.details?.title,
                             initialData: initialData,
                             recordId: id
                           },

@@ -4,7 +4,6 @@ import { Heading, Spinner } from '@douglasneuroinformatics/libui/components';
 import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { InstrumentRenderer } from '@opendatacapture/react-core';
 import type { InstrumentSubmitHandler } from '@opendatacapture/react-core';
-import type { UnilingualInstrumentInfo } from '@opendatacapture/schemas/instrument';
 import type { CreateInstrumentRecordData } from '@opendatacapture/schemas/instrument-records';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
@@ -25,7 +24,7 @@ const RouteComponent = () => {
   const location = useLocation();
   const { t } = useTranslation();
 
-  const info = location.state.info as UnilingualInstrumentInfo;
+  const instrumentTitle = (location.state as any)?.instrumentTitle as string | undefined;
   const initialData = (location.state as any)?.initialData as Record<string, unknown> | undefined;
   // Fallback to state recordId if search param is missing (e.g. navigation timing issues)
   const recordId = search.recordId ?? ((location.state as any)?.recordId as string | undefined);
@@ -49,7 +48,7 @@ const RouteComponent = () => {
 
   const instrumentBundleQuery = useInstrumentBundle(params.id);
 
-  const title = info?.clientDetails?.title ?? info?.details.title;
+  const title = instrumentTitle;
 
   const isLoadingData = Boolean(recordId) && !effectiveInitialData && recordsQuery.isLoading;
 
