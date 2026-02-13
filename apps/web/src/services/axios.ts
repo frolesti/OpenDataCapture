@@ -52,7 +52,8 @@ axios.interceptors.response.use(
     if (!isAxiosError(error)) {
       notifications.addNotification({
         message: i18n.t({
-          en: 'Error desconegut'
+          en: 'Error desconegut',
+          fr: 'Error desconocido'
         }),
         type: 'error'
       });
@@ -61,7 +62,8 @@ axios.interceptors.response.use(
     }
     notifications.addNotification({
       message: i18n.t({
-        en: 'Sol·licitud HTTP fallida'
+        en: 'Sol·licitud HTTP fallida',
+        fr: 'Solicitud HTTP fallida'
       }),
       title: error.response?.status.toString(),
       type: 'error'

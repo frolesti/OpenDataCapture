@@ -22,6 +22,7 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
                 ability.can('read', 'Instrument');
                 ability.can('create', 'InstrumentRecord');
                 ability.can('read', 'InstrumentRecord', { groupId: { in: groupIds } });
+                ability.can('update', 'InstrumentRecord', { groupId: { in: groupIds } });
                 ability.can('create', 'Session');
                 ability.can('read', 'Session', { groupId: { in: groupIds } });
                 ability.can('create', 'Subject');
@@ -34,6 +35,10 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
                 ability.can('read', 'Instrument');
                 ability.can('create', 'InstrumentRecord');
                 ability.can('read', 'InstrumentRecord', {
+                  groupId: { in: groupIds },
+                  session: { userId }
+                });
+                ability.can('update', 'InstrumentRecord', {
                   groupId: { in: groupIds },
                   session: { userId }
                 });
