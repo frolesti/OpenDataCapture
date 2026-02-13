@@ -173,49 +173,64 @@ const RouteComponent = () => {
             <div className="flex min-w-60 gap-2 lg:shrink">
               {instrumentId ? (
                 <React.Fragment>
-                  {Object.entries(filterOptions).map(([key, options]) => {
-                    const normalizedKey = key.toUpperCase();
-                    const isHealthCenter =
-                      normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
-                      normalizedKey === 'CENTRO_SANITARIO' ||
-                      (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'));
+                  {Object.entries(filterOptions)
+                    .filter(([key]) => {
+                      // Standard users should not see subject or health center filters
+                      if (!isStandardUser) return true;
+                      if (key === '__subjectId__') return false;
+                      const normalizedKey = key.toUpperCase();
+                      if (
+                        normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
+                        normalizedKey === 'CENTRO_SANITARIO' ||
+                        (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'))
+                      ) {
+                        return false;
+                      }
+                      return true;
+                    })
+                    .map(([key, options]) => {
+                      const normalizedKey = key.toUpperCase();
+                      const isHealthCenter =
+                        normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
+                        normalizedKey === 'CENTRO_SANITARIO' ||
+                        (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'));
 
-                    let label = key;
-                    if (key === '__subjectId__') {
-                      label = t('datahub.index.table.subject').toUpperCase();
-                    } else if (isHealthCenter) {
-                      label = t({
-                        en: 'Centre Sanitari',
-                        fr: 'Centro Sanitario'
-                      }).toUpperCase();
-                    }
+                      let label = key;
+                      if (key === '__subjectId__') {
+                        label = t('datahub.index.table.subject').toUpperCase();
+                      } else if (isHealthCenter) {
+                        label = t({
+                          en: 'Centre Sanitari',
+                          fr: 'Centro Sanitario'
+                        }).toUpperCase();
+                      }
 
-                    return (
-                      <Select
-                        key={key}
-                        value={filters[key] ?? 'ALL'}
-                        onValueChange={(val) => setFilter(key, val === 'ALL' ? null : val)}
-                      >
-                        <SelectTrigger className="min-w-32">
-                          <Select.Value placeholder={label} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">
-                            {key === '__subjectId__'
-                              ? t('datahub.filters.allSubjects')
-                              : isHealthCenter
-                                ? t('datahub.filters.allHealthCenters')
-                                : `${t('datahub.filters.all')} ${key}`}
-                          </SelectItem>
-                          {Array.from(options).map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {key === '__subjectId__' ? removeSubjectIdScope(opt) : opt}
+                      return (
+                        <Select
+                          key={key}
+                          value={filters[key] ?? 'ALL'}
+                          onValueChange={(val) => setFilter(key, val === 'ALL' ? null : val)}
+                        >
+                          <SelectTrigger className="min-w-32">
+                            <Select.Value placeholder={label} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ALL">
+                              {key === '__subjectId__'
+                                ? t('datahub.filters.allSubjects')
+                                : isHealthCenter
+                                  ? t('datahub.filters.allHealthCenters')
+                                  : `${t('datahub.filters.all')} ${key}`}
                             </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    );
-                  })}
+                            {Array.from(options).map((opt) => (
+                              <SelectItem key={opt} value={opt}>
+                                {key === '__subjectId__' ? removeSubjectIdScope(opt) : opt}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      );
+                    })}
                   <ActionDropdown
                     widthFull
                     data-spotlight-type="export-data-dropdown"
