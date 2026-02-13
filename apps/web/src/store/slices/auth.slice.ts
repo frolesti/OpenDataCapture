@@ -31,6 +31,7 @@ export const createAuthSlice: SliceCreator<AuthSlice> = (set) => ({
   },
   logout: () => {
     set({ accessToken: null, currentGroup: null, currentUser: null });
+    localStorage.removeItem('lastActivityTimestamp');
     window.location.reload();
   }
 });

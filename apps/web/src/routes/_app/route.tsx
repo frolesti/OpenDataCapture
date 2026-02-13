@@ -4,6 +4,7 @@ import { Layout } from '@/components/Layout';
 import { setupStateQueryOptions } from '@/hooks/useSetupStateQuery';
 import { DisclaimerProvider } from '@/providers/DisclaimerProvider';
 import { ForceClearQueryCacheProvider } from '@/providers/ForceClearQueryCacheProvider';
+import { InactivityProvider } from '@/providers/InactivityProvider';
 import { WalkthroughProvider } from '@/providers/WalkthroughProvider';
 import { useAppStore } from '@/store';
 
@@ -20,13 +21,15 @@ export const Route = createFileRoute('/_app')({
   },
   component: () => {
     return (
-      <DisclaimerProvider>
-        <WalkthroughProvider>
-          <ForceClearQueryCacheProvider>
-            <Layout />
-          </ForceClearQueryCacheProvider>
-        </WalkthroughProvider>
-      </DisclaimerProvider>
+      <InactivityProvider>
+        <DisclaimerProvider>
+          <WalkthroughProvider>
+            <ForceClearQueryCacheProvider>
+              <Layout />
+            </ForceClearQueryCacheProvider>
+          </WalkthroughProvider>
+        </DisclaimerProvider>
+      </InactivityProvider>
     );
   }
 });
