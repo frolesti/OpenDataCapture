@@ -82,9 +82,8 @@ const RouteComponent = () => {
     }
     notifications.addNotification({
       message: t({
-        ca: 'Formulari desat correctament',
-        en: 'Form saved successfully',
-        es: 'Formulario guardado correctamente'
+        en: 'Formulari desat correctament',
+        fr: 'Formulario guardado correctamente'
       } as any),
       type: 'success'
     });

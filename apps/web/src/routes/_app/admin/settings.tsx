@@ -25,7 +25,8 @@ const RouteComponent = () => {
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            en: "Modificar la configuració de l'aplicació"
+            en: "Modificar la configuració de l'aplicació",
+            fr: 'Modificar la configuración de la aplicación'
           })}
         </Heading>
       </PageHeader>
@@ -41,7 +42,8 @@ const RouteComponent = () => {
               }
             },
             title: t({
-              en: 'Funcionalitats'
+              en: 'Funcionalitats',
+              fr: 'Funcionalidades'
             })
           }
         ]}

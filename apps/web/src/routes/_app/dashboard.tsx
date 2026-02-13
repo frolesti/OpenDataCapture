@@ -346,7 +346,8 @@ const RouteComponent = () => {
                             </p>
                             <p className="font-semibold text-amber-600 dark:text-amber-400">
                               {t({
-                                en: 'Subjectes'
+                                en: 'Subjectes',
+                                fr: 'Sujetos'
                               })}
                               : {payload[0]?.value}
                             </p>

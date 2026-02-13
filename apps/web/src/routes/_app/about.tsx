@@ -124,7 +124,8 @@ const RouteComponent = () => {
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            en: 'Sobre Alta Medical Services'
+            en: 'Sobre Alta Medical Services',
+            fr: 'Sobre Alta Medical Services'
           })}
         </Heading>
       </PageHeader>

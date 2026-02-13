@@ -29,28 +29,32 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
     {
       kind: 'text',
       label: t({
-        en: 'Autors'
+        en: 'Autors',
+        fr: 'Autores'
       }),
       text: instrument.details.authors?.join(', ')
     },
     {
       kind: 'text',
       label: t({
-        en: 'Descripció'
+        en: 'Descripció',
+        fr: 'Descripción'
       }),
       text: instrument.details.description
     },
     {
       kind: 'text',
       label: t({
-        en: 'Edició'
+        en: 'Edició',
+        fr: 'Edición'
       }),
       text: instrument.internal?.edition.toString()
     },
     {
       kind: 'text',
       label: t({
-        en: 'Idiomes'
+        en: 'Idiomes',
+        fr: 'Idiomas'
       }),
       text: instrument.supportedLanguages
         .map((language) => {
@@ -72,7 +76,8 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
     {
       kind: 'text',
       label: t({
-        en: 'Llicència'
+        en: 'Llicència',
+        fr: 'Licencia'
       }),
       text: license?.name ?? 'NA',
       tooltip: (
@@ -88,10 +93,12 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
             <p>
               {license?.isOpenSource
                 ? t({
-                    en: 'Aquesta és una llicència lliure i de codi obert'
+                    en: 'Aquesta és una llicència lliure i de codi obert',
+                    fr: 'Esta es una licencia libre y de código abierto'
                   })
                 : t({
-                    en: 'Aquesta no és una llicència lliure i de codi obert'
+                    en: 'Aquesta no és una llicència lliure i de codi obert',
+                    fr: 'Esta no es una licencia libre y de código abierto'
                   })}
             </p>
           </Tooltip.Content>
@@ -102,20 +109,23 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       href: instrument.details.referenceUrl,
       kind: 'link',
       label: t({
-        en: 'Enllaç de referència'
+        en: 'Enllaç de referència',
+        fr: 'Enlace de referencia'
       })
     },
     {
       href: instrument.details.sourceUrl,
       kind: 'link',
       label: t({
-        en: 'Enllaç al codi font'
+        en: 'Enllaç al codi font',
+        fr: 'Enlace al código fuente'
       })
     },
     {
       kind: 'text',
       label: t({
-        en: 'Etiquetes'
+        en: 'Etiquetes',
+        fr: 'Etiquetas'
       }),
       text: instrument.tags.join(', ')
     }
@@ -147,7 +157,7 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
             return (
               <div className="flex items-center gap-1" key={item.label}>
                 <p className="line-clamp-3 leading-tight">
-                  <span className="font-medium">{item.label + t({ en: ': ' })}</span>
+                  <span className="font-medium">{item.label + t({ en: ': ', fr: ': ' })}</span>
                   {item.kind === 'text' && <span className="text-muted-foreground">{item.text}</span>}
                   {item.kind === 'link' && (
                     <a

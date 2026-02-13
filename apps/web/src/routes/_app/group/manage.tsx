@@ -79,13 +79,15 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
             subjectIdDisplayLength: {
               kind: 'number',
               label: t({
-                en: "Longitud preferida de visualització de l'ID del subjecte"
+                en: "Longitud preferida de visualització de l'ID del subjecte",
+                fr: 'Longitud preferida de visualización del ID del sujeto'
               }),
               variant: 'input'
             }
           },
           title: t({
-            en: 'Configuració de visualització'
+            en: 'Configuració de visualització',
+            fr: 'Configuración de visualización'
           })
         },
         {
@@ -101,11 +103,13 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
             },
             idValidationRegex: {
               description: t({
-                en: 'Definir una expressió regular personalitzada per validar els ID dels subjectes (vegeu https://regexr.com per obtenir ajuda en el disseny de la vostra expressió regular).'
+                en: 'Definir una expressió regular personalitzada per validar els ID dels subjectes (vegeu https://regexr.com per obtenir ajuda en el disseny de la vostra expressió regular).',
+                fr: 'Definir una expresión regular personalizada para validar los ID de los sujetos (vea https://regexr.com para obtener ayuda en el diseño de su expresión regular).'
               }),
               kind: 'string',
               label: t({
-                en: 'Patró de validació ID'
+                en: 'Patró de validació ID',
+                fr: 'Patrón de validación ID'
               }),
               variant: 'input'
             },
@@ -119,7 +123,8 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
                 return {
                   kind: 'string',
                   label: t({
-                    en: 'Missatge de validació ID personalitzat (català)'
+                    en: 'Missatge de validació ID personalitzat (català)',
+                    fr: 'Mensaje de validación ID personalizado (catalán)'
                   }),
                   variant: 'input'
                 };
@@ -135,7 +140,8 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
                 return {
                   kind: 'string',
                   label: t({
-                    en: 'Missatge de validació ID personalitzat (anglès)'
+                    en: 'Missatge de validació ID personalitzat (anglès)',
+                    fr: 'Mensaje de validación ID personalizado (inglés)'
                   }),
                   variant: 'input'
                 };
@@ -151,7 +157,8 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
                 return {
                   kind: 'string',
                   label: t({
-                    en: 'Missatge de validació ID personalitzat (espanyol)'
+                    en: 'Missatge de validació ID personalitzat (espanyol)',
+                    fr: 'Mensaje de validación ID personalizado (español)'
                   }),
                   variant: 'input'
                 };
@@ -167,7 +174,8 @@ const ManageGroupForm = ({ data, onSubmit, readOnly }: ManageGroupFormProps) => 
                 return {
                   kind: 'string',
                   label: t({
-                    en: 'Missatge de validació ID personalitzat (francès)'
+                    en: 'Missatge de validació ID personalitzat (francès)',
+                    fr: 'Mensaje de validación ID personalizado (francés)'
                   }),
                   variant: 'input'
                 };

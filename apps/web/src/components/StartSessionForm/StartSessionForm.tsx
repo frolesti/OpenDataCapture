@@ -298,7 +298,8 @@ export const StartSessionForm = ({
                     message:
                       errorMessageFromGroup ??
                       t({
-                        en: `Ha de coincidir amb l'expressió regular: ${regex.source}`
+                        en: `Ha de coincidir amb l'expressió regular: ${regex.source}`,
+                        fr: `Debe coincidir con la expresión regular: ${regex.source}`
                       }),
                     path: ['subjectId']
                   });
