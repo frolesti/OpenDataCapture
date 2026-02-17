@@ -4,11 +4,19 @@ import type { AnyUnilingualInstrument } from '@opendatacapture/runtime-core';
 
 export type InstrumentOverviewProps = {
   instrument: AnyUnilingualInstrument;
-  onNext: () => void;
+  isEditing?: boolean;
   isResuming?: boolean;
+  onDiscardDraft?: () => void;
+  onNext: () => void;
 };
 
-export const InstrumentOverview = ({ instrument, onNext, isResuming }: InstrumentOverviewProps) => {
+export const InstrumentOverview = ({
+  instrument,
+  onNext,
+  isEditing,
+  isResuming,
+  onDiscardDraft
+}: InstrumentOverviewProps) => {
   const { t } = useTranslation();
 
   const estimatedDuration = instrument.clientDetails?.estimatedDuration ?? instrument.details.estimatedDuration;
@@ -44,16 +52,27 @@ export const InstrumentOverview = ({ instrument, onNext, isResuming }: Instrumen
         )}
       </div>
       <Button
-        className="w-full"
+        className={isResuming ? 'w-full bg-sky-600 text-white hover:bg-sky-700' : 'w-full'}
         label={t({
-          en: isResuming ? 'Continuar formulari' : 'Començar',
-          fr: isResuming ? 'Continuar formulario' : 'Comenzar'
+          en: isEditing ? 'Modificar registre' : isResuming ? 'Continuar esborrany' : 'Començar',
+          fr: isEditing ? 'Modificar registro' : isResuming ? 'Continuar borrador' : 'Comenzar'
         })}
         variant="primary"
         onClick={() => {
           onNext();
         }}
       />
+      {isResuming && onDiscardDraft && !isEditing && (
+        <Button
+          className="mt-2 w-full"
+          label={t({
+            en: 'Descartar esborrany',
+            fr: 'Descartar borrador'
+          })}
+          variant="danger"
+          onClick={onDiscardDraft}
+        />
+      )}
     </div>
   );
 };
