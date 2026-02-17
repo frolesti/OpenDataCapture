@@ -1,19 +1,23 @@
 import { useEffect, useState } from 'react';
 
-import { Button, LanguageToggle, Separator, Sheet, ThemeToggle } from '@douglasneuroinformatics/libui/components';
+import { Button, LanguageToggle, Sheet, ThemeToggle } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { Branding } from '@opendatacapture/react-core';
 import { useNavigate } from '@tanstack/react-router';
-import { MenuIcon, StopCircle } from 'lucide-react';
+import { Info, LogOutIcon, MenuIcon, SchoolIcon, StopCircle } from 'lucide-react';
 
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { useNavItems } from '@/hooks/useNavItems';
 import { useAppStore } from '@/store';
 
 import { NavButton } from '../NavButton';
+import { UserIcon } from '../UserIcon';
 
 export const Navbar = () => {
   const currentSession = useAppStore((store) => store.currentSession);
+  const currentUser = useAppStore((store) => store.currentUser);
+  const logout = useAppStore((store) => store.logout);
+  const setIsWalkthroughOpen = useAppStore((store) => store.setIsWalkthroughOpen);
   const [isOpen, setIsOpen] = useState(false);
   const navItems = useNavItems();
   const { t } = useTranslation('layout');
@@ -55,7 +59,7 @@ export const Navbar = () => {
         <Sheet.Header>
           <Branding className="h-10" fontSize="md" />
         </Sheet.Header>
-        <Separator />
+        {/* Removed undefined Separator */}
         <nav className="flex w-full grow flex-col divide-y divide-slate-200 dark:divide-slate-700">
           {navItems.map((items, i) => (
             <div className="flex flex-col py-1 first:pt-0 last:pb-0" key={i}>
@@ -89,16 +93,56 @@ export const Navbar = () => {
           ))}
         </nav>
         <Sheet.Footer className="mt-auto">
-          <div className="flex justify-end gap-2">
-            <LanguageToggle
-              options={{
-                en: 'Català',
-                fr: 'Español'
-              }}
-              variant="outline"
-            />
-            <ThemeToggle variant="outline" />
-          </div>
+          <hr className="h-[1px] border-none bg-slate-200 dark:bg-slate-700" />
+          {currentUser && (
+            <div className="flex flex-col gap-1 py-2">
+              <div className="flex items-center gap-2 px-1">
+                <UserIcon />
+                <span className="text-sm font-medium">{currentUser.username}</span>
+              </div>
+              <div className="flex flex-col">
+                <button
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  onClick={() => {
+                    setIsOpen(false);
+                    void navigate({ to: '/about' });
+                  }}
+                >
+                  <Info className="h-4 w-4" />
+                  {t('userDropup.info')}
+                </button>
+                <button
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
+                  disabled={currentSession !== null}
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsWalkthroughOpen(true);
+                  }}
+                >
+                  <SchoolIcon className="h-4 w-4" />
+                  {t('userDropup.tutorial')}
+                </button>
+                <button
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                  onClick={logout}
+                >
+                  <LogOutIcon className="h-4 w-4" />
+                  {t('userDropup.logout')}
+                </button>
+              </div>
+              <hr className="h-[1px] border-none bg-slate-200 dark:bg-slate-700" />
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <LanguageToggle
+                  options={{
+                    en: 'Català',
+                    fr: 'Español'
+                  }}
+                  variant="outline"
+                />
+                <ThemeToggle variant="outline" />
+              </div>
+            </div>
+          )}
         </Sheet.Footer>
       </Sheet.Content>
     </Sheet>
