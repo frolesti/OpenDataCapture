@@ -238,6 +238,32 @@ model Session {
   @@map("SessionModel")
 }
 
+// Audit Log
+
+type AuditFieldChange {
+  field    String
+  oldValue String?
+  newValue String?
+}
+
+model AuditLog {
+  createdAt    DateTime           @default(now()) @db.Date
+  id           String             @id @default(auto()) @map("_id") @db.ObjectId
+  recordId     String             @db.ObjectId
+  instrumentId String
+  subjectId    String
+  groupId      String?            @db.ObjectId
+  userId       String
+  username     String
+  changes      AuditFieldChange[]
+  /// [JsonValue]
+  previousData Json?
+  /// [JsonValue]
+  newData      Json?
+
+  @@map("AuditLogModel")
+}
+
 // Setup
 
 model SetupState {

@@ -2,6 +2,7 @@ import { AppFactory } from '@douglasneuroinformatics/libnest';
 import { PrismaClient } from '@prisma/client';
 
 import { AssignmentsModule } from './assignments/assignments.module';
+import { AuditLogModule } from './audit-log/audit-log.module';
 import { $Env } from './core/env.schema';
 import { GatewayModule } from './gateway/gateway.module';
 import { GroupsModule } from './groups/groups.module';
@@ -32,11 +33,12 @@ export default AppFactory.create({
       url: 'https://www.apache.org/licenses/LICENSE-2.0'
     },
     path: '/',
-    tags: ['Authentication', 'Groups', 'Instruments', 'Instrument Records', 'Subjects', 'Users'],
+    tags: ['Authentication', 'Audit Log', 'Groups', 'Instruments', 'Instrument Records', 'Subjects', 'Users'],
     title: 'Open Data Capture'
   },
   envSchema: $Env,
   imports: [
+    AuditLogModule,
     ConfiguredAuthModule,
     GroupsModule,
     InstrumentRecordsModule,

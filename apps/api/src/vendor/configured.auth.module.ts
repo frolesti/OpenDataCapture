@@ -19,6 +19,7 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
               case 'GROUP_MANAGER':
                 ability.can('manage', 'Assignment', { groupId: { in: groupIds } });
                 ability.can('manage', 'Group', { id: { in: groupIds } });
+                ability.can('read', 'AuditLog', { groupId: { in: groupIds } });
                 ability.can('read', 'Instrument');
                 ability.can('create', 'InstrumentRecord');
                 ability.can('read', 'InstrumentRecord', { groupId: { in: groupIds } });

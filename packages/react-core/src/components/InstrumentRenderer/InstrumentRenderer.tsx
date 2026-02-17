@@ -9,7 +9,11 @@ export type InstrumentRendererProps = {
   className?: string;
   initialData?: Record<string, unknown>;
   initialSeriesIndex?: number;
+  isEditing?: boolean;
   isResuming?: boolean;
+  onDataChange?: (data: Record<string, unknown>) => void;
+  onDiscardDraft?: () => void;
+  onStepChange?: (step: number) => void;
   onSubmit: InstrumentSubmitHandler;
   subject?: SubjectDisplayInfo;
   target: InstrumentBundleContainer;

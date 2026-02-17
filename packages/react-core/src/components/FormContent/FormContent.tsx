@@ -8,10 +8,11 @@ import type { Promisable } from 'type-fest';
 export type FormContentProps = {
   initialValues?: Record<string, unknown>;
   instrument: AnyUnilingualFormInstrument;
+  onDataChange?: (data: Record<string, unknown>) => void;
   onSubmit: (data: FormInstrument.Data) => Promisable<void>;
 };
 
-export const FormContent = ({ initialValues, instrument, onSubmit }: FormContentProps) => {
+export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit }: FormContentProps) => {
   const { t } = useTranslation();
   const formRef = useRef<HTMLDivElement>(null);
   const isSubmittingRef = useRef(false);
@@ -101,6 +102,14 @@ export const FormContent = ({ initialValues, instrument, onSubmit }: FormContent
           content={instrument.content}
           data-testid="form-content"
           initialValues={(initialValues ?? instrument.initialValues) as any}
+          subscribe={
+            onDataChange
+              ? {
+                  onChange: (values) => onDataChange(values as Record<string, unknown>),
+                  selector: (values) => JSON.stringify(values)
+                }
+              : undefined
+          }
           validationSchema={instrument.validationSchema}
           onSubmit={handleSubmit}
         />

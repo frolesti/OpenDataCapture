@@ -2,14 +2,18 @@ import type React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
+import { useLocation } from '@tanstack/react-router';
 
 import { useAppStore } from '@/store';
 
-/** Inactivity timeout in milliseconds (15 minutes — HIPAA/healthcare standard) */
-const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
+/** Default inactivity timeout (15 minutes — HIPAA/healthcare standard) */
+const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
 
-/** Warning before logout in milliseconds (1 minute before expiry) */
-const WARNING_BEFORE_MS = 60 * 1000;
+/** Extended timeout when actively filling a form (60 minutes) */
+const FORM_TIMEOUT_MS = 60 * 60 * 1000;
+
+/** Warning before logout in milliseconds (2 minutes before expiry) */
+const WARNING_BEFORE_MS = 2 * 60 * 1000;
 
 const ACTIVITY_EVENTS: (keyof DocumentEventMap)[] = [
   'mousedown',
@@ -40,6 +44,12 @@ export const InactivityProvider = ({ children }: { children: React.ReactNode }) 
   const accessToken = useAppStore((s) => s.accessToken);
   const notifications = useNotificationsStore();
   const { t } = useTranslation();
+  const location = useLocation();
+
+  const isOnFormPage = location.pathname.includes('/instruments/render/');
+  const timeoutMs = isOnFormPage ? FORM_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+  const timeoutMsRef = useRef(timeoutMs);
+  timeoutMsRef.current = timeoutMs;
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const warningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,10 +69,12 @@ export const InactivityProvider = ({ children }: { children: React.ReactNode }) 
 
   const handleLogout = useCallback(() => {
     clearTimers();
+    // Dispatch event so form pages can save drafts before logout
+    window.dispatchEvent(new CustomEvent('session-expiring'));
     notifications.addNotification({
       message: t({
-        en: 'La sessió ha caducat per inactivitat',
-        fr: 'La sesión ha expirado por inactividad'
+        en: "La sessió ha caducat per inactivitat. Les dades del formulari s'han desat com a esborrany.",
+        fr: 'La sesión ha expirado por inactividad. Los datos del formulario se han guardado como borrador.'
       } as any),
       type: 'warning'
     });
@@ -74,8 +86,8 @@ export const InactivityProvider = ({ children }: { children: React.ReactNode }) 
       warningShownRef.current = true;
       notifications.addNotification({
         message: t({
-          en: 'La sessió caducarà en 1 minut per inactivitat',
-          fr: 'La sesión expirará en 1 minuto por inactividad'
+          en: 'La sessió caducarà en 2 minuts per inactivitat',
+          fr: 'La sesión expirará en 2 minutos por inactividad'
         } as any),
         type: 'warning'
       });
@@ -85,9 +97,10 @@ export const InactivityProvider = ({ children }: { children: React.ReactNode }) 
   const resetTimers = useCallback(() => {
     clearTimers();
     warningShownRef.current = false;
+    const ms = timeoutMsRef.current;
 
-    warningRef.current = setTimeout(showWarning, INACTIVITY_TIMEOUT_MS - WARNING_BEFORE_MS);
-    timeoutRef.current = setTimeout(handleLogout, INACTIVITY_TIMEOUT_MS);
+    warningRef.current = setTimeout(showWarning, ms - WARNING_BEFORE_MS);
+    timeoutRef.current = setTimeout(handleLogout, ms);
   }, [clearTimers, handleLogout, showWarning]);
 
   const handleActivity = useCallback(() => {
@@ -101,6 +114,13 @@ export const InactivityProvider = ({ children }: { children: React.ReactNode }) 
     resetTimers();
   }, [resetTimers]);
 
+  // Reset timers when navigating to/from form pages (timeout changes)
+  useEffect(() => {
+    if (accessToken) {
+      resetTimers();
+    }
+  }, [isOnFormPage, accessToken, resetTimers]);
+
   useEffect(() => {
     // Only track inactivity when logged in
     if (!accessToken) {
@@ -110,12 +130,12 @@ export const InactivityProvider = ({ children }: { children: React.ReactNode }) 
 
     // Check if already expired (e.g. page was closed and reopened after timeout)
     const elapsed = Date.now() - lastActivityRef.current;
-    if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+    if (elapsed >= timeoutMsRef.current) {
       handleLogout();
       return;
     }
 
-    // Start timers with remaining time
+    // Start timers
     resetTimers();
 
     // Listen for user activity
@@ -128,7 +148,7 @@ export const InactivityProvider = ({ children }: { children: React.ReactNode }) 
       if (document.visibilityState === 'visible' && accessToken) {
         // Check if we should have already logged out while tab was hidden
         const elapsed = Date.now() - lastActivityRef.current;
-        if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+        if (elapsed >= timeoutMsRef.current) {
           handleLogout();
         } else {
           handleActivity();

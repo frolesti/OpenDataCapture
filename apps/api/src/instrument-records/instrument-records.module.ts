@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AuditLogModule } from '@/audit-log/audit-log.module';
 import { GroupsModule } from '@/groups/groups.module';
 import { InstrumentsModule } from '@/instruments/instruments.module';
 import { SessionsModule } from '@/sessions/sessions.module';
@@ -12,7 +13,7 @@ import { InstrumentRecordsService } from './instrument-records.service';
 @Module({
   controllers: [InstrumentRecordsController],
   exports: [InstrumentRecordsService],
-  imports: [GroupsModule, InstrumentsModule, SessionsModule, SubjectsModule],
+  imports: [AuditLogModule, GroupsModule, InstrumentsModule, SessionsModule, SubjectsModule],
   providers: [InstrumentMeasuresService, InstrumentRecordsService]
 })
 export class InstrumentRecordsModule {}

@@ -21,9 +21,13 @@ import type { InstrumentSubmitHandler, SubjectDisplayInfo } from '../../types';
 export type ScalarInstrumentRendererProps = {
   className?: string;
   initialData?: Record<string, unknown>;
+  isEditing?: boolean;
   isResuming?: boolean;
   /** @deprecated */
   onCompileError?: (error: Error) => void;
+  onDataChange?: (data: Record<string, unknown>) => void;
+  onDiscardDraft?: () => void;
+  onStepChange?: (step: number) => void;
   onSubmit: InstrumentSubmitHandler;
   /** @deprecated */
   options?: InterpretOptions;
@@ -49,8 +53,12 @@ const fixDates = (data: unknown): unknown => {
 export const ScalarInstrumentRenderer = ({
   className,
   initialData,
+  isEditing,
   isResuming,
   onCompileError,
+  onDataChange,
+  onDiscardDraft,
+  onStepChange,
   onSubmit,
   options,
   subject,
@@ -97,8 +105,13 @@ export const ScalarInstrumentRenderer = ({
             .with({ index: 0 }, () => (
               <InstrumentOverview
                 instrument={instrument}
+                isEditing={isEditing}
                 isResuming={isResuming ?? Boolean(initialData)}
-                onNext={() => setIndex(1)}
+                onDiscardDraft={onDiscardDraft}
+                onNext={() => {
+                  setIndex(1);
+                  onStepChange?.(1);
+                }}
               />
             ))
             .with({ index: 1, instrument: { kind: 'FORM' } }, ({ instrument }) => (
@@ -106,6 +119,7 @@ export const ScalarInstrumentRenderer = ({
                 key={initialData ? 'loaded' : 'new'}
                 initialValues={initialData}
                 instrument={instrument}
+                onDataChange={onDataChange}
                 onSubmit={handleSubmit}
               />
             ))

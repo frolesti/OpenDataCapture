@@ -32,6 +32,7 @@ import { SessionsService } from '@/sessions/sessions.service';
 import { CreateSubjectDto } from '@/subjects/dto/create-subject.dto';
 import { SubjectsService } from '@/subjects/subjects.service';
 
+import { AuditLogService } from '@/audit-log/audit-log.service';
 import { InstrumentMeasuresService } from './instrument-measures.service';
 
 type ExpandDataType =
@@ -49,6 +50,7 @@ type ExpandDataType =
 export class InstrumentRecordsService {
   constructor(
     @InjectModel('InstrumentRecord') private readonly instrumentRecordModel: Model<'InstrumentRecord'>,
+    private readonly auditLogService: AuditLogService,
     private readonly groupsService: GroupsService,
     private readonly instrumentMeasuresService: InstrumentMeasuresService,
     private readonly instrumentsService: InstrumentsService,
@@ -364,13 +366,20 @@ export class InstrumentRecordsService {
       throw new NotFoundException(`Could not find record with ID '${id}'`);
     }
 
-    if (user && instrumentRecord.session.userId !== user.id) {
-      throw new ForbiddenException('Only the owner of the record can edit it.');
+    // Allow admin and group_manager to edit any record; standard users can only edit their own
+    if (user) {
+      const isPrivileged = user.basePermissionLevel === 'ADMIN' || user.basePermissionLevel === 'GROUP_MANAGER';
+      if (!isPrivileged && instrumentRecord.session.userId !== user.id) {
+        throw new ForbiddenException('Only the owner of the record can edit it.');
+      }
     }
 
     if (Array.isArray(instrumentRecord.data) && !Array.isArray(data)) {
       throw new BadRequestException('Data must be an array when the instrument record data is an array');
     }
+
+    // Deep clone the original data BEFORE mergeWith mutates it
+    const originalData = JSON.parse(JSON.stringify(instrumentRecord.data)) as unknown;
 
     // all records must be attached to scalar instruments
     const instrument = (await this.getInstrumentById(instrumentRecord.instrumentId)) as ScalarInstrument;
@@ -387,6 +396,31 @@ export class InstrumentRecordsService {
       throw new BadRequestException({
         issues: parseResult.error.issues,
         message: 'Merged data does not match validation schema'
+      });
+    }
+
+    // Compute field-level diff using the cloned original data (not the mutated one)
+    const oldDataObj =
+      typeof originalData === 'object' && originalData !== null && !Array.isArray(originalData)
+        ? (originalData as Record<string, unknown>)
+        : {};
+    const newDataObj =
+      typeof parseResult.data === 'object' && parseResult.data !== null && !Array.isArray(parseResult.data)
+        ? (parseResult.data as Record<string, unknown>)
+        : {};
+    const changes = this.auditLogService.computeChanges(oldDataObj, newDataObj);
+
+    if (changes.length > 0 && user) {
+      await this.auditLogService.create({
+        changes,
+        groupId: instrumentRecord.groupId ?? undefined,
+        instrumentId: instrumentRecord.instrumentId,
+        newData: newDataObj,
+        previousData: oldDataObj,
+        recordId: id,
+        subjectId: instrumentRecord.subjectId,
+        userId: user.id,
+        username: user.username
       });
     }
 
