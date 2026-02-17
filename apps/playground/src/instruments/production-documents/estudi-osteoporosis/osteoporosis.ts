@@ -219,6 +219,18 @@ function isMedicationTreatmentComplete(data: any, medicationName: string, treatm
     return !!(data[fechaFinKey] && data[motivoKey]);
   }
 
+  // If `continua` is not explicitly set but start date exists, consider the
+  // treatment complete (i.e. no further mandatory fields) unless there is an
+  // explicit end date+reason. This makes the UI tolerant when users provide
+  // a single treatment with a start date but don't fill the 'continúa' radio.
+  if (data[fechaInicioKey]) {
+    const fechaFinKey = `${medicationName}_end_date_${treatmentNumber}`;
+    const motivoKey = `${medicationName}_reason_end_${treatmentNumber}`;
+    // If there is an end date + reason then treatment is complete; otherwise
+    // assume ongoing (complete enough for our purposes).
+    return !(data[fechaFinKey] && !data[motivoKey]);
+  }
+
   return false;
 }
 
@@ -483,7 +495,9 @@ function generateMedicationValidationSchemas(medicationName: string, maxTreatmen
     schemas[`${medicationName}_reason_end_${i}`] = motivoEnum.optional();
 
     // Field to add next treatment (or additional details for the last one)
-    schemas[`add_${medicationName}_${i + 1}`] = z.enum(['si', 'no']).optional();
+    // Default to 'no' so that if the UI shows the question but the user
+    // doesn't select an option, validation assumes 'no' (avoids ghost required errors).
+    schemas[`add_${medicationName}_${i + 1}`] = z.enum(['si', 'no']).optional().default('no');
   }
 
   schemas[`${medicationName}_additional_details`] = z.string().optional();

@@ -9,6 +9,9 @@ import { ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
 
 import { PageHeader } from '@/components/PageHeader';
 import { useAppStore } from '@/store';
+import { useSubjectsQuery } from '@/hooks/useSubjectsQuery';
+import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
+import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 
 const SelectTrigger = Select.Trigger as unknown as React.ComponentType<React.PropsWithChildren<{ className?: string }>>;
 const SelectContent = Select.Content as unknown as React.ComponentType<React.PropsWithChildren<unknown>>;
@@ -41,6 +44,9 @@ const RouteComponent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [filterUser, setFilterUser] = useState<string>('ALL');
+
+  const { data: subjects } = useSubjectsQuery({ params: { groupId: currentGroup?.id } });
+  const { data: instrumentInfos } = useInstrumentInfoQuery();
 
   // Only admins and group managers can see this page
   const isAdmin = currentUser?.basePermissionLevel === 'ADMIN';
@@ -85,6 +91,30 @@ const RouteComponent = () => {
   const uniqueUsers = Array.from(new Set(auditLogs.map((log) => log.username)));
 
   const filteredLogs = filterUser === 'ALL' ? auditLogs : auditLogs.filter((log) => log.username === filterUser);
+
+  // Single subject map containing all useful label forms for each subject.
+  // - display: human-friendly fallback (title || fullName || unscoped id)
+  // - code: site-specific patient code (codigoPaciente or patientID)
+  const subjectMap = React.useMemo(() => {
+    const m: Record<string, { display: string; code?: string }> = {};
+    (subjects ?? []).forEach((s: any) => {
+      const title = s?.details?.title as string | undefined;
+      const patientCode = s?.data?.codigoPaciente ?? s?.data?.patientID ?? undefined;
+      const fullName = s?.firstName && s?.lastName ? `${s.firstName} ${s.lastName}` : undefined;
+      const unscoped = s.id ? removeSubjectIdScope(s.id) : s.id;
+      const display = title || patientCode || fullName || unscoped || '';
+      m[s.id] = { display, code: patientCode };
+    });
+    return m;
+  }, [subjects]);
+
+  const instrumentMap = React.useMemo(() => {
+    const m: Record<string, string> = {};
+    (instrumentInfos ?? []).forEach((i: any) => {
+      m[i.id] = i.clientDetails?.title ?? i.details?.title ?? i.id;
+    });
+    return m;
+  }, [instrumentInfos]);
 
   if (!canViewAudit) {
     return null;
@@ -198,7 +228,7 @@ const RouteComponent = () => {
                             fr: 'Instrumento'
                           } as any)}
                         </span>
-                        <p className="truncate text-sm">{log.instrumentId}</p>
+                        <p className="truncate text-sm">{instrumentMap[log.instrumentId] ?? log.instrumentId}</p>
                       </div>
                       <div>
                         <span className="text-muted-foreground text-xs font-medium">
@@ -220,7 +250,10 @@ const RouteComponent = () => {
                   {isExpanded && (
                     <div className="border-border border-t px-4 pb-4 pt-3">
                       <p className="text-muted-foreground mb-3 text-xs">
-                        ID: {log.recordId} &middot; Subject: {log.subjectId}
+                        {t({ en: 'Pacient', fr: 'Paciente' } as any)}:{' '}
+                        {subjectMap[log.subjectId]?.code ??
+                          subjectMap[log.subjectId]?.display ??
+                          removeSubjectIdScope(log.subjectId)}
                       </p>
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
