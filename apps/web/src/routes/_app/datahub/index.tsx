@@ -16,7 +16,7 @@ import type { Subject } from '@opendatacapture/schemas/subject';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
-import { Edit } from 'lucide-react';
+import { ClipboardList, Edit } from 'lucide-react';
 import { unparse } from 'papaparse';
 
 import { IdentificationForm } from '@/components/IdentificationForm';
@@ -60,6 +60,8 @@ const RouteComponent = () => {
   const { data: subjects } = useSubjectsQuery({ params: { groupId: currentGroup?.id } });
 
   const isStandardUser = currentUser?.basePermissionLevel === 'STANDARD';
+  const canViewAudit =
+    currentUser?.basePermissionLevel === 'ADMIN' || currentUser?.basePermissionLevel === 'GROUP_MANAGER';
 
   const getExportRecords = async () => {
     const response = await axios.get<InstrumentRecordsExport>('/v1/instrument-records/export', {
@@ -143,6 +145,17 @@ const RouteComponent = () => {
         <Heading className="text-center" variant="h2">
           {t('datahub.index.title')}
         </Heading>
+        {canViewAudit && (
+          <div className="mt-2 flex justify-center">
+            <Button className="gap-2" variant="outline" onClick={() => void navigate({ to: '/datahub/audit-log' })}>
+              <ClipboardList className="h-4 w-4" />
+              {t({
+                en: 'Registre de canvis',
+                fr: 'Registro de cambios'
+              } as any)}
+            </Button>
+          </div>
+        )}
       </PageHeader>
       <div className="flex grow flex-col">
         <div className="mb-3 flex flex-col justify-between gap-3 lg:flex-row">
