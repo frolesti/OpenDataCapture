@@ -57,9 +57,44 @@ export class AuditLogService {
       where.subjectId = query.subjectId;
     }
 
-    return this.auditLogModel.findMany({
+    const results = await this.auditLogModel.findMany({
       orderBy: { createdAt: 'desc' },
       where
+    });
+
+    // Transform results to avoid returning full newData/previousData blobs twice
+    // and return only the useful, compact shape for the frontend.
+    return results.map((r: any) => {
+      const patientCode =
+        r.newData?.codigoPaciente ??
+        r.previousData?.codigoPaciente ??
+        r.newData?.patientID ??
+        r.previousData?.patientID ??
+        undefined;
+      const prevKeys = r.previousData ? Object.keys(r.previousData) : [];
+      const newKeys = r.newData ? Object.keys(r.newData) : [];
+      const fields = Array.from(new Set([...prevKeys, ...newKeys]));
+
+      const compactChanges: Record<string, { old?: string; new?: string }> = {};
+      (r.changes ?? []).forEach((c: any) => {
+        compactChanges[c.field] = { old: c.oldValue, new: c.newValue };
+      });
+
+      return {
+        id: r.id,
+        createdAt: r.createdAt,
+        instrumentId: r.instrumentId,
+        recordId: r.recordId,
+        subjectId: r.subjectId,
+        groupId: r.groupId,
+        userId: r.userId,
+        username: r.username,
+        changes: r.changes ?? [],
+        changedCount: (r.changes ?? []).length,
+        patientCode,
+        fields,
+        compactChanges
+      };
     });
   }
 

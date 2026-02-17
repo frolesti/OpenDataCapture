@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { toBasicISOString } from '@douglasneuroinformatics/libjs';
 import { Button, ClientTable, Heading, Select } from '@douglasneuroinformatics/libui/components';
@@ -25,11 +25,15 @@ type AuditFieldChange = {
 
 type AuditLogEntry = {
   changes: AuditFieldChange[];
+  changedCount?: number;
+  compactChanges?: Record<string, { old?: string; new?: string }>;
   createdAt: string;
+  fields?: string[];
   id: string;
   instrumentId: string;
   recordId: string;
   subjectId: string;
+  patientCode?: string;
   userId: string;
   username: string;
 };
@@ -53,11 +57,17 @@ const RouteComponent = () => {
   const isGroupManager = currentUser?.basePermissionLevel === 'GROUP_MANAGER';
   const canViewAudit = isAdmin || isGroupManager;
 
+  const fetchedRef = useRef(false);
+
   useEffect(() => {
     if (!canViewAudit) {
       void navigate({ to: '/datahub' });
       return;
     }
+
+    if (fetchedRef.current) return; // avoid duplicate fetches (React strict/dev double-mount)
+    fetchedRef.current = true;
+
     const fetchAuditLogs = async () => {
       try {
         const response = await axios.get<AuditLogEntry[]>('/v1/audit-log', {
@@ -115,6 +125,19 @@ const RouteComponent = () => {
     });
     return m;
   }, [instrumentInfos]);
+  // Helper to extract patient code from compact response shape.
+  const getPatientCodeFromLog = React.useCallback((log: AuditLogEntry) => {
+    if (!log) return undefined;
+    // API now returns `patientCode` directly when available.
+    if (log.patientCode) return log.patientCode;
+    // If compactChanges include codigoPaciente (changed), prefer the new value.
+    const cc = log.compactChanges as any | undefined;
+    if (cc?.codigoPaciente?.new) return cc.codigoPaciente.new;
+    if (cc?.codigoPaciente?.old) return cc.codigoPaciente.old;
+    if (cc?.patientID?.new) return cc.patientID.new;
+    if (cc?.patientID?.old) return cc.patientID.old;
+    return undefined;
+  }, []);
 
   if (!canViewAudit) {
     return null;
@@ -251,9 +274,12 @@ const RouteComponent = () => {
                     <div className="border-border border-t px-4 pb-4 pt-3">
                       <p className="text-muted-foreground mb-3 text-xs">
                         {t({ en: 'Pacient', fr: 'Paciente' } as any)}:{' '}
-                        {subjectMap[log.subjectId]?.code ??
+                        {log.patientCode ??
+                          getPatientCodeFromLog(log) ??
+                          subjectMap[log.subjectId]?.code ??
                           subjectMap[log.subjectId]?.display ??
-                          removeSubjectIdScope(log.subjectId)}
+                          removeSubjectIdScope(log.subjectId) ??
+                          log.subjectId}
                       </p>
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
