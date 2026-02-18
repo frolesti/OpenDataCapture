@@ -70,7 +70,7 @@ const RouteComponent = () => {
 
     const fetchAuditLogs = async () => {
       try {
-        const response = await axios.get<AuditLogEntry[]>('/v1/audit-log', {
+        const response = await axios.get<AuditLogEntry[]>('/v1/datahub/audit-log', {
           params: {
             groupId: currentGroup?.id
           }
