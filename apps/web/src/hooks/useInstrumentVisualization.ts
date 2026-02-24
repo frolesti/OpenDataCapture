@@ -38,6 +38,32 @@ export function useInstrumentVisualization({ params }: UseInstrumentVisualizatio
   const [minDate, setMinDate] = useState<Date | null>(null);
   const [instrumentId, setInstrumentId] = useState<null | string>(null);
 
+  // Persist selected instrument for the current session so navigating away and back
+  // doesn't lose the selection. We use sessionStorage to scope to the browser session.
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('datahub:selectedInstrument');
+      if (stored) {
+        setInstrumentId(stored);
+      }
+    } catch (err) {
+      // sessionStorage may be unavailable in some environments; ignore errors
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (instrumentId) {
+        sessionStorage.setItem('datahub:selectedInstrument', instrumentId);
+      } else {
+        sessionStorage.removeItem('datahub:selectedInstrument');
+      }
+    } catch (err) {
+      // ignore storage errors
+    }
+  }, [instrumentId]);
+
   const instrument = useInstrument(instrumentId) as AnyUnilingualScalarInstrument;
 
   const instrumentInfoQuery = useInstrumentInfoQuery({

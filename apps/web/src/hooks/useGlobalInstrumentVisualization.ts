@@ -73,6 +73,31 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
   const [instrumentId, setInstrumentId] = useState<null | string>(null);
   const [filters, setFilters] = useState<{ [key: string]: null | string }>({});
 
+  // Persist selected instrument for this datahub view within the session.
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('datahub:selectedInstrument');
+      if (stored) {
+        setInstrumentId(stored);
+      }
+    } catch (err) {
+      // ignore storage errors (e.g., SSR or restricted environments)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (instrumentId) {
+        sessionStorage.setItem('datahub:selectedInstrument', instrumentId);
+      } else {
+        sessionStorage.removeItem('datahub:selectedInstrument');
+      }
+    } catch (err) {
+      // ignore storage errors
+    }
+  }, [instrumentId]);
+
   const instrument = useInstrument(instrumentId) as AnyUnilingualScalarInstrument;
 
   const instrumentInfoQuery = useInstrumentInfoQuery({
