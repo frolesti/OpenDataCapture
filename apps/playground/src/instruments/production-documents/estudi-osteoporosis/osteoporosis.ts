@@ -506,7 +506,10 @@ function generateMedicationValidationSchemas(medicationName: string, maxTreatmen
     // Field to add next treatment (or additional details for the last one)
     // Default to 'no' so that if the UI shows the question but the user
     // doesn't select an option, validation assumes 'no' (avoids ghost required errors).
-    schemas[`add_${medicationName}_${i + 1}`] = z.enum(['si', 'no']).optional().default('no');
+    schemas[`add_${medicationName}_${i + 1}`] = z
+      .enum(['si', 'no', ''])
+      .transform((v) => (v === '' ? undefined : v))
+      .optional();
   }
 
   schemas[`${medicationName}_additional_details`] = z.string().optional();
@@ -520,7 +523,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 21,
+    edition: 22,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -1498,7 +1501,10 @@ export default defineInstrument({
         .or(z.literal(''))
         .optional(),
       frac_rec_hosp_1: z.enum(['si', 'no']).or(z.literal('')).optional(),
-      add_frac_2: z.enum(['si', 'no']).optional(),
+      add_frac_2: z
+        .enum(['si', 'no', ''])
+        .transform((v) => (v === '' ? undefined : v))
+        .optional(),
       frac_rec_date_2: z
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
@@ -1507,8 +1513,14 @@ export default defineInstrument({
       frac_rec_loc_2: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
-      frac_rec_hosp_2: z.enum(['si', 'no']).optional(),
-      add_frac_3: z.enum(['si', 'no']).optional(),
+      frac_rec_hosp_2: z
+        .enum(['si', 'no', ''])
+        .transform((v) => (v === '' ? undefined : v))
+        .optional(),
+      add_frac_3: z
+        .enum(['si', 'no', ''])
+        .transform((v) => (v === '' ? undefined : v))
+        .optional(),
       frac_rec_date_3: z
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
@@ -1517,8 +1529,14 @@ export default defineInstrument({
       frac_rec_loc_3: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
-      frac_rec_hosp_3: z.enum(['si', 'no']).optional(),
-      add_frac_4: z.enum(['si', 'no']).optional(),
+      frac_rec_hosp_3: z
+        .enum(['si', 'no', ''])
+        .transform((v) => (v === '' ? undefined : v))
+        .optional(),
+      add_frac_4: z
+        .enum(['si', 'no', ''])
+        .transform((v) => (v === '' ? undefined : v))
+        .optional(),
       frac_rec_date_4: z
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
@@ -1527,8 +1545,14 @@ export default defineInstrument({
       frac_rec_loc_4: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
-      frac_rec_hosp_4: z.enum(['si', 'no']).optional(),
-      add_frac_5: z.enum(['si', 'no']).optional(),
+      frac_rec_hosp_4: z
+        .enum(['si', 'no', ''])
+        .transform((v) => (v === '' ? undefined : v))
+        .optional(),
+      add_frac_5: z
+        .enum(['si', 'no', ''])
+        .transform((v) => (v === '' ? undefined : v))
+        .optional(),
       frac_rec_date_5: z
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
@@ -1537,8 +1561,14 @@ export default defineInstrument({
       frac_rec_loc_5: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
-      frac_rec_hosp_5: z.enum(['si', 'no']).optional(),
-      add_frac_6: z.enum(['si', 'no']).optional(),
+      frac_rec_hosp_5: z
+        .enum(['si', 'no', ''])
+        .transform((v) => (v === '' ? undefined : v))
+        .optional(),
+      add_frac_6: z
+        .enum(['si', 'no', ''])
+        .transform((v) => (v === '' ? undefined : v))
+        .optional(),
       frac_rec_date_6: z
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
@@ -1547,7 +1577,10 @@ export default defineInstrument({
       frac_rec_loc_6: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
         .optional(),
-      frac_rec_hosp_6: z.enum(['si', 'no']).optional(),
+      frac_rec_hosp_6: z
+        .enum(['si', 'no', ''])
+        .transform((v) => (v === '' ? undefined : v))
+        .optional(),
 
       // DIAGNÓSTICO
       diag: z.enum(['si', 'no']).optional(),
