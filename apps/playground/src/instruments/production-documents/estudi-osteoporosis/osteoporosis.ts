@@ -4,8 +4,8 @@ import { z } from '/runtime/v1/zod@3.x';
 // Helper function to make a field conditional on informed consent
 function requiresConsent<T extends Record<string, any>>(field: T): any {
   return {
-    kind: 'dynamic' as const,
-    deps: ['informed_consent'] as const,
+    kind: 'dynamic',
+    deps: ['informed_consent'],
     render(data: any): any {
       if (data.informed_consent === 'si') {
         return field;
@@ -125,18 +125,25 @@ function requiresOtroMotivo<T extends Record<string, any>>(field: T): any {
 // Helper function to show fracture N only if user wants to add it
 function requiresPreviousFracture<T extends Record<string, any>>(field: T, fractureNumber: number): any {
   return {
-    kind: 'dynamic' as const,
+    kind: 'dynamic',
     deps: [
       'informed_consent',
-      `frac_rec_date_${fractureNumber - 1}`,
-      `frac_rec_loc_${fractureNumber - 1}`,
-      `frac_rec_hosp_${fractureNumber - 1}`,
-      `add_frac_${fractureNumber}`
-    ] as const,
-    render(data: any): any {
+      fractureNumber === 1 ? 'frac_rec_date_1' : `frac_rec_date_${fractureNumber - 1}`,
+      fractureNumber === 1 ? undefined : `frac_rec_loc_${fractureNumber - 1}`,
+      fractureNumber === 1 ? undefined : `frac_rec_hosp_${fractureNumber - 1}`,
+      fractureNumber === 1 ? undefined : `add_frac_${fractureNumber}`
+    ].filter(Boolean),
+    render(data: Record<string, any>): any {
       if (fractureNumber === 1) {
-        // First fracture always shows if consent is given
-        if (data.informed_consent === 'si') {
+        // La localització i hospitalització només es mostren si la data està informada
+        if (field.label && (field.label.includes('Localización') || field.label.includes('hospitalización'))) {
+          if (data['informed_consent'] === 'si' && data['frac_rec_date_1']) {
+            return field;
+          }
+          return null;
+        }
+        // La data sempre es mostra si hi ha consentiment
+        if (data['informed_consent'] === 'si') {
           return field;
         }
         return null;
@@ -153,7 +160,7 @@ function requiresPreviousFracture<T extends Record<string, any>>(field: T, fract
       const isPreviousComplete = data[prevFechaKey] && data[prevLocalizacionKey] && data[prevHospitalizacionKey];
 
       // Show if previous is complete AND user said yes to adding this fracture
-      if (data.informed_consent === 'si' && isPreviousComplete && data[agregarKey] === 'si') {
+      if (data['informed_consent'] === 'si' && isPreviousComplete && data[agregarKey] === 'si') {
         return field;
       }
 
@@ -165,14 +172,14 @@ function requiresPreviousFracture<T extends Record<string, any>>(field: T, fract
 // Helper function to show "Add another fracture?" button after each complete fracture
 function showAddFractureButton(fractureNumber: number): any {
   return {
-    kind: 'dynamic' as const,
+    kind: 'dynamic',
     deps: [
       'informed_consent',
       `frac_rec_date_${fractureNumber}`,
       `frac_rec_loc_${fractureNumber}`,
       `frac_rec_hosp_${fractureNumber}`
-    ] as const,
-    render(data: any): any {
+    ],
+    render(data: Record<string, any>): any {
       const fechaKey = `frac_rec_date_${fractureNumber}`;
       const localizacionKey = `frac_rec_loc_${fractureNumber}`;
       const frac_rec_hospKey = `frac_rec_hosp_${fractureNumber}`;
@@ -180,11 +187,11 @@ function showAddFractureButton(fractureNumber: number): any {
       // Show button only if current fracture is complete
       const isCurrentComplete = data[fechaKey] && data[localizacionKey] && data[frac_rec_hospKey];
 
-      if (data.informed_consent === 'si' && isCurrentComplete && fractureNumber < 6) {
+      if (data['informed_consent'] === 'si' && isCurrentComplete && fractureNumber < 6) {
         return {
-          kind: 'string' as const,
+          kind: 'string',
           label: `¿Desea agregar ${fractureNumber === 1 ? 'una segunda' : fractureNumber === 2 ? 'una tercera' : fractureNumber === 3 ? 'una cuarta' : fractureNumber === 4 ? 'una quinta' : 'una sexta'} fractura por fragilidad? *`,
-          variant: 'radio' as const,
+          variant: 'radio',
           options: {
             si: 'Sí',
             no: 'No'
@@ -511,7 +518,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 19,
+    edition: 21,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -1792,6 +1799,40 @@ export default defineInstrument({
         { num: 5, label: 'quinta' },
         { num: 6, label: 'sexta' }
       ];
+
+      // Neteja automàtica de fractures posteriors
+      for (let i = 1; i < fracturas.length; i++) {
+        const prevFechaKey = `frac_rec_date_${i}`;
+        if (!(data as any)[prevFechaKey]) {
+          for (let j = i + 1; j <= fracturas.length; j++) {
+            const fechaKey = `frac_rec_date_${j}`;
+            const locKey = `frac_rec_loc_${j}`;
+            const hospKey = `frac_rec_hosp_${j}`;
+            if ((data as any)[fechaKey]) (data as any)[fechaKey] = '';
+            if ((data as any)[locKey]) (data as any)[locKey] = '';
+            if ((data as any)[hospKey]) (data as any)[hospKey] = '';
+          }
+        }
+      }
+
+      // Neteja automàtica de tractaments posteriors
+      for (const med of medications) {
+        for (let i = 1; i <= 3; i++) {
+          const iniKey = `${med.name}_ini_date_${i}`;
+          if (!(data as any)[iniKey]) {
+            for (let j = i; j <= 3; j++) {
+              const endKey = `${med.name}_end_date_${j}`;
+              const contKey = `${med.name}_cont_${j}`;
+              const reasonKey = `${med.name}_reason_end_${j}`;
+              const addKey = `add_${med.name}_${j + 1}`;
+              if ((data as any)[endKey]) (data as any)[endKey] = '';
+              if ((data as any)[contKey]) (data as any)[contKey] = '';
+              if ((data as any)[reasonKey]) (data as any)[reasonKey] = '';
+              if ((data as any)[addKey]) (data as any)[addKey] = '';
+            }
+          }
+        }
+      }
 
       for (const fractura of fracturas) {
         const fechaKey = (
