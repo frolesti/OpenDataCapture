@@ -490,6 +490,7 @@ function generateMedicationValidationSchemas(medicationName: string, maxTreatmen
       .string()
       .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
       .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+      .or(z.literal(''))
       .optional();
 
     schemas[`${medicationName}_cont_${i}`] = z.enum(['si', 'no']).optional();
@@ -498,6 +499,7 @@ function generateMedicationValidationSchemas(medicationName: string, maxTreatmen
       .string()
       .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
       .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+      .or(z.literal(''))
       .optional();
     schemas[`${medicationName}_reason_end_${i}`] = motivoEnum.optional();
 
@@ -1815,20 +1817,41 @@ export default defineInstrument({
         }
       }
 
-      // Neteja automàtica de tractaments posteriors
+      // Neteja automàtica de tractaments: si s'esborra la data d'inici del primer tractament,
+      // s'esborren tots els camps de tots els tractaments d'aquest medicament
       for (const med of medications) {
-        for (let i = 1; i <= 3; i++) {
-          const iniKey = `${med.name}_ini_date_${i}`;
-          if (!(data as any)[iniKey]) {
-            for (let j = i; j <= 3; j++) {
-              const endKey = `${med.name}_end_date_${j}`;
-              const contKey = `${med.name}_cont_${j}`;
-              const reasonKey = `${med.name}_reason_end_${j}`;
-              const addKey = `add_${med.name}_${j + 1}`;
-              if ((data as any)[endKey]) (data as any)[endKey] = '';
-              if ((data as any)[contKey]) (data as any)[contKey] = '';
-              if ((data as any)[reasonKey]) (data as any)[reasonKey] = '';
-              if ((data as any)[addKey]) (data as any)[addKey] = '';
+        const iniKey1 = `${med.name}_ini_date_1`;
+        if (!(data as any)[iniKey1]) {
+          for (let j = 1; j <= 3; j++) {
+            const iniKey = `${med.name}_ini_date_${j}`;
+            const endKey = `${med.name}_end_date_${j}`;
+            const contKey = `${med.name}_cont_${j}`;
+            const reasonKey = `${med.name}_reason_end_${j}`;
+            const addKey = `add_${med.name}_${j + 1}`;
+            if ((data as any)[iniKey]) (data as any)[iniKey] = '';
+            if ((data as any)[endKey]) (data as any)[endKey] = '';
+            if ((data as any)[contKey]) (data as any)[contKey] = '';
+            if ((data as any)[reasonKey]) (data as any)[reasonKey] = '';
+            if ((data as any)[addKey]) (data as any)[addKey] = '';
+          }
+          // També neteja el camp de detalls addicionals si existeix
+          const detailsKey = `${med.name}_additional_details`;
+          if ((data as any)[detailsKey]) (data as any)[detailsKey] = '';
+        } else {
+          // Neteja automàtica de tractaments posteriors (com abans)
+          for (let i = 1; i <= 3; i++) {
+            const iniKey = `${med.name}_ini_date_${i}`;
+            if (!(data as any)[iniKey]) {
+              for (let j = i; j <= 3; j++) {
+                const endKey = `${med.name}_end_date_${j}`;
+                const contKey = `${med.name}_cont_${j}`;
+                const reasonKey = `${med.name}_reason_end_${j}`;
+                const addKey = `add_${med.name}_${j + 1}`;
+                if ((data as any)[endKey]) (data as any)[endKey] = '';
+                if ((data as any)[contKey]) (data as any)[contKey] = '';
+                if ((data as any)[reasonKey]) (data as any)[reasonKey] = '';
+                if ((data as any)[addKey]) (data as any)[addKey] = '';
+              }
             }
           }
         }
@@ -1877,5 +1900,5 @@ export default defineInstrument({
           }
         }
       }
-    })
+    }) // Fet! Tot ben tancat
 });
