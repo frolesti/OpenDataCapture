@@ -1838,14 +1838,19 @@ export default defineInstrument({
       // Neteja automàtica de fractures posteriors
       for (let i = 1; i < fracturas.length; i++) {
         const prevFechaKey = `frac_rec_date_${i}`;
-        if (!(data as any)[prevFechaKey]) {
+        const currentAddKey = i === 1 ? undefined : `add_frac_${i}`;
+
+        // Si no hi ha la data de la fractura anterior, O si explícitament hem dit que NO volem més fractures (a partir de la 1a)
+        if (!(data as any)[prevFechaKey] || (currentAddKey && (data as any)[currentAddKey] === 'no')) {
           for (let j = i + 1; j <= fracturas.length; j++) {
             const fechaKey = `frac_rec_date_${j}`;
             const locKey = `frac_rec_loc_${j}`;
             const hospKey = `frac_rec_hosp_${j}`;
+            const nextAddKey = `add_frac_${j}`;
             if ((data as any)[fechaKey]) (data as any)[fechaKey] = '';
             if ((data as any)[locKey]) (data as any)[locKey] = '';
             if ((data as any)[hospKey]) (data as any)[hospKey] = '';
+            if ((data as any)[nextAddKey] && (data as any)[nextAddKey] !== 'no') (data as any)[nextAddKey] = 'no';
           }
         }
       }
@@ -1871,19 +1876,48 @@ export default defineInstrument({
           const detailsKey = `${med.name}_additional_details`;
           if ((data as any)[detailsKey]) (data as any)[detailsKey] = '';
         } else {
-          // Neteja automàtica de tractaments posteriors (com abans)
+          // Neteja automàtica de tractaments posteriors
           for (let i = 1; i <= 3; i++) {
             const iniKey = `${med.name}_ini_date_${i}`;
-            if (!(data as any)[iniKey]) {
-              for (let j = i; j <= 3; j++) {
-                const endKey = `${med.name}_end_date_${j}`;
-                const contKey = `${med.name}_cont_${j}`;
-                const reasonKey = `${med.name}_reason_end_${j}`;
-                const addKey = `add_${med.name}_${j + 1}`;
-                if ((data as any)[endKey]) (data as any)[endKey] = '';
-                if ((data as any)[contKey]) (data as any)[contKey] = '';
-                if ((data as any)[reasonKey]) (data as any)[reasonKey] = '';
-                if ((data as any)[addKey]) (data as any)[addKey] = '';
+            const endKey = `${med.name}_end_date_${i}`;
+            const contKey = `${med.name}_cont_${i}`;
+            const reasonKey = `${med.name}_reason_end_${i}`;
+            const currentAddKey = `add_${med.name}_${i + 1}`;
+
+            // Si el tractament I no té data d'inici, o ens diuen que no volen el I+1 i estem tractant de netejar...
+            // Espera, millor tractar seqüencialment.
+
+            // Si estem en l'element `i` i falta l'inici, esborrem a partir de la informació associada (inici no l'esborrem explícitament pq ja no hi és).
+            // També si l'usuari ha marcat explicitament que NO vol l'element següent, ens encarreguem d'esborrar el següent
+            if (!(data as any)[iniKey] || (currentAddKey && (data as any)[currentAddKey] === 'no')) {
+              // Si falla la data d'inici de i, borrem restes de i cap endavant.
+              // Si no, si diu q 'no' a add, borrem i+1 cap endavant
+              const startClearFrom = !(data as any)[iniKey] ? i : i + 1;
+
+              for (let j = startClearFrom; j <= 3; j++) {
+                const nextIniKey = `${med.name}_ini_date_${j}`;
+                const nextEndKey = `${med.name}_end_date_${j}`;
+                const nextContKey = `${med.name}_cont_${j}`;
+                const nextReasonKey = `${med.name}_reason_end_${j}`;
+                const addNextKey = `add_${med.name}_${j + 1}`;
+
+                // Si startClearFrom > i, per j=startClearFrom sí hem d'esborrar l'iniKey j
+                if (startClearFrom > i || j > startClearFrom) {
+                  if ((data as any)[nextIniKey]) {
+                    (data as any)[nextIniKey] = '';
+                  }
+                }
+
+                if ((data as any)[nextEndKey]) (data as any)[nextEndKey] = '';
+                if ((data as any)[nextContKey]) (data as any)[nextContKey] = '';
+                if ((data as any)[nextReasonKey]) (data as any)[nextReasonKey] = '';
+                // Només el posem buit si no estem en el add que acabem de fer no, ni abans
+                if (j >= startClearFrom) {
+                  // tot el que quedi per davant l'esborrem o posem buit
+                  if ((data as any)[addNextKey] && (data as any)[addNextKey] !== 'no') {
+                    (data as any)[addNextKey] = '';
+                  }
+                }
               }
             }
           }
