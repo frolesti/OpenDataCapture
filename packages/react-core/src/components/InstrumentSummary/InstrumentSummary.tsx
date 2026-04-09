@@ -119,20 +119,17 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
           </p>
         </div>
         <div className="hidden sm:flex sm:items-center sm:gap-1 print:hidden">
-          {instrument.internal.name === 'OMEGA_FF_AP_2025' && (
-            <Button size="icon" title="Descarregar CRF PDF" type="button" variant="ghost" onClick={handleDownloadPDF}>
-              <FileTextIcon />
+          {instrument.internal.name !== 'OMEGA_FF_AP_2025' && (
+            <Button
+              size="icon"
+              title="Descarregar resultats (CSV)"
+              type="button"
+              variant="ghost"
+              onClick={handleDownloadCSV}
+            >
+              <DownloadIcon />
             </Button>
           )}
-          <Button
-            size="icon"
-            title="Descarregar resultats (CSV)"
-            type="button"
-            variant="ghost"
-            onClick={handleDownloadCSV}
-          >
-            <DownloadIcon />
-          </Button>
         </div>
       </div>
       <Separator />

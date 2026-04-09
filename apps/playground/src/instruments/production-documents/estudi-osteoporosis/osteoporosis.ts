@@ -470,6 +470,17 @@ const isValidDate = (val: string | undefined) => {
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 };
 
+// Helper to validate fracture date is between 01/2021 and 12/2025
+const isDateInFractureRange = (val: string | undefined) => {
+  if (!val) return true;
+  const [day, month, year] = val.split('-').map(Number);
+  if (day === undefined || month === undefined || year === undefined) return true;
+  const date = new Date(year, month - 1, day);
+  const minDate = new Date(2021, 0, 1); // 01/01/2021
+  const maxDate = new Date(2025, 11, 31); // 31/12/2025
+  return date >= minDate && date <= maxDate;
+};
+
 // Function to generate medication validation schemas for multiple treatments
 function generateMedicationValidationSchemas(medicationName: string, maxTreatments: number = 3) {
   const schemas: Record<string, any> = {};
@@ -1494,6 +1505,10 @@ export default defineInstrument({
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
         .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .refine(
+          isDateInFractureRange,
+          'La fecha de la fractura reciente por fragilidad debe comprenderse entre 01/2021 y 12/2025.'
+        )
         .or(z.literal(''))
         .optional(),
       frac_rec_loc_1: z
