@@ -26,27 +26,32 @@ for (const filepath in binaryFiles) {
 
 const defaultInstruments: InstrumentRepository[] = [];
 for (const [filename, content] of Object.entries({ ...binaryFiles, ...textFiles })) {
-  const segments = filename.split('/').filter(Boolean);
-  const category = await $InstrumentCategory.parseAsync(capitalize(segments[1]));
-  const kind = await $InstrumentKind.parseAsync(segments[2]!.toUpperCase());
-  const label = segments[3]!.replaceAll('-', ' ');
-  const name = segments.slice(4, segments.length).join('/');
+  try {
+    const segments = filename.split('/').filter(Boolean);
+    const category = await $InstrumentCategory.parseAsync(capitalize(segments[1]));
+    const kind = await $InstrumentKind.parseAsync(segments[2]!.toUpperCase());
+    const label = segments[3]!.replaceAll('-', ' ');
+    const name = segments.slice(4, segments.length).join('/');
 
-  if (EXCLUDED_LABELS.includes(label)) {
+    if (EXCLUDED_LABELS.includes(label)) {
+      continue;
+    }
+
+    let instrument = defaultInstruments.find((instrument) => {
+      return instrument.category === category && instrument.kind === kind && instrument.label === label;
+    });
+    if (!instrument) {
+      instrument = { category, files: [], id: crypto.randomUUID(), kind, label };
+      defaultInstruments.push(instrument);
+    }
+    instrument.files.push({
+      content,
+      name
+    });
+  } catch {
+    // Skip files that don't match the expected category/kind structure (e.g. production-documents)
     continue;
   }
-
-  let instrument = defaultInstruments.find((instrument) => {
-    return instrument.category === category && instrument.kind === kind && instrument.label === label;
-  });
-  if (!instrument) {
-    instrument = { category, files: [], id: crypto.randomUUID(), kind, label };
-    defaultInstruments.push(instrument);
-  }
-  instrument.files.push({
-    content,
-    name
-  });
 }
 
 export const defaultSelectedInstrument = defaultInstruments.find((item) => item.label === 'Unilingual Form')!;
