@@ -534,7 +534,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 22,
+    edition: 33,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -1277,7 +1277,7 @@ export default defineInstrument({
         ),
         NPT_quit_smoking: requiresConsent({
           kind: 'string',
-          label: 'Consejo antitabáquico - ¿Lo ha recibido? *',
+          label: 'Consejo Antitabaco - ¿Lo ha recibido? *',
           variant: 'radio',
           options: {
             si: 'Sí',
@@ -1287,7 +1287,7 @@ export default defineInstrument({
         NPT_quit_smoking_cont: requiresRecibido(
           {
             kind: 'string',
-            label: 'Consejo antitabáquico - Continúa *',
+            label: 'Consumo de tabaco - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1308,7 +1308,7 @@ export default defineInstrument({
         NPT_alcohol_reduction_cont: requiresRecibido(
           {
             kind: 'string',
-            label: 'Reducción de consumo de alcohol - Continúa *',
+            label: 'Consumo de alcohol - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1524,9 +1524,11 @@ export default defineInstrument({
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
         .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .or(z.literal(''))
         .optional(),
       frac_rec_loc_2: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
+        .or(z.literal(''))
         .optional(),
       frac_rec_hosp_2: z
         .enum(['si', 'no', ''])
@@ -1540,9 +1542,11 @@ export default defineInstrument({
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
         .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .or(z.literal(''))
         .optional(),
       frac_rec_loc_3: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
+        .or(z.literal(''))
         .optional(),
       frac_rec_hosp_3: z
         .enum(['si', 'no', ''])
@@ -1556,9 +1560,11 @@ export default defineInstrument({
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
         .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .or(z.literal(''))
         .optional(),
       frac_rec_loc_4: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
+        .or(z.literal(''))
         .optional(),
       frac_rec_hosp_4: z
         .enum(['si', 'no', ''])
@@ -1572,9 +1578,11 @@ export default defineInstrument({
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
         .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .or(z.literal(''))
         .optional(),
       frac_rec_loc_5: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
+        .or(z.literal(''))
         .optional(),
       frac_rec_hosp_5: z
         .enum(['si', 'no', ''])
@@ -1588,9 +1596,11 @@ export default defineInstrument({
         .string()
         .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, 'Formato inválido (DD-MM-YYYY)')
         .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+        .or(z.literal(''))
         .optional(),
       frac_rec_loc_6: z
         .enum(['vertebral', 'femoral', 'humero', 'radioMuneca', 'pelvis', 'costilla', 'tobillopie', 'otras'])
+        .or(z.literal(''))
         .optional(),
       frac_rec_hosp_6: z
         .enum(['si', 'no', ''])
@@ -1791,15 +1801,17 @@ export default defineInstrument({
               });
             }
 
-            // Validar "¿Desea agregar otro tratamiento?" sea obligatorio si el tratamiento actual está "completo"
-            // (Ya sea porque continúa activos o porque ha finalizado con todos los datos)
+            // Validar "¿Desea agregar otro tratamiento?" sea obligatorio SOLO si el tratamiento
+            // ha sido discontinuado (continúa = 'no') con fecha fin y motivo informados.
+            // Cuando el tratamiento sigue activo (continúa = 'si'), NO se requiere porque
+            // la UI no muestra el botón "¿Desea agregar otro tratamiento?".
             const motivoKey = `${med.name}_reason_end_${i}` as keyof typeof data;
             const motivo = data[motivoKey];
             const agregarKey = `add_${med.name}_${i + 1}` as keyof typeof data;
 
-            const isTreatmentComplete = continua === 'si' || (continua === 'no' && fechaFinStr && motivo);
+            const isTreatmentDiscontinued = continua === 'no' && fechaFinStr && motivo;
 
-            if (isTreatmentComplete && !data[agregarKey]) {
+            if (isTreatmentDiscontinued && !data[agregarKey]) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'Este campo es obligatorio',
