@@ -13,11 +13,16 @@ export class SupportService {
     @InjectModel('User') private readonly userModel: Model<'User'>,
     private readonly cryptoService: CryptoService
   ) {
+    const smtpPort = Number(process.env.MAIL_PORT ?? 465);
+    const smtpSecure = (process.env.MAIL_SECURE ?? 'true') === 'true';
+
     // Using credentials from environment variables
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.MAIL_HOST ?? 'correo.acens.net',
+      port: Number.isNaN(smtpPort) ? 465 : smtpPort,
+      secure: smtpSecure,
       auth: {
-        user: process.env.MAIL_USER || 'suport.alta.medical@gmail.com',
+        user: process.env.MAIL_USER || 'info@altamedicalservices.com',
         pass: process.env.MAIL_PASSWORD
       }
     });
@@ -48,9 +53,9 @@ export class SupportService {
     if (!emailToSendTo) {
       this.logger.warn(`Password reset requested for user ${user.username} but no email found.`);
       // Fallback: notify support
-      const contactEmail = process.env.CONTACT_EMAIL || 'suport.alta.medical@gmail.com';
+      const contactEmail = process.env.CONTACT_EMAIL || 'info@altamedicalservices.com';
       await this.transporter.sendMail({
-        from: '"Alta Medical Services" <noreply@altamedicalservices.com>',
+        from: process.env.MAIL_FROM || '"Alta Medical Services" <info@altamedicalservices.com>',
         to: contactEmail,
         subject: `Password Reset Request (No Email Found): ${user.username}`,
         text: `The user '${user.username}' requested a password reset, but has no email address on file. Please contact them manually.`
@@ -70,7 +75,7 @@ export class SupportService {
 
     // Send email to user
     const mailOptions = {
-      from: '"Alta Medical Services" <noreply@altamedicalservices.com>',
+      from: process.env.MAIL_FROM || '"Alta Medical Services" <info@altamedicalservices.com>',
       to: emailToSendTo,
       subject: 'Restablecimiento de Contraseña - Alta Medical Services',
       html: `

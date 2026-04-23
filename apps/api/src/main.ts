@@ -19,7 +19,7 @@ import { ConfiguredAuthModule } from './vendor/configured.auth.module';
 export default AppFactory.create({
   docs: {
     contact: {
-      email: 'suport.alta.medical@gmail.com',
+      email: 'info@altamedicalservices.com',
       name: 'Douglas Neuroinformatics',
       url: 'https://douglasneuroinformatics.ca'
     },

@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "baseUrl": ".",
+    "esModuleInterop": true,
+    "ignoreDeprecations": "6.0",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "paths": {
       "@/*": ["./src/*"],
