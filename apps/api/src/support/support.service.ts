@@ -13,13 +13,13 @@ export class SupportService {
     @InjectModel('User') private readonly userModel: Model<'User'>,
     private readonly cryptoService: CryptoService
   ) {
-    const smtpPort = Number(process.env.MAIL_PORT ?? 465);
-    const smtpSecure = (process.env.MAIL_SECURE ?? 'true') === 'true';
+    const smtpPort = Number(process.env.MAIL_PORT ?? 587);
+    const smtpSecure = (process.env.MAIL_SECURE ?? 'false') === 'true';
 
     // Using credentials from environment variables
     this.transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST ?? 'correo.acens.net',
-      port: Number.isNaN(smtpPort) ? 465 : smtpPort,
+      host: process.env.MAIL_HOST ?? 'smtp.servidor-correo.net',
+      port: Number.isNaN(smtpPort) ? 587 : smtpPort,
       secure: smtpSecure,
       auth: {
         user: process.env.MAIL_USER || 'info@altamedicalservices.com',
