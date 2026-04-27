@@ -537,7 +537,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 33,
+    edition: 35,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
@@ -740,10 +740,10 @@ export default defineInstrument({
           label: 'Indique el estilo de vida que se ajuste más al paciente *',
           variant: 'radio',
           options: {
-            sedentario: 'Estilo de vida sedentario',
-            activo: 'Estilo de vida activo',
-            equilibrado: 'Estilo de vida equilibrado',
-            riesgo: 'Estilo de vida con hábitos de riesgo'
+            sedentario: 'Sedentario: predominio de comportamiento sedentario',
+            activo:
+              'Activo: >=150-300 minutos semanales de actividad física aeróbica de intensidad moderada o 75-150 minutos semanales de actividad física aeróbica de intensidad vigorosa, o una combinación equivalente de ambos',
+            altamente_activo: 'Altamente activo: supera estas recomendaciones'
           }
         })
       }
@@ -770,7 +770,7 @@ export default defineInstrument({
         }),
         RF_prev_frac: requiresConsent({
           kind: 'boolean',
-          label: 'Fractura previa',
+          label: 'Fractura osteoporótica previa',
           variant: 'checkbox'
         }),
         RF_hist_fem_frac: requiresConsent({
@@ -844,12 +844,13 @@ export default defineInstrument({
         }),
         com_inflam_bowel: requiresConsent({
           kind: 'boolean',
-          label: 'Enfermedad inflamatoria intestinal',
+          label: 'Enfermedad Inflamatoria Intestinal',
           variant: 'checkbox'
         }),
         com_malnutrition: requiresConsent({
           kind: 'boolean',
-          label: 'Malnutrición',
+          label:
+            'Malnutrición (se considera si se cumple al menos uno de los siguientes criterios: IMC <18,5 kg/m², pérdida de peso no intencionada: 5% en 3 meses o 10% en 6 meses, baja masa muscular, déficit de micronutrientes documentado (p. ej., hierro, vitamina D, B12))',
           variant: 'checkbox'
         }),
         com_parent_nutrition: requiresConsent({
@@ -869,12 +870,12 @@ export default defineInstrument({
         }),
         com_COPD: requiresConsent({
           kind: 'boolean',
-          label: 'Enfermedad pulmonar obstructiva crónica (EPOC)',
+          label: 'Enfermedad Pulmonar Obstructiva Crónica (EPOC)',
           variant: 'checkbox'
         }),
         com_CKD: requiresConsent({
           kind: 'boolean',
-          label: 'Enfermedad renal crónica (ERC)',
+          label: 'Enfermedad Renal Crónica (ERC: FG<60ml/min/1,73m²)',
           variant: 'checkbox'
         })
       }
@@ -1248,7 +1249,7 @@ export default defineInstrument({
         NPT_exercise_cont: requiresRecibido(
           {
             kind: 'string',
-            label: 'Ejercicio físico - Continúa *',
+            label: '↳ Ejercicio físico - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1269,7 +1270,7 @@ export default defineInstrument({
         NPT_calcium_vitaminD_cont: requiresRecibido(
           {
             kind: 'string',
-            label: 'Suplementos de calcio / vitamina D - Continúa *',
+            label: '↳ Suplementos de calcio / vitamina D - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1290,7 +1291,7 @@ export default defineInstrument({
         NPT_quit_smoking_cont: requiresRecibido(
           {
             kind: 'string',
-            label: 'Consumo de tabaco - Continúa *',
+            label: '↳ Consumo de tabaco - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1311,7 +1312,7 @@ export default defineInstrument({
         NPT_alcohol_reduction_cont: requiresRecibido(
           {
             kind: 'string',
-            label: 'Consumo de alcohol - Continúa *',
+            label: '↳ Consumo de alcohol - Continúa *',
             variant: 'radio',
             options: {
               si: 'Sí',
@@ -1319,27 +1320,6 @@ export default defineInstrument({
             }
           },
           'NPT_alcohol_reduction'
-        ),
-        NPT_hip_protectors: requiresConsent({
-          kind: 'string',
-          label: 'Protectores de cadera - ¿Lo ha recibido? *',
-          variant: 'radio',
-          options: {
-            si: 'Sí',
-            no: 'No'
-          }
-        }),
-        NPT_hip_protectors_cont: requiresRecibido(
-          {
-            kind: 'string',
-            label: 'Protectores de cadera - Continúa *',
-            variant: 'radio',
-            options: {
-              si: 'Sí',
-              no: 'No'
-            }
-          },
-          'NPT_hip_protectors'
         ),
         other_treatment: requiresConsent({
           kind: 'string',
@@ -1391,7 +1371,7 @@ export default defineInstrument({
     }
   ],
   clientDetails: {
-    estimatedDuration: 45,
+    estimatedDuration: 30,
     instructions: [
       'IMPORTANTE: Antes de comenzar, asegúrese de tener a mano TODOS los datos clínicos del paciente necesarios para completar el formulario.\n Revise el formulario compartido previamente en la sesión de formación para familiarizarse con todos los datos que se requerirán.\n Complete todos los campos del formulario con la información más precisa posible.\n Los campos marcados con * son obligatorios.\n Utilice las unidades de medida especificadas en cada campo.\n En caso de duda, consulte con el investigador principal.\n Asegúrese de verificar los datos antes de enviar el formulario.'
     ]
@@ -1475,7 +1455,7 @@ export default defineInstrument({
         .optional(),
       cifosis: z.enum(['si', 'no']).optional(),
       height_loss: z.enum(['si', 'no']).optional(),
-      lifestyle: z.enum(['sedentario', 'activo', 'equilibrado', 'riesgo']).optional(),
+      lifestyle: z.enum(['sedentario', 'activo', 'altamente_activo']).optional(),
       presentaFactoresRiesgo: z.enum(['si', 'no']).optional(),
       RF_IMCm20: z.boolean().optional(),
       RF_ethnicity: z.boolean().optional(),
@@ -1644,8 +1624,6 @@ export default defineInstrument({
       NPT_quit_smoking_cont: z.enum(['si', 'no']).optional(),
       NPT_alcohol_reduction: z.enum(['si', 'no']).optional(),
       NPT_alcohol_reduction_cont: z.enum(['si', 'no']).optional(),
-      NPT_hip_protectors: z.enum(['si', 'no']).optional(),
-      NPT_hip_protectors_cont: z.enum(['si', 'no']).optional(),
       other_treatment: z.string().optional(),
 
       // FIN DE ESTUDIO
@@ -1683,7 +1661,6 @@ export default defineInstrument({
           'NPT_calcium_vitaminD',
           'NPT_quit_smoking',
           'NPT_alcohol_reduction',
-          'NPT_hip_protectors',
           'date_end_study',
           'study_completion',
           'Investigator_initials'
@@ -1729,14 +1706,6 @@ export default defineInstrument({
             path: ['NPT_alcohol_reduction_cont']
           });
         }
-        if (data.NPT_hip_protectors === 'si' && !data.NPT_hip_protectors_cont) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Este campo es obligatorio',
-            path: ['NPT_hip_protectors_cont']
-          });
-        }
-
         if (data.diag === 'si') {
           if (!data.diag_date)
             ctx.addIssue({
