@@ -52,7 +52,11 @@ export const InstrumentOverview = ({
         )}
       </div>
       <Button
-        className={isResuming ? 'w-full bg-sky-600 text-white hover:bg-sky-700' : 'w-full'}
+        className={
+          isResuming
+            ? 'w-full bg-sky-600 text-white hover:bg-sky-700'
+            : 'bg-primary text-primary-foreground hover:bg-primary/90 w-full'
+        }
         label={t({
           en: isEditing ? 'Modificar registre' : isResuming ? 'Continuar esborrany' : 'Començar',
           fr: isEditing ? 'Modificar registro' : isResuming ? 'Continuar borrador' : 'Comenzar'
