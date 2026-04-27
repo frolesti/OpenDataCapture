@@ -86,7 +86,10 @@ export const StartSessionForm = ({
           sessionDate: new Date()
         }}
         readOnly={readOnly}
-        submitBtnLabel={t('core.submit')}
+        submitBtnLabel={t({
+          en: 'Iniciar',
+          fr: 'Iniciar'
+        })}
         validationSchema={z.object({
           sessionDate: z.any()
         })}
