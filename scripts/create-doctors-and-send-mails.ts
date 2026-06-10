@@ -10,12 +10,14 @@ import removeAccents from 'remove-accents';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const API_URL = process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/v1` : 'http://localhost:5500/v1';
+const API_BASE = (process.env.API_BASE_URL || 'http://localhost:5500').replace(/\/$/, '');
+const API_CANDIDATES = Array.from(new Set([`${API_BASE}/v1`, `${API_BASE}/api/v1`]));
+let API_URL = API_CANDIDATES[0];
 // Use specific env vars for this script, or fallback to the known working credentials
 const ADMIN_USERNAME = process.env.SCRIPT_ADMIN_USERNAME || 'frolesti';
 const ADMIN_PASSWORD = process.env.SCRIPT_ADMIN_PASSWORD || 'FRoy116699';
 
-console.log(`Using API URL: ${API_URL}`);
+console.log(`Using API URL candidates: ${API_CANDIDATES.join(' | ')}`);
 console.log(`Using Admin Username: ${ADMIN_USERNAME}`);
 // Do not log password for security, but we can log its length or a hash if needed for debugging.
 console.log(`Using Admin Password Length: ${ADMIN_PASSWORD.length}`);
@@ -131,16 +133,31 @@ function parseDate(dateStr: string): Date | undefined {
 }
 
 async function login() {
-  try {
-    const res = await axios.post(`${API_URL}/auth/login`, {
-      username: ADMIN_USERNAME,
-      password: ADMIN_PASSWORD
-    });
-    return res.data.accessToken;
-  } catch (err) {
-    console.error('Error logging in:', err);
-    throw err;
+  let lastError: unknown;
+
+  for (const candidate of API_CANDIDATES) {
+    try {
+      const res = await axios.post(`${candidate}/auth/login`, {
+        username: ADMIN_USERNAME,
+        password: ADMIN_PASSWORD
+      });
+      API_URL = candidate;
+      console.log(`Resolved API URL: ${API_URL}`);
+      return res.data.accessToken;
+    } catch (err) {
+      lastError = err;
+      if (axios.isAxiosError(err)) {
+        console.warn(
+          `Login failed against ${candidate}: ${err.response?.status || 'NO_STATUS'} ${err.response?.statusText || err.message}`
+        );
+      } else {
+        console.warn(`Login failed against ${candidate}: ${String(err)}`);
+      }
+    }
   }
+
+  console.error('Error logging in:', lastError);
+  throw lastError;
 }
 
 async function getGroups(token: string) {
