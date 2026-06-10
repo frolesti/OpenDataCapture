@@ -256,10 +256,19 @@ function generateMailHtml(doctor: any, user: any) {
 // retrocompatibilitat amb el setup antic de proves.
 function buildTransporter() {
   if (process.env.MAIL_HOST) {
+    const port = Number(process.env.MAIL_PORT) || 465;
+    const secure = process.env.MAIL_SECURE ? process.env.MAIL_SECURE === 'true' : port === 465;
     return nodemailer.createTransport({
       host: process.env.MAIL_HOST,
-      port: Number(process.env.MAIL_PORT) || 465,
-      secure: process.env.MAIL_SECURE ? process.env.MAIL_SECURE === 'true' : true,
+      port,
+      secure,
+      // En mode no-secure (típicament 587) obliguem STARTTLS i fixem el SNI al host
+      // configurat per evitar problemes de certificat quan el servidor de relay té un
+      // hostname intern diferent (ex: relayout01-dsp.dominioabsoluto.net a Acens).
+      requireTLS: !secure,
+      tls: {
+        servername: process.env.MAIL_HOST
+      },
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASSWORD
