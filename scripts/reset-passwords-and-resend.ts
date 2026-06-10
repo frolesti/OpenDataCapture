@@ -179,12 +179,16 @@ function buildTransporter() {
   if (process.env.MAIL_HOST) {
     const port = Number(process.env.MAIL_PORT) || 465;
     const secure = process.env.MAIL_SECURE ? process.env.MAIL_SECURE === 'true' : port === 465;
+    const tlsServerName = process.env.MAIL_TLS_SERVERNAME || process.env.MAIL_HOST;
+    const rejectUnauthorized = process.env.MAIL_TLS_REJECT_UNAUTHORIZED
+      ? process.env.MAIL_TLS_REJECT_UNAUTHORIZED !== 'false'
+      : true;
     return nodemailer.createTransport({
       host: process.env.MAIL_HOST,
       port,
       secure,
       requireTLS: !secure,
-      tls: { servername: process.env.MAIL_HOST },
+      tls: { servername: tlsServerName, rejectUnauthorized },
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASSWORD
