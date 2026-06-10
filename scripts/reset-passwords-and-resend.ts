@@ -222,7 +222,7 @@ async function sendMail(doctor: DoctorRow, user: { username: string; password: s
   const info = await transporter.sendMail({
     from: fromAddress,
     to: doctor.Email,
-    subject: 'El teu accés a Alta Medical Services',
+    subject: 'Tu acceso a Alta Medical Services',
     html: mailHtml,
     attachments: [
       {
@@ -268,6 +268,19 @@ async function updateSheetUpdates(rowIndex: number, msg: string) {
       `  MAIL_PASSWORD : ${process.env.MAIL_PASSWORD ? '(set, len=' + process.env.MAIL_PASSWORD.length + ')' : "(NO DEFINIT — fallarà l'enviament)"}`
     );
     console.log('-------------------');
+
+    // SMTP preflight: si no podem autenticar-nos al servidor de correu, no toquem cap
+    // contrasenya. Això evita acabar amb usuaris la contrasenya dels quals s'ha canviat
+    // a la BD però sense que ningu rebi el mail amb la nova credencial.
+    try {
+      const probe = buildTransporter();
+      await probe.verify();
+      console.log('SMTP preflight OK — podem enviar correus.');
+    } catch (err) {
+      console.error('✗ SMTP preflight KO — no s’executa res. Revisa MAIL_* al .env.');
+      console.error(err);
+      process.exit(1);
+    }
 
     const token = await login();
     const allUsers = await getAllUsers(token);

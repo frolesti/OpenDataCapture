@@ -300,7 +300,7 @@ async function sendMail(doctor: any, user: any, mailHtml: string) {
   const info = await transporter.sendMail({
     from: fromAddress,
     to: doctor.Email,
-    subject: 'El teu accés a Alta Medical Services',
+    subject: 'Tu acceso a Alta Medical Services',
     html: mailHtml,
     attachments: [
       {
@@ -366,6 +366,19 @@ async function updateSheetUpdates(rowIndex: number, updatesMsg: string) {
       `  MAIL_PASSWORD : ${process.env.MAIL_PASSWORD ? '(set, len=' + process.env.MAIL_PASSWORD.length + ')' : "(NO DEFINIT — fallarà l'enviament)"}`
     );
     console.log('-------------------');
+
+    // SMTP preflight: si no podem autenticar-nos contra el servidor de correu, avortem
+    // ABANS de crear cap usuari. Així mai més tornem a la situació de "usuari creat però
+    // mail no enviat" (com va passar amb el problema de DNS de correo.acens.net).
+    try {
+      const probe = buildTransporter();
+      await probe.verify();
+      console.log(`SMTP preflight OK — podem enviar correus.`);
+    } catch (err) {
+      console.error('✗ SMTP preflight KO — no s’executa res. Revisa MAIL_* al .env.');
+      console.error(err);
+      process.exit(1);
+    }
 
     const token = await login();
     console.log('Logged in successfully');
