@@ -29,7 +29,8 @@ const sheets = google.sheets({ version: 'v4', auth });
 
 const spreadsheetId = '1RO4R4oGhdG9DMlUoNkut7X7ZZSgmk_u0sNE-OwkPWhQ';
 const sheetName = 'Hoja 1';
-const range = `${sheetName}!A2:K`; // Assumeix capçalera a la fila 1, ara fins a Updates (K)
+// Capçalera a la fila 1. Llegim fins a la columna M (Tipus).
+const range = `${sheetName}!A2:M`;
 
 interface DoctorRow {
   Nom: string;
@@ -43,7 +44,31 @@ interface DoctorRow {
   Sex: string;
   DateOfBirth: string;
   Updates: string;
+  Signat: string;
+  Tipus: string;
   rowIndex: number;
+}
+
+// Considerem signat qualsevol valor que comenci per 't' (TRUE / true / True / 1 → opcional).
+function isSigned(value: string): boolean {
+  if (!value) return false;
+  const v = value.trim().toLowerCase();
+  return (
+    v === 'true' ||
+    v === 'verdadero' ||
+    v === 'cert' ||
+    v === 'sí' ||
+    v === 'si' ||
+    v === 'yes' ||
+    v === '1' ||
+    v === 'x'
+  );
+}
+
+// Files amb Tipus = "Usuari de test" mai s'han de processar (afegit per seguretat).
+function isTestUser(value: string): boolean {
+  if (!value) return false;
+  return value.trim().toLowerCase().startsWith('usuari de test');
 }
 
 async function getDoctors(): Promise<DoctorRow[]> {
@@ -61,6 +86,8 @@ async function getDoctors(): Promise<DoctorRow[]> {
       Sex: row[8] || '',
       DateOfBirth: row[9] && !row[9].startsWith('Error') ? row[9] : '1990-01-01',
       Updates: row[10] || '',
+      Signat: row[11] || '',
+      Tipus: row[12] || '',
       rowIndex: idx + 2
     })) || []
   );
@@ -208,17 +235,36 @@ function generateMailHtml(doctor: any, user: any) {
   return htmlTemplate;
 }
 
-async function sendMail(doctor: any, user: any, mailHtml: string) {
-  const transporter = nodemailer.createTransport({
+// Si tenim MAIL_HOST configurat, usem SMTP directe (Alta acens). Si no, caiem al servei gmail per
+// retrocompatibilitat amb el setup antic de proves.
+function buildTransporter() {
+  if (process.env.MAIL_HOST) {
+    return nodemailer.createTransport({
+      host: process.env.MAIL_HOST,
+      port: Number(process.env.MAIL_PORT) || 465,
+      secure: process.env.MAIL_SECURE ? process.env.MAIL_SECURE === 'true' : true,
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASSWORD
+      }
+    });
+  }
+  return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.MAIL_USER,
       pass: process.env.MAIL_PASSWORD
     }
   });
+}
 
-  await transporter.sendMail({
-    from: '"Alta Medical Services" <noreply@altamedicalservices.com>',
+async function sendMail(doctor: any, user: any, mailHtml: string) {
+  const transporter = buildTransporter();
+  const fromAddress =
+    process.env.MAIL_FROM || `"Alta Medical Services" <${process.env.MAIL_USER || 'noreply@altamedicalservices.com'}>`;
+
+  const info = await transporter.sendMail({
+    from: fromAddress,
     to: doctor.Email,
     subject: 'El teu accés a Alta Medical Services',
     html: mailHtml,
@@ -230,6 +276,12 @@ async function sendMail(doctor: any, user: any, mailHtml: string) {
       }
     ]
   });
+
+  console.log(
+    `   ✉  SMTP host=${process.env.MAIL_HOST || 'gmail-service'} | from=${fromAddress} | to=${doctor.Email} | messageId=${info.messageId}` +
+      (info.accepted?.length ? ` | accepted=[${info.accepted.join(', ')}]` : '') +
+      (info.rejected?.length ? ` | rejected=[${info.rejected.join(', ')}]` : '')
+  );
 }
 
 function generatePassword(length = 14) {
@@ -267,25 +319,68 @@ async function updateSheetUpdates(rowIndex: number, updatesMsg: string) {
 
 (async () => {
   try {
+    // Resum de la configuració SMTP (sense exposar la contrasenya)
+    console.log('--- Mail config ---');
+    console.log(`  MAIL_HOST     : ${process.env.MAIL_HOST || '(no definit — fallback a service:gmail)'}`);
+    console.log(`  MAIL_PORT     : ${process.env.MAIL_PORT || '(no definit)'}`);
+    console.log(`  MAIL_SECURE   : ${process.env.MAIL_SECURE || '(no definit)'}`);
+    console.log(`  MAIL_USER     : ${process.env.MAIL_USER || '(no definit)'}`);
+    console.log(
+      `  MAIL_FROM     : ${process.env.MAIL_FROM || `"Alta Medical Services" <${process.env.MAIL_USER || 'noreply@altamedicalservices.com'}>`}`
+    );
+    console.log(
+      `  MAIL_PASSWORD : ${process.env.MAIL_PASSWORD ? '(set, len=' + process.env.MAIL_PASSWORD.length + ')' : "(NO DEFINIT — fallarà l'enviament)"}`
+    );
+    console.log('-------------------');
+
     const token = await login();
     console.log('Logged in successfully');
 
     const groups = await getGroups(token);
-    const groupsMap = new Map(groups.map((g: any) => [g.name, g.id]));
+    const groupsEntries: [string, string][] = (groups as Array<{ id: string; name: string }>).map((g) => [
+      g.name,
+      g.id
+    ]);
+    const groupsMap = new Map<string, string>(groupsEntries);
     console.log(`Loaded ${groupsMap.size} groups.`);
 
     const doctors = await getDoctors();
     console.log(`S'han recuperat ${doctors.length} files del full de càlcul.`);
 
+    // Filtrem en aquest ordre:
+    //   (1) Excloure usuaris de test (Tipus == "Usuari de test") — mai s'han de tocar.
+    //   (2) Excloure els ja creats (tenen Password + MailSentAt).
+    //   (3) Dels restants, processar només els que tinguin Signat = TRUE.
+    const notTest = doctors.filter((d) => !isTestUser(d.Tipus));
+    const testCount = doctors.length - notTest.length;
+    const pending = notTest.filter((d) => !(d.Password && d.MailSentAt));
+    const eligible = pending.filter((d) => isSigned(d.Signat));
+    const skippedNotSigned = pending.filter((d) => !isSigned(d.Signat));
+
+    console.log(`  · Usuaris de test (saltats):       ${testCount}`);
+    console.log(`  · Ja creats (saltats):            ${notTest.length - pending.length}`);
+    console.log(`  · Pendents NO signats (saltats):  ${skippedNotSigned.length}`);
+    console.log(`  · Pendents SIGNATS (a processar): ${eligible.length}`);
+    if (eligible.length) {
+      console.log('    →', eligible.map((d) => `${d.Nom} ${d.Cognoms} <${d.Email || 'sense-email'}>`).join(' | '));
+    }
+    if (skippedNotSigned.length) {
+      console.log('    ⨯ NO signats:', skippedNotSigned.map((d) => `${d.Nom} ${d.Cognoms}`).join(' | '));
+    }
+
     let processedCount = 0;
 
-    for (const doc of doctors) {
-      // Si ja té contrasenya i data d'enviament, salta
-      if (doc.Password && doc.MailSentAt) {
+    for (const doc of eligible) {
+      processedCount++;
+
+      // Guard: si està signat però no té email, no podem enviar.
+      if (!doc.Email || !doc.Email.trim()) {
+        const msg = `Saltat (signat però sense email): ${doc.Nom} ${doc.Cognoms}`;
+        console.warn('⚠️ ', msg);
+        await updateSheetUpdates(doc.rowIndex, msg);
         continue;
       }
 
-      processedCount++;
       const password = generatePassword();
       let user;
       let updatesMsg = '';
