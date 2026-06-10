@@ -258,16 +258,24 @@ function buildTransporter() {
   if (process.env.MAIL_HOST) {
     const port = Number(process.env.MAIL_PORT) || 465;
     const secure = process.env.MAIL_SECURE ? process.env.MAIL_SECURE === 'true' : port === 465;
+    // El TLS SNI/hostname que verifiquem pot ser diferent del MAIL_HOST quan el proveïdor
+    // (ex: Acens) presenta un certificat per al seu hostname tècnic intern (relay) i no
+    // pel hostname comercial del client. Per defecte usem MAIL_HOST; opcionalment es pot
+    // sobreescriure amb MAIL_TLS_SERVERNAME.
+    const tlsServerName = process.env.MAIL_TLS_SERVERNAME || process.env.MAIL_HOST;
+    // Permet desactivar la verificació de cert en setups on Acens no publica un cert amb
+    // el hostname comercial. Per defecte la verificació està activada (segur).
+    const rejectUnauthorized = process.env.MAIL_TLS_REJECT_UNAUTHORIZED
+      ? process.env.MAIL_TLS_REJECT_UNAUTHORIZED !== 'false'
+      : true;
     return nodemailer.createTransport({
       host: process.env.MAIL_HOST,
       port,
       secure,
-      // En mode no-secure (típicament 587) obliguem STARTTLS i fixem el SNI al host
-      // configurat per evitar problemes de certificat quan el servidor de relay té un
-      // hostname intern diferent (ex: relayout01-dsp.dominioabsoluto.net a Acens).
       requireTLS: !secure,
       tls: {
-        servername: process.env.MAIL_HOST
+        servername: tlsServerName,
+        rejectUnauthorized
       },
       auth: {
         user: process.env.MAIL_USER,
