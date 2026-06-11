@@ -296,10 +296,12 @@ async function sendMail(doctor: any, user: any, mailHtml: string) {
   const transporter = buildTransporter();
   const fromAddress =
     process.env.MAIL_FROM || `"Alta Medical Services" <${process.env.MAIL_USER || 'noreply@altamedicalservices.com'}>`;
+  const auditBcc = process.env.MAIL_AUDIT_BCC?.trim() || undefined;
 
   const info = await transporter.sendMail({
     from: fromAddress,
     to: doctor.Email,
+    bcc: auditBcc,
     subject: 'Tu acceso a Alta Medical Services',
     html: mailHtml,
     attachments: [
@@ -313,9 +315,12 @@ async function sendMail(doctor: any, user: any, mailHtml: string) {
 
   console.log(
     `   ✉  SMTP host=${process.env.MAIL_HOST || 'gmail-service'} | from=${fromAddress} | to=${doctor.Email} | messageId=${info.messageId}` +
+      (auditBcc ? ` | bcc=${auditBcc}` : '') +
       (info.accepted?.length ? ` | accepted=[${info.accepted.join(', ')}]` : '') +
       (info.rejected?.length ? ` | rejected=[${info.rejected.join(', ')}]` : '')
   );
+
+  return info;
 }
 
 function generatePassword(length = 14) {
@@ -365,6 +370,7 @@ async function updateSheetUpdates(rowIndex: number, updatesMsg: string) {
     console.log(
       `  MAIL_PASSWORD : ${process.env.MAIL_PASSWORD ? '(set, len=' + process.env.MAIL_PASSWORD.length + ')' : "(NO DEFINIT — fallarà l'enviament)"}`
     );
+    console.log(`  MAIL_AUDIT_BCC: ${process.env.MAIL_AUDIT_BCC || '(no definit)'}`);
     console.log('-------------------');
 
     // SMTP preflight: si no podem autenticar-nos contra el servidor de correu, avortem
@@ -452,13 +458,13 @@ async function updateSheetUpdates(rowIndex: number, updatesMsg: string) {
       // 2. Envia el correu
       try {
         const mailHtml = generateMailHtml(doc, { ...user, password });
-        await sendMail(doc, { ...user, password }, mailHtml);
+        const mailInfo = await sendMail(doc, { ...user, password }, mailHtml);
         fs.writeFileSync(`mail_${user.username}.html`, mailHtml);
 
         const now = new Date().toISOString();
         // Actualitza Google Sheet
         await updateSheet(doc.rowIndex, user.password, now);
-        await updateSheetUpdates(doc.rowIndex, updatesMsg + ' (mail enviat)');
+        await updateSheetUpdates(doc.rowIndex, `${updatesMsg} (mail enviat) [messageId: ${mailInfo.messageId}]`);
 
         console.log(`Usuari creat i informat: ${user.username} (${doc.Email})`);
       } catch (err) {

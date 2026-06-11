@@ -218,10 +218,12 @@ async function sendMail(doctor: DoctorRow, user: { username: string; password: s
   const transporter = buildTransporter();
   const fromAddress =
     process.env.MAIL_FROM || `"Alta Medical Services" <${process.env.MAIL_USER || 'noreply@altamedicalservices.com'}>`;
+  const auditBcc = process.env.MAIL_AUDIT_BCC?.trim() || undefined;
 
   const info = await transporter.sendMail({
     from: fromAddress,
     to: doctor.Email,
+    bcc: auditBcc,
     subject: 'Tu acceso a Alta Medical Services',
     html: mailHtml,
     attachments: [
@@ -234,8 +236,12 @@ async function sendMail(doctor: DoctorRow, user: { username: string; password: s
   });
 
   console.log(
-    `   ✉  SMTP host=${process.env.MAIL_HOST || 'gmail-service'} | from=${fromAddress} | to=${doctor.Email} | messageId=${info.messageId} | accepted=${JSON.stringify(info.accepted)} | rejected=${JSON.stringify(info.rejected)}`
+    `   ✉  SMTP host=${process.env.MAIL_HOST || 'gmail-service'} | from=${fromAddress} | to=${doctor.Email} | messageId=${info.messageId}` +
+      (auditBcc ? ` | bcc=${auditBcc}` : '') +
+      ` | accepted=${JSON.stringify(info.accepted)} | rejected=${JSON.stringify(info.rejected)}`
   );
+
+  return info;
 }
 
 async function updateSheet(rowIndex: number, password: string, mailSentAt: string) {
@@ -267,6 +273,7 @@ async function updateSheetUpdates(rowIndex: number, msg: string) {
     console.log(
       `  MAIL_PASSWORD : ${process.env.MAIL_PASSWORD ? '(set, len=' + process.env.MAIL_PASSWORD.length + ')' : "(NO DEFINIT — fallarà l'enviament)"}`
     );
+    console.log(`  MAIL_AUDIT_BCC: ${process.env.MAIL_AUDIT_BCC || '(no definit)'}`);
     console.log('-------------------');
 
     // SMTP preflight: si no podem autenticar-nos al servidor de correu, no toquem cap
@@ -345,12 +352,12 @@ async function updateSheetUpdates(rowIndex: number, msg: string) {
 
       try {
         const mailHtml = generateMailHtml(doc, { username, password: newPassword });
-        await sendMail(doc, { username, password: newPassword }, mailHtml);
+        const mailInfo = await sendMail(doc, { username, password: newPassword }, mailHtml);
         fs.writeFileSync(`mail_${username}.html`, mailHtml);
 
         const now = new Date().toISOString();
         await updateSheet(doc.rowIndex, newPassword, now);
-        await updateSheetUpdates(doc.rowIndex, `Reset+resend OK (${now})`);
+        await updateSheetUpdates(doc.rowIndex, `Reset+resend OK (${now}) [messageId: ${mailInfo.messageId}]`);
 
         console.log(`✔ Reset+mail enviat: ${username} (${doc.Email})`);
         okCount++;
