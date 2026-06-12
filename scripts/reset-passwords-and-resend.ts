@@ -41,6 +41,8 @@ let API_URL = API_CANDIDATES[0];
 
 const ADMIN_USERNAME = process.env.SCRIPT_ADMIN_USERNAME || 'frolesti';
 const ADMIN_PASSWORD = process.env.SCRIPT_ADMIN_PASSWORD || 'FRoy116699';
+const MAIL_AUDIT_LOG_PATH = process.env.MAIL_AUDIT_LOG_PATH || path.join(process.cwd(), 'logs', 'mail-audit.csv');
+const MAIL_AUDIT_BCC = process.env.MAIL_AUDIT_BCC;
 
 console.log(`Using API URL candidates: ${API_CANDIDATES.join(' | ')}`);
 console.log(`Using Admin Username: ${ADMIN_USERNAME}`);
@@ -204,6 +206,51 @@ function buildTransporter() {
   });
 }
 
+function csvEscape(value: string): string {
+  const v = value ?? '';
+  return `"${v.replace(/"/g, '""')}"`;
+}
+
+function appendMailAudit(entry: {
+  script: string;
+  status: 'SENT' | 'FAILED';
+  to: string;
+  username: string;
+  messageId: string;
+  accepted: string;
+  rejected: string;
+  error: string;
+}) {
+  try {
+    const dir = path.dirname(MAIL_AUDIT_LOG_PATH);
+    fs.mkdirSync(dir, { recursive: true });
+
+    if (!fs.existsSync(MAIL_AUDIT_LOG_PATH)) {
+      const header = 'timestamp,script,status,to,username,messageId,accepted,rejected,error\n';
+      fs.writeFileSync(MAIL_AUDIT_LOG_PATH, header, 'utf8');
+    }
+
+    const line =
+      [
+        new Date().toISOString(),
+        entry.script,
+        entry.status,
+        entry.to,
+        entry.username,
+        entry.messageId,
+        entry.accepted,
+        entry.rejected,
+        entry.error
+      ]
+        .map((v) => csvEscape(v))
+        .join(',') + '\n';
+
+    fs.appendFileSync(MAIL_AUDIT_LOG_PATH, line, 'utf8');
+  } catch (err) {
+    console.warn("No s'ha pogut escriure el log d'auditoria de correu:", err);
+  }
+}
+
 function generateMailHtml(doctor: DoctorRow, user: { username: string; password: string }) {
   const templatePath = path.join(process.cwd(), 'scripts', 'mail-template.html');
   let htmlTemplate = fs.readFileSync(templatePath, 'utf8');
@@ -218,12 +265,11 @@ async function sendMail(doctor: DoctorRow, user: { username: string; password: s
   const transporter = buildTransporter();
   const fromAddress =
     process.env.MAIL_FROM || `"Alta Medical Services" <${process.env.MAIL_USER || 'noreply@altamedicalservices.com'}>`;
-  const auditBcc = process.env.MAIL_AUDIT_BCC?.trim() || undefined;
 
   const info = await transporter.sendMail({
     from: fromAddress,
     to: doctor.Email,
-    bcc: auditBcc,
+    bcc: MAIL_AUDIT_BCC,
     subject: 'Tu acceso a Alta Medical Services',
     html: mailHtml,
     attachments: [
@@ -236,12 +282,19 @@ async function sendMail(doctor: DoctorRow, user: { username: string; password: s
   });
 
   console.log(
-    `   ✉  SMTP host=${process.env.MAIL_HOST || 'gmail-service'} | from=${fromAddress} | to=${doctor.Email} | messageId=${info.messageId}` +
-      (auditBcc ? ` | bcc=${auditBcc}` : '') +
-      ` | accepted=${JSON.stringify(info.accepted)} | rejected=${JSON.stringify(info.rejected)}`
+    `   ✉  SMTP host=${process.env.MAIL_HOST || 'gmail-service'} | from=${fromAddress} | to=${doctor.Email} | messageId=${info.messageId} | accepted=${JSON.stringify(info.accepted)} | rejected=${JSON.stringify(info.rejected)}`
   );
 
-  return info;
+  appendMailAudit({
+    script: 'reset-passwords-and-resend.ts',
+    status: 'SENT',
+    to: doctor.Email,
+    username: user?.username || '',
+    messageId: info.messageId || '',
+    accepted: (info.accepted || []).map(String).join(';'),
+    rejected: (info.rejected || []).map(String).join(';'),
+    error: ''
+  });
 }
 
 async function updateSheet(rowIndex: number, password: string, mailSentAt: string) {
@@ -270,10 +323,11 @@ async function updateSheetUpdates(rowIndex: number, msg: string) {
     console.log(`  MAIL_SECURE   : ${process.env.MAIL_SECURE || '(per defecte derivat del port)'}`);
     console.log(`  MAIL_USER     : ${process.env.MAIL_USER || '(no definit)'}`);
     console.log(`  MAIL_FROM     : ${process.env.MAIL_FROM || '(no definit — usa MAIL_USER)'}`);
+    console.log(`  MAIL_AUDIT_LOG_PATH : ${MAIL_AUDIT_LOG_PATH}`);
+    console.log(`  MAIL_AUDIT_BCC : ${MAIL_AUDIT_BCC || '(no definit)'}`);
     console.log(
       `  MAIL_PASSWORD : ${process.env.MAIL_PASSWORD ? '(set, len=' + process.env.MAIL_PASSWORD.length + ')' : "(NO DEFINIT — fallarà l'enviament)"}`
     );
-    console.log(`  MAIL_AUDIT_BCC: ${process.env.MAIL_AUDIT_BCC || '(no definit)'}`);
     console.log('-------------------');
 
     // SMTP preflight: si no podem autenticar-nos al servidor de correu, no toquem cap
@@ -352,18 +406,28 @@ async function updateSheetUpdates(rowIndex: number, msg: string) {
 
       try {
         const mailHtml = generateMailHtml(doc, { username, password: newPassword });
-        const mailInfo = await sendMail(doc, { username, password: newPassword }, mailHtml);
+        await sendMail(doc, { username, password: newPassword }, mailHtml);
         fs.writeFileSync(`mail_${username}.html`, mailHtml);
 
         const now = new Date().toISOString();
         await updateSheet(doc.rowIndex, newPassword, now);
-        await updateSheetUpdates(doc.rowIndex, `Reset+resend OK (${now}) [messageId: ${mailInfo.messageId}]`);
+        await updateSheetUpdates(doc.rowIndex, `Reset+resend OK (${now})`);
 
         console.log(`✔ Reset+mail enviat: ${username} (${doc.Email})`);
         okCount++;
       } catch (err) {
         const msg = `Error enviant mail a ${doc.Email} després del reset: ${String(err)}`;
         console.error('✗', msg);
+        appendMailAudit({
+          script: 'reset-passwords-and-resend.ts',
+          status: 'FAILED',
+          to: doc.Email,
+          username,
+          messageId: '',
+          accepted: '',
+          rejected: '',
+          error: String(err)
+        });
         // Important: la contrasenya ja s'ha canviat a la BD. La deixem registrada al sheet
         // perquè si el mail ha petat per un altre motiu (ex: SMTP transitori) puguis donar-la
         // manualment a l'usuari, i la propera execució no torni a generar-ne una de nova.
