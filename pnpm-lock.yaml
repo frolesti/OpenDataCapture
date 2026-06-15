@@ -6,91 +6,12 @@ settings:
 
 catalogs:
   default:
-    '@casl/ability':
-      specifier: ^6.7.1
-      version: 6.7.3
-    '@douglasneuroinformatics/esbuild-plugin-prisma':
-      specifier: latest
-      version: 1.0.1
-    '@douglasneuroinformatics/libcrypto':
-      specifier: ^0.0.4
-      version: 0.0.4
-    '@douglasneuroinformatics/libjs':
-      specifier: ^3.1.0
-      version: 3.1.0
-    '@douglasneuroinformatics/libpasswd':
-      specifier: latest
-      version: 0.0.3
-    '@douglasneuroinformatics/libstats':
-      specifier: latest
-      version: 0.2.1
-    '@douglasneuroinformatics/libui':
-      specifier: ^4.8.1
-      version: 4.8.1
-    '@douglasneuroinformatics/libui-form-types':
-      specifier: latest
-      version: 0.14.0
-    '@microsoft/api-extractor':
-      specifier: ^7.47.6
-      version: 7.52.8
-    '@prisma/client':
-      specifier: ^6.9.0
-      version: 6.11.1
-    '@storybook/addon-docs':
-      specifier: 9.0.0-beta.3
-      version: 9.0.0-beta.3
-    '@storybook/addon-themes':
-      specifier: 9.0.0-beta.3
-      version: 9.0.0-beta.3
-    '@storybook/react-vite':
-      specifier: 9.0.0-beta.3
-      version: 9.0.0-beta.3
-    '@tailwindcss/vite':
-      specifier: ^4.1.4
-      version: 4.1.11
     axios:
       specifier: ^1.12.0
       version: 1.12.2
-    esbuild:
-      specifier: 0.23.x
-      version: 0.23.1
-    esbuild-wasm:
-      specifier: 0.23.x
-      version: 0.23.1
-    happy-dom:
-      specifier: ^20.0.2
-      version: 20.0.2
-    motion:
-      specifier: 11.15.0
-      version: 11.15.0
-    nodemon:
-      specifier: ^3.1.9
-      version: 3.1.10
-    prisma:
-      specifier: ^6.9.0
-      version: 6.11.1
-    serialize-error:
-      specifier: ^11.0.3
-      version: 11.0.3
-    storybook:
-      specifier: 9.0.0-beta.3
-      version: 9.0.0-beta.3
-    tailwindcss:
-      specifier: ^4.1.4
-      version: 4.1.11
     tsx:
       specifier: 4.8.2
       version: 4.8.2
-    vite:
-      specifier: ^6.3.3
-      version: 6.3.5
-  react19:
-    react:
-      specifier: 19.1.0
-      version: 19.1.0
-    react-dom:
-      specifier: 19.1.0
-      version: 19.1.0
 
 overrides:
   '@types/react': '-'
@@ -107,9 +28,6 @@ importers:
       googleapis:
         specifier: ^166.0.0
         version: 166.0.0
-      imapflow:
-        specifier: ^1.4.0
-        version: 1.4.0
       nodemailer:
         specifier: ^7.0.10
         version: 7.0.10
@@ -4014,10 +3932,6 @@ packages:
     resolution:
       { integrity: sha512-ZOBkgDwEdoYVlSeRbYYXs0S9MejQofiVYoTbKzy/6GQa39/q5tQU2IX46+shYnUkpEl3wc+J6wRlar7r2EK2xA== }
 
-  '@pinojs/redact@0.4.0':
-    resolution:
-      { integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg== }
-
   '@pkgjs/parseargs@0.11.0':
     resolution:
       { integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg== }
@@ -6198,10 +6112,6 @@ packages:
       { integrity: sha512-siPY6BD5dQ2SZPl3I0OZBHL27ZqZvLEosObsZRQ1NUB8qcxegwt0T9eKtV96JMFQpIz1elhkzqOg4c/Ri6Dp9A== }
     engines: { node: ^14.14.0 || >=16.0.0 }
 
-  '@zone-eu/mailsplit@5.4.12':
-    resolution:
-      { integrity: sha512-w7Gy+NvjZ0MiXm8F6zfjImAqcTONKDImgWVBjDKQVFUXWuz3VFM5levNArkL2M877ajql5+bkS2pDV56injlmg== }
-
   '@zxcvbn-ts/core@3.0.4':
     resolution:
       { integrity: sha512-aQeiT0F09FuJaAqNrxynlAwZ2mW/1MdXakKWNmGM1Qp/VaY6CnB/GfnMS2T8gB2231Esp1/maCWd8vTG4OuShw== }
@@ -7560,11 +7470,6 @@ packages:
       { integrity: sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg== }
     engines: { node: '>= 0.8' }
 
-  encoding-japanese@2.2.0:
-    resolution:
-      { integrity: sha512-EuJWwlHPZ1LbADuKTClvHtwbaFn4rOD+dRAbWysqEOXRc2Uui0hJInNJrsdH0c+OhJA4nrCBdSkW4DD5YxAo6A== }
-    engines: { node: '>=8.10.0' }
-
   encoding@0.1.13:
     resolution:
       { integrity: sha512-ETBauow1T35Y/WZMkio9jiM0Z5xjHHmJ4XmjZOq1l/dXz3lr2sRn87nJy20RupqSh1F2m3HHPSp8ShIPQJrJ3A== }
@@ -8785,11 +8690,6 @@ packages:
       { integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw== }
     engines: { node: '>=0.10.0' }
 
-  iconv-lite@0.7.2:
-    resolution:
-      { integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw== }
-    engines: { node: '>=0.10.0' }
-
   ieee754@1.2.1:
     resolution:
       { integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA== }
@@ -8807,10 +8707,6 @@ packages:
     resolution:
       { integrity: sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg== }
     engines: { node: '>= 4' }
-
-  imapflow@1.4.0:
-    resolution:
-      { integrity: sha512-bpNWv3AwzZryMMYoKiqPebcxmldCQwWxqhBQ5b/nTlJYAgexCzDIpN0LdhVJpJp6H25lAmwvShX+Fu/9AU5Spg== }
 
   immediate@3.0.6:
     resolution:
@@ -9433,18 +9329,6 @@ packages:
     resolution:
       { integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ== }
     engines: { node: '>= 0.8.0' }
-
-  libbase64@1.3.0:
-    resolution:
-      { integrity: sha512-GgOXd0Eo6phYgh0DJtjQ2tO8dc0IVINtZJeARPeiIJqge+HdsWSuaDTe8ztQ7j/cONByDZ3zeB325AHiv5O0dg== }
-
-  libmime@5.3.8:
-    resolution:
-      { integrity: sha512-ZrCY+Q66mPvasAfjsQ/IgahzoBvfE1VdtGRpo1hwRB1oK3wJKxhKA3GOcd2a6j7AH5eMFccxK9fBoCpRZTf8ng== }
-
-  libqp@2.1.1:
-    resolution:
-      { integrity: sha512-0Wd+GPz1O134cP62YU2GTOPNA7Qgl09XwCqM5zpBv87ERCXdfDtyKXvV7c9U22yWJh44QZqBocFnXN11K96qow== }
 
   lie@3.3.0:
     resolution:
@@ -10386,11 +10270,6 @@ packages:
       { integrity: sha512-Us/Se1WtT0ylXgNFfyFSx4LElllVLJXQjWi2Xz17xWw7amDKO2MLtFnVp1WACy7GkVGs+oBlRopVNUzlrGSw1w== }
     engines: { node: '>=6.0.0' }
 
-  nodemailer@8.0.10:
-    resolution:
-      { integrity: sha512-BLFuSth7QtHOkBzyqTehWWyub0NTRDuK2Q2SQfnGLsrJnzyU+Yeh4WpV1eZGuARFj1xQJHIdnTuJZLP+b9R1GQ== }
-    engines: { node: '>=6.0.0' }
-
   nodemon@3.1.10:
     resolution:
       { integrity: sha512-WDjw3pJ0/0jMFmyNDp3gvY2YizjLmmOUQo6DEBY+JgdvW/yQ9mEeSw6H5ythl5Ny2ytb7f9C2nIbjSxMNzbJXw== }
@@ -10771,10 +10650,6 @@ packages:
     resolution:
       { integrity: sha512-F63x5tizV6WCh4R6RHyi2Ml+M70DNRXt/+HANowMflpgGFMAym/VKm6G7ZOQRjqN7XbGxK1Lg9t6ZrtzOaivMw== }
 
-  pino-abstract-transport@3.0.0:
-    resolution:
-      { integrity: sha512-wlfUczU+n7Hy/Ha5j9a/gZNy7We5+cXp8YL+X+PG8S0KXxw7n/JXA3c46Y0zQznIJ83URJiwy7Lh56WLokNuxg== }
-
   pino-http@10.5.0:
     resolution:
       { integrity: sha512-hD91XjgaKkSsdn8P7LaebrNzhGTdB086W3pyPihX0EzGPjq5uBJBXo4N5guqNaK6mUjg9aubMF7wDViYek9dRA== }
@@ -10787,11 +10662,6 @@ packages:
   pino-std-serializers@7.0.0:
     resolution:
       { integrity: sha512-e906FRY0+tV27iq4juKzSYPbUj2do2X2JX4EzSca1631EB2QJQUqGbDuERal7LCtOpxl6x3+nvo9NPZcmjkiFA== }
-
-  pino@10.3.1:
-    resolution:
-      { integrity: sha512-r34yH/GlQpKZbU1BvFFqOjhISRo1MNx1tWYsYvmj6KIRHSPMT2+yHOEb1SG6NMvRoHRF0a07kCOox/9yakl1vg== }
-    hasBin: true
 
   pino@9.7.0:
     resolution:
@@ -11307,10 +11177,6 @@ packages:
     resolution:
       { integrity: sha512-57frrGM/OCTLqLOAh0mhVA9VBMHd+9U7Zb2THMGdBUoZVOtGbJzjxsYGDJ3A9AYYCP4hn6y1TVbaOfzWtm5GFg== }
     engines: { node: '>= 12.13.0' }
-
-  real-require@1.0.0:
-    resolution:
-      { integrity: sha512-P4nbQYQfePJxRSmY+v/KINxVucm4NF3p3s7pJveMTtom52FR4YGltUQLB8idDXwDDWW+eYrWDFbuzUnjoWHF7g== }
 
   recast@0.23.11:
     resolution:
@@ -12291,11 +12157,6 @@ packages:
   thread-stream@3.1.0:
     resolution:
       { integrity: sha512-OqyPZ9u96VohAyMfJykzmivOrY2wfMSf3C5TtFJVgN+Hm6aj+voFhlK+kZEIv2FBh1X6Xp3DlnCOfEQ3B2J86A== }
-
-  thread-stream@4.2.0:
-    resolution:
-      { integrity: sha512-e2zZ96wSChazBsbENf/Pcm/4swHt2cEKQ92rhUjkL9GCKiTDJIaTBenjE/m9DXi0QBmTMDkFDdOomUy20A1tDQ== }
-    engines: { node: '>=20' }
 
   throttleit@1.0.1:
     resolution:
@@ -14965,7 +14826,7 @@ snapshots:
   '@eslint/config-array@0.19.2':
     dependencies:
       '@eslint/object-schema': 2.1.6
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -14983,7 +14844,7 @@ snapshots:
   '@eslint/eslintrc@3.3.1':
     dependencies:
       ajv: 6.12.6
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       espree: 10.4.0
       globals: 14.0.0
       ignore: 5.3.2
@@ -15835,8 +15696,6 @@ snapshots:
   '@paralleldrive/cuid2@2.2.2':
     dependencies:
       '@noble/hashes': 1.8.0
-
-  '@pinojs/redact@0.4.0': {}
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
@@ -17416,7 +17275,7 @@ snapshots:
       '@swc-node/sourcemap-support': 0.5.1
       '@swc/core': 1.12.11(@swc/helpers@0.5.17)
       colorette: 2.0.20
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       oxc-resolver: 5.3.0
       pirates: 4.0.7
       tslib: 2.8.1
@@ -18062,7 +17921,7 @@ snapshots:
       '@typescript-eslint/types': 8.36.0
       '@typescript-eslint/typescript-estree': 8.36.0(typescript@5.6.3)
       '@typescript-eslint/visitor-keys': 8.36.0
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       eslint: 9.23.0(jiti@2.4.2)
       typescript: 5.6.3
     transitivePeerDependencies:
@@ -18072,7 +17931,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.36.0(typescript@5.6.3)
       '@typescript-eslint/types': 8.36.0
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       typescript: 5.6.3
     transitivePeerDependencies:
       - supports-color
@@ -18090,7 +17949,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/typescript-estree': 8.36.0(typescript@5.6.3)
       '@typescript-eslint/utils': 8.36.0(eslint@9.23.0(jiti@2.4.2))(typescript@5.6.3)
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       eslint: 9.23.0(jiti@2.4.2)
       ts-api-utils: 2.1.0(typescript@5.6.3)
       typescript: 5.6.3
@@ -18105,7 +17964,7 @@ snapshots:
       '@typescript-eslint/tsconfig-utils': 8.36.0(typescript@5.6.3)
       '@typescript-eslint/types': 8.36.0
       '@typescript-eslint/visitor-keys': 8.36.0
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.5
@@ -18189,7 +18048,7 @@ snapshots:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
       ast-v8-to-istanbul: 0.3.3
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       istanbul-lib-coverage: 3.2.2
       istanbul-lib-report: 3.0.1
       istanbul-lib-source-maps: 5.0.6
@@ -18386,12 +18245,6 @@ snapshots:
   '@xhmikosr/os-filter-obj@3.0.0':
     dependencies:
       arch: 3.0.0
-
-  '@zone-eu/mailsplit@5.4.12':
-    dependencies:
-      libbase64: 1.3.0
-      libmime: 5.3.8
-      libqp: 2.1.1
 
   '@zxcvbn-ts/core@3.0.4':
     dependencies:
@@ -18650,7 +18503,7 @@ snapshots:
       '@typescript-eslint/scope-manager': 8.36.0
       '@typescript-eslint/types': 8.36.0
       astrojs-compiler-sync: 1.1.1(@astrojs/compiler@2.12.2)
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       entities: 6.0.1
       eslint-scope: 8.4.0
       eslint-visitor-keys: 4.2.1
@@ -19434,11 +19287,19 @@ snapshots:
     dependencies:
       ms: 2.0.0
 
+  debug@3.2.7:
+    dependencies:
+      ms: 2.1.3
+
   debug@3.2.7(supports-color@8.1.1):
     dependencies:
       ms: 2.1.3
     optionalDependencies:
       supports-color: 8.1.1
+
+  debug@4.4.1:
+    dependencies:
+      ms: 2.1.3
 
   debug@4.4.1(supports-color@5.5.0):
     dependencies:
@@ -19505,8 +19366,7 @@ snapshots:
 
   detect-libc@2.0.4: {}
 
-  detect-libc@2.1.2:
-    optional: true
+  detect-libc@2.1.2: {}
 
   detect-newline@2.1.0: {}
 
@@ -19597,8 +19457,6 @@ snapshots:
   encodeurl@1.0.2: {}
 
   encodeurl@2.0.0: {}
-
-  encoding-japanese@2.2.0: {}
 
   encoding@0.1.13:
     dependencies:
@@ -19864,7 +19722,7 @@ snapshots:
 
   eslint-import-resolver-node@0.3.9:
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7
       is-core-module: 2.16.1
       resolve: 1.22.10
     transitivePeerDependencies:
@@ -19878,7 +19736,7 @@ snapshots:
 
   eslint-module-utils@2.12.1(@typescript-eslint/parser@8.36.0(eslint@9.23.0(jiti@2.4.2))(typescript@5.6.3))(eslint-import-resolver-node@0.3.9)(eslint@9.23.0(jiti@2.4.2)):
     dependencies:
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 8.36.0(eslint@9.23.0(jiti@2.4.2))(typescript@5.6.3)
       eslint: 9.23.0(jiti@2.4.2)
@@ -19907,7 +19765,7 @@ snapshots:
       array.prototype.findlastindex: 1.2.6
       array.prototype.flat: 1.3.3
       array.prototype.flatmap: 1.3.3
-      debug: 3.2.7(supports-color@8.1.1)
+      debug: 3.2.7
       doctrine: 2.1.0
       eslint: 9.23.0(jiti@2.4.2)
       eslint-import-resolver-node: 0.3.9
@@ -19934,7 +19792,7 @@ snapshots:
       '@es-joy/jsdoccomment': 0.50.2
       are-docs-informative: 0.0.2
       comment-parser: 1.4.1
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       escape-string-regexp: 4.0.0
       eslint: 9.23.0(jiti@2.4.2)
       espree: 10.4.0
@@ -20059,7 +19917,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       escape-string-regexp: 4.0.0
       eslint-scope: 8.4.0
       eslint-visitor-keys: 4.2.1
@@ -20453,7 +20311,7 @@ snapshots:
 
   follow-redirects@1.15.9(debug@4.4.1):
     optionalDependencies:
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
 
   fontace@0.3.0:
     dependencies:
@@ -21090,7 +20948,7 @@ snapshots:
   https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -21117,10 +20975,6 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
-  iconv-lite@0.7.2:
-    dependencies:
-      safer-buffer: 2.1.2
-
   ieee754@1.2.1: {}
 
   ignore-by-default@1.0.1: {}
@@ -21128,18 +20982,6 @@ snapshots:
   ignore@5.3.2: {}
 
   ignore@7.0.5: {}
-
-  imapflow@1.4.0:
-    dependencies:
-      '@zone-eu/mailsplit': 5.4.12
-      encoding-japanese: 2.2.0
-      iconv-lite: 0.7.2
-      libbase64: 1.3.0
-      libmime: 5.3.8
-      libqp: 2.1.1
-      nodemailer: 8.0.10
-      pino: 10.3.1
-      socks: 2.8.9
 
   immediate@3.0.6: {}
 
@@ -21189,7 +21031,8 @@ snapshots:
 
   internmap@2.0.3: {}
 
-  ip-address@10.2.0: {}
+  ip-address@10.2.0:
+    optional: true
 
   ip-address@9.0.5:
     dependencies:
@@ -21395,7 +21238,7 @@ snapshots:
   istanbul-lib-source-maps@5.0.6:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.29
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       istanbul-lib-coverage: 3.2.2
     transitivePeerDependencies:
       - supports-color
@@ -21620,17 +21463,6 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
-  libbase64@1.3.0: {}
-
-  libmime@5.3.8:
-    dependencies:
-      encoding-japanese: 2.2.0
-      iconv-lite: 0.7.2
-      libbase64: 1.3.0
-      libqp: 2.1.1
-
-  libqp@2.1.1: {}
-
   lie@3.3.0:
     dependencies:
       immediate: 3.0.6
@@ -21667,7 +21499,7 @@ snapshots:
 
   lightningcss@1.30.1:
     dependencies:
-      detect-libc: 2.0.4
+      detect-libc: 2.1.2
     optionalDependencies:
       lightningcss-darwin-arm64: 1.30.1
       lightningcss-darwin-x64: 1.30.1
@@ -22642,8 +22474,6 @@ snapshots:
 
   nodemailer@7.0.10: {}
 
-  nodemailer@8.0.10: {}
-
   nodemon@3.1.10:
     dependencies:
       chokidar: 3.6.0
@@ -22985,10 +22815,6 @@ snapshots:
     dependencies:
       split2: 4.2.0
 
-  pino-abstract-transport@3.0.0:
-    dependencies:
-      split2: 4.2.0
-
   pino-http@10.5.0:
     dependencies:
       get-caller-file: 2.0.5
@@ -23014,20 +22840,6 @@ snapshots:
       strip-json-comments: 3.1.1
 
   pino-std-serializers@7.0.0: {}
-
-  pino@10.3.1:
-    dependencies:
-      '@pinojs/redact': 0.4.0
-      atomic-sleep: 1.0.0
-      on-exit-leak-free: 2.1.2
-      pino-abstract-transport: 3.0.0
-      pino-std-serializers: 7.0.0
-      process-warning: 5.0.0
-      quick-format-unescaped: 4.0.4
-      real-require: 0.2.0
-      safe-stable-stringify: 2.5.0
-      sonic-boom: 4.2.0
-      thread-stream: 4.2.0
 
   pino@9.7.0:
     dependencies:
@@ -23465,8 +23277,6 @@ snapshots:
   reading-time@1.5.0: {}
 
   real-require@0.2.0: {}
-
-  real-require@1.0.0: {}
 
   recast@0.23.11:
     dependencies:
@@ -24138,7 +23948,8 @@ snapshots:
       astral-regex: 2.0.0
       is-fullwidth-code-point: 3.0.0
 
-  smart-buffer@4.2.0: {}
+  smart-buffer@4.2.0:
+    optional: true
 
   smol-toml@1.4.1: {}
 
@@ -24163,6 +23974,7 @@ snapshots:
     dependencies:
       ip-address: 10.2.0
       smart-buffer: 4.2.0
+    optional: true
 
   solid-js@1.9.7:
     dependencies:
@@ -24269,7 +24081,7 @@ snapshots:
       arg: 5.0.2
       bluebird: 3.7.2
       check-more-types: 2.24.0
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       execa: 5.1.1
       lazy-ass: 1.6.0
       ps-tree: 1.2.0
@@ -24589,10 +24401,6 @@ snapshots:
   thread-stream@3.1.0:
     dependencies:
       real-require: 0.2.0
-
-  thread-stream@4.2.0:
-    dependencies:
-      real-require: 1.0.0
 
   throttleit@1.0.1: {}
 
@@ -25115,7 +24923,7 @@ snapshots:
   vite-node@3.2.4(@types/node@22.16.3)(jiti@2.4.2)(lightningcss@1.30.1)(tsx@4.8.2)(yaml@2.8.0):
     dependencies:
       cac: 6.7.14
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       es-module-lexer: 1.7.0
       pathe: 2.0.3
       vite: 6.3.5(@types/node@22.16.3)(jiti@2.4.2)(lightningcss@1.30.1)(tsx@4.8.2)(yaml@2.8.0)
@@ -25205,7 +25013,7 @@ snapshots:
       '@vitest/spy': 3.2.4
       '@vitest/utils': 3.2.4
       chai: 5.2.1
-      debug: 4.4.1(supports-color@5.5.0)
+      debug: 4.4.1
       expect-type: 1.2.2
       magic-string: 0.30.17
       pathe: 2.0.3

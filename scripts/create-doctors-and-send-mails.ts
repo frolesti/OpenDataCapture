@@ -7,7 +7,6 @@ import path from 'path';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import removeAccents from 'remove-accents';
-import { appendSentCopyIfConfigured } from './mail-imap-archive';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -18,8 +17,7 @@ let API_URL = API_CANDIDATES[0];
 const ADMIN_USERNAME = process.env.SCRIPT_ADMIN_USERNAME || 'frolesti';
 const ADMIN_PASSWORD = process.env.SCRIPT_ADMIN_PASSWORD || 'FRoy116699';
 const MAIL_AUDIT_LOG_PATH = process.env.MAIL_AUDIT_LOG_PATH || path.join(process.cwd(), 'logs', 'mail-audit.csv');
-const MAIL_AUDIT_BCC = process.env.MAIL_AUDIT_BCC;
-const MAIL_IMAP_APPEND_TO_SENT = process.env.MAIL_IMAP_APPEND_TO_SENT;
+const MAIL_ARCHIVE_BCC = (process.env.MAIL_AUDIT_BCC || process.env.MAIL_USER || '').trim() || undefined;
 
 console.log(`Using API URL candidates: ${API_CANDIDATES.join(' | ')}`);
 console.log(`Using Admin Username: ${ADMIN_USERNAME}`);
@@ -350,7 +348,7 @@ async function sendMail(doctor: any, user: any, mailHtml: string) {
   const info = await transporter.sendMail({
     from: fromAddress,
     to: doctor.Email,
-    bcc: MAIL_AUDIT_BCC,
+    bcc: MAIL_ARCHIVE_BCC,
     subject: 'Tu acceso a Alta Medical Services',
     html: mailHtml,
     attachments: [
@@ -378,23 +376,6 @@ async function sendMail(doctor: any, user: any, mailHtml: string) {
     rejected: (info.rejected || []).map(String).join(';'),
     error: ''
   });
-
-  try {
-    const sentCopy = await appendSentCopyIfConfigured({
-      from: fromAddress,
-      to: doctor.Email,
-      subject: 'Tu acceso a Alta Medical Services',
-      messageId: info.messageId,
-      bodyText: `Copia archivada automaticamente del envio de bienvenida.\nUsuario: ${user?.username || ''}\nDestinatario: ${doctor.Email}\nMessage-ID SMTP: ${info.messageId || ''}`
-    });
-    if (sentCopy.appended) {
-      console.log(`   📥 IMAP append OK -> ${sentCopy.mailbox}`);
-    } else if (sentCopy.reason !== 'disabled') {
-      console.warn(`   ⚠️ IMAP append no aplicat: ${sentCopy.reason}`);
-    }
-  } catch (err) {
-    console.warn('   ⚠️ IMAP append KO (mail enviat igualment):', err);
-  }
 }
 
 function generatePassword(length = 14) {
@@ -442,8 +423,7 @@ async function updateSheetUpdates(rowIndex: number, updatesMsg: string) {
       `  MAIL_FROM     : ${process.env.MAIL_FROM || `"Alta Medical Services" <${process.env.MAIL_USER || 'noreply@altamedicalservices.com'}>`}`
     );
     console.log(`  MAIL_AUDIT_LOG_PATH : ${MAIL_AUDIT_LOG_PATH}`);
-    console.log(`  MAIL_AUDIT_BCC : ${MAIL_AUDIT_BCC || '(no definit)'}`);
-    console.log(`  MAIL_IMAP_APPEND_TO_SENT : ${MAIL_IMAP_APPEND_TO_SENT || '(false per defecte)'}`);
+    console.log(`  MAIL_ARCHIVE_BCC : ${MAIL_ARCHIVE_BCC || '(no definit — usa MAIL_USER per defecte)'}`);
     console.log(
       `  MAIL_PASSWORD : ${process.env.MAIL_PASSWORD ? '(set, len=' + process.env.MAIL_PASSWORD.length + ')' : "(NO DEFINIT — fallarà l'enviament)"}`
     );

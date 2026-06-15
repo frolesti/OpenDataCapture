@@ -4,13 +4,11 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { appendSentCopyIfConfigured } from './mail-imap-archive';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const MAIL_AUDIT_LOG_PATH = process.env.MAIL_AUDIT_LOG_PATH || path.join(process.cwd(), 'logs', 'mail-audit.csv');
-const MAIL_AUDIT_BCC = process.env.MAIL_AUDIT_BCC;
-const MAIL_IMAP_APPEND_TO_SENT = process.env.MAIL_IMAP_APPEND_TO_SENT;
+const MAIL_ARCHIVE_BCC = (process.env.MAIL_AUDIT_BCC || process.env.MAIL_USER || '').trim() || undefined;
 
 const toEmail = process.env.TEST_TO_EMAIL || process.argv[2];
 if (!toEmail) {
@@ -122,8 +120,7 @@ function appendMailAudit(entry: {
   console.log(`  MAIL_USER     : ${process.env.MAIL_USER || '(undefined)'}`);
   console.log(`  MAIL_FROM     : ${fromAddress}`);
   console.log(`  MAIL_AUDIT_LOG_PATH : ${MAIL_AUDIT_LOG_PATH}`);
-  console.log(`  MAIL_AUDIT_BCC : ${MAIL_AUDIT_BCC || '(undefined)'}`);
-  console.log(`  MAIL_IMAP_APPEND_TO_SENT : ${MAIL_IMAP_APPEND_TO_SENT || '(false by default)'}`);
+  console.log(`  MAIL_ARCHIVE_BCC : ${MAIL_ARCHIVE_BCC || '(undefined — uses MAIL_USER by default)'}`);
   console.log(`  TO            : ${toEmail}`);
   console.log('------------------------');
 
@@ -147,7 +144,7 @@ function appendMailAudit(entry: {
     const info = await transporter.sendMail({
       from: fromAddress,
       to: toEmail,
-      bcc: MAIL_AUDIT_BCC,
+      bcc: MAIL_ARCHIVE_BCC,
       subject: 'Tu acceso a Alta Medical Services',
       html,
       attachments: [
@@ -172,23 +169,6 @@ function appendMailAudit(entry: {
       rejected: (info.rejected || []).map(String).join(';'),
       error: ''
     });
-
-    try {
-      const sentCopy = await appendSentCopyIfConfigured({
-        from: fromAddress,
-        to: toEmail,
-        subject: 'Tu acceso a Alta Medical Services',
-        messageId: info.messageId,
-        bodyText: `Copia archivada automaticamente del mail de test.\nUsuario de prueba: ${testUsername}\nDestinatario: ${toEmail}\nMessage-ID SMTP: ${info.messageId || ''}`
-      });
-      if (sentCopy.appended) {
-        console.log(`IMAP append OK -> ${sentCopy.mailbox}`);
-      } else if (sentCopy.reason !== 'disabled') {
-        console.warn(`IMAP append skipped: ${sentCopy.reason}`);
-      }
-    } catch (err) {
-      console.warn('IMAP append KO (mail already sent):', err);
-    }
 
     console.log(`Audit row appended to ${MAIL_AUDIT_LOG_PATH}`);
     console.log('Done. Check both your mailbox and Sent folder in Acens webmail.');
