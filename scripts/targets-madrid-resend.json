@@ -1,0 +1,44 @@
+[
+  {
+    "email": "mgbejar@telefonica.net",
+    "nom": "Maria Milagros",
+    "cognoms": "Gonzalez Bejar",
+    "hospital": "C. S. ARAVACA (Madrid)"
+  },
+  {
+    "email": "luisfernandezpacheco@gmail.com",
+    "nom": "Luis Maria",
+    "cognoms": "Fernandez-Pacheco Corchado",
+    "hospital": "C.S. Ensanche de Vallecas (Madrid)"
+  },
+  {
+    "email": "ymarblac@gmail.com",
+    "nom": "Yolanda",
+    "cognoms": "Martin Blazquez",
+    "hospital": "C. S. ENSANCHE DE VALLECAS"
+  },
+  {
+    "email": "cvaldesyllorca@gmail.com",
+    "nom": "Maria Carmen",
+    "cognoms": "Valdes y Llorca",
+    "hospital": "CS Fuencarral"
+  },
+  {
+    "email": "jmarme@hotmail.com",
+    "nom": "Maria Juncal",
+    "cognoms": "Martinez Urazusta",
+    "hospital": "CS Brujula"
+  },
+  {
+    "email": "gema.fernandez.tabernero@gmail.com",
+    "nom": "Gema",
+    "cognoms": "Fernandez Tabernero",
+    "hospital": "C. S. V CENTENARIO (Madrid)"
+  },
+  {
+    "email": "josemiart92@gmail.com",
+    "nom": "Jose Miguel",
+    "cognoms": "Artica Garcia",
+    "hospital": "CS Sector III, Getafe (Madrid)"
+  }
+]
