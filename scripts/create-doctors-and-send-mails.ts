@@ -13,16 +13,19 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const API_BASE = (process.env.API_BASE_URL || 'http://localhost:5500').replace(/\/$/, '');
 const API_CANDIDATES = Array.from(new Set([`${API_BASE}/v1`, `${API_BASE}/api/v1`]));
 let API_URL = API_CANDIDATES[0];
-// Use specific env vars for this script, or fallback to the known working credentials
-const ADMIN_USERNAME = process.env.SCRIPT_ADMIN_USERNAME || 'frolesti';
-const ADMIN_PASSWORD = process.env.SCRIPT_ADMIN_PASSWORD || 'FRoy116699';
+// Use specific env vars for this script (REQUIRED - no fallbacks)
+const ADMIN_USERNAME = process.env.SCRIPT_ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.SCRIPT_ADMIN_PASSWORD;
+
+if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
+  console.error('ERROR: SCRIPT_ADMIN_USERNAME and SCRIPT_ADMIN_PASSWORD must be set in .env');
+  process.exit(1);
+}
 const MAIL_AUDIT_LOG_PATH = process.env.MAIL_AUDIT_LOG_PATH || path.join(process.cwd(), 'logs', 'mail-audit.csv');
 const MAIL_ARCHIVE_BCC = (process.env.MAIL_AUDIT_BCC || process.env.MAIL_USER || '').trim() || undefined;
 
 console.log(`Using API URL candidates: ${API_CANDIDATES.join(' | ')}`);
 console.log(`Using Admin Username: ${ADMIN_USERNAME}`);
-// Do not log password for security, but we can log its length or a hash if needed for debugging.
-console.log(`Using Admin Password Length: ${ADMIN_PASSWORD.length}`);
 
 // Configura Google Sheets API
 const auth = new google.auth.GoogleAuth({

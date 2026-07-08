@@ -537,7 +537,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Osteoporosis', 'Primary Care'],
   internal: {
-    edition: 35,
+    edition: 37,
     name: 'OMEGA_FF_AP_2025'
   },
   content: [
