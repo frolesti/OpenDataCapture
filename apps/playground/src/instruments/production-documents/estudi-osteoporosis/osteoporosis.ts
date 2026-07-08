@@ -53,7 +53,7 @@ const centrosSanitariosOptions = {
   'CS Vinaròs': 'CS Vinaròs',
   'CS Monforte de Lemos': 'CS Monforte de Lemos',
   'CS José Aguado': 'CS José Aguado',
-  'CS La Magdalena': 'CS La Magdalena',
+  'Consultorio de Villaobispo de las Regueras (León)': 'Consultorio de Villaobispo de las Regueras (León)',
   'UGC Aguadulce - El Parador': 'UGC Aguadulce - El Parador',
   'CS Cartaya': 'CS Cartaya',
   'CS Fuencarral': 'CS Fuencarral',

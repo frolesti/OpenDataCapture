@@ -32,7 +32,7 @@ const CENTROS_SANITARIOS = [
   'CS Vinaròs',
   'CS Monforte de Lemos',
   'CS José Aguado',
-  'CS La Magdalena',
+  'Consultorio de Villaobispo de las Regueras (León)',
   'UGC Aguadulce - El Parador',
   'CS Cartaya',
   'CS Fuencarral',
