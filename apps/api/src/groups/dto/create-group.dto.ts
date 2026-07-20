@@ -5,8 +5,15 @@ import type { CreateGroupData, GroupSettings, GroupType } from '@opendatacapture
 
 @ValidationSchema($CreateGroupData)
 export class CreateGroupDto implements CreateGroupData {
+  @ApiProperty({ required: false, type: [String] })
+  hospitals: string[];
+
   @ApiProperty({ example: 'Depression Clinic' })
   name: string;
+
+  @ApiProperty({ required: false })
   settings?: GroupSettings;
+
+  @ApiProperty({ enum: ['CLINICAL', 'RESEARCH'] })
   type: GroupType;
 }

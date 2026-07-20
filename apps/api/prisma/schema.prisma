@@ -78,6 +78,7 @@ model Group {
   accessibleInstrumentIds String[]
   accessibleInstruments   Instrument[]       @relation(fields: [accessibleInstrumentIds], references: [id])
   assignments             Assignment[]
+  hospitals               String[]
   instrumentRecords       InstrumentRecord[]
   name                    String             @unique
   settings                GroupSettings
@@ -219,6 +220,42 @@ enum SessionType {
   RETROSPECTIVE
   IN_PERSON
   REMOTE
+}
+
+enum PendingInvestigatorStatus {
+  PENDING
+  IN_PROGRESS
+  READY_FOR_ACCOUNT
+  COMPLETED
+}
+
+enum PendingInvestigatorUserType {
+  INVESTIGATOR
+  TEST_USER
+}
+
+model PendingInvestigator {
+  createdAt           DateTime                    @default(now()) @db.Date
+  updatedAt           DateTime                    @updatedAt @db.Date
+  id                  String                      @id @default(auto()) @map("_id") @db.ObjectId
+  firstName           String
+  lastName            String
+  email               String
+  hospital            String
+  basePermissionLevel BasePermissionLevel
+  groupIds            String[]                    @db.ObjectId
+  sex                 Sex?
+  dateOfBirth         DateTime?                   @db.Date
+  status              PendingInvestigatorStatus
+  userType            PendingInvestigatorUserType
+  signed              Boolean                     @default(false)
+  notes               String?
+  promotedUserId      String?                     @db.ObjectId
+  promotedAt          DateTime?                   @db.Date
+  mailSentAt          DateTime?                   @db.Date
+  mailError           String?
+
+  @@map("PendingInvestigatorModel")
 }
 
 model Session {

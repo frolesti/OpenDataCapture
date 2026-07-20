@@ -10,8 +10,8 @@ import { AuditLogService } from './audit-log.service';
 export class AuditLogController {
   constructor(private readonly auditLogService: AuditLogService) {}
 
-  @Get()
   @ApiOperation({ summary: 'Get audit log entries' })
+  @Get()
   @RouteAccess({ action: 'read', subject: 'AuditLog' })
   find(
     @CurrentUser('ability') ability: AppAbility,

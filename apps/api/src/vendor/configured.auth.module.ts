@@ -74,9 +74,9 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
                 basePermissionLevel: user.basePermissionLevel,
                 firstName: user.firstName,
                 groups: user.groups,
+                id: user.id,
                 lastName: user.lastName,
-                username: user.username,
-                id: user.id
+                username: user.username
               } as any
             };
           }

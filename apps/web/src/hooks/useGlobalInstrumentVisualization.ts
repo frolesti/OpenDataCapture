@@ -13,41 +13,6 @@ import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
 import { useAppStore } from '@/store';
 import { downloadSubjectTableExcel } from '@/utils/excel';
 
-const CENTROS_SANITARIOS = [
-  'CAP Badia',
-  'CAP Numància',
-  'CAP Sant Martí',
-  'CAP Manso',
-  'CS Acea da Ma',
-  'CS Aravaca',
-  'CS Xunqueira de Ambía',
-  'CS Villoria',
-  'CS Tórtola',
-  'CS Ávila Norte',
-  'CS Casco Vello',
-  'Consultorio de Jayena',
-  'CS Ribadavia',
-  'CS Arturo Eyries',
-  'CS Ensanche de Vallecas',
-  'CS Vinaròs',
-  'CS Monforte de Lemos',
-  'CS José Aguado',
-  'Consultorio de Villaobispo de las Regueras (León)',
-  'UGC Aguadulce - El Parador',
-  'CS Cartaya',
-  'CS Fuencarral',
-  'CS Brújula',
-  'Consultorio Local Fontanars Dels Alforins',
-  'CS María Fuensanta Pérez Quirós',
-  'CS Santa Marta de Tormes',
-  'CS A Ponte',
-  'CS V Centenario',
-  'CS Sector III',
-  "Consultori La Platja d'Almenara",
-  'CS de La Eliana',
-  'CAP Sant Llàtzer'
-];
-
 type InstrumentVisualizationRecord = {
   [key: string]: unknown;
   __data__: Record<string, unknown>;
@@ -162,7 +127,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
         normalizedKey === 'CENTRO_SANITARIO' ||
         (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'))
       ) {
-        CENTROS_SANITARIOS.forEach((center) => options[key]?.add(center));
+        (currentGroup?.hospitals ?? []).forEach((center) => options[key]?.add(center));
       }
     });
 
@@ -176,7 +141,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     });
 
     return options;
-  }, [records]);
+  }, [currentGroup?.hospitals, records]);
 
   const filteredRecords = useMemo(() => {
     let currentRecords = records;

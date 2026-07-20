@@ -141,9 +141,9 @@ function eq5d5lFields(timeframe: 'retrospective' | 'prospective'): Record<string
       }
     },
     [`${prefix}eq5d_vas`]: {
-      kind: 'numeric',
+      kind: 'number',
+      variant: 'input',
       label: `¿Cómo considera su estado de salud hoy en una escala de 0 a 100?${label_suffix}`,
-      range: [0, 100],
       description: 'Donde 100 es la mejor salud que pueda imaginar y 0 la peor'
     }
   };
@@ -264,7 +264,7 @@ const isValidDate = (val: string | undefined) => {
 
 export default defineInstrument({
   kind: 'FORM',
-  language: 'es',
+  language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
     edition: 1,
@@ -451,9 +451,9 @@ export default defineInstrument({
           disabled: true
         } as any),
         age: requiresConsent({
-          kind: 'numeric',
-          label: 'Edad (años) *',
-          range: [18, 120]
+          kind: 'number',
+          variant: 'input',
+          label: 'Edad (años) *'
         }),
         sex: requiresConsent({
           kind: 'string',
@@ -465,11 +465,13 @@ export default defineInstrument({
           }
         }),
         weight: requiresConsent({
-          kind: 'numeric',
+          kind: 'number',
+          variant: 'input',
           label: 'Peso (kg)'
         }),
         height: requiresConsent({
-          kind: 'numeric',
+          kind: 'number',
+          variant: 'input',
           label: 'Altura (cm)'
         })
       }
@@ -554,22 +556,27 @@ export default defineInstrument({
         _warningChangeReasons: consentWarning() as any,
         change_reason_adherence: requiresConsent({
           kind: 'boolean',
+          variant: 'checkbox',
           label: 'Falta de adherencia'
         }),
         change_reason_efficacy: requiresConsent({
           kind: 'boolean',
+          variant: 'checkbox',
           label: 'Falta de eficacia'
         }),
         change_reason_tolerability: requiresConsent({
           kind: 'boolean',
+          variant: 'checkbox',
           label: 'Falta de tolerabilidad'
         }),
         change_reason_patient_pref: requiresConsent({
           kind: 'boolean',
+          variant: 'checkbox',
           label: 'Preferencia del paciente'
         }),
         change_reason_investigator_pref: requiresConsent({
           kind: 'boolean',
+          variant: 'checkbox',
           label: 'Preferencia del investigador'
         }),
         change_reason_other: requiresConsent({
@@ -589,7 +596,7 @@ export default defineInstrument({
           label: 'Indique comorbilidades presentes con fecha de diagnóstico',
           disabled: true
         }
-      }
+      } as any
     },
     {
       title: 'EVALUACIÓN RETROSPECTIVA - PREGABALINA IR',
@@ -664,9 +671,9 @@ export default defineInstrument({
           description: 'Introduzca la fecha en formato DD-MM-YYYY'
         },
         new_dose: {
-          kind: 'numeric',
-          label: 'Nueva dosis (mg)',
-          range: [0, 1000]
+          kind: 'number',
+          variant: 'input',
+          label: 'Nueva dosis (mg)'
         }
       }
     },
@@ -743,6 +750,21 @@ export default defineInstrument({
       }
     }
   ],
+  clientDetails: {
+    estimatedDuration: 20,
+    instructions: [
+      'Complete el instrumento utilizando los datos clínicos disponibles en la historia médica.',
+      'Los campos marcados con * son obligatorios.'
+    ]
+  },
+  details: {
+    title: 'ORION-PR-2026',
+    description:
+      'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada.',
+    license: 'Apache-2.0',
+    authors: ['Equipo de Investigación ORION']
+  },
+  measures: {},
   validationSchema: z.object({
     visit_date: z.string().refine(isValidDate, { message: 'Fecha inválida' }),
     informed_consent: z.enum(['si', 'no']),
@@ -779,6 +801,18 @@ export default defineInstrument({
     change_reason_patient_pref: z.boolean().optional(),
     change_reason_investigator_pref: z.boolean().optional(),
     change_reason_other: z.string().optional(),
+    _warningInclusionStart: z.any().optional(),
+    _warningExclusionStart: z.any().optional(),
+    _warningExclusionCriteria: z.any().optional(),
+    _warningDemographics: z.any().optional(),
+    _warningDiagnosis: z.any().optional(),
+    _warningPrevTreatments: z.any().optional(),
+    prev_treatments_info: z.string().optional(),
+    _warningCurrentTreatments: z.any().optional(),
+    current_treatments_info: z.string().optional(),
+    _warningChangeReasons: z.any().optional(),
+    _warningComorbidities: z.any().optional(),
+    comorbidities_info: z.string().optional(),
     retro_eq5d_mobility: z.enum(['1', '2', '3', '4', '5']).optional(),
     retro_eq5d_selfcare: z.enum(['1', '2', '3', '4', '5']).optional(),
     retro_eq5d_activities: z.enum(['1', '2', '3', '4', '5']).optional(),

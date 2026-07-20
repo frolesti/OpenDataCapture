@@ -21,10 +21,10 @@ import type {
   UploadInstrumentRecordsData
 } from '@opendatacapture/schemas/instrument-records';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
-import type { Prisma } from '@prisma/client';
-import type { Session } from '@prisma/client';
+import type { Prisma, Session } from '@prisma/client';
 import { isNumber, mergeWith, pickBy } from 'lodash-es';
 
+import { AuditLogService } from '@/audit-log/audit-log.service';
 import type { EntityOperationOptions } from '@/core/types';
 import { GroupsService } from '@/groups/groups.service';
 import { InstrumentsService } from '@/instruments/instruments.service';
@@ -32,7 +32,6 @@ import { SessionsService } from '@/sessions/sessions.service';
 import { CreateSubjectDto } from '@/subjects/dto/create-subject.dto';
 import { SubjectsService } from '@/subjects/subjects.service';
 
-import { AuditLogService } from '@/audit-log/audit-log.service';
 import { InstrumentMeasuresService } from './instrument-measures.service';
 
 type ExpandDataType =
@@ -71,9 +70,7 @@ export class InstrumentRecordsService {
     { data: rawData, date, groupId, instrumentId, sessionId, subjectId }: CreateInstrumentRecordData,
     options?: EntityOperationOptions
   ): Promise<InstrumentRecord> {
-    if (groupId) {
-      await this.groupsService.findById(groupId, options);
-    }
+    const group = groupId ? await this.groupsService.findById(groupId, options) : null;
     const instrument = await this.instrumentsService.findById(instrumentId);
     if (instrument.kind === 'SERIES') {
       throw new UnprocessableEntityException(
@@ -93,6 +90,8 @@ export class InstrumentRecordsService {
         statusCode: 422
       });
     }
+
+    this.validateHospitalSelection(parseResult.data, group?.hospitals ?? []);
 
     return this.instrumentRecordModel.create({
       data: {
@@ -402,11 +401,11 @@ export class InstrumentRecordsService {
     // Compute field-level diff using the cloned original data (not the mutated one)
     const oldDataObj =
       typeof originalData === 'object' && originalData !== null && !Array.isArray(originalData)
-        ? (originalData as Record<string, unknown>)
+        ? (originalData as { [key: string]: unknown })
         : {};
     const newDataObj =
       typeof parseResult.data === 'object' && parseResult.data !== null && !Array.isArray(parseResult.data)
-        ? (parseResult.data as Record<string, unknown>)
+        ? (parseResult.data as { [key: string]: unknown })
         : {};
     const changes = this.auditLogService.computeChanges(oldDataObj, newDataObj);
 
@@ -439,9 +438,7 @@ export class InstrumentRecordsService {
     { groupId, instrumentId, records }: UploadInstrumentRecordsData,
     options?: EntityOperationOptions
   ): Promise<InstrumentRecord[]> {
-    if (groupId) {
-      await this.groupsService.findById(groupId, options);
-    }
+    const group = groupId ? await this.groupsService.findById(groupId, options) : null;
 
     const instrument = await this.instrumentsService.findById(instrumentId);
     if (instrument.kind === 'SERIES') {
@@ -473,6 +470,8 @@ export class InstrumentRecordsService {
               `Data received for record does not pass validation schema of instrument '${instrument.id}'`
             );
           }
+
+          this.validateHospitalSelection(parseResult.data, group?.hospitals ?? []);
 
           const session = await this.sessionsService.create({
             date: date,
@@ -551,5 +550,32 @@ export class InstrumentRecordsService {
 
   private serializeData(data: unknown) {
     return JSON.parse(JSON.stringify(data, replacer)) as unknown;
+  }
+
+  private validateHospitalSelection(data: unknown, groupHospitals: string[]) {
+    if (groupHospitals.length === 0) {
+      return;
+    }
+
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return;
+    }
+
+    const objectData = data as Record<string, unknown>;
+    const rawHospital = objectData.CAP ?? objectData.centro_sanitario ?? objectData.centroAtencionPrimaria;
+    if (typeof rawHospital !== 'string') {
+      return;
+    }
+
+    const normalized = rawHospital.trim();
+    if (!normalized) {
+      return;
+    }
+
+    if (!groupHospitals.includes(normalized)) {
+      throw new BadRequestException(
+        `Hospital '${normalized}' is not configured in the current group. Configure it in group management first.`
+      );
+    }
   }
 }

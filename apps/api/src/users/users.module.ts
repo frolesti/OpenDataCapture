@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { GroupsModule } from '@/groups/groups.module';
 
+import { OnboardingMailService } from './onboarding-mail.service';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -9,6 +10,6 @@ import { UsersService } from './users.service';
   controllers: [UsersController],
   exports: [UsersService],
   imports: [GroupsModule],
-  providers: [UsersService]
+  providers: [OnboardingMailService, UsersService]
 })
 export class UsersModule {}

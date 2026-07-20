@@ -26,6 +26,30 @@ export type CreateAuditLogData = {
 export class AuditLogService {
   constructor(@InjectModel('AuditLog') private readonly auditLogModel: Model<'AuditLog'>) {}
 
+  /** Compute field-level diff between old and new data objects */
+  computeChanges(oldData: { [key: string]: unknown }, newData: { [key: string]: unknown }): AuditFieldChange[] {
+    const changes: AuditFieldChange[] = [];
+    const allKeys = new Set([...Object.keys(newData), ...Object.keys(oldData)]);
+
+    for (const key of allKeys) {
+      const oldVal = oldData[key];
+      const newVal = newData[key];
+
+      const oldStr = oldVal !== undefined && oldVal !== null ? JSON.stringify(oldVal) : undefined;
+      const newStr = newVal !== undefined && newVal !== null ? JSON.stringify(newVal) : undefined;
+
+      if (oldStr !== newStr) {
+        changes.push({
+          field: key,
+          newValue: newStr,
+          oldValue: oldStr
+        });
+      }
+    }
+
+    return changes;
+  }
+
   async create(data: CreateAuditLogData) {
     return this.auditLogModel.create({
       data: {
@@ -46,7 +70,7 @@ export class AuditLogService {
     query: { groupId?: string; instrumentId?: string; subjectId?: string },
     { ability }: EntityOperationOptions = {}
   ) {
-    const where: Record<string, unknown> = {};
+    const where: { [key: string]: unknown } = {};
     if (query.groupId) {
       where.groupId = query.groupId;
     }
@@ -73,52 +97,28 @@ export class AuditLogService {
         undefined;
       const prevKeys = r.previousData ? Object.keys(r.previousData) : [];
       const newKeys = r.newData ? Object.keys(r.newData) : [];
-      const fields = Array.from(new Set([...prevKeys, ...newKeys]));
+      const fields = Array.from(new Set([...newKeys, ...prevKeys]));
 
-      const compactChanges: Record<string, { old?: string; new?: string }> = {};
+      const compactChanges: { [key: string]: { new?: string; old?: string } } = {};
       (r.changes ?? []).forEach((c: any) => {
-        compactChanges[c.field] = { old: c.oldValue, new: c.newValue };
+        compactChanges[c.field] = { new: c.newValue, old: c.oldValue };
       });
 
       return {
-        id: r.id,
+        changedCount: (r.changes ?? []).length,
+        changes: r.changes ?? [],
+        compactChanges,
         createdAt: r.createdAt,
+        fields,
+        groupId: r.groupId,
+        id: r.id,
         instrumentId: r.instrumentId,
+        patientCode,
         recordId: r.recordId,
         subjectId: r.subjectId,
-        groupId: r.groupId,
         userId: r.userId,
-        username: r.username,
-        changes: r.changes ?? [],
-        changedCount: (r.changes ?? []).length,
-        patientCode,
-        fields,
-        compactChanges
+        username: r.username
       };
     });
-  }
-
-  /** Compute field-level diff between old and new data objects */
-  computeChanges(oldData: Record<string, unknown>, newData: Record<string, unknown>): AuditFieldChange[] {
-    const changes: AuditFieldChange[] = [];
-    const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
-
-    for (const key of allKeys) {
-      const oldVal = oldData[key];
-      const newVal = newData[key];
-
-      const oldStr = oldVal !== undefined && oldVal !== null ? JSON.stringify(oldVal) : undefined;
-      const newStr = newVal !== undefined && newVal !== null ? JSON.stringify(newVal) : undefined;
-
-      if (oldStr !== newStr) {
-        changes.push({
-          field: key,
-          newValue: newStr,
-          oldValue: oldStr
-        });
-      }
-    }
-
-    return changes;
   }
 }
