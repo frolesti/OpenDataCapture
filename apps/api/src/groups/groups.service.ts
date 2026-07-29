@@ -21,7 +21,7 @@ export class GroupsService {
     if (exists) {
       throw new ConflictException(`Group with name '${name}' already exists!`);
     }
-    return this.groupModel.create({
+    const created = await this.groupModel.create({
       data: {
         accessibleInstruments: {
           connect: (await this.instrumentsService.find()).map(({ id }) => ({ id }))
@@ -36,6 +36,8 @@ export class GroupsService {
         ...data
       }
     });
+
+    return this.sanitizeGroupHospitals(created);
   }
 
   async deleteById(id: string, { ability }: EntityOperationOptions = {}) {
@@ -45,9 +47,11 @@ export class GroupsService {
   }
 
   async findAll({ ability }: EntityOperationOptions = {}) {
-    return this.groupModel.findMany({
+    const groups = await this.groupModel.findMany({
       where: accessibleQuery(ability, 'read', 'Group')
     });
+
+    return groups.map((group) => this.sanitizeGroupHospitals(group));
   }
 
   async findById(id: string, { ability }: EntityOperationOptions = {}) {
@@ -57,7 +61,7 @@ export class GroupsService {
     if (!group) {
       throw new NotFoundException(`Failed to find group with ID: ${id}`);
     }
-    return group;
+    return this.sanitizeGroupHospitals(group);
   }
 
   async updateById(
@@ -96,13 +100,32 @@ export class GroupsService {
       updateData.settings = { ...group.settings, ...settings };
     }
 
-    return this.groupModel.update({
+    const updated = await this.groupModel.update({
       data: updateData,
       where: { AND: [accessibleQuery(ability, 'update', 'Group')], id }
     });
+
+    return this.sanitizeGroupHospitals(updated);
   }
 
   private normalizeHospitals(hospitals: string[]) {
     return Array.from(new Set(hospitals.map((hospital) => hospital.trim()).filter(Boolean)));
+  }
+
+  private sanitizeGroupHospitals<T extends { hospitals?: unknown }>(
+    group: T
+  ): Omit<T, 'hospitals'> & { hospitals: string[] } {
+    return {
+      ...group,
+      hospitals: this.sanitizeHospitals(group.hospitals)
+    };
+  }
+
+  private sanitizeHospitals(value: unknown) {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return this.normalizeHospitals(value.filter((entry): entry is string => typeof entry === 'string'));
   }
 }

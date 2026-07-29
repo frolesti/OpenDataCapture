@@ -8,7 +8,14 @@ export const groupsQueryOptions = () => {
   return queryOptions({
     queryFn: async () => {
       const response = await axios.get('/v1/groups');
-      return $Group.array().parse(response.data);
+      const normalized = Array.isArray(response.data)
+        ? response.data.map((group) => ({
+            ...group,
+            hospitals: Array.isArray(group?.hospitals) ? group.hospitals : []
+          }))
+        : response.data;
+
+      return $Group.array().parse(normalized);
     },
     queryKey: [GROUPS_QUERY_KEY]
   });
