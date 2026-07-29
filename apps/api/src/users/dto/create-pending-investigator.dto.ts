@@ -2,7 +2,6 @@ import { ValidationSchema } from '@douglasneuroinformatics/libnest';
 import { ApiProperty } from '@nestjs/swagger';
 import type { BasePermissionLevel, CreatePendingInvestigatorData } from '@opendatacapture/schemas/user';
 import { $CreatePendingInvestigatorData } from '@opendatacapture/schemas/user';
-import type { Sex } from '@opendatacapture/schemas/subject';
 
 @ValidationSchema($CreatePendingInvestigatorData)
 export class CreatePendingInvestigatorDto implements CreatePendingInvestigatorData {
@@ -10,9 +9,6 @@ export class CreatePendingInvestigatorDto implements CreatePendingInvestigatorDa
     enum: ['ADMIN', 'GROUP_MANAGER', 'STANDARD'] satisfies BasePermissionLevel[]
   })
   basePermissionLevel: BasePermissionLevel;
-
-  @ApiProperty({ required: false })
-  dateOfBirth?: Date;
 
   @ApiProperty()
   email: string;
@@ -29,8 +25,8 @@ export class CreatePendingInvestigatorDto implements CreatePendingInvestigatorDa
   @ApiProperty()
   lastName: string;
 
-  @ApiProperty({ enum: ['MALE', 'FEMALE'], required: false })
-  sex?: Sex;
+  @ApiProperty({ required: false })
+  notes?: string;
 
   @ApiProperty()
   signed: boolean;

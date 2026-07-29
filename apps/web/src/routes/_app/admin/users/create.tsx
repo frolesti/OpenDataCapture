@@ -9,14 +9,19 @@ import {
   Heading,
   Input,
   Label,
-  SearchBar,
-  Select
+  Select,
+  Table
 } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { BasePermissionLevel, PendingInvestigator, User } from '@opendatacapture/schemas/user';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { PageHeader } from '@/components/PageHeader';
+import {
+  type PendingTypeFilter,
+  type ProfileFilter,
+  UserDirectoryControls
+} from '@/components/admin/users/UserDirectoryControls';
 import { formatHospitalLabel, serializeHospital, type HospitalMetadata } from '@/components/admin/groups/hospitals';
 import { useCreatePendingInvestigatorMutation } from '@/hooks/useCreatePendingInvestigatorMutation';
 import { useCreateUserMutation } from '@/hooks/useCreateUserMutation';
@@ -25,6 +30,7 @@ import { useDeletePendingInvestigatorMutation } from '@/hooks/useDeletePendingIn
 import { groupsQueryOptions, useGroupsQuery } from '@/hooks/useGroupsQuery';
 import { pendingInvestigatorsQueryOptions, usePendingInvestigatorsQuery } from '@/hooks/usePendingInvestigatorsQuery';
 import { usePromotePendingInvestigatorMutation } from '@/hooks/usePromotePendingInvestigatorMutation';
+import { useSessionsQuery } from '@/hooks/useSessionsQuery';
 import { useUsersQuery, usersQueryOptions } from '@/hooks/useUsersQuery';
 import { useUpdateGroupByIdMutation } from '@/hooks/useUpdateGroupByIdMutation';
 import { useUpdatePendingInvestigatorMutation } from '@/hooks/useUpdatePendingInvestigatorMutation';
@@ -45,65 +51,21 @@ function formatDate(value?: Date | null | string) {
   return `${day}/${month}/${year}`;
 }
 
-function parseOptionalDate(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return undefined;
+function ellipsize(value: string, maxLength = 48) {
+  if (value.length <= maxLength) {
+    return value;
   }
-
-  const slashMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(trimmed);
-  if (slashMatch) {
-    const [, dayText, monthText, yearText] = slashMatch;
-    const day = Number(dayText);
-    const month = Number(monthText);
-    const year = Number(yearText);
-    const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-    if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
-      return date;
-    }
-    return undefined;
-  }
-
-  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
-  if (isoMatch) {
-    const [, yearText, monthText, dayText] = isoMatch;
-    const day = Number(dayText);
-    const month = Number(monthText);
-    const year = Number(yearText);
-    const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-    if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
-      return date;
-    }
-  }
-
-  return undefined;
-}
-
-function formatDateInput(value?: Date | null | string) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = String(date.getFullYear());
-  return `${year}-${month}-${day}`;
+  return `${value.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
 }
 
 function buildPendingForm(entry?: PendingInvestigator) {
   return {
-    dateOfBirth: formatDateInput(entry?.dateOfBirth),
     email: entry?.email ?? '',
     firstName: entry?.firstName ?? '',
     groupIds: entry?.groupIds ?? [],
     hospital: entry?.hospital ?? '',
     lastName: entry?.lastName ?? '',
-    sex: (entry?.sex ?? '') as '' | 'FEMALE' | 'MALE',
+    notes: entry?.notes ?? '',
     signed: entry?.signed ?? false
   };
 }
@@ -114,12 +76,10 @@ function buildUserSearchText(user: User) {
 
 function buildUserEditForm(user?: User) {
   return {
-    dateOfBirth: formatDateInput(user?.dateOfBirth),
     email: user?.email ?? '',
     firstName: user?.firstName ?? '',
     groupIds: user?.groupIds ?? [],
     lastName: user?.lastName ?? '',
-    sex: (user?.sex ?? '') as '' | 'FEMALE' | 'MALE',
     username: user?.username ?? ''
   };
 }
@@ -130,65 +90,70 @@ function buildPendingSearchText(entry: PendingInvestigator) {
 
 type UserFormState = {
   basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER';
-  dateOfBirth: string;
   firstName: string;
   groupIds: string[];
   lastName: string;
   password: string;
-  sex: '' | 'FEMALE' | 'MALE';
   username: string;
 };
 
 type InvestigatorFormState = {
-  dateOfBirth: string;
   email: string;
   firstName: string;
   groupIds: string[];
   hospital: string;
   lastName: string;
-  sex: '' | 'FEMALE' | 'MALE';
+  notes: string;
   signed: boolean;
 };
 
 type CreatedUserFormState = {
-  dateOfBirth: string;
   email: string;
   firstName: string;
   groupIds: string[];
   lastName: string;
-  sex: '' | 'FEMALE' | 'MALE';
+  username: string;
+};
+
+type UserDirectoryRow = {
+  basePermissionLevel: BasePermissionLevel | 'PENDING';
+  email: string;
+  firstName: string;
+  groupIds: string[];
+  id: string;
+  kind: 'pending' | 'user';
+  lastConnectionLabel: string;
+  lastName: string;
+  notes: string;
+  profileLabel: string;
+  searchText: string;
   username: string;
 };
 
 const DEFAULT_USER_FORM: UserFormState = {
   basePermissionLevel: 'GROUP_MANAGER',
-  dateOfBirth: '',
   firstName: '',
   groupIds: [],
   lastName: '',
   password: '',
-  sex: '',
   username: ''
 };
 
 const DEFAULT_INVESTIGATOR_FORM: InvestigatorFormState = {
-  dateOfBirth: '',
   email: '',
   firstName: '',
   groupIds: [],
   hospital: '',
   lastName: '',
-  sex: '',
+  notes: '',
   signed: false
 };
 
 const DEFAULT_CREATED_USER_FORM: CreatedUserFormState = {
-  dateOfBirth: '',
   email: '',
   firstName: '',
   groupIds: [],
   lastName: '',
-  sex: '',
   username: ''
 };
 
@@ -205,6 +170,7 @@ const RouteComponent = () => {
   const groupsQuery = useGroupsQuery();
   const pendingInvestigatorsQuery = usePendingInvestigatorsQuery();
   const usersQuery = useUsersQuery();
+  const sessionsQuery = useSessionsQuery();
   const createUserMutation = useCreateUserMutation();
   const createPendingMutation = useCreatePendingInvestigatorMutation();
   const deleteUserMutation = useDeleteUserMutation();
@@ -221,7 +187,12 @@ const RouteComponent = () => {
   const [isCreatedUserDialogOpen, setIsCreatedUserDialogOpen] = useState(false);
   const [isCreatedUserDeleteConfirmOpen, setIsCreatedUserDeleteConfirmOpen] = useState(false);
   const [isSignedPromotionConfirmOpen, setIsSignedPromotionConfirmOpen] = useState(false);
+  const [isBulkSignedPromotionConfirmOpen, setIsBulkSignedPromotionConfirmOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'pending' | 'users'>('users');
+  const [profileFilter, setProfileFilter] = useState<ProfileFilter>('ALL');
+  const [pendingTypeFilter, setPendingTypeFilter] = useState<PendingTypeFilter>('ALL');
+  const [userGroupFilter, setUserGroupFilter] = useState<string>('ALL');
+  const [pendingGroupFilter, setPendingGroupFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [hospitalDialogTarget, setHospitalDialogTarget] = useState<'create' | 'edit'>('create');
   const [userForm, setUserForm] = useState<UserFormState>(DEFAULT_USER_FORM);
@@ -231,6 +202,7 @@ const RouteComponent = () => {
   const [hospitalForm, setHospitalForm] = useState<HospitalMetadata>(DEFAULT_HOSPITAL_FORM);
   const [selectedPendingId, setSelectedPendingId] = useState<null | string>(null);
   const [selectedUserId, setSelectedUserId] = useState<null | string>(null);
+  const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
 
   const groupOptions = useMemo(
     () => (groupsQuery.data ?? []).map((group) => ({ id: group.id, name: group.name, hospitals: group.hospitals })),
@@ -278,19 +250,130 @@ const RouteComponent = () => {
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-  const filteredPendingRows = useMemo(
-    () => pendingRows.filter((entry) => buildPendingSearchText(entry).includes(normalizedSearchTerm)),
-    [normalizedSearchTerm, pendingRows]
-  );
+  const filteredPendingRows = useMemo(() => {
+    return pendingRows.filter((entry) => {
+      if (!buildPendingSearchText(entry).includes(normalizedSearchTerm)) {
+        return false;
+      }
 
-  const filteredCreatedUsers = useMemo(() => {
-    return createdUsers.filter((entry) => buildUserSearchText(entry).includes(normalizedSearchTerm));
-  }, [createdUsers, normalizedSearchTerm]);
+      if (pendingTypeFilter === 'PENDING_INVESTIGATOR' && entry.promotedAt) {
+        return false;
+      }
+
+      if (pendingGroupFilter !== 'ALL' && !entry.groupIds.includes(pendingGroupFilter)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [normalizedSearchTerm, pendingGroupFilter, pendingRows, pendingTypeFilter]);
+
+  const sessionsByUserId = useMemo(() => {
+    const byUserId = new Map<string, typeof sessionsQuery.data>();
+    for (const session of sessionsQuery.data ?? []) {
+      if (!session.userId) {
+        continue;
+      }
+      const current = byUserId.get(session.userId) ?? [];
+      current.push(session);
+      byUserId.set(session.userId, current);
+    }
+    return byUserId;
+  }, [sessionsQuery.data]);
+
+  const getLastConnectionLabel = (userId: string) => {
+    const sessions = sessionsByUserId.get(userId) ?? [];
+    if (!sessions.length) {
+      return '-';
+    }
+    return formatDate(sessions[0]?.createdAt);
+  };
+
+  const userDirectoryRows = useMemo<UserDirectoryRow[]>(() => {
+    const userRows: UserDirectoryRow[] = createdUsers.map((entry) => {
+      const basePermissionLevel = entry.basePermissionLevel ?? 'GROUP_MANAGER';
+      const profileLabel =
+        entry.username === currentUser?.username
+          ? t({ en: 'Usuari (Tu)', fr: 'Usuario (Tú)' })
+          : basePermissionLevel === 'STANDARD'
+            ? t({ en: 'Investigador', fr: 'Investigador' })
+            : t({ en: 'Usuari', fr: 'Usuario' });
+
+      return {
+        basePermissionLevel,
+        email: entry.email ?? '-',
+        firstName: entry.firstName,
+        groupIds: entry.groupIds,
+        id: entry.id,
+        kind: 'user',
+        lastConnectionLabel: basePermissionLevel === 'STANDARD' ? getLastConnectionLabel(entry.id) : '-',
+        lastName: entry.lastName,
+        notes: '-',
+        profileLabel,
+        searchText: buildUserSearchText(entry),
+        username: entry.username
+      };
+    });
+
+    const pendingDirectoryRows: UserDirectoryRow[] = pendingRows.map((entry) => ({
+      basePermissionLevel: 'PENDING',
+      email: entry.email,
+      firstName: entry.firstName,
+      groupIds: entry.groupIds,
+      id: entry.id,
+      kind: 'pending',
+      lastConnectionLabel: '-',
+      lastName: entry.lastName,
+      notes: entry.notes?.trim() || '-',
+      profileLabel: t({ en: 'Investigador (pendent)', fr: 'Investigador (pendiente)' }),
+      searchText: buildPendingSearchText(entry),
+      username: '-'
+    }));
+
+    return [...userRows, ...pendingDirectoryRows];
+  }, [createdUsers, currentUser?.username, pendingRows, sessionsByUserId, t]);
+
+  const filteredUserDirectoryRows = useMemo(() => {
+    const profileFiltered = userDirectoryRows.filter((entry) => {
+      if (profileFilter === 'ALL') {
+        return true;
+      }
+      if (profileFilter === 'PENDING_INVESTIGATOR') {
+        return entry.kind === 'pending';
+      }
+      if (profileFilter === 'INVESTIGATOR') {
+        return entry.kind === 'user' && entry.basePermissionLevel === 'STANDARD';
+      }
+      return entry.kind === 'user' && entry.basePermissionLevel !== 'STANDARD';
+    });
+
+    return profileFiltered.filter((entry) => {
+      if (!entry.searchText.includes(normalizedSearchTerm)) {
+        return false;
+      }
+
+      if (userGroupFilter !== 'ALL' && !entry.groupIds.includes(userGroupFilter)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [normalizedSearchTerm, profileFilter, userDirectoryRows, userGroupFilter]);
+  const pendingById = useMemo(() => new Map(pendingRows.map((entry) => [entry.id, entry])), [pendingRows]);
+  const visiblePendingIds = useMemo(() => filteredPendingRows.map((entry) => entry.id), [filteredPendingRows]);
+  const areAllVisiblePendingSelected =
+    visiblePendingIds.length > 0 && visiblePendingIds.every((id) => selectedPendingIds.includes(id));
 
   const selectedCreatedUser = useMemo(
     () => createdUsers.find((entry) => entry.id === selectedUserId) ?? null,
     [createdUsers, selectedUserId]
   );
+  const selectedCreatedUserSessions = useMemo(() => {
+    if (!selectedCreatedUser?.id) {
+      return [];
+    }
+    return sessionsByUserId.get(selectedCreatedUser.id) ?? [];
+  }, [selectedCreatedUser?.id, sessionsByUserId]);
   const showEmailField = selectedCreatedUser?.basePermissionLevel !== 'STANDARD';
 
   const canCreateUser =
@@ -307,6 +390,7 @@ const RouteComponent = () => {
     investigatorForm.groupIds.length > 0 &&
     investigatorForm.hospital.trim().length > 0;
 
+  const canOpenCreateHospitalDialog = (groupIds: string[]) => groupIds.length > 0;
   const canCreateHospital = (groupIds: string[]) => hospitalForm.name.trim().length > 0 && groupIds.length > 0;
   const canSavePendingDialog =
     pendingDialogForm.firstName.trim().length > 0 &&
@@ -346,6 +430,7 @@ const RouteComponent = () => {
   const closePendingDialog = () => {
     setIsPendingDialogOpen(false);
     setIsSignedPromotionConfirmOpen(false);
+    setIsBulkSignedPromotionConfirmOpen(false);
     setSelectedPendingId(null);
     setPendingDialogForm(DEFAULT_INVESTIGATOR_FORM);
   };
@@ -381,13 +466,12 @@ const RouteComponent = () => {
 
   const buildPendingUpdateData = (form: InvestigatorFormState, signed: boolean) => ({
     basePermissionLevel: 'STANDARD' as const,
-    dateOfBirth: parseOptionalDate(form.dateOfBirth),
     email: form.email.trim(),
     firstName: form.firstName.trim(),
     groupIds: form.groupIds,
     hospital: form.hospital,
     lastName: form.lastName.trim(),
-    sex: form.sex || undefined,
+    notes: form.notes.trim() || undefined,
     signed
   });
 
@@ -399,12 +483,10 @@ const RouteComponent = () => {
       await createUserMutation.mutateAsync({
         data: {
           basePermissionLevel: userForm.basePermissionLevel as BasePermissionLevel,
-          dateOfBirth: parseOptionalDate(userForm.dateOfBirth),
           firstName: userForm.firstName.trim(),
           groupIds: userForm.groupIds,
           lastName: userForm.lastName.trim(),
           password: userForm.password,
-          sex: userForm.sex || undefined,
           username: userForm.username.trim()
         }
       });
@@ -422,13 +504,12 @@ const RouteComponent = () => {
       const createdPending = await createPendingMutation.mutateAsync({
         data: {
           basePermissionLevel: 'STANDARD',
-          dateOfBirth: parseOptionalDate(investigatorForm.dateOfBirth),
           email: investigatorForm.email.trim(),
           firstName: investigatorForm.firstName.trim(),
           groupIds: investigatorForm.groupIds,
           hospital: investigatorForm.hospital,
           lastName: investigatorForm.lastName.trim(),
-          sex: investigatorForm.sex || undefined,
+          notes: investigatorForm.notes.trim() || undefined,
           signed: investigatorForm.signed
         },
         suppressSuccessNotification: investigatorForm.signed
@@ -500,6 +581,53 @@ const RouteComponent = () => {
     }
   };
 
+  const togglePendingBulkSelection = (id: string) => {
+    setSelectedPendingIds((current) =>
+      current.includes(id) ? current.filter((pendingId) => pendingId !== id) : [...current, id]
+    );
+  };
+
+  const handleToggleAllVisiblePending = () => {
+    setSelectedPendingIds((current) => {
+      if (areAllVisiblePendingSelected) {
+        return current.filter((id) => !visiblePendingIds.includes(id));
+      }
+      return Array.from(new Set([...current, ...visiblePendingIds]));
+    });
+  };
+
+  const handleMarkSelectedPendingAsSigned = async () => {
+    if (!selectedPendingIds.length) {
+      return;
+    }
+
+    try {
+      for (const id of selectedPendingIds) {
+        const pending = pendingById.get(id);
+        if (!pending) {
+          continue;
+        }
+
+        if (!pending.signed) {
+          await updatePendingMutation.mutateAsync({
+            data: { signed: true },
+            id
+          });
+        }
+
+        await promotePendingMutation.mutateAsync({ id });
+      }
+      setSelectedPendingIds([]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleConfirmBulkSignedPromotion = async () => {
+    await handleMarkSelectedPendingAsSigned();
+    setIsBulkSignedPromotionConfirmOpen(false);
+  };
+
   const handleSaveCreatedUserDialog = async () => {
     if (!selectedUserId || !canSaveCreatedUserDialog) {
       return;
@@ -508,11 +636,9 @@ const RouteComponent = () => {
     try {
       await updateUserMutation.mutateAsync({
         data: {
-          dateOfBirth: parseOptionalDate(createdUserDialogForm.dateOfBirth),
           firstName: createdUserDialogForm.firstName.trim(),
           groupIds: createdUserDialogForm.groupIds,
           lastName: createdUserDialogForm.lastName.trim(),
-          sex: createdUserDialogForm.sex || undefined,
           username: createdUserDialogForm.username.trim()
         },
         id: selectedUserId
@@ -537,6 +663,21 @@ const RouteComponent = () => {
       closeCreatedUserDialog();
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleOpenUserDirectoryEntry = (entry: UserDirectoryRow) => {
+    if (entry.kind === 'pending') {
+      const pending = pendingById.get(entry.id);
+      if (pending) {
+        openPendingDialog(pending);
+      }
+      return;
+    }
+
+    const user = createdUsers.find((candidate) => candidate.id === entry.id);
+    if (user) {
+      openCreatedUserDialog(user);
     }
   };
 
@@ -584,7 +725,7 @@ const RouteComponent = () => {
       </PageHeader>
 
       <div className="mx-auto max-w-6xl space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-4 shadow-sm dark:bg-slate-950">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex flex-wrap gap-2">
             <Button
               className="bg-violet-600 text-white hover:bg-violet-700"
@@ -603,159 +744,156 @@ const RouteComponent = () => {
               {t({ en: 'Afegir investigador', fr: 'Añadir investigador' })}
             </Button>
           </div>
-          <div className="flex rounded-md border border-violet-300 bg-violet-100 p-1">
-            <Button
-              className={
-                viewMode === 'users'
-                  ? 'bg-violet-600 text-white hover:bg-violet-700'
-                  : 'text-violet-900 hover:bg-violet-200'
-              }
-              size="sm"
-              type="button"
-              variant={viewMode === 'users' ? 'primary' : 'ghost'}
-              onClick={() => setViewMode('users')}
-            >
-              {t({ en: 'Tots els usuaris', fr: 'Todos los usuarios' })}
-            </Button>
-            <Button
-              className={
-                viewMode === 'pending'
-                  ? 'bg-violet-600 text-white hover:bg-violet-700'
-                  : 'text-violet-900 hover:bg-violet-200'
-              }
-              size="sm"
-              type="button"
-              variant={viewMode === 'pending' ? 'primary' : 'ghost'}
-              onClick={() => setViewMode('pending')}
-            >
-              {t({ en: 'Investigadors pendents', fr: 'Investigadores pendientes' })}
-            </Button>
-          </div>
         </div>
 
-        <SearchBar
-          className="grow"
-          placeholder={
-            viewMode === 'pending'
-              ? t({
-                  en: 'Cerca investigadors pendents per nom o correu',
-                  fr: 'Buscar investigadores pendientes por nombre o correo'
-                })
-              : t({
-                  en: 'Cerca usuaris per nom, usuari o correu',
-                  fr: 'Buscar usuarios por nombre, usuario o correo'
-                })
-          }
-          value={searchTerm}
-          onValueChange={setSearchTerm}
+        <UserDirectoryControls
+          groupOptions={groupOptions.map((group) => ({ id: group.id, name: group.name }))}
+          pendingGroupFilter={pendingGroupFilter}
+          pendingTypeFilter={pendingTypeFilter}
+          profileFilter={profileFilter}
+          searchTerm={searchTerm}
+          setPendingGroupFilter={setPendingGroupFilter}
+          setPendingTypeFilter={setPendingTypeFilter}
+          setProfileFilter={setProfileFilter}
+          setSearchTerm={setSearchTerm}
+          setUserGroupFilter={setUserGroupFilter}
+          setViewMode={setViewMode}
+          userGroupFilter={userGroupFilter}
+          viewMode={viewMode}
         />
 
         {viewMode === 'pending' ? (
-          <ClientTable<PendingInvestigator>
-            columns={[
-              {
-                field: (entry) => {
-                  const fullName = `${entry.firstName} ${entry.lastName}`;
-                  return fullName;
-                },
-                label: t({
-                  en: 'Nom',
-                  fr: 'Nombre'
-                })
-              },
-              {
-                field: 'email',
-                label: t({ en: 'Correu', fr: 'Correo' })
-              },
-              {
-                field: ({ hospital }) => formatHospitalLabel(hospital),
-                label: t({
-                  en: 'Hospital',
-                  fr: 'Hospital'
-                })
-              },
-              {
-                field: ({ signed }) => (signed ? t({ en: 'Sí', fr: 'Sí' }) : t({ en: 'No', fr: 'No' })),
-                label: t({
-                  en: 'Signat',
-                  fr: 'Firmado'
-                })
-              },
-              {
-                field: ({ mailSentAt }) => formatDate(mailSentAt),
-                label: t({
-                  en: 'Mail enviat',
-                  fr: 'Mail enviado'
-                })
-              },
-              {
-                field: ({ groupIds }) => summarizeGroups(groupIds),
-                label: t({
-                  en: 'Grups',
-                  fr: 'Grupos'
-                })
-              },
-              {
-                field: ({ createdAt }) => formatDate(createdAt),
-                label: t({
-                  en: 'Creat',
-                  fr: 'Creado'
-                })
-              }
-            ]}
-            data={filteredPendingRows}
-            entriesPerPage={10}
-            minRows={10}
-            onEntryClick={openPendingDialog}
-          />
+          <div className="space-y-3">
+            <div className="rounded-md border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <Checkbox checked={areAllVisiblePendingSelected} onCheckedChange={handleToggleAllVisiblePending} />
+                  <span>{t({ en: 'Seleccionar todos', fr: 'Seleccionar todos' })}</span>
+                </label>
+                <Button
+                  disabled={!selectedPendingIds.length || isPendingDialogBusy}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsBulkSignedPromotionConfirmOpen(true)}
+                >
+                  {selectedPendingIds.length <= 1
+                    ? t({ en: 'Crear usuario', fr: 'Crear usuario' })
+                    : t({ en: 'Crear usuarios', fr: 'Crear usuarios' })}
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-card text-muted-foreground shadow-xs rounded-md border tracking-tight">
+              <Table>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.Head className="text-foreground whitespace-nowrap">#</Table.Head>
+                    <Table.Head className="text-foreground whitespace-nowrap">
+                      {t({ en: 'Nom', fr: 'Nombre' })}
+                    </Table.Head>
+                    <Table.Head className="text-foreground whitespace-nowrap">
+                      {t({ en: 'Correu', fr: 'Correo' })}
+                    </Table.Head>
+                    <Table.Head className="text-foreground whitespace-nowrap">
+                      {t({ en: 'Hospital', fr: 'Hospital' })}
+                    </Table.Head>
+                    <Table.Head className="text-foreground whitespace-nowrap">
+                      {t({ en: 'Signat', fr: 'Firmado' })}
+                    </Table.Head>
+                    <Table.Head className="text-foreground whitespace-nowrap">
+                      {t({ en: 'Mail enviat', fr: 'Mail enviado' })}
+                    </Table.Head>
+                    <Table.Head className="text-foreground whitespace-nowrap">
+                      {t({ en: 'Grups', fr: 'Grupos' })}
+                    </Table.Head>
+                    <Table.Head className="text-foreground whitespace-nowrap">
+                      {t({ en: 'Comentaris', fr: 'Comentarios' })}
+                    </Table.Head>
+                    <Table.Head className="text-foreground whitespace-nowrap">
+                      {t({ en: 'Creat', fr: 'Creado' })}
+                    </Table.Head>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {filteredPendingRows.map((entry) => (
+                    <Table.Row className="cursor-pointer" key={entry.id} onClick={() => openPendingDialog(entry)}>
+                      <Table.Cell
+                        className="w-10"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                        }}
+                      >
+                        <Checkbox
+                          checked={selectedPendingIds.includes(entry.id)}
+                          onCheckedChange={() => togglePendingBulkSelection(entry.id)}
+                        />
+                      </Table.Cell>
+                      <Table.Cell>{`${entry.firstName} ${entry.lastName}`}</Table.Cell>
+                      <Table.Cell>{entry.email}</Table.Cell>
+                      <Table.Cell>{formatHospitalLabel(entry.hospital)}</Table.Cell>
+                      <Table.Cell>{entry.signed ? t({ en: 'Sí', fr: 'Sí' }) : t({ en: 'No', fr: 'No' })}</Table.Cell>
+                      <Table.Cell>{formatDate(entry.mailSentAt)}</Table.Cell>
+                      <Table.Cell>{summarizeGroups(entry.groupIds)}</Table.Cell>
+                      <Table.Cell>{ellipsize(entry.notes?.trim() || '-')}</Table.Cell>
+                      <Table.Cell>{formatDate(entry.createdAt)}</Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            </div>
+          </div>
         ) : (
-          <ClientTable<User>
-            columns={[
-              {
-                field: (entry) => `${entry.firstName} ${entry.lastName}`,
-                label: t({
-                  en: 'Nom',
-                  fr: 'Nombre'
-                })
-              },
-              {
-                field: ({ email }) => email ?? '-',
-                label: t({ en: 'Correu', fr: 'Correo' })
-              },
-              {
-                field: ({ username }) => username,
-                label: t({
-                  en: 'Usuari',
-                  fr: 'Usuario'
-                })
-              },
-              {
-                field: ({ basePermissionLevel, username }) => {
-                  if (username === currentUser?.username) {
-                    return t({ en: 'Usuari (Tu)', fr: 'Usuario (Tú)' });
-                  }
-                  return basePermissionLevel === 'STANDARD'
-                    ? t({ en: 'Investigador', fr: 'Investigador' })
-                    : t({ en: 'Usuari', fr: 'Usuario' });
+          <div className="space-y-3">
+            <ClientTable<UserDirectoryRow>
+              columns={[
+                {
+                  field: (entry) => `${entry.firstName} ${entry.lastName}`,
+                  label: t({
+                    en: 'Nom',
+                    fr: 'Nombre'
+                  })
                 },
-                label: t({
-                  en: 'Perfil',
-                  fr: 'Perfil'
-                })
-              },
-              {
-                field: ({ groupIds }) => summarizeGroups(groupIds),
-                label: t({
-                  en: 'Grups',
-                  fr: 'Grupos'
-                })
-              }
-            ]}
-            data={filteredCreatedUsers}
-            entriesPerPage={10}
-            minRows={10}
-            onEntryClick={openCreatedUserDialog}
-          />
+                {
+                  field: ({ email }) => email,
+                  label: t({ en: 'Correu', fr: 'Correo' })
+                },
+                {
+                  field: ({ username }) => username,
+                  label: t({
+                    en: 'Usuari',
+                    fr: 'Usuario'
+                  })
+                },
+                {
+                  field: ({ profileLabel }) => profileLabel,
+                  label: t({ en: 'Perfil', fr: 'Perfil' })
+                },
+                {
+                  field: ({ groupIds }) => summarizeGroups(groupIds),
+                  label: t({
+                    en: 'Grups',
+                    fr: 'Grupos'
+                  })
+                },
+                {
+                  field: ({ lastConnectionLabel }) => lastConnectionLabel,
+                  label: t({
+                    en: 'Última connexió',
+                    fr: 'Última conexión'
+                  })
+                },
+                {
+                  field: ({ notes }) => ellipsize(notes),
+                  label: t({ en: 'Comentaris', fr: 'Comentarios' })
+                }
+              ]}
+              data={filteredUserDirectoryRows}
+              entriesPerPage={10}
+              minRows={10}
+              onEntryClick={handleOpenUserDirectoryEntry}
+            />
+          </div>
         )}
       </div>
 
@@ -837,41 +975,27 @@ const RouteComponent = () => {
                 })}
               </div>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+            {selectedCreatedUser?.basePermissionLevel === 'STANDARD' ? (
               <div className="grid gap-2">
-                <Label htmlFor="created-user-sex">
-                  {t({ en: 'Sexe en néixer (opcional)', fr: 'Sexo al nacer (opcional)' })}
-                </Label>
-                <Select
-                  value={createdUserDialogForm.sex}
-                  onValueChange={(value) =>
-                    setCreatedUserDialogForm((current) => ({ ...current, sex: value as '' | 'FEMALE' | 'MALE' }))
-                  }
-                >
-                  <Select.Trigger id="created-user-sex">
-                    <Select.Value placeholder={t({ en: 'Selecciona', fr: 'Seleccionar' })} />
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.Item value="MALE">{t('core.identificationData.sex.male')}</Select.Item>
-                    <Select.Item value="FEMALE">{t('core.identificationData.sex.female')}</Select.Item>
-                  </Select.Content>
-                </Select>
+                <Label>{t({ en: 'Històric de sessions', fr: 'Histórico de sesiones' })}</Label>
+                <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3 text-sm">
+                  {selectedCreatedUserSessions.length ? (
+                    selectedCreatedUserSessions.map((session) => (
+                      <div className="rounded border px-3 py-2" key={session.id}>
+                        <p className="font-medium">{formatDate(session.createdAt)}</p>
+                        <p className="text-muted-foreground">
+                          {t({ en: 'Tipus', fr: 'Tipo' })}: {session.type}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">
+                      {t({ en: 'Sense sessions registrades', fr: 'Sin sesiones registradas' })}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="created-user-date-of-birth">
-                  {t({ en: 'Data de naixement (opcional)', fr: 'Fecha de nacimiento (opcional)' })}
-                </Label>
-                <Input
-                  id="created-user-date-of-birth"
-                  inputMode="numeric"
-                  placeholder="dd/mm/aaaa"
-                  value={createdUserDialogForm.dateOfBirth}
-                  onChange={(event) =>
-                    setCreatedUserDialogForm((current) => ({ ...current, dateOfBirth: event.target.value }))
-                  }
-                />
-              </div>
-            </div>
+            ) : null}
           </div>
 
           <Dialog.Footer className="w-full justify-end gap-2">
@@ -989,39 +1113,6 @@ const RouteComponent = () => {
                   })}
                 </p>
               ) : null}
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="user-sex">
-                  {t({ en: 'Sexe en néixer (opcional)', fr: 'Sexo al nacer (opcional)' })}
-                </Label>
-                <Select
-                  value={userForm.sex}
-                  onValueChange={(value) =>
-                    setUserForm((current) => ({ ...current, sex: value as '' | 'FEMALE' | 'MALE' }))
-                  }
-                >
-                  <Select.Trigger id="user-sex">
-                    <Select.Value placeholder={t({ en: 'Selecciona', fr: 'Seleccionar' })} />
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.Item value="MALE">{t('core.identificationData.sex.male')}</Select.Item>
-                    <Select.Item value="FEMALE">{t('core.identificationData.sex.female')}</Select.Item>
-                  </Select.Content>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="user-date-of-birth">
-                  {t({ en: 'Data de naixement (opcional)', fr: 'Fecha de nacimiento (opcional)' })}
-                </Label>
-                <Input
-                  id="user-date-of-birth"
-                  inputMode="numeric"
-                  placeholder="dd/mm/aaaa"
-                  value={userForm.dateOfBirth}
-                  onChange={(event) => setUserForm((current) => ({ ...current, dateOfBirth: event.target.value }))}
-                />
-              </div>
             </div>
           </div>
 
@@ -1143,11 +1234,12 @@ const RouteComponent = () => {
                 </Select.Content>
               </Select>
               <Button
-                disabled={!canCreateHospital(investigatorForm.groupIds) || isBusy}
+                disabled={!canOpenCreateHospitalDialog(investigatorForm.groupIds) || isBusy}
                 type="button"
                 variant="outline"
                 onClick={() => {
                   setHospitalDialogTarget('create');
+                  setHospitalForm(DEFAULT_HOSPITAL_FORM);
                   setIsHospitalDialogOpen(true);
                 }}
               >
@@ -1162,40 +1254,20 @@ const RouteComponent = () => {
                 </p>
               ) : null}
             </div>
-            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="investigator-sex">
-                  {t({ en: 'Sexe en néixer (opcional)', fr: 'Sexo al nacer (opcional)' })}
-                </Label>
-                <Select
-                  value={investigatorForm.sex}
-                  onValueChange={(value) =>
-                    setInvestigatorForm((current) => ({ ...current, sex: value as '' | 'FEMALE' | 'MALE' }))
-                  }
-                >
-                  <Select.Trigger id="investigator-sex">
-                    <Select.Value placeholder={t({ en: 'Selecciona', fr: 'Seleccionar' })} />
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.Item value="MALE">{t('core.identificationData.sex.male')}</Select.Item>
-                    <Select.Item value="FEMALE">{t('core.identificationData.sex.female')}</Select.Item>
-                  </Select.Content>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="investigator-date-of-birth">
-                  {t({ en: 'Data de naixement (opcional)', fr: 'Fecha de nacimiento (opcional)' })}
-                </Label>
-                <Input
-                  id="investigator-date-of-birth"
-                  inputMode="numeric"
-                  placeholder="dd/mm/aaaa"
-                  value={investigatorForm.dateOfBirth}
-                  onChange={(event) =>
-                    setInvestigatorForm((current) => ({ ...current, dateOfBirth: event.target.value }))
-                  }
-                />
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="investigator-notes">
+                {t({ en: 'Comentaris (només pendent)', fr: 'Comentarios (solo pendiente)' })}
+              </Label>
+              <textarea
+                className="bg-background min-h-24 rounded-md border px-3 py-2 text-sm"
+                id="investigator-notes"
+                placeholder={t({
+                  en: 'Afegiu comentaris interns sobre aquest investigador pendent',
+                  fr: 'Añade comentarios internos sobre este investigador pendiente'
+                })}
+                value={investigatorForm.notes}
+                onChange={(event) => setInvestigatorForm((current) => ({ ...current, notes: event.target.value }))}
+              />
             </div>
             <div className="grid gap-2 rounded-md border p-3">
               <label className="flex items-start gap-3">
@@ -1335,51 +1407,27 @@ const RouteComponent = () => {
                 </Select.Content>
               </Select>
               <Button
-                disabled={!canCreateHospital(pendingDialogForm.groupIds) || isBusy}
+                disabled={!canOpenCreateHospitalDialog(pendingDialogForm.groupIds) || isBusy}
                 type="button"
                 variant="outline"
                 onClick={() => {
                   setHospitalDialogTarget('edit');
+                  setHospitalForm(DEFAULT_HOSPITAL_FORM);
                   setIsHospitalDialogOpen(true);
                 }}
               >
                 {t({ en: 'Crear hospital nou', fr: 'Crear hospital nuevo' })}
               </Button>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="pending-sex">
-                  {t({ en: 'Sexe en néixer (opcional)', fr: 'Sexo al nacer (opcional)' })}
-                </Label>
-                <Select
-                  value={pendingDialogForm.sex}
-                  onValueChange={(value) =>
-                    setPendingDialogForm((current) => ({ ...current, sex: value as '' | 'FEMALE' | 'MALE' }))
-                  }
-                >
-                  <Select.Trigger id="pending-sex">
-                    <Select.Value placeholder={t({ en: 'Selecciona', fr: 'Seleccionar' })} />
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.Item value="MALE">{t('core.identificationData.sex.male')}</Select.Item>
-                    <Select.Item value="FEMALE">{t('core.identificationData.sex.female')}</Select.Item>
-                  </Select.Content>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="pending-date-of-birth">
-                  {t({ en: 'Data de naixement (opcional)', fr: 'Fecha de nacimiento (opcional)' })}
-                </Label>
-                <Input
-                  id="pending-date-of-birth"
-                  inputMode="numeric"
-                  placeholder="dd/mm/aaaa"
-                  value={pendingDialogForm.dateOfBirth}
-                  onChange={(event) =>
-                    setPendingDialogForm((current) => ({ ...current, dateOfBirth: event.target.value }))
-                  }
-                />
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="pending-notes">{t({ en: 'Comentaris', fr: 'Comentarios' })}</Label>
+              <textarea
+                className="bg-background min-h-24 rounded-md border px-3 py-2 text-sm"
+                id="pending-notes"
+                placeholder={t({ en: 'Afegiu comentaris interns', fr: 'Añade comentarios internos' })}
+                value={pendingDialogForm.notes}
+                onChange={(event) => setPendingDialogForm((current) => ({ ...current, notes: event.target.value }))}
+              />
             </div>
             <div className="grid gap-2 rounded-md border p-3">
               <label className="flex items-start gap-3">
@@ -1525,6 +1573,29 @@ const RouteComponent = () => {
               onClick={() => void handleConfirmSignedPromotion()}
             >
               {t({ en: 'Confirm and continue', fr: 'Confirmar y continuar' })}
+            </AlertDialog.Action>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
+      </AlertDialog>
+
+      <AlertDialog open={isBulkSignedPromotionConfirmOpen} onOpenChange={setIsBulkSignedPromotionConfirmOpen}>
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>{t({ en: 'Confirmar acció massiva', fr: 'Confirmar acción masiva' })}</AlertDialog.Title>
+            <AlertDialog.Description>
+              {t({
+                en: `Aquesta acció marcarà ${selectedPendingIds.length} investigadors com signats, crearà els seus usuaris i enviarà el mail de benvinguda. Vols continuar?`,
+                fr: `Esta acción marcará ${selectedPendingIds.length} investigadores como firmados, creará sus usuarios y enviará el correo de bienvenida. ¿Deseas continuar?`
+              })}
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
+            <AlertDialog.Cancel>{t('core.cancel')}</AlertDialog.Cancel>
+            <AlertDialog.Action
+              className="bg-violet-600 text-white hover:bg-violet-700"
+              onClick={() => void handleConfirmBulkSignedPromotion()}
+            >
+              {t({ en: 'Confirmar i executar', fr: 'Confirmar y ejecutar' })}
             </AlertDialog.Action>
           </AlertDialog.Footer>
         </AlertDialog.Content>

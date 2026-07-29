@@ -79,3 +79,7 @@ storybook-static
 
 # playwright
 testing/e2e/.playwright
+
+# local user docs artifacts
+docs/guia-client-gestio-usuaris-grups-estudis.html
+docs/assets/

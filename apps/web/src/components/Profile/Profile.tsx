@@ -28,30 +28,6 @@ export const Profile = ({ currentGroup, currentUser, onSubmit, profileUser }: Pr
   const userFullName =
     `${profileUser?.firstName ?? currentUser.firstName ?? ''} ${profileUser?.lastName ?? currentUser.lastName ?? ''}`.trim();
 
-  const sexLabel = useMemo(() => {
-    if (profileUser?.sex === 'MALE') {
-      return t('core.identificationData.sex.male');
-    }
-    if (profileUser?.sex === 'FEMALE') {
-      return t('core.identificationData.sex.female');
-    }
-    return '-';
-  }, [profileUser?.sex, t]);
-
-  const dateOfBirthLabel = useMemo(() => {
-    if (!profileUser?.dateOfBirth) {
-      return '-';
-    }
-    const date = new Date(profileUser.dateOfBirth);
-    if (Number.isNaN(date.getTime())) {
-      return '-';
-    }
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = String(date.getFullYear());
-    return `${day}/${month}/${year}`;
-  }, [profileUser?.dateOfBirth]);
-
   const groupNames = useMemo(() => {
     if (!currentUser.groups.length) {
       return '-';
@@ -186,24 +162,6 @@ export const Profile = ({ currentGroup, currentUser, onSubmit, profileUser }: Pr
                 })}
               </label>
               <p className="text-lg font-medium">{profileUser?.email ?? '-'}</p>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t({
-                  en: 'Sexe en néixer',
-                  fr: 'Sexo al nacer'
-                })}
-              </label>
-              <p className="text-lg font-medium">{sexLabel}</p>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t({
-                  en: 'Data de naixement',
-                  fr: 'Fecha de nacimiento'
-                })}
-              </label>
-              <p className="text-lg font-medium">{dateOfBirthLabel}</p>
             </div>
             {isInvestigator ? (
               <div className="md:col-span-2">

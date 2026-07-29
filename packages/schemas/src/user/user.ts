@@ -69,13 +69,12 @@ export const $PendingInvestigator = $BaseModel.extend({
 export type CreatePendingInvestigatorData = z.infer<typeof $CreatePendingInvestigatorData>;
 export const $CreatePendingInvestigatorData = $PendingInvestigator.pick({
   basePermissionLevel: true,
-  dateOfBirth: true,
   email: true,
   firstName: true,
   groupIds: true,
   hospital: true,
   lastName: true,
-  sex: true,
+  notes: true,
   signed: true
 });
 
