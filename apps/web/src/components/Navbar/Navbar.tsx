@@ -57,6 +57,8 @@ export const Navbar = () => {
       </Sheet.Trigger>
       <Sheet.Content className="flex h-full flex-col">
         <Sheet.Header>
+          <Sheet.Title className="sr-only">Navigation menu</Sheet.Title>
+          <Sheet.Description className="sr-only">Main navigation and account actions</Sheet.Description>
           <Branding className="h-10" fontSize="md" />
         </Sheet.Header>
         {/* Removed undefined Separator */}

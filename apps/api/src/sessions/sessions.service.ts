@@ -103,6 +103,20 @@ export class SessionsService {
     return session;
   }
 
+  async find({ userId }: { userId?: string } = {}, { ability }: EntityOperationOptions = {}) {
+    return this.sessionModel.findMany({
+      include: {
+        subject: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      where: {
+        AND: [accessibleQuery(ability, 'read', 'Session'), { userId: userId ?? undefined }]
+      }
+    });
+  }
+
   /** Get the subject if they exist, otherwise create them */
   private async resolveSubject(subjectData: CreateSubjectData) {
     this.loggingService.debug({ message: 'Attempting to resolve subject', subjectData });

@@ -32,11 +32,11 @@ export class CreateUserDto implements CreateUserData {
   @ApiProperty({ description: 'Date of Birth' })
   dateOfBirth?: Date;
 
-  @ApiProperty({ description: 'First Name' })
-  firstName: string;
-
   @ApiProperty({ description: 'Email Address', required: false })
   email?: string;
+
+  @ApiProperty({ description: 'First Name' })
+  firstName: string;
 
   @ApiProperty({
     description: 'The IDs of the group(s) to which the user belongs'

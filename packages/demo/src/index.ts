@@ -7,15 +7,20 @@ type DemoUser = Pick<User, 'basePermissionLevel' | 'firstName' | 'lastName' | 'u
   password: string;
 };
 
-type DemoGroup = CreateGroupData & { dummyIdPrefix?: string };
+type DemoGroup = Omit<CreateGroupData, 'hospitals'> & {
+  dummyIdPrefix?: string;
+  hospitals: readonly string[];
+};
 
 export const DEMO_GROUPS: readonly DemoGroup[] = deepFreeze([
   {
+    hospitals: ['Douglas Mental Health University Institute'],
     name: 'Depression Clinic',
     type: 'CLINICAL'
   },
   {
     dummyIdPrefix: 'ex_',
+    hospitals: ['Psychosis Research Centre'],
     name: 'Psychosis Lab',
     settings: {
       defaultIdentificationMethod: 'CUSTOM_ID',

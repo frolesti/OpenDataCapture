@@ -16,7 +16,7 @@ export class GroupsService {
     private readonly instrumentsService: InstrumentsService
   ) {}
 
-  async create({ name, settings, type, ...data }: CreateGroupDto) {
+  async create({ hospitals = [], name, settings, type, ...data }: CreateGroupDto) {
     const exists = await this.groupModel.exists({ name });
     if (exists) {
       throw new ConflictException(`Group with name '${name}' already exists!`);
@@ -26,6 +26,7 @@ export class GroupsService {
         accessibleInstruments: {
           connect: (await this.instrumentsService.find()).map(({ id }) => ({ id }))
         },
+        hospitals: this.normalizeHospitals(hospitals),
         name,
         settings: {
           defaultIdentificationMethod: type === 'CLINICAL' ? 'PERSONAL_INFO' : 'CUSTOM_ID',
@@ -61,7 +62,7 @@ export class GroupsService {
 
   async updateById(
     id: string,
-    { accessibleInstrumentIds, settings, ...data }: UpdateGroupDto,
+    { accessibleInstrumentIds, hospitals, name, settings, type }: UpdateGroupDto,
     { ability }: EntityOperationOptions = {}
   ) {
     const where: Prisma.GroupWhereInput = { AND: [accessibleQuery(ability, 'update', 'Group')], id };
@@ -69,24 +70,39 @@ export class GroupsService {
     if (!group) {
       throw new NotFoundException(`Failed to find group with ID: ${id}`);
     }
-    const exists = typeof data.name === 'string' && (await this.groupModel.exists({ name: group.name }));
-    if (exists) {
-      throw new ConflictException(`Group with name '${group.name}' already exists!`);
+    if (typeof name === 'string' && name !== group.name) {
+      const nameTakenByOther = await this.groupModel.exists({ AND: [{ name }, { id: { not: id } }] });
+      if (nameTakenByOther) {
+        throw new ConflictException(`Group with name '${name}' already exists!`);
+      }
     }
+
+    const updateData: Prisma.GroupUpdateInput = {};
+    if (accessibleInstrumentIds) {
+      updateData.accessibleInstruments = {
+        set: accessibleInstrumentIds.map((instrumentId) => ({ id: instrumentId }))
+      };
+    }
+    if (hospitals !== undefined) {
+      updateData.hospitals = { set: this.normalizeHospitals(hospitals) };
+    }
+    if (typeof name === 'string') {
+      updateData.name = name;
+    }
+    if (type) {
+      updateData.type = type;
+    }
+    if (settings) {
+      updateData.settings = { ...group.settings, ...settings };
+    }
+
     return this.groupModel.update({
-      data: {
-        accessibleInstruments: accessibleInstrumentIds
-          ? {
-              set: accessibleInstrumentIds.map((id) => ({ id }))
-            }
-          : undefined,
-        settings: {
-          ...group.settings,
-          ...settings
-        },
-        ...data
-      },
+      data: updateData,
       where: { AND: [accessibleQuery(ability, 'update', 'Group')], id }
     });
+  }
+
+  private normalizeHospitals(hospitals: string[]) {
+    return Array.from(new Set(hospitals.map((hospital) => hospital.trim()).filter(Boolean)));
   }
 }

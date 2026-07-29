@@ -34,41 +34,6 @@ function consentWarning(): any {
   };
 }
 
-const centrosSanitariosOptions = {
-  'CAP Badia': 'CAP Badia',
-  'CAP Numància': 'CAP Numància',
-  'CAP Sant Martí': 'CAP Sant Martí',
-  'CAP Manso': 'CAP Manso',
-  'CS Acea da Ma': 'CS Acea da Ma',
-  'CS Aravaca': 'CS Aravaca',
-  'CS Xunqueira de Ambía': 'CS Xunqueira de Ambía',
-  'CS Villoria': 'CS Villoria',
-  'CS Tórtola': 'CS Tórtola',
-  'CS Ávila Norte': 'CS Ávila Norte',
-  'CS Casco Vello': 'CS Casco Vello',
-  'Consultorio de Jayena': 'Consultorio de Jayena',
-  'CS Ribadavia': 'CS Ribadavia',
-  'CS Arturo Eyries': 'CS Arturo Eyries',
-  'CS Ensanche de Vallecas': 'CS Ensanche de Vallecas',
-  'CS Vinaròs': 'CS Vinaròs',
-  'CS Monforte de Lemos': 'CS Monforte de Lemos',
-  'CS José Aguado': 'CS José Aguado',
-  'Consultorio de Villaobispo de las Regueras (León)': 'Consultorio de Villaobispo de las Regueras (León)',
-  'UGC Aguadulce - El Parador': 'UGC Aguadulce - El Parador',
-  'CS Cartaya': 'CS Cartaya',
-  'CS Fuencarral': 'CS Fuencarral',
-  'CS Brújula': 'CS Brújula',
-  'Consultorio Local Fontanars Dels Alforins': 'Consultorio Local Fontanars Dels Alforins',
-  'CS María Fuensanta Pérez Quirós': 'CS María Fuensanta Pérez Quirós',
-  'CS Santa Marta de Tormes': 'CS Santa Marta de Tormes',
-  'CS A Ponte': 'CS A Ponte',
-  'CS V Centenario': 'CS V Centenario',
-  'CS Sector III': 'CS Sector III',
-  "Consultori La Platja d'Almenara": "Consultori La Platja d'Almenara",
-  'CS de La Eliana': 'CS de La Eliana',
-  'CAP Sant Llàtzer': 'CAP Sant Llàtzer'
-};
-
 // Helper function to make a field conditional on osteoporosis diagnosis
 function requiresDiagnosis<T extends Record<string, any>>(field: T): any {
   return {
@@ -691,7 +656,7 @@ export default defineInstrument({
           kind: 'string',
           label: '¿Cuál es el centro de atención primaria dónde se visita el paciente? *',
           variant: 'select',
-          options: centrosSanitariosOptions
+          options: (globalThis as any).__ODC_GROUP_HOSPITAL_OPTIONS__ ?? {}
         }),
         sex: requiresConsent({
           kind: 'string',

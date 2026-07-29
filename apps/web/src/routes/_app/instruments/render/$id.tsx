@@ -14,6 +14,26 @@ import { useInstrumentBundle } from '@/hooks/useInstrumentBundle';
 import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
 import { useAppStore } from '@/store';
 
+const HOSPITAL_META_SEPARATOR = '|||';
+
+function formatHospitalLabel(raw: string) {
+  if (raw.includes(HOSPITAL_META_SEPARATOR)) {
+    const [name, locality, province] = raw.split(HOSPITAL_META_SEPARATOR).map((value) => value.trim());
+    if (locality && province) {
+      return `${name}, ${locality} (${province})`;
+    }
+    const location = locality || province;
+    return location ? `${name}, ${location}` : name;
+  }
+  return raw.trim();
+}
+
+function buildGroupHospitalOptions(hospitals: string[]): string {
+  const normalized = Array.from(new Set(hospitals.map((hospital) => hospital.trim()).filter(Boolean)));
+  const optionsObject = Object.fromEntries(normalized.map((hospital) => [hospital, formatHospitalLabel(hospital)]));
+  return JSON.stringify(optionsObject);
+}
+
 const DRAFT_PREFIX = 'instrument-draft:';
 
 function getDraftKey(instrumentId: string): string {
@@ -101,6 +121,15 @@ const RouteComponent = () => {
           : (draftData ?? undefined);
 
   const instrumentBundleQuery = useInstrumentBundle(params.id);
+  const groupHospitalOptions = buildGroupHospitalOptions(currentGroup?.hospitals ?? []);
+
+  const instrumentTarget =
+    instrumentBundleQuery.data && instrumentBundleQuery.data.kind !== 'SERIES'
+      ? {
+          ...instrumentBundleQuery.data,
+          bundle: `globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions};\n${instrumentBundleQuery.data.bundle}`
+        }
+      : instrumentBundleQuery.data;
 
   const title = instrumentTitle;
 
@@ -223,7 +252,7 @@ const RouteComponent = () => {
     }
   };
 
-  if (!instrumentBundleQuery.data || isLoadingData) {
+  if (!instrumentTarget || isLoadingData) {
     return <Spinner />;
   }
 
@@ -253,7 +282,7 @@ const RouteComponent = () => {
           isEditing={Boolean(recordId)}
           isResuming={Boolean(recordId) || Boolean(effectiveInitialData)}
           subject={currentSession?.subject}
-          target={instrumentBundleQuery.data}
+          target={instrumentTarget}
           onDataChange={handleDataChange}
           onDiscardDraft={draftData && !recordId && !draftDiscarded ? handleDiscardDraft : undefined}
           onStepChange={setCurrentStep}

@@ -1,8 +1,9 @@
+import path from 'path';
+
 import { CryptoService, InjectModel } from '@douglasneuroinformatics/libnest';
 import type { Model } from '@douglasneuroinformatics/libnest';
 import { Injectable, Logger } from '@nestjs/common';
 import nodemailer from 'nodemailer';
-import path from 'path';
 
 @Injectable()
 export class SupportService {
@@ -18,13 +19,13 @@ export class SupportService {
 
     // Using credentials from environment variables
     this.transporter = nodemailer.createTransport({
+      auth: {
+        pass: process.env.MAIL_PASSWORD,
+        user: process.env.MAIL_USER || 'info@altamedicalservices.com'
+      },
       host: process.env.MAIL_HOST ?? 'smtp.servidor-correo.net',
       port: Number.isNaN(smtpPort) ? 587 : smtpPort,
-      secure: smtpSecure,
-      auth: {
-        user: process.env.MAIL_USER || 'info@altamedicalservices.com',
-        pass: process.env.MAIL_PASSWORD
-      }
+      secure: smtpSecure
     });
   }
 
@@ -56,9 +57,9 @@ export class SupportService {
       const contactEmail = process.env.CONTACT_EMAIL || 'info@altamedicalservices.com';
       await this.transporter.sendMail({
         from: process.env.MAIL_FROM || '"Alta Medical Services" <info@altamedicalservices.com>',
-        to: contactEmail,
         subject: `Password Reset Request (No Email Found): ${user.username}`,
-        text: `The user '${user.username}' requested a password reset, but has no email address on file. Please contact them manually.`
+        text: `The user '${user.username}' requested a password reset, but has no email address on file. Please contact them manually.`,
+        to: contactEmail
       });
       return { success: true };
     }
@@ -69,15 +70,20 @@ export class SupportService {
 
     // Update user
     await this.userModel.update({
-      where: { id: user.id },
-      data: { hashedPassword }
+      data: { hashedPassword },
+      where: { id: user.id }
     });
 
     // Send email to user
     const mailOptions = {
+      attachments: [
+        {
+          cid: 'logo-alta',
+          filename: 'alta-medical-services-logo.png',
+          path: path.resolve(process.cwd(), '../../alta-medical-services-logo.png')
+        }
+      ],
       from: process.env.MAIL_FROM || '"Alta Medical Services" <info@altamedicalservices.com>',
-      to: emailToSendTo,
-      subject: 'Restablecimiento de Contraseña - Alta Medical Services',
       html: `
         <!doctype html>
         <html lang="es">
@@ -181,13 +187,8 @@ export class SupportService {
         </body>
         </html>
       `,
-      attachments: [
-        {
-          filename: 'alta-medical-services-logo.png',
-          path: path.resolve(process.cwd(), '../../alta-medical-services-logo.png'),
-          cid: 'logo-alta'
-        }
-      ]
+      subject: 'Restablecimiento de Contraseña - Alta Medical Services',
+      to: emailToSendTo
     };
 
     try {

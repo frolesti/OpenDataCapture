@@ -1,5 +1,6 @@
 import { CurrentUser, RouteAccess } from '@douglasneuroinformatics/libnest';
-import { Body, Controller, Post } from '@nestjs/common';
+import type { AppAbility } from '@douglasneuroinformatics/libnest';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import type { Session, User } from '@prisma/client';
 
@@ -9,6 +10,13 @@ import { SessionsService } from './sessions.service';
 @Controller('sessions')
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
+
+  @ApiOperation({ description: 'Get Sessions' })
+  @Get()
+  @RouteAccess({ action: 'read', subject: 'Session' })
+  find(@CurrentUser('ability') ability: AppAbility, @Query('userId') userId?: string) {
+    return this.sessionsService.find({ userId }, { ability });
+  }
 
   @ApiOperation({ description: 'Create Session' })
   @Post()

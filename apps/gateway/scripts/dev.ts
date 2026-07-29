@@ -36,7 +36,7 @@ const ctx = await esbuild.context({
     path.resolve(import.meta.dirname, '../src/main.ts'),
     path.resolve(import.meta.dirname, '../src/entry-server.tsx')
   ],
-  external: ['fsevents', 'lightningcss', 'vite'],
+  external: ['@douglasneuroinformatics/libui/*', 'fsevents', 'lightningcss', 'vite'],
   format: 'esm',
   keepNames: true,
   outdir,
