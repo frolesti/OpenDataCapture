@@ -45,6 +45,25 @@ axios.interceptors.response.use(
   },
   (error) => {
     const notifications = useNotificationsStore.getState();
+
+    const extractErrorMessage = (value: unknown) => {
+      if (!value || typeof value !== 'object') {
+        return null;
+      }
+
+      const message = Reflect.get(value, 'message');
+      if (typeof message === 'string' && message.trim().length > 0) {
+        return message;
+      }
+
+      if (Array.isArray(message)) {
+        const firstMessage = message.find((entry) => typeof entry === 'string' && entry.trim().length > 0);
+        return typeof firstMessage === 'string' ? firstMessage : null;
+      }
+
+      return null;
+    };
+
     if (isAxiosError(error) && error.response?.status === 401) {
       useAppStore.getState().logout();
       return Promise.reject(error);
@@ -60,11 +79,15 @@ axios.interceptors.response.use(
       console.error(error);
       return Promise.reject(error as Error);
     }
+
+    const backendMessage = extractErrorMessage(error.response?.data);
     notifications.addNotification({
-      message: i18n.t({
-        en: 'Sol·licitud HTTP fallida',
-        fr: 'Solicitud HTTP fallida'
-      }),
+      message:
+        backendMessage ??
+        i18n.t({
+          en: 'Sol\u00b7licitud HTTP fallida',
+          fr: 'Solicitud HTTP fallida'
+        }),
       title: error.response?.status.toString(),
       type: 'error'
     });
