@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { estimatePasswordStrength } from '@douglasneuroinformatics/libpasswd';
 import {
@@ -6,15 +6,15 @@ import {
   Button,
   Checkbox,
   Dialog,
+  DropdownMenu,
   Heading,
   Input,
   Label,
   SearchBar,
   Select,
-  Table,
-  Tooltip
+  Table
 } from '@douglasneuroinformatics/libui/components';
-import { ArrowsUpDownIcon, ClockIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { ArrowsUpDownIcon, ChevronDownIcon, ClockIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { BasePermissionLevel, PendingInvestigator, User } from '@opendatacapture/schemas/user';
 import { createFileRoute } from '@tanstack/react-router';
@@ -131,6 +131,7 @@ type UserDirectoryRow = {
   id: string;
   kind: 'pending' | 'user';
   lastConnectionLabel: string;
+  lastConnectionValue: number;
   lastName: string;
   notes: string;
   profileLabel: string;
@@ -139,8 +140,11 @@ type UserDirectoryRow = {
 };
 
 type UserTypeFilter = 'ALL' | 'INVESTIGATOR' | 'PENDING_INVESTIGATOR' | 'USER';
-type PendingSignedFilter = 'ALL' | 'SIGNED' | 'UNSIGNED';
 type SortDirection = 'asc' | 'desc';
+type PendingSortKey = 'createdAt' | 'email' | 'group' | 'hospital' | 'mailSentAt' | 'name' | 'notes';
+type UserSortKey = 'createdAt' | 'email' | 'group' | 'lastConnection' | 'name' | 'notes' | 'profile' | 'username';
+
+const ENTRIES_PER_PAGE = 10;
 
 const DEFAULT_USER_FORM: UserFormState = {
   basePermissionLevel: 'GROUP_MANAGER',
@@ -202,11 +206,14 @@ const RouteComponent = () => {
   const [isBulkSignedPromotionConfirmOpen, setIsBulkSignedPromotionConfirmOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'pending' | 'users'>('users');
   const [userTypeFilter, setUserTypeFilter] = useState<UserTypeFilter>('ALL');
-  const [pendingSignedFilter, setPendingSignedFilter] = useState<PendingSignedFilter>('ALL');
   const [userGroupFilter, setUserGroupFilter] = useState<string>('ALL');
   const [pendingGroupFilter, setPendingGroupFilter] = useState<string>('ALL');
-  const [userCreatedSortDirection, setUserCreatedSortDirection] = useState<SortDirection>('desc');
-  const [pendingCreatedSortDirection, setPendingCreatedSortDirection] = useState<SortDirection>('desc');
+  const [userSortKey, setUserSortKey] = useState<UserSortKey>('createdAt');
+  const [userSortDirection, setUserSortDirection] = useState<SortDirection>('desc');
+  const [pendingSortKey, setPendingSortKey] = useState<PendingSortKey>('createdAt');
+  const [pendingSortDirection, setPendingSortDirection] = useState<SortDirection>('desc');
+  const [userPage, setUserPage] = useState(1);
+  const [pendingPage, setPendingPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [hospitalDialogTarget, setHospitalDialogTarget] = useState<'create' | 'edit'>('create');
   const [userForm, setUserForm] = useState<UserFormState>(DEFAULT_USER_FORM);
@@ -274,23 +281,33 @@ const RouteComponent = () => {
         return false;
       }
 
-      if (pendingSignedFilter === 'SIGNED' && !entry.signed) {
-        return false;
-      }
-
-      if (pendingSignedFilter === 'UNSIGNED' && entry.signed) {
-        return false;
-      }
-
       return true;
     });
 
     return filtered.sort((left, right) => {
-      const leftTimestamp = toTimestamp(left.createdAt);
-      const rightTimestamp = toTimestamp(right.createdAt);
-      return pendingCreatedSortDirection === 'desc' ? rightTimestamp - leftTimestamp : leftTimestamp - rightTimestamp;
+      const comparator = (() => {
+        switch (pendingSortKey) {
+          case 'name':
+            return `${left.firstName} ${left.lastName}`.localeCompare(`${right.firstName} ${right.lastName}`);
+          case 'email':
+            return left.email.localeCompare(right.email);
+          case 'hospital':
+            return left.hospital.localeCompare(right.hospital);
+          case 'mailSentAt':
+            return toTimestamp(left.mailSentAt) - toTimestamp(right.mailSentAt);
+          case 'group':
+            return summarizeGroups(left.groupIds).localeCompare(summarizeGroups(right.groupIds));
+          case 'notes':
+            return (left.notes?.trim() || '-').localeCompare(right.notes?.trim() || '-');
+          case 'createdAt':
+          default:
+            return toTimestamp(left.createdAt) - toTimestamp(right.createdAt);
+        }
+      })();
+
+      return pendingSortDirection === 'desc' ? -comparator : comparator;
     });
-  }, [normalizedSearchTerm, pendingCreatedSortDirection, pendingGroupFilter, pendingRows, pendingSignedFilter]);
+  }, [normalizedSearchTerm, pendingGroupFilter, pendingRows, pendingSortDirection, pendingSortKey]);
 
   const sessionsByUserId = useMemo(() => {
     const byUserId = new Map<string, typeof sessionsQuery.data>();
@@ -333,6 +350,8 @@ const RouteComponent = () => {
         id: entry.id,
         kind: 'user',
         lastConnectionLabel: basePermissionLevel === 'STANDARD' ? getLastConnectionLabel(entry.id) : '-',
+        lastConnectionValue:
+          basePermissionLevel === 'STANDARD' ? toTimestamp((sessionsByUserId.get(entry.id) ?? [])[0]?.createdAt) : 0,
         lastName: entry.lastName,
         notes: '-',
         profileLabel,
@@ -351,6 +370,7 @@ const RouteComponent = () => {
       id: entry.id,
       kind: 'pending',
       lastConnectionLabel: '-',
+      lastConnectionValue: 0,
       lastName: entry.lastName,
       notes: entry.notes?.trim() || '-',
       profileLabel: t({ en: 'Investigador (pendent)', fr: 'Investigador (pendiente)' }),
@@ -388,13 +408,81 @@ const RouteComponent = () => {
     });
 
     return filtered.sort((left, right) => {
-      return userCreatedSortDirection === 'desc'
-        ? right.createdAtValue - left.createdAtValue
-        : left.createdAtValue - right.createdAtValue;
+      const comparator = (() => {
+        switch (userSortKey) {
+          case 'name':
+            return `${left.firstName} ${left.lastName}`.localeCompare(`${right.firstName} ${right.lastName}`);
+          case 'email':
+            return left.email.localeCompare(right.email);
+          case 'username':
+            return left.username.localeCompare(right.username);
+          case 'profile':
+            return left.profileLabel.localeCompare(right.profileLabel);
+          case 'group':
+            return summarizeGroups(left.groupIds).localeCompare(summarizeGroups(right.groupIds));
+          case 'lastConnection':
+            return left.lastConnectionValue - right.lastConnectionValue;
+          case 'notes':
+            return left.notes.localeCompare(right.notes);
+          case 'createdAt':
+          default:
+            return left.createdAtValue - right.createdAtValue;
+        }
+      })();
+
+      return userSortDirection === 'desc' ? -comparator : comparator;
     });
-  }, [normalizedSearchTerm, userCreatedSortDirection, userDirectoryRows, userGroupFilter, userTypeFilter]);
+  }, [normalizedSearchTerm, userDirectoryRows, userGroupFilter, userSortDirection, userSortKey, userTypeFilter]);
   const pendingById = useMemo(() => new Map(pendingRows.map((entry) => [entry.id, entry])), [pendingRows]);
-  const visiblePendingIds = useMemo(() => filteredPendingRows.map((entry) => entry.id), [filteredPendingRows]);
+
+  const handlePendingSort = (key: PendingSortKey) => {
+    if (pendingSortKey === key) {
+      setPendingSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setPendingSortKey(key);
+    setPendingSortDirection('asc');
+  };
+
+  const handleUserSort = (key: UserSortKey) => {
+    if (userSortKey === key) {
+      setUserSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setUserSortKey(key);
+    setUserSortDirection('asc');
+  };
+
+  const pendingTotalPages = Math.max(1, Math.ceil(filteredPendingRows.length / ENTRIES_PER_PAGE));
+  const usersTotalPages = Math.max(1, Math.ceil(filteredUserDirectoryRows.length / ENTRIES_PER_PAGE));
+
+  useEffect(() => {
+    setPendingPage((current) => Math.min(current, pendingTotalPages));
+  }, [pendingTotalPages]);
+
+  useEffect(() => {
+    setUserPage((current) => Math.min(current, usersTotalPages));
+  }, [usersTotalPages]);
+
+  useEffect(() => {
+    setPendingPage(1);
+  }, [pendingGroupFilter, pendingSortDirection, pendingSortKey, searchTerm, viewMode]);
+
+  useEffect(() => {
+    setUserPage(1);
+  }, [searchTerm, userGroupFilter, userSortDirection, userSortKey, userTypeFilter, viewMode]);
+
+  const paginatedPendingRows = useMemo(() => {
+    const start = (pendingPage - 1) * ENTRIES_PER_PAGE;
+    return filteredPendingRows.slice(start, start + ENTRIES_PER_PAGE);
+  }, [filteredPendingRows, pendingPage]);
+
+  const paginatedUserRows = useMemo(() => {
+    const start = (userPage - 1) * ENTRIES_PER_PAGE;
+    return filteredUserDirectoryRows.slice(start, start + ENTRIES_PER_PAGE);
+  }, [filteredUserDirectoryRows, userPage]);
+
+  const visiblePendingIds = useMemo(() => paginatedPendingRows.map((entry) => entry.id), [paginatedPendingRows]);
   const areAllVisiblePendingSelected =
     visiblePendingIds.length > 0 && visiblePendingIds.every((id) => selectedPendingIds.includes(id));
 
@@ -762,7 +850,7 @@ const RouteComponent = () => {
       <PageHeader>
         <Heading className="text-center" variant="h2">
           {t({
-            en: "Gestio d'usuaris",
+            en: "Gestió d'usuaris",
             fr: 'Gestión de usuarios'
           })}
         </Heading>
@@ -790,44 +878,36 @@ const RouteComponent = () => {
           </div>
 
           <div className="flex items-center rounded-md border border-violet-300 bg-violet-100 p-1">
-            <Tooltip delayDuration={300}>
-              <Tooltip.Trigger
-                aria-label={t({ en: 'Tots els usuaris', fr: 'Todos los usuarios' })}
-                className={
-                  viewMode === 'users'
-                    ? 'h-9 w-9 bg-violet-600 text-white hover:bg-violet-700'
-                    : 'h-9 w-9 text-violet-900 hover:bg-violet-200'
-                }
-                size="icon"
-                type="button"
-                variant={viewMode === 'users' ? 'primary' : 'ghost'}
-                onClick={() => setViewMode('users')}
-              >
-                <UsersIcon className="h-4 w-4" />
-              </Tooltip.Trigger>
-              <Tooltip.Content side="bottom">
-                <p>{t({ en: 'Tots els usuaris', fr: 'Todos los usuarios' })}</p>
-              </Tooltip.Content>
-            </Tooltip>
-            <Tooltip delayDuration={300}>
-              <Tooltip.Trigger
-                aria-label={t({ en: 'Investigadors pendents', fr: 'Investigadores pendientes' })}
-                className={
-                  viewMode === 'pending'
-                    ? 'h-9 w-9 bg-violet-600 text-white hover:bg-violet-700'
-                    : 'h-9 w-9 text-violet-900 hover:bg-violet-200'
-                }
-                size="icon"
-                type="button"
-                variant={viewMode === 'pending' ? 'primary' : 'ghost'}
-                onClick={() => setViewMode('pending')}
-              >
-                <ClockIcon className="h-4 w-4" />
-              </Tooltip.Trigger>
-              <Tooltip.Content side="bottom">
-                <p>{t({ en: 'Investigadors pendents', fr: 'Investigadores pendientes' })}</p>
-              </Tooltip.Content>
-            </Tooltip>
+            <Button
+              aria-label={t({ en: 'Tots els usuaris', fr: 'Todos los usuarios' })}
+              className={
+                viewMode === 'users'
+                  ? 'h-9 w-9 bg-violet-600 text-white hover:bg-violet-700'
+                  : 'h-9 w-9 text-violet-900 hover:bg-violet-200'
+              }
+              size="icon"
+              title={t({ en: 'Tots els usuaris', fr: 'Todos los usuarios' })}
+              type="button"
+              variant={viewMode === 'users' ? 'primary' : 'ghost'}
+              onClick={() => setViewMode('users')}
+            >
+              <UsersIcon className="h-4 w-4" />
+            </Button>
+            <Button
+              aria-label={t({ en: 'Investigadors pendents', fr: 'Investigadores pendientes' })}
+              className={
+                viewMode === 'pending'
+                  ? 'h-9 w-9 bg-violet-600 text-white hover:bg-violet-700'
+                  : 'h-9 w-9 text-violet-900 hover:bg-violet-200'
+              }
+              size="icon"
+              title={t({ en: 'Investigadors pendents', fr: 'Investigadores pendientes' })}
+              type="button"
+              variant={viewMode === 'pending' ? 'primary' : 'ghost'}
+              onClick={() => setViewMode('pending')}
+            >
+              <ClockIcon className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
@@ -876,63 +956,89 @@ const RouteComponent = () => {
                   <Table.Row>
                     <Table.Head className="text-foreground whitespace-nowrap">#</Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      {t({ en: 'Nom', fr: 'Nombre' })}
+                      <button
+                        className="inline-flex items-center gap-1"
+                        type="button"
+                        onClick={() => handlePendingSort('name')}
+                      >
+                        <span>{t({ en: 'Nom', fr: 'Nombre' })}</span>
+                        <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                      </button>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      {t({ en: 'Correu', fr: 'Correo' })}
+                      <button
+                        className="inline-flex items-center gap-1"
+                        type="button"
+                        onClick={() => handlePendingSort('email')}
+                      >
+                        <span>{t({ en: 'Correu', fr: 'Correo' })}</span>
+                        <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                      </button>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      {t({ en: 'Hospital', fr: 'Hospital' })}
+                      <button
+                        className="inline-flex items-center gap-1"
+                        type="button"
+                        onClick={() => handlePendingSort('hospital')}
+                      >
+                        <span>{t({ en: 'Hospital', fr: 'Hospital' })}</span>
+                        <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                      </button>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      <div className="flex min-w-28 flex-col gap-1">
-                        <span>{t({ en: 'Signat', fr: 'Firmado' })}</span>
-                        <Select
-                          value={pendingSignedFilter}
-                          onValueChange={(value) => setPendingSignedFilter(value as PendingSignedFilter)}
+                      <button
+                        className="inline-flex items-center gap-1"
+                        type="button"
+                        onClick={() => handlePendingSort('mailSentAt')}
+                      >
+                        <span>{t({ en: 'Mail enviat', fr: 'Mail enviado' })}</span>
+                        <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </Table.Head>
+                    <Table.Head className="text-foreground whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1">
+                        <button
+                          className="inline-flex items-center gap-1"
+                          type="button"
+                          onClick={() => handlePendingSort('group')}
                         >
-                          <Select.Trigger className="h-8 text-xs">
-                            <Select.Value />
-                          </Select.Trigger>
-                          <Select.Content>
-                            <Select.Item value="ALL">{t({ en: 'Tots', fr: 'Todos' })}</Select.Item>
-                            <Select.Item value="SIGNED">{t({ en: 'Sí', fr: 'Sí' })}</Select.Item>
-                            <Select.Item value="UNSIGNED">{t({ en: 'No', fr: 'No' })}</Select.Item>
-                          </Select.Content>
-                        </Select>
-                      </div>
-                    </Table.Head>
-                    <Table.Head className="text-foreground whitespace-nowrap">
-                      {t({ en: 'Mail enviat', fr: 'Mail enviado' })}
-                    </Table.Head>
-                    <Table.Head className="text-foreground whitespace-nowrap">
-                      <div className="flex min-w-36 flex-col gap-1">
-                        <span>{t({ en: 'Grups', fr: 'Grupos' })}</span>
-                        <Select value={pendingGroupFilter} onValueChange={setPendingGroupFilter}>
-                          <Select.Trigger className="h-8 text-xs">
-                            <Select.Value />
-                          </Select.Trigger>
-                          <Select.Content>
-                            <Select.Item value="ALL">{t({ en: 'Tots', fr: 'Todos' })}</Select.Item>
+                          <span>{t({ en: 'Grups', fr: 'Grupos' })}</span>
+                          <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenu.Trigger asChild>
+                            <Button className="h-6 w-6 p-0" size="icon" type="button" variant="ghost">
+                              <ChevronDownIcon className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenu.Trigger>
+                          <DropdownMenu.Content align="end" className="w-48">
+                            <DropdownMenu.Item onClick={() => setPendingGroupFilter('ALL')}>
+                              {t({ en: 'Tots', fr: 'Todos' })}
+                            </DropdownMenu.Item>
                             {groupOptions.map((group) => (
-                              <Select.Item key={group.id} value={group.id}>
+                              <DropdownMenu.Item key={group.id} onClick={() => setPendingGroupFilter(group.id)}>
                                 {group.name}
-                              </Select.Item>
+                              </DropdownMenu.Item>
                             ))}
-                          </Select.Content>
-                        </Select>
+                          </DropdownMenu.Content>
+                        </DropdownMenu>
                       </div>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      {t({ en: 'Comentaris', fr: 'Comentarios' })}
+                      <button
+                        className="inline-flex items-center gap-1"
+                        type="button"
+                        onClick={() => handlePendingSort('notes')}
+                      >
+                        <span>{t({ en: 'Comentaris', fr: 'Comentarios' })}</span>
+                        <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                      </button>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
                       <button
                         className="text-foreground inline-flex items-center gap-1"
                         type="button"
-                        onClick={() =>
-                          setPendingCreatedSortDirection((current) => (current === 'desc' ? 'asc' : 'desc'))
-                        }
+                        onClick={() => handlePendingSort('createdAt')}
                       >
                         <span>{t({ en: 'Creat', fr: 'Creado' })}</span>
                         <ArrowsUpDownIcon className="h-3.5 w-3.5" />
@@ -941,7 +1047,7 @@ const RouteComponent = () => {
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {filteredPendingRows.map((entry) => (
+                  {paginatedPendingRows.map((entry) => (
                     <Table.Row className="cursor-pointer" key={entry.id} onClick={() => openPendingDialog(entry)}>
                       <Table.Cell
                         className="w-10"
@@ -957,7 +1063,6 @@ const RouteComponent = () => {
                       <Table.Cell>{`${entry.firstName} ${entry.lastName}`}</Table.Cell>
                       <Table.Cell>{entry.email}</Table.Cell>
                       <Table.Cell>{formatHospitalLabel(entry.hospital)}</Table.Cell>
-                      <Table.Cell>{entry.signed ? t({ en: 'Sí', fr: 'Sí' }) : t({ en: 'No', fr: 'No' })}</Table.Cell>
                       <Table.Cell>{formatDate(entry.mailSentAt)}</Table.Cell>
                       <Table.Cell>{summarizeGroups(entry.groupIds)}</Table.Cell>
                       <Table.Cell>{ellipsize(entry.notes?.trim() || '-')}</Table.Cell>
@@ -967,6 +1072,32 @@ const RouteComponent = () => {
                 </Table.Body>
               </Table>
             </div>
+
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">
+                {t({ en: 'Pàgina', fr: 'Página' })} {pendingPage} / {pendingTotalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  disabled={pendingPage <= 1}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                  onClick={() => setPendingPage((current) => Math.max(1, current - 1))}
+                >
+                  {t({ en: 'Anterior', fr: 'Anterior' })}
+                </Button>
+                <Button
+                  disabled={pendingPage >= pendingTotalPages}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                  onClick={() => setPendingPage((current) => Math.min(pendingTotalPages, current + 1))}
+                >
+                  {t({ en: 'Següent', fr: 'Siguiente' })}
+                </Button>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -975,75 +1106,131 @@ const RouteComponent = () => {
                 <Table.Header>
                   <Table.Row>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      {t({ en: 'Nom', fr: 'Nombre' })}
+                      <button
+                        className="inline-flex items-center gap-1"
+                        type="button"
+                        onClick={() => handleUserSort('name')}
+                      >
+                        <span>{t({ en: 'Nom', fr: 'Nombre' })}</span>
+                        <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                      </button>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      {t({ en: 'Correu', fr: 'Correo' })}
+                      <button
+                        className="inline-flex items-center gap-1"
+                        type="button"
+                        onClick={() => handleUserSort('email')}
+                      >
+                        <span>{t({ en: 'Correu', fr: 'Correo' })}</span>
+                        <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                      </button>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      {t({ en: 'Usuari', fr: 'Usuario' })}
+                      <button
+                        className="inline-flex items-center gap-1"
+                        type="button"
+                        onClick={() => handleUserSort('username')}
+                      >
+                        <span>{t({ en: 'Usuari', fr: 'Usuario' })}</span>
+                        <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                      </button>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      <div className="flex min-w-36 flex-col gap-1">
-                        <span>{t({ en: 'Perfil', fr: 'Perfil' })}</span>
-                        <Select
-                          value={userTypeFilter}
-                          onValueChange={(value) => setUserTypeFilter(value as UserTypeFilter)}
+                      <div className="inline-flex items-center gap-1">
+                        <button
+                          className="inline-flex items-center gap-1"
+                          type="button"
+                          onClick={() => handleUserSort('profile')}
                         >
-                          <Select.Trigger className="h-8 text-xs">
-                            <Select.Value />
-                          </Select.Trigger>
-                          <Select.Content>
-                            <Select.Item value="ALL">{t({ en: 'Tots', fr: 'Todos' })}</Select.Item>
-                            <Select.Item value="USER">{t({ en: 'Usuari', fr: 'Usuario' })}</Select.Item>
-                            <Select.Item value="INVESTIGATOR">
+                          <span>{t({ en: 'Perfil', fr: 'Perfil' })}</span>
+                          <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenu.Trigger asChild>
+                            <Button className="h-6 w-6 p-0" size="icon" type="button" variant="ghost">
+                              <ChevronDownIcon className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenu.Trigger>
+                          <DropdownMenu.Content align="end" className="w-56">
+                            <DropdownMenu.Item onClick={() => setUserTypeFilter('ALL')}>
+                              {t({ en: 'Tots', fr: 'Todos' })}
+                            </DropdownMenu.Item>
+                            <DropdownMenu.Item onClick={() => setUserTypeFilter('USER')}>
+                              {t({ en: 'Usuari', fr: 'Usuario' })}
+                            </DropdownMenu.Item>
+                            <DropdownMenu.Item onClick={() => setUserTypeFilter('INVESTIGATOR')}>
                               {t({ en: 'Investigador', fr: 'Investigador' })}
-                            </Select.Item>
-                            <Select.Item value="PENDING_INVESTIGATOR">
+                            </DropdownMenu.Item>
+                            <DropdownMenu.Item onClick={() => setUserTypeFilter('PENDING_INVESTIGATOR')}>
                               {t({ en: 'Investigador (pendent)', fr: 'Investigador (pendiente)' })}
-                            </Select.Item>
-                          </Select.Content>
-                        </Select>
+                            </DropdownMenu.Item>
+                          </DropdownMenu.Content>
+                        </DropdownMenu>
                       </div>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      <div className="flex min-w-36 flex-col gap-1">
-                        <span>{t({ en: 'Grups', fr: 'Grupos' })}</span>
-                        <Select value={userGroupFilter} onValueChange={setUserGroupFilter}>
-                          <Select.Trigger className="h-8 text-xs">
-                            <Select.Value />
-                          </Select.Trigger>
-                          <Select.Content>
-                            <Select.Item value="ALL">{t({ en: 'Tots', fr: 'Todos' })}</Select.Item>
+                      <div className="inline-flex items-center gap-1">
+                        <button
+                          className="inline-flex items-center gap-1"
+                          type="button"
+                          onClick={() => handleUserSort('group')}
+                        >
+                          <span>{t({ en: 'Grups', fr: 'Grupos' })}</span>
+                          <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenu.Trigger asChild>
+                            <Button className="h-6 w-6 p-0" size="icon" type="button" variant="ghost">
+                              <ChevronDownIcon className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenu.Trigger>
+                          <DropdownMenu.Content align="end" className="w-56">
+                            <DropdownMenu.Item onClick={() => setUserGroupFilter('ALL')}>
+                              {t({ en: 'Tots', fr: 'Todos' })}
+                            </DropdownMenu.Item>
                             {groupOptions.map((group) => (
-                              <Select.Item key={group.id} value={group.id}>
+                              <DropdownMenu.Item key={group.id} onClick={() => setUserGroupFilter(group.id)}>
                                 {group.name}
-                              </Select.Item>
+                              </DropdownMenu.Item>
                             ))}
-                          </Select.Content>
-                        </Select>
+                          </DropdownMenu.Content>
+                        </DropdownMenu>
                       </div>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
                       <button
                         className="text-foreground inline-flex items-center gap-1"
                         type="button"
-                        onClick={() => setUserCreatedSortDirection((current) => (current === 'desc' ? 'asc' : 'desc'))}
+                        onClick={() => handleUserSort('createdAt')}
                       >
                         <span>{t({ en: 'Creat', fr: 'Creado' })}</span>
                         <ArrowsUpDownIcon className="h-3.5 w-3.5" />
                       </button>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      {t({ en: 'Última connexió', fr: 'Última conexión' })}
+                      <button
+                        className="inline-flex items-center gap-1"
+                        type="button"
+                        onClick={() => handleUserSort('lastConnection')}
+                      >
+                        <span>{t({ en: 'Última connexió', fr: 'Última conexión' })}</span>
+                        <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                      </button>
                     </Table.Head>
                     <Table.Head className="text-foreground whitespace-nowrap">
-                      {t({ en: 'Comentaris', fr: 'Comentarios' })}
+                      <button
+                        className="inline-flex items-center gap-1"
+                        type="button"
+                        onClick={() => handleUserSort('notes')}
+                      >
+                        <span>{t({ en: 'Comentaris', fr: 'Comentarios' })}</span>
+                        <ArrowsUpDownIcon className="h-3.5 w-3.5" />
+                      </button>
                     </Table.Head>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {filteredUserDirectoryRows.map((entry) => (
+                  {paginatedUserRows.map((entry) => (
                     <Table.Row
                       className="cursor-pointer"
                       key={entry.id}
@@ -1061,6 +1248,32 @@ const RouteComponent = () => {
                   ))}
                 </Table.Body>
               </Table>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">
+                {t({ en: 'Pàgina', fr: 'Página' })} {userPage} / {usersTotalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  disabled={userPage <= 1}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                  onClick={() => setUserPage((current) => Math.max(1, current - 1))}
+                >
+                  {t({ en: 'Anterior', fr: 'Anterior' })}
+                </Button>
+                <Button
+                  disabled={userPage >= usersTotalPages}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                  onClick={() => setUserPage((current) => Math.min(usersTotalPages, current + 1))}
+                >
+                  {t({ en: 'Següent', fr: 'Siguiente' })}
+                </Button>
+              </div>
             </div>
           </div>
         )}
