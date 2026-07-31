@@ -46,10 +46,12 @@ export const StartSessionForm = ({
   onSubmit
 }: StartSessionFormProps) => {
   const { resolvedLanguage, t } = useTranslation();
-  const isAltaHealthServices = currentGroup?.name === 'Alta Health Services';
+  const usesStreamlinedSessionStart =
+    currentGroup?.name === 'Alta Health Services' || currentGroup?.type === 'RESEARCH';
 
-  // For Alta Health Services, show simplified form with only session date
-  if (isAltaHealthServices) {
+  // Research/study groups use the streamlined production workflow:
+  // start one session, then register multiple patient records within it.
+  if (usesStreamlinedSessionStart) {
     return (
       <Form
         preventResetValuesOnReset
@@ -334,9 +336,8 @@ export const StartSessionForm = ({
         subjectDateOfBirth,
         subjectSex
       }) => {
-        // For Alta Health Services, always use RETROSPECTIVE type
-        const finalSessionType = isAltaHealthServices ? 'RETROSPECTIVE' : sessionType!;
-        const finalSessionDate = isAltaHealthServices ? sessionDate! : (sessionDate ?? currentDate);
+        const finalSessionType = usesStreamlinedSessionStart ? 'RETROSPECTIVE' : sessionType!;
+        const finalSessionDate = usesStreamlinedSessionStart ? sessionDate! : (sessionDate ?? currentDate);
 
         if (!subjectId) {
           subjectId = await generateSubjectHash({
