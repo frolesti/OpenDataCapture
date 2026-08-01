@@ -127,7 +127,10 @@ const RouteComponent = () => {
     instrumentBundleQuery.data && instrumentBundleQuery.data.kind !== 'SERIES'
       ? {
           ...instrumentBundleQuery.data,
-          bundle: `globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions};\n${instrumentBundleQuery.data.bundle}`
+          // IMPORTANT: `evaluateInstrument` wraps this string with `return ${bundle}`.
+          // Any bare assignment prepended here becomes `return X = Y`, which returns Y
+          // and skips the instrument IIFE. Wrap in an arrow so the IIFE is what gets returned.
+          bundle: `(()=>{globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions}; return ${instrumentBundleQuery.data.bundle}})()`
         }
       : instrumentBundleQuery.data;
 
