@@ -36,9 +36,26 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
       })
     : instrument.content;
 
+  const shouldUseLegacyOmegaFlattenedContent =
+    instrument.internal?.name === 'OMEGA_FF_AP_2025' &&
+    typeof instrument.internal?.edition === 'number' &&
+    instrument.internal.edition <= 36;
+
+  const flattenedContent = Array.isArray(sanitizedContent)
+    ? sanitizedContent.reduce<Record<string, unknown>>((acc, group) => {
+        const fields = (group as { fields?: Record<string, unknown> }).fields;
+        if (!fields) {
+          return acc;
+        }
+        return { ...acc, ...fields };
+      }, {})
+    : sanitizedContent;
+
+  const contentForForm = shouldUseLegacyOmegaFlattenedContent ? flattenedContent : sanitizedContent;
+
   const hasRenderableContent =
-    (Array.isArray(sanitizedContent) && sanitizedContent.length > 0) ||
-    (!Array.isArray(sanitizedContent) && Object.keys(sanitizedContent ?? {}).length > 0);
+    (Array.isArray(contentForForm) && contentForForm.length > 0) ||
+    (!Array.isArray(contentForForm) && Object.keys(contentForForm ?? {}).length > 0);
 
   useEffect(() => {
     if (!formRef.current) return;
@@ -128,7 +145,7 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
         ) : null}
         <Form
           preventResetValuesOnReset
-          content={sanitizedContent as any}
+          content={contentForForm as any}
           data-testid="form-content"
           initialValues={(initialValues ?? instrument.initialValues) as any}
           subscribe={
