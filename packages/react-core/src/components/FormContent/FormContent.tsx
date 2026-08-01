@@ -26,32 +26,7 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
       fr: 'Instrumento'
     });
 
-  const sanitizedContent = Array.isArray(instrument.content)
-    ? instrument.content.filter((group) => {
-        if (!group || typeof group !== 'object') {
-          return false;
-        }
-        const fields = (group as { fields?: Record<string, unknown> }).fields;
-        return Boolean(fields && Object.keys(fields).length > 0);
-      })
-    : instrument.content;
-
-  const shouldUseLegacyOmegaFlattenedContent =
-    instrument.internal?.name === 'OMEGA_FF_AP_2025' &&
-    typeof instrument.internal?.edition === 'number' &&
-    instrument.internal.edition <= 36;
-
-  const flattenedContent = Array.isArray(sanitizedContent)
-    ? sanitizedContent.reduce<Record<string, unknown>>((acc, group) => {
-        const fields = (group as { fields?: Record<string, unknown> }).fields;
-        if (!fields) {
-          return acc;
-        }
-        return { ...acc, ...fields };
-      }, {})
-    : sanitizedContent;
-
-  const contentForForm = shouldUseLegacyOmegaFlattenedContent ? flattenedContent : sanitizedContent;
+  const contentForForm = instrument.content;
 
   const hasRenderableContent =
     (Array.isArray(contentForForm) && contentForForm.length > 0) ||
