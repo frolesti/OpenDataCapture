@@ -17,7 +17,14 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
   const formRef = useRef<HTMLDivElement>(null);
   const isSubmittingRef = useRef(false);
   const hasScrolledRef = useRef(false);
-  const instructions = instrument.clientDetails?.instructions ?? instrument.details.instructions;
+  const instructions = instrument.clientDetails?.instructions ?? instrument.details?.instructions;
+  const title =
+    instrument.clientDetails?.title ??
+    instrument.details?.title ??
+    t({
+      en: 'Instrument',
+      fr: 'Instrumento'
+    });
 
   useEffect(() => {
     if (!formRef.current) return;
@@ -65,7 +72,7 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
   return (
     <div ref={formRef} className="space-y-6">
       <div className="flex gap-2">
-        <Heading variant="h4">{instrument.clientDetails?.title ?? instrument.details.title}</Heading>
+        <Heading variant="h4">{title}</Heading>
         <Dialog>
           <Dialog.Trigger asChild>
             <Button disabled={!instructions?.length} size="icon" variant="ghost">

@@ -19,12 +19,19 @@ export const InstrumentOverview = ({
 }: InstrumentOverviewProps) => {
   const { t } = useTranslation();
 
-  const estimatedDuration = instrument.clientDetails?.estimatedDuration ?? instrument.details.estimatedDuration;
-  const instructions = instrument.clientDetails?.instructions ?? instrument.details.instructions;
+  const estimatedDuration = instrument.clientDetails?.estimatedDuration ?? instrument.details?.estimatedDuration;
+  const instructions = instrument.clientDetails?.instructions ?? instrument.details?.instructions;
+  const title =
+    instrument.clientDetails?.title ??
+    instrument.details?.title ??
+    t({
+      en: 'Instrument',
+      fr: 'Instrumento'
+    });
 
   return (
     <div className="space-y-6">
-      <Heading variant="h4">{instrument.clientDetails?.title ?? instrument.details.title}</Heading>
+      <Heading variant="h4">{title}</Heading>
       <div className="mb-8 space-y-6">
         <div>
           {estimatedDuration && (

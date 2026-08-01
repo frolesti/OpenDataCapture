@@ -94,7 +94,7 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
     timeStyle: 'long'
   });
 
-  const title = (instrument.clientDetails?.title ?? instrument.details.title).trim();
+  const title = (instrument.clientDetails?.title ?? instrument.details?.title ?? '').trim();
 
   return (
     <div className="space-y-6">
