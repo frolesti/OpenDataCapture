@@ -45,6 +45,44 @@ function getTargetLanguage(instrument: Pick<AnyInstrument, 'language'>, preferre
   return instrument.language[0]!;
 }
 
+function inferLanguagesFromTitle(value: unknown): Language[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return [];
+  }
+  const entries = Object.entries(value).filter(([, label]) => typeof label === 'string');
+  return entries.map(([key]) => key as Language);
+}
+
+function normalizeInstrumentLanguage(instrument: AnyInstrument, preferredLanguage: Language): AnyInstrument {
+  if (typeof instrument.language === 'string' || Array.isArray(instrument.language)) {
+    return instrument;
+  }
+
+  const inferred = inferLanguagesFromTitle((instrument as { details?: { title?: unknown } }).details?.title);
+  if (inferred.length > 1) {
+    return { ...instrument, language: inferred } as AnyInstrument;
+  }
+  if (inferred.length === 1) {
+    return { ...instrument, language: inferred[0] } as AnyInstrument;
+  }
+  return { ...instrument, language: preferredLanguage } as AnyInstrument;
+}
+
+function normalizeInstrumentInfoLanguage(info: InstrumentInfo, preferredLanguage: Language): InstrumentInfo {
+  if (typeof info.language === 'string' || Array.isArray(info.language)) {
+    return info;
+  }
+
+  const inferred = inferLanguagesFromTitle((info as { details?: { title?: unknown } }).details?.title);
+  if (inferred.length > 1) {
+    return { ...info, language: inferred } as InstrumentInfo;
+  }
+  if (inferred.length === 1) {
+    return { ...info, language: inferred[0] } as InstrumentInfo;
+  }
+  return { ...info, language: preferredLanguage } as InstrumentInfo;
+}
+
 /**
  * Translate a scalar field of an instrument to the user's preferred language.
  *
@@ -310,19 +348,20 @@ function translateSeries(series: SeriesInstrument<Language[]>, language: Languag
  * @returns A translated unilingual instrument.
  */
 export function translateInstrumentInfo(info: InstrumentInfo, preferredLanguage: Language): TranslatedInstrumentInfo {
-  if (isUnilingualInstrumentInfo(info)) {
-    return { ...info, supportedLanguages: [info.language] };
-  } else if (!isMultilingualInstrumentInfo(info)) {
-    throw new Error(`Unexpected value for property 'language': ${JSON.stringify(info.language)}`);
+  const normalizedInfo = normalizeInstrumentInfoLanguage(info, preferredLanguage);
+  if (isUnilingualInstrumentInfo(normalizedInfo)) {
+    return { ...normalizedInfo, supportedLanguages: [normalizedInfo.language] };
+  } else if (!isMultilingualInstrumentInfo(normalizedInfo)) {
+    throw new Error(`Unexpected value for property 'language': ${JSON.stringify(normalizedInfo.language)}`);
   }
-  const targetLanguage = getTargetLanguage(info, preferredLanguage);
+  const targetLanguage = getTargetLanguage(normalizedInfo as Pick<AnyInstrument, 'language'>, preferredLanguage);
   return {
-    ...info,
-    clientDetails: translateClientDetails(info.clientDetails, targetLanguage),
-    details: translateDetails(info.details, targetLanguage),
+    ...normalizedInfo,
+    clientDetails: translateClientDetails(normalizedInfo.clientDetails, targetLanguage),
+    details: translateDetails(normalizedInfo.details, targetLanguage),
     language: targetLanguage,
-    supportedLanguages: info.language,
-    tags: info.tags[targetLanguage]
+    supportedLanguages: normalizedInfo.language,
+    tags: normalizedInfo.tags[targetLanguage]
   };
 }
 
@@ -338,18 +377,19 @@ export function translateInstrumentInfo(info: InstrumentInfo, preferredLanguage:
  * @returns A translated unilingual instrument.
  */
 export function translateInstrument(instrument: AnyInstrument, preferredLanguage: Language): AnyUnilingualInstrument {
-  if (isUnilingualInstrument(instrument)) {
-    return instrument;
-  } else if (!isMultilingualInstrument(instrument)) {
-    throw new Error(`Unexpected value for property 'language': ${JSON.stringify(instrument.language)}`);
+  const normalizedInstrument = normalizeInstrumentLanguage(instrument, preferredLanguage);
+  if (isUnilingualInstrument(normalizedInstrument)) {
+    return normalizedInstrument;
+  } else if (!isMultilingualInstrument(normalizedInstrument)) {
+    throw new Error(`Unexpected value for property 'language': ${JSON.stringify(normalizedInstrument.language)}`);
   }
-  const targetLanguage = getTargetLanguage(instrument, preferredLanguage);
-  if (isFormInstrument(instrument)) {
-    return translateForm(instrument, targetLanguage);
-  } else if (isSeriesInstrument(instrument)) {
-    return translateSeries(instrument, targetLanguage);
-  } else if (isInteractiveInstrument(instrument)) {
-    return translateInteractive(instrument, targetLanguage);
+  const targetLanguage = getTargetLanguage(normalizedInstrument, preferredLanguage);
+  if (isFormInstrument(normalizedInstrument)) {
+    return translateForm(normalizedInstrument, targetLanguage);
+  } else if (isSeriesInstrument(normalizedInstrument)) {
+    return translateSeries(normalizedInstrument, targetLanguage);
+  } else if (isInteractiveInstrument(normalizedInstrument)) {
+    return translateInteractive(normalizedInstrument, targetLanguage);
   }
-  throw new Error(`Unexpected instrument kind: ${(instrument as AnyInstrument).kind}`);
+  throw new Error(`Unexpected instrument kind: ${(normalizedInstrument as AnyInstrument).kind}`);
 }
