@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { Button, Form, Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod/v4';
 
 import { GroupHospitalManager } from '@/components/admin/groups/GroupHospitalManager';
@@ -50,6 +50,16 @@ const RouteComponent = () => {
         <Form
           additionalButtons={{
             left: (
+              <Button asChild className="w-full" type="button" variant="outline">
+                <Link to="..">
+                  {t({
+                    en: 'Torna enrere',
+                    fr: 'Volver'
+                  })}
+                </Link>
+              </Button>
+            ),
+            right: (
               <Button className="w-full" disabled={!canSubmit} type="submit" variant="primary">
                 {t('core.submit')}
               </Button>

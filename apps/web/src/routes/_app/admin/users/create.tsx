@@ -513,7 +513,7 @@ const RouteComponent = () => {
     userForm.username.trim().length > 0 &&
     userForm.password.trim().length > 0 &&
     isUserPasswordStrong &&
-    (userForm.basePermissionLevel === 'ADMIN' || userForm.groupIds.length > 0);
+    (userForm.basePermissionLevel === 'ADMIN' || userForm.groupIds.length === 1);
 
   const canCreateInvestigator =
     investigatorForm.firstName.trim().length > 0 &&
@@ -550,8 +550,15 @@ const RouteComponent = () => {
   const isCreatedUserDialogBusy = updateUserMutation.isPending;
   const isCreatedUserDeleteBusy = deleteUserMutation.isPending;
 
-  const toggleGroups = (current: string[], groupId: string) =>
-    current.includes(groupId) ? current.filter((id) => id !== groupId) : [...current, groupId];
+  const toggleSingleGroup = (current: string[], groupId: string) => (current.includes(groupId) ? [] : [groupId]);
+
+  const updateUserBasePermissionLevel = (basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER') => {
+    setUserForm((current) => ({
+      ...current,
+      basePermissionLevel,
+      groupIds: basePermissionLevel === 'ADMIN' ? [] : current.groupIds.slice(0, 1)
+    }));
+  };
 
   const openPendingDialog = (entry: PendingInvestigator) => {
     setSelectedPendingId(entry.id);
@@ -1287,7 +1294,7 @@ const RouteComponent = () => {
           }
         }}
       >
-        <Dialog.Content className="max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="flex max-h-[90vh] flex-col overflow-hidden">
           <Dialog.Header>
             <Dialog.Title>{t({ en: 'Editar usuari', fr: 'Editar usuario' })}</Dialog.Title>
             <Dialog.Description>
@@ -1298,86 +1305,88 @@ const RouteComponent = () => {
             </Dialog.Description>
           </Dialog.Header>
 
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="created-user-first-name">{t({ en: 'Nom', fr: 'Nombre' })}</Label>
-              <Input
-                id="created-user-first-name"
-                value={createdUserDialogForm.firstName}
-                onChange={(event) =>
-                  setCreatedUserDialogForm((current) => ({ ...current, firstName: event.target.value }))
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="created-user-last-name">{t({ en: 'Cognoms', fr: 'Apellidos' })}</Label>
-              <Input
-                id="created-user-last-name"
-                value={createdUserDialogForm.lastName}
-                onChange={(event) =>
-                  setCreatedUserDialogForm((current) => ({ ...current, lastName: event.target.value }))
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="created-user-username">{t({ en: "Nom d'usuari", fr: 'Nombre de usuario' })}</Label>
-              <Input
-                id="created-user-username"
-                value={createdUserDialogForm.username}
-                onChange={(event) =>
-                  setCreatedUserDialogForm((current) => ({ ...current, username: event.target.value }))
-                }
-              />
-            </div>
-            {showEmailField ? (
+          <div className="min-h-0 flex-1 overflow-y-auto py-2 pr-1">
+            <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="created-user-email">{t({ en: 'Correu', fr: 'Correo' })}</Label>
-                <Input id="created-user-email" disabled value={createdUserDialogForm.email || '-'} />
+                <Label htmlFor="created-user-first-name">{t({ en: 'Nom', fr: 'Nombre' })}</Label>
+                <Input
+                  id="created-user-first-name"
+                  value={createdUserDialogForm.firstName}
+                  onChange={(event) =>
+                    setCreatedUserDialogForm((current) => ({ ...current, firstName: event.target.value }))
+                  }
+                />
               </div>
-            ) : null}
-            <div className="grid gap-2">
-              <Label>{t('common.groups')}</Label>
-              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
-                {groupOptions.map((group) => {
-                  const checked = createdUserDialogForm.groupIds.includes(group.id);
-                  return (
-                    <label key={group.id} className="flex items-start gap-2 text-sm">
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={() =>
-                          setCreatedUserDialogForm((current) => ({
-                            ...current,
-                            groupIds: toggleGroups(current.groupIds, group.id)
-                          }))
-                        }
-                      />
-                      <span>{group.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-            {selectedCreatedUser?.basePermissionLevel === 'STANDARD' ? (
               <div className="grid gap-2">
-                <Label>{t({ en: 'Històric de sessions', fr: 'Histórico de sesiones' })}</Label>
-                <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3 text-sm">
-                  {selectedCreatedUserSessions.length ? (
-                    selectedCreatedUserSessions.map((session) => (
-                      <div className="rounded border px-3 py-2" key={session.id}>
-                        <p className="font-medium">{formatDate(session.createdAt)}</p>
-                        <p className="text-muted-foreground">
-                          {t({ en: 'Tipus', fr: 'Tipo' })}: {session.type}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground">
-                      {t({ en: 'Sense sessions registrades', fr: 'Sin sesiones registradas' })}
-                    </p>
-                  )}
+                <Label htmlFor="created-user-last-name">{t({ en: 'Cognoms', fr: 'Apellidos' })}</Label>
+                <Input
+                  id="created-user-last-name"
+                  value={createdUserDialogForm.lastName}
+                  onChange={(event) =>
+                    setCreatedUserDialogForm((current) => ({ ...current, lastName: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="created-user-username">{t({ en: "Nom d'usuari", fr: 'Nombre de usuario' })}</Label>
+                <Input
+                  id="created-user-username"
+                  value={createdUserDialogForm.username}
+                  onChange={(event) =>
+                    setCreatedUserDialogForm((current) => ({ ...current, username: event.target.value }))
+                  }
+                />
+              </div>
+              {showEmailField ? (
+                <div className="grid gap-2">
+                  <Label htmlFor="created-user-email">{t({ en: 'Correu', fr: 'Correo' })}</Label>
+                  <Input id="created-user-email" disabled value={createdUserDialogForm.email || '-'} />
+                </div>
+              ) : null}
+              <div className="grid gap-2">
+                <Label>{t('common.groups')}</Label>
+                <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
+                  {groupOptions.map((group) => {
+                    const checked = createdUserDialogForm.groupIds.includes(group.id);
+                    return (
+                      <label key={group.id} className="flex items-start gap-2 text-sm">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() =>
+                            setCreatedUserDialogForm((current) => ({
+                              ...current,
+                              groupIds: toggleGroups(current.groupIds, group.id)
+                            }))
+                          }
+                        />
+                        <span>{group.name}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
-            ) : null}
+              {selectedCreatedUser?.basePermissionLevel === 'STANDARD' ? (
+                <div className="grid gap-2">
+                  <Label>{t({ en: 'Històric de sessions', fr: 'Histórico de sesiones' })}</Label>
+                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3 text-sm">
+                    {selectedCreatedUserSessions.length ? (
+                      selectedCreatedUserSessions.map((session) => (
+                        <div className="rounded border px-3 py-2" key={session.id}>
+                          <p className="font-medium">{formatDate(session.createdAt)}</p>
+                          <p className="text-muted-foreground">
+                            {t({ en: 'Tipus', fr: 'Tipo' })}: {session.type}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground">
+                        {t({ en: 'Sense sessions registrades', fr: 'Sin sesiones registradas' })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <Dialog.Footer className="w-full justify-end gap-2">
@@ -1407,7 +1416,7 @@ const RouteComponent = () => {
       </Dialog>
 
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-        <Dialog.Content className="max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="flex max-h-[90vh] flex-col overflow-hidden">
           <Dialog.Header>
             <Dialog.Title>{t({ en: 'Afegir usuari', fr: 'Añadir usuario' })}</Dialog.Title>
             <Dialog.Description>
@@ -1418,91 +1427,101 @@ const RouteComponent = () => {
             </Dialog.Description>
           </Dialog.Header>
 
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="user-first-name">{t({ en: 'Nom', fr: 'Nombre' })}</Label>
-              <Input
-                id="user-first-name"
-                value={userForm.firstName}
-                onChange={(event) => setUserForm((current) => ({ ...current, firstName: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="user-last-name">{t({ en: 'Cognoms', fr: 'Apellidos' })}</Label>
-              <Input
-                id="user-last-name"
-                value={userForm.lastName}
-                onChange={(event) => setUserForm((current) => ({ ...current, lastName: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="user-username">{t('common.username')}</Label>
-              <Input
-                id="user-username"
-                value={userForm.username}
-                onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="user-password">{t('common.password')}</Label>
-              <Input
-                id="user-password"
-                type="password"
-                value={userForm.password}
-                onChange={(event) => setUserForm((current) => ({ ...current, password: event.target.value }))}
-              />
-              {userForm.password.trim().length > 0 && !isUserPasswordStrong ? (
-                <p className="text-destructive text-xs">
-                  {t({
-                    en: 'La contrasenya no és prou segura. Inclou majúscules, minúscules, números i símbols.',
-                    fr: 'La contraseña no es lo bastante segura. Incluye mayúsculas, minúsculas, números y símbolos.'
-                  })}
-                </p>
-              ) : null}
-            </div>
-            <div className="grid gap-2">
-              <Label>{t('common.basePermissionLevel')}</Label>
-              <Select
-                value={userForm.basePermissionLevel}
-                onValueChange={(value) =>
-                  setUserForm((current) => ({ ...current, basePermissionLevel: value as 'ADMIN' | 'GROUP_MANAGER' }))
-                }
-              >
-                <Select.Trigger>
-                  <Select.Value />
-                </Select.Trigger>
-                <Select.Content>
-                  <Select.Item value="ADMIN">{t('common.admin')}</Select.Item>
-                  <Select.Item value="GROUP_MANAGER">{t('common.groupManager')}</Select.Item>
-                </Select.Content>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label>{t('common.groups')}</Label>
-              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
-                {groupOptions.map((group) => {
-                  const checked = userForm.groupIds.includes(group.id);
-                  return (
-                    <label key={group.id} className="flex items-start gap-2 text-sm">
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={() =>
-                          setUserForm((current) => ({ ...current, groupIds: toggleGroups(current.groupIds, group.id) }))
-                        }
-                      />
-                      <span>{group.name}</span>
-                    </label>
-                  );
-                })}
+          <div className="min-h-0 flex-1 overflow-y-auto py-2 pr-1">
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="user-first-name">{t({ en: 'Nom', fr: 'Nombre' })}</Label>
+                <Input
+                  id="user-first-name"
+                  value={userForm.firstName}
+                  onChange={(event) => setUserForm((current) => ({ ...current, firstName: event.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="user-last-name">{t({ en: 'Cognoms', fr: 'Apellidos' })}</Label>
+                <Input
+                  id="user-last-name"
+                  value={userForm.lastName}
+                  onChange={(event) => setUserForm((current) => ({ ...current, lastName: event.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="user-username">{t('common.username')}</Label>
+                <Input
+                  id="user-username"
+                  value={userForm.username}
+                  onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="user-password">{t('common.password')}</Label>
+                <Input
+                  id="user-password"
+                  type="password"
+                  value={userForm.password}
+                  onChange={(event) => setUserForm((current) => ({ ...current, password: event.target.value }))}
+                />
+                {userForm.password.trim().length > 0 && !isUserPasswordStrong ? (
+                  <p className="text-destructive text-xs">
+                    {t({
+                      en: 'La contrasenya no és prou segura. Inclou majúscules, minúscules, números i símbols.',
+                      fr: 'La contraseña no es lo bastante segura. Incluye mayúsculas, minúsculas, números y símbolos.'
+                    })}
+                  </p>
+                ) : null}
+              </div>
+              <div className="grid gap-2">
+                <Label>{t('common.basePermissionLevel')}</Label>
+                <Select
+                  value={userForm.basePermissionLevel}
+                  onValueChange={(value) => updateUserBasePermissionLevel(value as 'ADMIN' | 'GROUP_MANAGER')}
+                >
+                  <Select.Trigger>
+                    <Select.Value />
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value="ADMIN">{t('common.admin')}</Select.Item>
+                    <Select.Item value="GROUP_MANAGER">{t('common.groupManager')}</Select.Item>
+                  </Select.Content>
+                </Select>
               </div>
               {userForm.basePermissionLevel === 'GROUP_MANAGER' ? (
-                <p className="text-muted-foreground text-xs">
+                <div className="grid gap-2">
+                  <Label>{t('common.groups')}</Label>
+                  <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border p-3">
+                    {groupOptions.map((group) => {
+                      const checked = userForm.groupIds.includes(group.id);
+                      return (
+                        <label key={group.id} className="flex items-start gap-2 text-sm">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() =>
+                              setUserForm((current) => ({
+                                ...current,
+                                groupIds: toggleSingleGroup(current.groupIds, group.id)
+                              }))
+                            }
+                          />
+                          <span>{group.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    {t({
+                      en: 'Els gestors de grup només poden estar assignats a un grup.',
+                      fr: 'Los gestores de grupo solo pueden estar asignados a un grupo.'
+                    })}
+                  </p>
+                </div>
+              ) : (
+                <div className="text-muted-foreground rounded-md border border-dashed p-3 text-sm">
                   {t({
-                    en: "Els gestors de grup han d'estar assignats com a mínim a un grup.",
-                    fr: 'Los gestores de grupo deben estar asignados al menos a un grupo.'
+                    en: "Els administradors no necessiten assignació de grup en crear l'usuari.",
+                    fr: 'Los administradores no necesitan asignación de grupo al crear el usuario.'
                   })}
-                </p>
-              ) : null}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1524,7 +1543,7 @@ const RouteComponent = () => {
       </Dialog>
 
       <Dialog open={isInvestigatorDialogOpen} onOpenChange={setIsInvestigatorDialogOpen}>
-        <Dialog.Content className="max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="flex max-h-[90vh] flex-col overflow-hidden">
           <Dialog.Header>
             <Dialog.Title>{t({ en: 'Afegir investigador', fr: 'Añadir investigador' })}</Dialog.Title>
             <Dialog.Description>
@@ -1535,148 +1554,152 @@ const RouteComponent = () => {
             </Dialog.Description>
           </Dialog.Header>
 
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="investigator-first-name">{t({ en: 'Nom', fr: 'Nombre' })}</Label>
-              <Input
-                id="investigator-first-name"
-                value={investigatorForm.firstName}
-                onChange={(event) => setInvestigatorForm((current) => ({ ...current, firstName: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="investigator-last-name">{t({ en: 'Cognoms', fr: 'Apellidos' })}</Label>
-              <Input
-                id="investigator-last-name"
-                value={investigatorForm.lastName}
-                onChange={(event) => setInvestigatorForm((current) => ({ ...current, lastName: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="investigator-email">{t({ en: 'Correu', fr: 'Correo' })}</Label>
-              <Input
-                id="investigator-email"
-                type="email"
-                value={investigatorForm.email}
-                onChange={(event) => setInvestigatorForm((current) => ({ ...current, email: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>{t('common.groups')}</Label>
-              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
-                {groupOptions.map((group) => {
-                  const checked = investigatorForm.groupIds.includes(group.id);
-                  return (
-                    <label key={group.id} className="flex items-start gap-2 text-sm">
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={() =>
-                          setInvestigatorForm((current) => {
-                            const nextGroupIds = toggleGroups(current.groupIds, group.id);
-                            const nextHospitalOptions = Array.from(
-                              new Set(
-                                groupOptions
-                                  .filter((entry) => nextGroupIds.includes(entry.id))
-                                  .flatMap((entry) => entry.hospitals)
-                                  .map((hospital) => hospital.trim())
-                                  .filter(Boolean)
-                              )
-                            );
-                            return {
-                              ...current,
-                              groupIds: nextGroupIds,
-                              hospital: nextHospitalOptions.includes(current.hospital) ? current.hospital : ''
-                            };
-                          })
-                        }
-                      />
-                      <span>{group.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label>{t({ en: 'Hospital / Centre', fr: 'Hospital / Centro' })}</Label>
-              <p className="text-muted-foreground text-xs">
-                {t({
-                  en: "L'hospital disponible depèn dels grups seleccionats. Si no hi és, el podeu crear directament des d'aquí.",
-                  fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
-                })}
-              </p>
-              <Select
-                value={investigatorForm.hospital}
-                onValueChange={(value) => setInvestigatorForm((current) => ({ ...current, hospital: value }))}
-              >
-                <Select.Trigger disabled={investigatorHospitalOptions.length === 0}>
-                  {investigatorForm.hospital ? (
-                    formatHospitalLabel(investigatorForm.hospital)
-                  ) : (
-                    <Select.Value placeholder={t({ en: 'Selecciona un hospital', fr: 'Selecciona un hospital' })} />
-                  )}
-                </Select.Trigger>
-                <Select.Content>
-                  {investigatorHospitalOptions.map((hospital) => (
-                    <Select.Item key={hospital} value={hospital}>
-                      {formatHospitalLabel(hospital)}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select>
-              <Button
-                disabled={!canOpenCreateHospitalDialog(investigatorForm.groupIds) || isBusy}
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setHospitalDialogTarget('create');
-                  setHospitalForm(DEFAULT_HOSPITAL_FORM);
-                  setIsHospitalDialogOpen(true);
-                }}
-              >
-                {t({ en: 'Crear hospital nou', fr: 'Crear hospital nuevo' })}
-              </Button>
-              {investigatorForm.groupIds.length === 0 ? (
-                <p className="text-muted-foreground text-xs">
-                  {t({
-                    en: 'Selecciona primer un o més grups per carregar els hospitals disponibles.',
-                    fr: 'Selecciona primero uno o más grupos para cargar los hospitales disponibles.'
-                  })}
-                </p>
-              ) : null}
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="investigator-notes">
-                {t({ en: 'Comentaris (només pendent)', fr: 'Comentarios (solo pendiente)' })}
-              </Label>
-              <textarea
-                className="bg-background min-h-24 rounded-md border px-3 py-2 text-sm"
-                id="investigator-notes"
-                placeholder={t({
-                  en: 'Afegiu comentaris interns sobre aquest investigador pendent',
-                  fr: 'Añade comentarios internos sobre este investigador pendiente'
-                })}
-                value={investigatorForm.notes}
-                onChange={(event) => setInvestigatorForm((current) => ({ ...current, notes: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2 rounded-md border p-3">
-              <label className="flex items-start gap-3">
-                <Checkbox
-                  checked={investigatorForm.signed}
-                  onCheckedChange={(checked) =>
-                    setInvestigatorForm((current) => ({ ...current, signed: Boolean(checked) }))
+          <div className="min-h-0 flex-1 overflow-y-auto py-2 pr-1">
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="investigator-first-name">{t({ en: 'Nom', fr: 'Nombre' })}</Label>
+                <Input
+                  id="investigator-first-name"
+                  value={investigatorForm.firstName}
+                  onChange={(event) =>
+                    setInvestigatorForm((current) => ({ ...current, firstName: event.target.value }))
                   }
                 />
-                <div>
-                  <span className="text-sm font-medium">{t({ en: 'Signat', fr: 'Firmado' })}</span>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="investigator-last-name">{t({ en: 'Cognoms', fr: 'Apellidos' })}</Label>
+                <Input
+                  id="investigator-last-name"
+                  value={investigatorForm.lastName}
+                  onChange={(event) => setInvestigatorForm((current) => ({ ...current, lastName: event.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="investigator-email">{t({ en: 'Correu', fr: 'Correo' })}</Label>
+                <Input
+                  id="investigator-email"
+                  type="email"
+                  value={investigatorForm.email}
+                  onChange={(event) => setInvestigatorForm((current) => ({ ...current, email: event.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>{t('common.groups')}</Label>
+                <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
+                  {groupOptions.map((group) => {
+                    const checked = investigatorForm.groupIds.includes(group.id);
+                    return (
+                      <label key={group.id} className="flex items-start gap-2 text-sm">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() =>
+                            setInvestigatorForm((current) => {
+                              const nextGroupIds = toggleGroups(current.groupIds, group.id);
+                              const nextHospitalOptions = Array.from(
+                                new Set(
+                                  groupOptions
+                                    .filter((entry) => nextGroupIds.includes(entry.id))
+                                    .flatMap((entry) => entry.hospitals)
+                                    .map((hospital) => hospital.trim())
+                                    .filter(Boolean)
+                                )
+                              );
+                              return {
+                                ...current,
+                                groupIds: nextGroupIds,
+                                hospital: nextHospitalOptions.includes(current.hospital) ? current.hospital : ''
+                              };
+                            })
+                          }
+                        />
+                        <span>{group.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label>{t({ en: 'Hospital / Centre', fr: 'Hospital / Centro' })}</Label>
+                <p className="text-muted-foreground text-xs">
+                  {t({
+                    en: "L'hospital disponible depèn dels grups seleccionats. Si no hi és, el podeu crear directament des d'aquí.",
+                    fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
+                  })}
+                </p>
+                <Select
+                  value={investigatorForm.hospital}
+                  onValueChange={(value) => setInvestigatorForm((current) => ({ ...current, hospital: value }))}
+                >
+                  <Select.Trigger disabled={investigatorHospitalOptions.length === 0}>
+                    {investigatorForm.hospital ? (
+                      formatHospitalLabel(investigatorForm.hospital)
+                    ) : (
+                      <Select.Value placeholder={t({ en: 'Selecciona un hospital', fr: 'Selecciona un hospital' })} />
+                    )}
+                  </Select.Trigger>
+                  <Select.Content>
+                    {investigatorHospitalOptions.map((hospital) => (
+                      <Select.Item key={hospital} value={hospital}>
+                        {formatHospitalLabel(hospital)}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select>
+                <Button
+                  disabled={!canOpenCreateHospitalDialog(investigatorForm.groupIds) || isBusy}
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setHospitalDialogTarget('create');
+                    setHospitalForm(DEFAULT_HOSPITAL_FORM);
+                    setIsHospitalDialogOpen(true);
+                  }}
+                >
+                  {t({ en: 'Crear hospital nou', fr: 'Crear hospital nuevo' })}
+                </Button>
+                {investigatorForm.groupIds.length === 0 ? (
                   <p className="text-muted-foreground text-xs">
                     {t({
-                      en: "Si marques aquesta casella, es crearà automàticament el compte d'usuari i s'enviarà el mail de benvinguda.",
-                      fr: 'Si marcas esta casilla, se creará automáticamente la cuenta de usuario y se enviará el correo de bienvenida.'
+                      en: 'Selecciona primer un o més grups per carregar els hospitals disponibles.',
+                      fr: 'Selecciona primero uno o más grupos para cargar los hospitales disponibles.'
                     })}
                   </p>
-                </div>
-              </label>
+                ) : null}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="investigator-notes">
+                  {t({ en: 'Comentaris (només pendent)', fr: 'Comentarios (solo pendiente)' })}
+                </Label>
+                <textarea
+                  className="bg-background min-h-24 rounded-md border px-3 py-2 text-sm"
+                  id="investigator-notes"
+                  placeholder={t({
+                    en: 'Afegiu comentaris interns sobre aquest investigador pendent',
+                    fr: 'Añade comentarios internos sobre este investigador pendiente'
+                  })}
+                  value={investigatorForm.notes}
+                  onChange={(event) => setInvestigatorForm((current) => ({ ...current, notes: event.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2 rounded-md border p-3">
+                <label className="flex items-start gap-3">
+                  <Checkbox
+                    checked={investigatorForm.signed}
+                    onCheckedChange={(checked) =>
+                      setInvestigatorForm((current) => ({ ...current, signed: Boolean(checked) }))
+                    }
+                  />
+                  <div>
+                    <span className="text-sm font-medium">{t({ en: 'Signat', fr: 'Firmado' })}</span>
+                    <p className="text-muted-foreground text-xs">
+                      {t({
+                        en: "Si marques aquesta casella, es crearà automàticament el compte d'usuari i s'enviarà el mail de benvinguda.",
+                        fr: 'Si marcas esta casilla, se creará automáticamente la cuenta de usuario y se enviará el correo de bienvenida.'
+                      })}
+                    </p>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -1705,7 +1728,7 @@ const RouteComponent = () => {
           }
         }}
       >
-        <Dialog.Content className="max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="flex max-h-[90vh] flex-col overflow-hidden">
           <Dialog.Header>
             <Dialog.Title>{t({ en: 'Editar investigador pendent', fr: 'Editar investigador pendiente' })}</Dialog.Title>
             <Dialog.Description>
@@ -1716,127 +1739,133 @@ const RouteComponent = () => {
             </Dialog.Description>
           </Dialog.Header>
 
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="pending-first-name">{t({ en: 'Nom', fr: 'Nombre' })}</Label>
-              <Input
-                id="pending-first-name"
-                value={pendingDialogForm.firstName}
-                onChange={(event) => setPendingDialogForm((current) => ({ ...current, firstName: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="pending-last-name">{t({ en: 'Cognoms', fr: 'Apellidos' })}</Label>
-              <Input
-                id="pending-last-name"
-                value={pendingDialogForm.lastName}
-                onChange={(event) => setPendingDialogForm((current) => ({ ...current, lastName: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="pending-email">{t({ en: 'Correu', fr: 'Correo' })}</Label>
-              <Input
-                id="pending-email"
-                type="email"
-                value={pendingDialogForm.email}
-                onChange={(event) => setPendingDialogForm((current) => ({ ...current, email: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>{t('common.groups')}</Label>
-              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
-                {groupOptions.map((group) => {
-                  const checked = pendingDialogForm.groupIds.includes(group.id);
-                  return (
-                    <label key={group.id} className="flex items-start gap-2 text-sm">
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={() =>
-                          setPendingDialogForm((current) => {
-                            const nextGroupIds = toggleGroups(current.groupIds, group.id);
-                            const nextHospitalOptions = getHospitalOptions(nextGroupIds);
-                            return {
-                              ...current,
-                              groupIds: nextGroupIds,
-                              hospital: nextHospitalOptions.includes(current.hospital) ? current.hospital : ''
-                            };
-                          })
-                        }
-                      />
-                      <span>{group.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label>{t({ en: 'Hospital / Centre', fr: 'Hospital / Centro' })}</Label>
-              <p className="text-muted-foreground text-xs">
-                {t({
-                  en: "L'hospital disponible depèn dels grups seleccionats. Si no hi és, el podeu crear directament des d'aquí.",
-                  fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
-                })}
-              </p>
-              <Select
-                value={pendingDialogForm.hospital}
-                onValueChange={(value) => setPendingDialogForm((current) => ({ ...current, hospital: value }))}
-              >
-                <Select.Trigger disabled={pendingDialogHospitalOptions.length === 0}>
-                  {pendingDialogForm.hospital ? (
-                    formatHospitalLabel(pendingDialogForm.hospital)
-                  ) : (
-                    <Select.Value placeholder={t({ en: 'Selecciona un hospital', fr: 'Selecciona un hospital' })} />
-                  )}
-                </Select.Trigger>
-                <Select.Content>
-                  {pendingDialogHospitalOptions.map((hospital) => (
-                    <Select.Item key={hospital} value={hospital}>
-                      {formatHospitalLabel(hospital)}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select>
-              <Button
-                disabled={!canOpenCreateHospitalDialog(pendingDialogForm.groupIds) || isBusy}
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setHospitalDialogTarget('edit');
-                  setHospitalForm(DEFAULT_HOSPITAL_FORM);
-                  setIsHospitalDialogOpen(true);
-                }}
-              >
-                {t({ en: 'Crear hospital nou', fr: 'Crear hospital nuevo' })}
-              </Button>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="pending-notes">{t({ en: 'Comentaris', fr: 'Comentarios' })}</Label>
-              <textarea
-                className="bg-background min-h-24 rounded-md border px-3 py-2 text-sm"
-                id="pending-notes"
-                placeholder={t({ en: 'Afegiu comentaris interns', fr: 'Añade comentarios internos' })}
-                value={pendingDialogForm.notes}
-                onChange={(event) => setPendingDialogForm((current) => ({ ...current, notes: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2 rounded-md border p-3">
-              <label className="flex items-start gap-3">
-                <Checkbox
-                  checked={pendingDialogForm.signed}
-                  onCheckedChange={(checked) =>
-                    setPendingDialogForm((current) => ({ ...current, signed: Boolean(checked) }))
+          <div className="min-h-0 flex-1 overflow-y-auto py-2 pr-1">
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="pending-first-name">{t({ en: 'Nom', fr: 'Nombre' })}</Label>
+                <Input
+                  id="pending-first-name"
+                  value={pendingDialogForm.firstName}
+                  onChange={(event) =>
+                    setPendingDialogForm((current) => ({ ...current, firstName: event.target.value }))
                   }
                 />
-                <div>
-                  <span className="text-sm font-medium">{t({ en: 'Signat', fr: 'Firmado' })}</span>
-                  <p className="text-muted-foreground text-xs">
-                    {t({
-                      en: "Si marques aquesta casella, es crearà automàticament el compte d'usuari i s'enviarà el mail de benvinguda.",
-                      fr: 'Si marcas esta casilla, se creará automáticamente la cuenta de usuario y se enviará el correo de bienvenida.'
-                    })}
-                  </p>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="pending-last-name">{t({ en: 'Cognoms', fr: 'Apellidos' })}</Label>
+                <Input
+                  id="pending-last-name"
+                  value={pendingDialogForm.lastName}
+                  onChange={(event) =>
+                    setPendingDialogForm((current) => ({ ...current, lastName: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="pending-email">{t({ en: 'Correu', fr: 'Correo' })}</Label>
+                <Input
+                  id="pending-email"
+                  type="email"
+                  value={pendingDialogForm.email}
+                  onChange={(event) => setPendingDialogForm((current) => ({ ...current, email: event.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>{t('common.groups')}</Label>
+                <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
+                  {groupOptions.map((group) => {
+                    const checked = pendingDialogForm.groupIds.includes(group.id);
+                    return (
+                      <label key={group.id} className="flex items-start gap-2 text-sm">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() =>
+                            setPendingDialogForm((current) => {
+                              const nextGroupIds = toggleGroups(current.groupIds, group.id);
+                              const nextHospitalOptions = getHospitalOptions(nextGroupIds);
+                              return {
+                                ...current,
+                                groupIds: nextGroupIds,
+                                hospital: nextHospitalOptions.includes(current.hospital) ? current.hospital : ''
+                              };
+                            })
+                          }
+                        />
+                        <span>{group.name}</span>
+                      </label>
+                    );
+                  })}
                 </div>
-              </label>
+              </div>
+              <div className="grid gap-2">
+                <Label>{t({ en: 'Hospital / Centre', fr: 'Hospital / Centro' })}</Label>
+                <p className="text-muted-foreground text-xs">
+                  {t({
+                    en: "L'hospital disponible depèn dels grups seleccionats. Si no hi és, el podeu crear directament des d'aquí.",
+                    fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
+                  })}
+                </p>
+                <Select
+                  value={pendingDialogForm.hospital}
+                  onValueChange={(value) => setPendingDialogForm((current) => ({ ...current, hospital: value }))}
+                >
+                  <Select.Trigger disabled={pendingDialogHospitalOptions.length === 0}>
+                    {pendingDialogForm.hospital ? (
+                      formatHospitalLabel(pendingDialogForm.hospital)
+                    ) : (
+                      <Select.Value placeholder={t({ en: 'Selecciona un hospital', fr: 'Selecciona un hospital' })} />
+                    )}
+                  </Select.Trigger>
+                  <Select.Content>
+                    {pendingDialogHospitalOptions.map((hospital) => (
+                      <Select.Item key={hospital} value={hospital}>
+                        {formatHospitalLabel(hospital)}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select>
+                <Button
+                  disabled={!canOpenCreateHospitalDialog(pendingDialogForm.groupIds) || isBusy}
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setHospitalDialogTarget('edit');
+                    setHospitalForm(DEFAULT_HOSPITAL_FORM);
+                    setIsHospitalDialogOpen(true);
+                  }}
+                >
+                  {t({ en: 'Crear hospital nou', fr: 'Crear hospital nuevo' })}
+                </Button>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="pending-notes">{t({ en: 'Comentaris', fr: 'Comentarios' })}</Label>
+                <textarea
+                  className="bg-background min-h-24 rounded-md border px-3 py-2 text-sm"
+                  id="pending-notes"
+                  placeholder={t({ en: 'Afegiu comentaris interns', fr: 'Añade comentarios internos' })}
+                  value={pendingDialogForm.notes}
+                  onChange={(event) => setPendingDialogForm((current) => ({ ...current, notes: event.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2 rounded-md border p-3">
+                <label className="flex items-start gap-3">
+                  <Checkbox
+                    checked={pendingDialogForm.signed}
+                    onCheckedChange={(checked) =>
+                      setPendingDialogForm((current) => ({ ...current, signed: Boolean(checked) }))
+                    }
+                  />
+                  <div>
+                    <span className="text-sm font-medium">{t({ en: 'Signat', fr: 'Firmado' })}</span>
+                    <p className="text-muted-foreground text-xs">
+                      {t({
+                        en: "Si marques aquesta casella, es crearà automàticament el compte d'usuari i s'enviarà el mail de benvinguda.",
+                        fr: 'Si marcas esta casilla, se creará automáticamente la cuenta de usuario y se enviará el correo de bienvenida.'
+                      })}
+                    </p>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -1868,7 +1897,7 @@ const RouteComponent = () => {
       </Dialog>
 
       <Dialog open={isHospitalDialogOpen} onOpenChange={setIsHospitalDialogOpen}>
-        <Dialog.Content className="max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="flex max-h-[90vh] flex-col overflow-hidden">
           <Dialog.Header>
             <Dialog.Title>{t({ en: 'Crear hospital nou', fr: 'Crear hospital nuevo' })}</Dialog.Title>
             <Dialog.Description>
@@ -1879,46 +1908,48 @@ const RouteComponent = () => {
             </Dialog.Description>
           </Dialog.Header>
 
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="new-hospital-name">
-                {t({ en: 'Nom del centre sanitari', fr: 'Nombre del centro sanitario' })}
-              </Label>
-              <Input
-                id="new-hospital-name"
-                value={hospitalForm.name}
-                onChange={(event) => setHospitalForm((current) => ({ ...current, name: event.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+          <div className="min-h-0 flex-1 overflow-y-auto py-2 pr-1">
+            <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="new-hospital-locality">
-                  {t({ en: 'Ciutat / localitat (opcional)', fr: 'Ciudad / localidad (opcional)' })}
+                <Label htmlFor="new-hospital-name">
+                  {t({ en: 'Nom del centre sanitari', fr: 'Nombre del centro sanitario' })}
                 </Label>
                 <Input
-                  id="new-hospital-locality"
-                  value={hospitalForm.locality ?? ''}
-                  onChange={(event) => setHospitalForm((current) => ({ ...current, locality: event.target.value }))}
+                  id="new-hospital-name"
+                  value={hospitalForm.name}
+                  onChange={(event) => setHospitalForm((current) => ({ ...current, name: event.target.value }))}
                 />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+                <div className="grid gap-2">
+                  <Label htmlFor="new-hospital-locality">
+                    {t({ en: 'Ciutat / localitat (opcional)', fr: 'Ciudad / localidad (opcional)' })}
+                  </Label>
+                  <Input
+                    id="new-hospital-locality"
+                    value={hospitalForm.locality ?? ''}
+                    onChange={(event) => setHospitalForm((current) => ({ ...current, locality: event.target.value }))}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="new-hospital-province">
+                    {t({ en: 'Província (opcional)', fr: 'Provincia (opcional)' })}
+                  </Label>
+                  <Input
+                    id="new-hospital-province"
+                    value={hospitalForm.province ?? ''}
+                    onChange={(event) => setHospitalForm((current) => ({ ...current, province: event.target.value }))}
+                  />
+                </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="new-hospital-province">
-                  {t({ en: 'Província (opcional)', fr: 'Provincia (opcional)' })}
-                </Label>
+                <Label htmlFor="new-hospital-state">{t({ en: 'País (opcional)', fr: 'País (opcional)' })}</Label>
                 <Input
-                  id="new-hospital-province"
-                  value={hospitalForm.province ?? ''}
-                  onChange={(event) => setHospitalForm((current) => ({ ...current, province: event.target.value }))}
+                  id="new-hospital-state"
+                  value={hospitalForm.state ?? ''}
+                  onChange={(event) => setHospitalForm((current) => ({ ...current, state: event.target.value }))}
                 />
               </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="new-hospital-state">{t({ en: 'País (opcional)', fr: 'País (opcional)' })}</Label>
-              <Input
-                id="new-hospital-state"
-                value={hospitalForm.state ?? ''}
-                onChange={(event) => setHospitalForm((current) => ({ ...current, state: event.target.value }))}
-              />
             </div>
           </div>
 
