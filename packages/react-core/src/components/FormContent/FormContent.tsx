@@ -26,6 +26,20 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
       fr: 'Instrumento'
     });
 
+  const sanitizedContent = Array.isArray(instrument.content)
+    ? instrument.content.filter((group) => {
+        if (!group || typeof group !== 'object') {
+          return false;
+        }
+        const fields = (group as { fields?: Record<string, unknown> }).fields;
+        return Boolean(fields && Object.keys(fields).length > 0);
+      })
+    : instrument.content;
+
+  const hasRenderableContent =
+    (Array.isArray(sanitizedContent) && sanitizedContent.length > 0) ||
+    (!Array.isArray(sanitizedContent) && Object.keys(sanitizedContent ?? {}).length > 0);
+
   useEffect(() => {
     if (!formRef.current) return;
 
@@ -104,9 +118,17 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
           }
         }}
       >
+        {!hasRenderableContent ? (
+          <p className="text-muted-foreground text-sm">
+            {t({
+              en: 'No hi ha camps disponibles per aquest instrument en el format actual.',
+              fr: 'No hay campos disponibles para este instrumento en el formato actual.'
+            })}
+          </p>
+        ) : null}
         <Form
           preventResetValuesOnReset
-          content={instrument.content}
+          content={sanitizedContent as any}
           data-testid="form-content"
           initialValues={(initialValues ?? instrument.initialValues) as any}
           subscribe={
