@@ -253,6 +253,18 @@ const RouteComponent = () => {
   };
 
   if (!instrumentTarget || isLoadingData) {
+    if (instrumentBundleQuery.isError) {
+      return (
+        <div className="flex grow items-center justify-center px-6">
+          <p className="text-muted-foreground text-center text-sm">
+            {t({
+              en: "No s'ha pogut carregar l'instrument. Torna-ho a provar en uns segons.",
+              fr: 'No se pudo cargar el instrumento. Inténtelo de nuevo en unos segundos.'
+            } as any)}
+          </p>
+        </div>
+      );
+    }
     return <Spinner />;
   }
 
