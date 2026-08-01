@@ -37,8 +37,11 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
     return instrument.defaultMeasureVisibility === 'visible';
   });
 
+  const internalName = instrument.internal?.name ?? 'instrument';
+  const internalEdition = instrument.internal?.edition ?? 'unknown';
+
   const handleDownloadCSV = () => {
-    const filename = `${instrument.internal.name}_${instrument.internal.edition}_${new Date(timeCollected).toISOString()}.csv`;
+    const filename = `${internalName}_${internalEdition}_${new Date(timeCollected).toISOString()}.csv`;
     const csvContent = [
       ['Variable', 'Value'],
       ...Object.values(computedMeasures).map(({ label, value }) => [label, value?.toString() ?? 'NA']),
@@ -53,7 +56,7 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
 
   const handleDownloadPDF = async () => {
     // Download the CRF PDF file for OMEGA osteoporosis study
-    if (instrument.internal.name === 'OMEGA_FF_AP_2025') {
+    if (internalName === 'OMEGA_FF_AP_2025') {
       try {
         const response = await fetch('/instruments/production-documents/CRD OMEGA Vdef.pdf');
         const blob = await response.blob();
@@ -119,7 +122,7 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
           </p>
         </div>
         <div className="hidden sm:flex sm:items-center sm:gap-1 print:hidden">
-          {instrument.internal.name !== 'OMEGA_FF_AP_2025' && (
+          {internalName !== 'OMEGA_FF_AP_2025' && (
             <Button
               size="icon"
               title="Descarregar resultats (CSV)"
@@ -133,7 +136,7 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
         </div>
       </div>
       <Separator />
-      {subject && instrument.internal.name === 'OMEGA_FF_AP_2025' ? (
+      {subject && internalName === 'OMEGA_FF_AP_2025' ? (
         <>
           <InstrumentSummaryGroup
             items={[

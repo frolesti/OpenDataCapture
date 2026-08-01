@@ -79,6 +79,17 @@ export const ScalarInstrumentRenderer = ({
     setData(fixedData);
   };
 
+  const canFallbackToFormRenderer = (instrument: unknown): instrument is AnyUnilingualFormInstrument => {
+    if (!instrument || typeof instrument !== 'object') {
+      return false;
+    }
+    const candidate = instrument as {
+      content?: unknown;
+      validationSchema?: unknown;
+    };
+    return Boolean(candidate.content && candidate.validationSchema);
+  };
+
   return (
     <InstrumentRendererContainer className={className} index={index}>
       {match(interpreted)
@@ -126,6 +137,33 @@ export const ScalarInstrumentRenderer = ({
             .with({ index: 1, instrument: { kind: 'INTERACTIVE' } }, () => (
               <InteractiveContent bundle={target.bundle} onSubmit={handleSubmit} />
             ))
+            .with({ index: 1 }, ({ instrument }) => {
+              // Some legacy production instruments may have an incomplete runtime shape
+              // (e.g., missing `kind`) but still contain valid form content.
+              if (canFallbackToFormRenderer(instrument)) {
+                return (
+                  <FormContent
+                    key={initialData ? 'loaded' : 'new'}
+                    initialValues={initialData}
+                    instrument={instrument}
+                    onDataChange={onDataChange}
+                    onSubmit={handleSubmit}
+                  />
+                );
+              }
+              return (
+                <ContentPlaceholder
+                  message={t({
+                    en: 'Aquest instrument no té un format compatible per mostrar el contingut.',
+                    fr: 'Este instrumento no tiene un formato compatible para mostrar el contenido.'
+                  })}
+                  title={t({
+                    en: 'No es pot mostrar el contingut',
+                    fr: 'No se puede mostrar el contenido'
+                  })}
+                />
+              );
+            })
             .with({ index: 2 }, () => (
               <InstrumentSummary data={data} instrument={instrument} subject={subject} timeCollected={Date.now()} />
             ))
