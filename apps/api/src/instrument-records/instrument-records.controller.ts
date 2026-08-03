@@ -68,8 +68,12 @@ export class InstrumentRecordsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RouteAccess({ action: 'delete', subject: 'InstrumentRecord' })
-  async deleteById(@Param('id', ValidObjectIdPipe) id: string, @CurrentUser('ability') ability: AppAbility) {
-    await this.instrumentRecordsService.deleteById(id, { ability });
+  async deleteById(
+    @Param('id', ValidObjectIdPipe) id: string,
+    @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: User
+  ) {
+    await this.instrumentRecordsService.deleteById(id, { ability, user });
   }
 
   @ApiOperation({ summary: 'Export Records' })

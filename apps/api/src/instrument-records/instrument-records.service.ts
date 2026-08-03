@@ -49,6 +49,7 @@ type ExpandDataType =
 export class InstrumentRecordsService {
   constructor(
     @InjectModel('InstrumentRecord') private readonly instrumentRecordModel: Model<'InstrumentRecord'>,
+    @InjectModel('User') private readonly userModel: Model<'User'>,
     private readonly auditLogService: AuditLogService,
     private readonly groupsService: GroupsService,
     private readonly instrumentMeasuresService: InstrumentMeasuresService,
@@ -124,11 +125,27 @@ export class InstrumentRecordsService {
     });
   }
 
-  async deleteById(id: string, { ability }: EntityOperationOptions = {}) {
-    const isExisting = await this.instrumentRecordModel.exists({ id });
-    if (!isExisting) {
+  async deleteById(id: string, { ability, user }: EntityOperationOptions = {}) {
+    const instrumentRecord = await this.instrumentRecordModel.findFirst({
+      include: { session: true },
+      where: {
+        AND: [accessibleQuery(ability, 'delete', 'InstrumentRecord')],
+        id
+      }
+    });
+
+    if (!instrumentRecord) {
       throw new NotFoundException(`Could not find record with ID '${id}'`);
     }
+
+    // Safety rule: admins can only delete records created by admin users.
+    if (user?.basePermissionLevel === 'ADMIN') {
+      const recordOwner = await this.userModel.findById(instrumentRecord.session.userId);
+      if (!recordOwner || recordOwner.basePermissionLevel !== 'ADMIN') {
+        throw new ForbiddenException('Admin users can only delete records created by admin users.');
+      }
+    }
+
     return this.instrumentRecordModel.delete({
       where: { AND: [accessibleQuery(ability, 'delete', 'InstrumentRecord')], id }
     });
