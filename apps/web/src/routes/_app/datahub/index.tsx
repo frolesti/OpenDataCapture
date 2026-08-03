@@ -324,7 +324,8 @@ const RouteComponent = () => {
                   }
 
                   const canEditRecord = removeSubjectIdScope(record.__subjectId__ as string) === currentUser?.username;
-                  const canDeleteRecord = isAdminUser;
+                  const canDeleteRecord =
+                    isAdminUser && removeSubjectIdScope(record.__subjectId__ as string) === currentUser?.username;
 
                   if (!canEditRecord && !canDeleteRecord) {
                     return <div className="w-16" />;
