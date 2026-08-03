@@ -9,6 +9,8 @@ type UseInstrumentRecordsOptions = {
   params: InstrumentRecordQueryParams;
 };
 
+export const INSTRUMENT_RECORDS_QUERY_KEY = 'instrument-records';
+
 export const useInstrumentRecords = (
   { enabled, params }: UseInstrumentRecordsOptions = {
     enabled: true,
@@ -24,6 +26,6 @@ export const useInstrumentRecords = (
       });
       return $InstrumentRecord.array().parseAsync(response.data);
     },
-    queryKey: ['instrument-records', ...Object.values(params)]
+    queryKey: [INSTRUMENT_RECORDS_QUERY_KEY, ...Object.values(params)]
   });
 };

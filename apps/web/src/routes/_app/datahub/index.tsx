@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 import { camelToSnakeCase, toBasicISOString } from '@douglasneuroinformatics/libjs';
 import {
+  AlertDialog,
   ActionDropdown,
   Button,
   ClientTable,
@@ -16,12 +17,13 @@ import type { Subject } from '@opendatacapture/schemas/subject';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
-import { ClipboardList, Edit } from 'lucide-react';
+import { ClipboardList, Edit, Trash2 } from 'lucide-react';
 import { unparse } from 'papaparse';
 
 import { IdentificationForm } from '@/components/IdentificationForm';
 import { PageHeader } from '@/components/PageHeader';
 import { SelectInstrument } from '@/components/SelectInstrument';
+import { useDeleteInstrumentRecordMutation } from '@/hooks/useDeleteInstrumentRecordMutation';
 import { useGlobalInstrumentVisualization } from '@/hooks/useGlobalInstrumentVisualization';
 import { useSubjectsQuery } from '@/hooks/useSubjectsQuery';
 import { useAppStore } from '@/store';
@@ -36,6 +38,8 @@ const SelectItem = Select.Item as unknown as React.ComponentType<React.PropsWith
 
 const RouteComponent = () => {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [selectedRecordId, setSelectedRecordId] = useState<null | string>(null);
 
   const currentGroup = useAppStore((store) => store.currentGroup);
   const currentUser = useAppStore((store) => store.currentUser);
@@ -44,6 +48,7 @@ const RouteComponent = () => {
   const addNotification = useNotificationsStore((store) => store.addNotification);
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const deleteInstrumentRecordMutation = useDeleteInstrumentRecordMutation();
 
   const {
     dl,
@@ -60,8 +65,11 @@ const RouteComponent = () => {
   const { data: subjects } = useSubjectsQuery({ params: { groupId: currentGroup?.id } });
 
   const isStandardUser = currentUser?.basePermissionLevel === 'STANDARD';
+  const isAdminUser = currentUser?.basePermissionLevel === 'ADMIN';
   const canViewAudit =
     currentUser?.basePermissionLevel === 'ADMIN' || currentUser?.basePermissionLevel === 'GROUP_MANAGER';
+
+  const selectedRecord = selectedRecordId ? records.find((record) => record.__id__ === selectedRecordId) : undefined;
 
   const getExportRecords = async () => {
     const response = await axios.get<InstrumentRecordsExport>('/v1/instrument-records/export', {
@@ -120,6 +128,15 @@ const RouteComponent = () => {
       addNotification({ type: 'success' });
       await navigate({ to: `./${response.data.id}/assignments` });
     }
+  };
+
+  const handleDeleteRecord = async () => {
+    if (!selectedRecordId) {
+      return;
+    }
+    await deleteInstrumentRecordMutation.mutateAsync({ id: selectedRecordId });
+    setIsDeleteConfirmOpen(false);
+    setSelectedRecordId(null);
   };
 
   const fields: { field: string; label: string }[] = [];
@@ -302,32 +319,56 @@ const RouteComponent = () => {
                 // @ts-expect-error - Formatter can return a React Node
                 formatter: (id: string) => {
                   const record = records.find((r) => r.__id__ === id);
-                  if (!record || removeSubjectIdScope(record.__subjectId__ as string) !== currentUser?.username) {
-                    return <div className="w-9" />;
+                  if (!record) {
+                    return <div className="w-16" />;
                   }
-                  return (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => {
-                        const rawData = record && typeof record === 'object' ? record.__data__ : undefined;
-                        // Ensure empty objects are treated as undefined to trigger fetch in target page
-                        const initialData = rawData && Object.keys(rawData).length > 0 ? rawData : undefined;
 
-                        void navigate({
-                          params: { id: instrumentId },
-                          search: { recordId: id },
-                          state: {
-                            instrumentTitle: instrument?.clientDetails?.title ?? instrument?.details?.title,
-                            initialData: initialData,
-                            recordId: id
-                          },
-                          to: '/instruments/render/$id'
-                        });
-                      }}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                  const canEditRecord = removeSubjectIdScope(record.__subjectId__ as string) === currentUser?.username;
+                  const canDeleteRecord = isAdminUser;
+
+                  if (!canEditRecord && !canDeleteRecord) {
+                    return <div className="w-16" />;
+                  }
+
+                  return (
+                    <div className="flex items-center gap-1">
+                      {canEditRecord && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
+                            const rawData = record && typeof record === 'object' ? record.__data__ : undefined;
+                            // Ensure empty objects are treated as undefined to trigger fetch in target page
+                            const initialData = rawData && Object.keys(rawData).length > 0 ? rawData : undefined;
+
+                            void navigate({
+                              params: { id: instrumentId },
+                              search: { recordId: id },
+                              state: {
+                                instrumentTitle: instrument?.clientDetails?.title ?? instrument?.details?.title,
+                                initialData: initialData,
+                                recordId: id
+                              },
+                              to: '/instruments/render/$id'
+                            });
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDeleteRecord && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
+                            setSelectedRecordId(id);
+                            setIsDeleteConfirmOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   );
                 },
                 label: t({
@@ -363,6 +404,54 @@ const RouteComponent = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={(open) => {
+          setIsDeleteConfirmOpen(open);
+          if (!open) {
+            setSelectedRecordId(null);
+          }
+        }}
+      >
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>
+              {t({
+                en: "Eliminar entrada d'informe?",
+                fr: '¿Eliminar entrada de informe?'
+              })}
+            </AlertDialog.Title>
+            <AlertDialog.Description>
+              {selectedRecord
+                ? t({
+                    en: `S'eliminarà la fila del subjecte "${removeSubjectIdScope(
+                      selectedRecord.__subjectId__
+                    )}". Aquesta acció no es pot desfer.`,
+                    fr: `Se eliminará la fila del sujeto "${removeSubjectIdScope(
+                      selectedRecord.__subjectId__
+                    )}". Esta acción no se puede deshacer.`
+                  })
+                : t({
+                    en: 'Aquesta acció no es pot desfer.',
+                    fr: 'Esta acción no se puede deshacer.'
+                  })}
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
+            <AlertDialog.Cancel disabled={deleteInstrumentRecordMutation.isPending}>
+              {t('core.cancel')}
+            </AlertDialog.Cancel>
+            <AlertDialog.Action
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/80"
+              disabled={deleteInstrumentRecordMutation.isPending || !selectedRecordId}
+              onClick={() => void handleDeleteRecord()}
+            >
+              {t('core.delete')}
+            </AlertDialog.Action>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
+      </AlertDialog>
     </React.Fragment>
   );
 };
