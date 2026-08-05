@@ -86,6 +86,7 @@ function buildUserEditForm(user?: User) {
     firstName: user?.firstName ?? '',
     groupIds: user?.groupIds ?? [],
     lastName: user?.lastName ?? '',
+    password: '',
     username: user?.username ?? ''
   };
 }
@@ -118,6 +119,7 @@ type CreatedUserFormState = {
   firstName: string;
   groupIds: string[];
   lastName: string;
+  password: string;
   username: string;
 };
 
@@ -170,6 +172,7 @@ const DEFAULT_CREATED_USER_FORM: CreatedUserFormState = {
   firstName: '',
   groupIds: [],
   lastName: '',
+  password: '',
   username: ''
 };
 
@@ -498,6 +501,12 @@ const RouteComponent = () => {
   }, [selectedCreatedUser?.id, sessionsByUserId]);
   const showEmailField = selectedCreatedUser?.basePermissionLevel !== 'STANDARD';
 
+  const createdUserPasswordStrength = useMemo(
+    () => estimatePasswordStrength(createdUserDialogForm.password, { feedbackLanguage: 'en' }),
+    [createdUserDialogForm.password]
+  );
+  const isCreatedUserPasswordStrong = createdUserPasswordStrength.success;
+
   const passwordStrength = useMemo(
     () =>
       estimatePasswordStrength(userForm.password, {
@@ -534,7 +543,8 @@ const RouteComponent = () => {
   const canSaveCreatedUserDialog =
     createdUserDialogForm.firstName.trim().length > 0 &&
     createdUserDialogForm.lastName.trim().length > 0 &&
-    createdUserDialogForm.username.trim().length > 0;
+    createdUserDialogForm.username.trim().length > 0 &&
+    (createdUserDialogForm.password.trim().length === 0 || isCreatedUserPasswordStrong);
 
   const isBusy =
     createUserMutation.isPending ||
@@ -778,6 +788,7 @@ const RouteComponent = () => {
           firstName: createdUserDialogForm.firstName.trim(),
           groupIds: createdUserDialogForm.groupIds,
           lastName: createdUserDialogForm.lastName.trim(),
+          password: createdUserDialogForm.password.trim() || undefined,
           username: createdUserDialogForm.username.trim()
         },
         id: selectedUserId
@@ -1336,6 +1347,31 @@ const RouteComponent = () => {
                     setCreatedUserDialogForm((current) => ({ ...current, username: event.target.value }))
                   }
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="created-user-password">{t({ en: 'Nova contrasenya', fr: 'Nueva contraseña' })}</Label>
+                <Input
+                  id="created-user-password"
+                  type="password"
+                  value={createdUserDialogForm.password}
+                  onChange={(event) =>
+                    setCreatedUserDialogForm((current) => ({ ...current, password: event.target.value }))
+                  }
+                />
+                <p className="text-muted-foreground text-xs">
+                  {t({
+                    en: 'Deixa aquest camp en blanc si no vols canviar la contrasenya.',
+                    fr: 'Deja este campo en blanco si no quieres cambiar la contraseña.'
+                  })}
+                </p>
+                {createdUserDialogForm.password.trim().length > 0 && !isCreatedUserPasswordStrong ? (
+                  <p className="text-destructive text-xs">
+                    {t({
+                      en: 'La contrasenya no és prou segura. Inclou majúscules, minúscules, números i símbols.',
+                      fr: 'La contraseña no es lo bastante segura. Incluye mayúsculas, minúsculas, números y símbolos.'
+                    })}
+                  </p>
+                ) : null}
               </div>
               {showEmailField ? (
                 <div className="grid gap-2">
