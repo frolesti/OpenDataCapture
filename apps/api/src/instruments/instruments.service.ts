@@ -128,18 +128,18 @@ export class InstrumentsService {
     const instruments = await this.instrumentModel.findMany({
       where: {
         AND: [
-          {
-            records: query.subjectId
-              ? {
+          query.subjectId
+            ? {
+                records: {
                   some: {
                     subjectId: query.subjectId
                   }
                 }
-              : undefined
-          },
+              }
+            : undefined,
           accessibleInstrumentIds ? { id: { in: accessibleInstrumentIds } } : undefined,
           accessibleQuery(ability, 'read', 'Instrument')
-        ]
+        ].filter(Boolean)
       }
     });
     const instances = await this.instantiate(instruments);
@@ -184,7 +184,7 @@ export class InstrumentsService {
         AND: [
           accessibleQuery(ability, 'read', 'Instrument'),
           accessibleInstrumentIds ? { id: { in: accessibleInstrumentIds } } : undefined
-        ],
+        ].filter(Boolean),
         id
       }
     });
