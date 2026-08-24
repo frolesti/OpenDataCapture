@@ -214,13 +214,20 @@ export class UsersService {
     if (password) {
       hashedPassword = await this.cryptoService.hashPassword(password);
     }
+
+    const groupsUpdate =
+      groupIds === undefined
+        ? undefined
+        : {
+            // Replace memberships so unselected groups are removed as well.
+            set: groupIds.map((id) => ({ id }))
+          };
+
     return this.userModel.update({
       data: {
         ...data,
         email: normalizedEmail,
-        groups: {
-          connect: groupIds?.map((id) => ({ id }))
-        },
+        ...(groupsUpdate ? { groups: groupsUpdate } : {}),
         hashedPassword
       },
       omit: {
