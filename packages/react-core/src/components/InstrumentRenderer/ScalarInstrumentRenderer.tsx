@@ -37,9 +37,9 @@ export type ScalarInstrumentRendererProps = {
 
 const fixDates = (data: unknown): unknown => {
   if (data instanceof Date) {
-    // Construct a UTC date using the local components of the input date
-    // We set time to 12:00 UTC to be safe against timezone shifts
-    return new Date(Date.UTC(data.getFullYear(), data.getMonth(), data.getDate(), 12, 0, 0));
+    // Date-only controls expose a UTC calendar day. Keep those components and
+    // persist noon UTC so western time zones cannot shift the stored day back.
+    return new Date(Date.UTC(data.getUTCFullYear(), data.getUTCMonth(), data.getUTCDate(), 12, 0, 0));
   } else if (Array.isArray(data)) {
     return data.map(fixDates);
   } else if (data instanceof Set) {

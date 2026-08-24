@@ -250,7 +250,10 @@ const RouteComponent = () => {
 
                         let label = key;
                         if (key === '__subjectId__') {
-                          label = t('datahub.index.table.subject').toUpperCase();
+                          label = t({
+                            en: 'INVESTIGATOR',
+                            fr: 'INVESTIGADORES'
+                          }).toUpperCase();
                         } else if (isHealthCenter) {
                           label = t({
                             en: 'Centre Sanitari',
@@ -270,16 +273,30 @@ const RouteComponent = () => {
                             <SelectContent>
                               <SelectItem value="ALL">
                                 {key === '__subjectId__'
-                                  ? t('datahub.filters.allSubjects')
+                                  ? t({
+                                      en: 'All investigators',
+                                      fr: 'Todos los investigadores'
+                                    })
                                   : isHealthCenter
                                     ? t('datahub.filters.allHealthCenters')
                                     : `${t('datahub.filters.all')} ${key}`}
                               </SelectItem>
-                              {Array.from(options).map((opt) => (
-                                <SelectItem key={opt} value={opt}>
-                                  {key === '__subjectId__' ? removeSubjectIdScope(opt) : opt}
-                                </SelectItem>
-                              ))}
+                              {(() => {
+                                const visibleOptions =
+                                  key === '__subjectId__'
+                                    ? Array.from(
+                                        new Map(
+                                          Array.from(options).map((opt) => [removeSubjectIdScope(opt), opt])
+                                        ).entries()
+                                      )
+                                    : Array.from(options).map((opt) => [opt, opt] as const);
+
+                                return visibleOptions.map(([label, value]) => (
+                                  <SelectItem key={value} value={value}>
+                                    {label}
+                                  </SelectItem>
+                                ));
+                              })()}
                             </SelectContent>
                           </Select>
                         );
@@ -385,7 +402,10 @@ const RouteComponent = () => {
               {
                 field: '__subjectId__',
                 formatter: (value: string) => removeSubjectIdScope(value),
-                label: 'SUBJECT_ID'
+                label: t({
+                  en: 'INVESTIGATOR',
+                  fr: 'INVESTIGADOR'
+                })
               },
               ...fields
             ]}

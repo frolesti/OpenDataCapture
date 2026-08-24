@@ -17,6 +17,14 @@ export type AuthSlice = {
   currentUser: CurrentUser | null;
   login: (accessToken: string) => void;
   logout: () => void;
+  syncCurrentUserFromProfile: (profile: {
+    basePermissionLevel: CurrentUser['basePermissionLevel'];
+    firstName: string;
+    groups: Group[];
+    id: string;
+    lastName: string;
+    username: string;
+  }) => void;
 };
 
 export type DisclaimerSlice = {

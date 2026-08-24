@@ -116,6 +116,31 @@ model InstrumentRecord {
   @@map("InstrumentRecordModel")
 }
 
+enum OrionFollowupReminderStatus {
+  COMPLETE
+  PENDING
+  SENT
+  FAILED
+}
+
+model OrionFollowupReminder {
+  createdAt          DateTime                  @default(now()) @db.Date
+  updatedAt          DateTime                  @updatedAt @db.Date
+  id                 String                    @id @default(auto()) @map("_id") @db.ObjectId
+  dueAt              DateTime                  @db.Date
+  error              String?
+  followupRecordId   String?                   @unique @db.ObjectId
+  investigatorEmail  String?
+  investigatorName   String
+  completedAt        DateTime?                 @db.Date
+  selectionRecordId  String                    @unique @db.ObjectId
+  status             OrionFollowupReminderStatus @default(PENDING)
+  subjectId          String
+  userCode           String
+
+  @@map("OrionFollowupReminderModel")
+}
+
 // Instruments 
 
 enum InstrumentKind {

@@ -32,6 +32,11 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
     (Array.isArray(contentForForm) && contentForForm.length > 0) ||
     (!Array.isArray(contentForForm) && Object.keys(contentForForm ?? {}).length > 0);
 
+  const markSubmitAttempt = () => {
+    isSubmittingRef.current = true;
+    hasScrolledRef.current = false;
+  };
+
   useEffect(() => {
     if (!formRef.current) return;
 
@@ -41,14 +46,20 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
         return;
       }
 
-      const firstError = formRef.current?.querySelector('[role="alert"], .text-destructive, [aria-invalid="true"]');
+      const firstError = formRef.current?.querySelector(
+        '[role="alert"], .text-destructive, [aria-invalid="true"], [data-invalid="true"]'
+      );
       if (firstError) {
-        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'start' });
         hasScrolledRef.current = true;
 
-        const inputElement = firstError.closest('[data-field]')?.querySelector('input, select, textarea');
+        const inputElement =
+          firstError.closest('[data-field]')?.querySelector('input, select, textarea') ??
+          firstError.querySelector('input, select, textarea');
         if (inputElement instanceof HTMLElement) {
           setTimeout(() => inputElement.focus(), 300);
+        } else if (firstError instanceof HTMLElement) {
+          setTimeout(() => firstError.focus(), 300);
         }
 
         // Reset flags after scrolling
@@ -62,7 +73,7 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['aria-invalid', 'role']
+      attributeFilter: ['aria-invalid', 'role', 'class', 'data-invalid']
     });
 
     return () => observer.disconnect();
@@ -101,14 +112,15 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
         </Dialog>
       </div>
       <div
+        className="[&_button[type='submit']]:border-[#8f8df2] [&_button[type='submit']]:bg-[#8f8df2] [&_button[type='submit']]:text-white [&_button[type='submit']]:hover:bg-[#7f7de4]"
         onClick={(e) => {
           // Detect submit button clicks to set the flag
           const target = e.target as HTMLElement;
           if (target.closest('button[type="submit"]')) {
-            isSubmittingRef.current = true;
-            hasScrolledRef.current = false;
+            markSubmitAttempt();
           }
         }}
+        onSubmitCapture={markSubmitAttempt}
       >
         {!hasRenderableContent ? (
           <p className="text-muted-foreground text-sm">

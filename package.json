@@ -82,7 +82,10 @@
     "onlyBuiltDependencies": [
       "@nestjs/core",
       "sharp"
-    ]
+    ],
+    "patchedDependencies": {
+      "@douglasneuroinformatics/libui": "patches/@douglasneuroinformatics__libui.patch"
+    }
   },
   "__isODCRepo": true,
   "dependencies": {

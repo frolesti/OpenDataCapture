@@ -1,0 +1,14 @@
+diff --git a/dist/components.js b/dist/components.js
+index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3bde25a81e 100755
+--- a/dist/components.js
++++ b/dist/components.js
+@@ -3030,7 +3030,8 @@ var DateField = ({ disabled, error, label, name, readOnly, setValue, value }) =>
+     if (isSelecting) {
+       return;
+     } else if (isValidDateString(inputValue)) {
+-      setValue(new Date(inputValue));
++      const [year, month, day] = inputValue.split("-").map(Number);
++      setValue(new Date(year, month - 1, day, 12));
+     } else {
+       setInputValue("");
+     }

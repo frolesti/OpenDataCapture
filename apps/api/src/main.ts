@@ -8,6 +8,7 @@ import { GatewayModule } from './gateway/gateway.module';
 import { GroupsModule } from './groups/groups.module';
 import { InstrumentRecordsModule } from './instrument-records/instrument-records.module';
 import { InstrumentsModule } from './instruments/instruments.module';
+import { OrionFollowupModule } from './orion-followup/orion-followup.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { SetupModule } from './setup/setup.module';
 import { SubjectsModule } from './subjects/subjects.module';
@@ -43,6 +44,7 @@ export default AppFactory.create({
     GroupsModule,
     InstrumentRecordsModule,
     InstrumentsModule,
+    OrionFollowupModule,
     SessionsModule,
     SetupModule,
     SubjectsModule,

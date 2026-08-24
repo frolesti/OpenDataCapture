@@ -25,10 +25,14 @@ import { useAssignmentsQuery } from '@/hooks/useAssignmentsQuery';
 import { useCreateAssignment } from '@/hooks/useCreateAssignment';
 import { useInstrument } from '@/hooks/useInstrument';
 import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
+import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
 import { useUpdateAssignment } from '@/hooks/useUpdateAssignment';
 import { useAppStore } from '@/store';
 
 const ONE_YEAR = 31556952000;
+
+const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
+const ORION_FOLLOWUP_INTERNAL_NAME = 'ORION_PR_2026_FOLLOWUP';
 
 const AssignmentSlider: React.FC<{
   assignment: Assignment | null;
@@ -155,10 +159,39 @@ const RouteComponent = () => {
 
   const instrumentInfoQuery = useInstrumentInfoQuery();
 
+  const orionSelectionInstrument = (instrumentInfoQuery.data ?? []).find(
+    (instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME
+  );
+  const orionFollowupInstrument = (instrumentInfoQuery.data ?? []).find(
+    (instrument) => instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME
+  );
+
+  const orionSelectionRecordsQuery = useInstrumentRecords({
+    enabled: Boolean(orionSelectionInstrument?.id),
+    params: {
+      instrumentId: orionSelectionInstrument?.id,
+      subjectId: params.subjectId
+    }
+  });
+
+  const hasEligibleOrionSelection = (orionSelectionRecordsQuery.data ?? []).some((record) => {
+    const data = record.data as Record<string, unknown>;
+    const inclusionKeys = ['inclusion_1', 'inclusion_2', 'inclusion_3', 'inclusion_4', 'inclusion_5', 'inclusion_6'];
+    const exclusionKeys = ['exclusion_1', 'exclusion_2', 'exclusion_3', 'exclusion_4', 'exclusion_5', 'exclusion_6'];
+    return (
+      data.informed_consent === 'si' &&
+      inclusionKeys.every((key) => data[key] === 'si') &&
+      exclusionKeys.every((key) => data[key] === 'no')
+    );
+  });
+
   const instrumentOptions = Object.fromEntries(
     (instrumentInfoQuery.data ?? [])
       .sort((a, b) => a.details.title.localeCompare(b.details.title))
       .filter((instrument) => {
+        if (instrument.id === orionFollowupInstrument?.id && !hasEligibleOrionSelection) {
+          return false;
+        }
         return currentGroup?.accessibleInstrumentIds.includes(instrument.id) ?? true;
       })
       .map((instrument) => [instrument.id, instrument.details.title])

@@ -26,6 +26,62 @@ const EXCLUSION_KEYS = [
 
 type FormData = Record<string, any>;
 
+const DATE_FORMAT_ERROR = 'Formato de fecha inválido. Use dd-mm-aaaa';
+
+function parseManualDate(value: unknown): Date | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value.trim());
+  if (!match) {
+    return undefined;
+  }
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const parsed = new Date(year, month - 1, day, 12);
+
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
+function optionalManualDateSchema() {
+  return z
+    .any()
+    .optional()
+    .transform((value, context) => {
+      if (value === undefined || value === null || value === '') {
+        return undefined;
+      }
+
+      const parsed = parseManualDate(value);
+      if (!parsed) {
+        context.addIssue({ code: z.ZodIssueCode.custom, message: DATE_FORMAT_ERROR });
+        return z.NEVER;
+      }
+
+      return parsed;
+    });
+}
+
 function isEligible(data: FormData): boolean {
   if (data.informed_consent !== 'si') {
     return false;
@@ -57,19 +113,6 @@ function requiresEligibility<T extends Record<string, any>>(field: T): any {
   };
 }
 
-function requiresConsentAndValue<T extends Record<string, any>>(dep: string, value: any, field: T): any {
-  return {
-    kind: 'dynamic' as const,
-    deps: ['informed_consent', dep] as const,
-    render(data: FormData): any {
-      if (data.informed_consent === 'si' && data[dep] === value) {
-        return field;
-      }
-      return null;
-    }
-  };
-}
-
 function requiresEligibilityAndValue<T extends Record<string, any>>(dep: string, value: any, field: T): any {
   return {
     kind: 'dynamic' as const,
@@ -83,65 +126,11 @@ function requiresEligibilityAndValue<T extends Record<string, any>>(dep: string,
   };
 }
 
-function consentWarning(): any {
-  return {
-    kind: 'dynamic' as const,
-    deps: ['informed_consent'] as const,
-    render(data: FormData): any {
-      if (data.informed_consent !== 'si') {
-        return {
-          kind: 'string',
-          variant: 'input',
-          label: '⚠️ Sin consentimiento informado no se puede continuar con el formulario.',
-          disabled: true,
-          className: 'text-red-600 font-bold'
-        };
-      }
-      return null;
-    }
-  };
-}
-
-function eligibilityWarning(): any {
-  return {
-    kind: 'dynamic' as const,
-    deps: ['informed_consent', ...INCLUSION_KEYS, ...EXCLUSION_KEYS] as const,
-    render(data: FormData): any {
-      if (data.informed_consent !== 'si') {
-        return null;
-      }
-
-      const allCriteriaAnswered =
-        INCLUSION_KEYS.every((key) => data[key] === 'si' || data[key] === 'no') &&
-        EXCLUSION_KEYS.every((key) => data[key] === 'si' || data[key] === 'no');
-
-      if (!allCriteriaAnswered) {
-        return {
-          kind: 'string',
-          variant: 'input',
-          label: '⚠️ Complete todos los criterios de selección para desbloquear el resto de secciones.',
-          disabled: true,
-          className: 'text-amber-700 font-bold'
-        };
-      }
-
-      if (!isEligible(data)) {
-        return {
-          kind: 'string',
-          variant: 'input',
-          label: '⚠️ El paciente no cumple con los criterios de selección.',
-          disabled: true,
-          className: 'text-red-600 font-bold'
-        };
-      }
-
-      return null;
-    }
-  };
-}
-
-function eq5d5lFields(timeframe: 'retrospective' | 'prospective'): Record<string, any> {
-  const prefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_';
+function eq5d5lFields(
+  timeframe: 'retrospective' | 'prospective',
+  fieldPrefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_'
+): Record<string, any> {
+  const prefix = fieldPrefix;
   const labelSuffix =
     timeframe === 'retrospective' ? ' (durante tratamiento con pregabalina IR)' : ' (actualmente con pregabalina PR)';
 
@@ -172,7 +161,7 @@ function eq5d5lFields(timeframe: 'retrospective' | 'prospective'): Record<string
     }),
     [`${prefix}eq5d_activities`]: requiresEligibility({
       kind: 'string',
-      label: `Actividades cotidianas${labelSuffix}`,
+      label: `Actividades cotidianas(Ej.: trabajar, estudiar, hacer tareas domésticas, actividades familiares o actividades durante el tiempo libre)}`,
       variant: 'radio',
       options: {
         '1': 'No tengo problemas para realizar mis actividades cotidianas',
@@ -207,16 +196,21 @@ function eq5d5lFields(timeframe: 'retrospective' | 'prospective'): Record<string
       }
     }),
     [`${prefix}eq5d_vas`]: requiresEligibility({
-      kind: 'number',
+      kind: 'string',
       variant: 'input',
       label: `¿Cómo considera su estado de salud hoy en una escala de 0 a 100?${labelSuffix}`,
-      description: 'Donde 100 es la mejor salud que pueda imaginar y 0 la peor'
+      placeholder: 'Su salud hoy',
+      description:
+        'Donde 100 es la mejor salud que pueda imaginar y 0 la peor. Indique a continuación el número que mejor refleje su estado de salud actual.'
     })
   };
 }
 
-function sleepQualityFields(timeframe: 'retrospective' | 'prospective'): Record<string, any> {
-  const prefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_';
+function sleepQualityFields(
+  timeframe: 'retrospective' | 'prospective',
+  fieldPrefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_'
+): Record<string, any> {
+  const prefix = fieldPrefix;
   const labelSuffix = timeframe === 'retrospective' ? ' (durante pregabalina IR)' : ' (actualmente con pregabalina PR)';
 
   return {
@@ -271,8 +265,11 @@ function sleepQualityFields(timeframe: 'retrospective' | 'prospective'): Record<
   };
 }
 
-function adherenceFields(timeframe: 'retrospective' | 'prospective'): Record<string, any> {
-  const prefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_';
+function adherenceFields(
+  timeframe: 'retrospective' | 'prospective',
+  fieldPrefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_'
+): Record<string, any> {
+  const prefix = fieldPrefix;
 
   return {
     [`${prefix}mmas_forget`]: requiresEligibility({
@@ -302,101 +299,202 @@ function adherenceFields(timeframe: 'retrospective' | 'prospective'): Record<str
   };
 }
 
-function generateTreatmentFields(
-  prefix: 'prev' | 'current',
-  sectionLabel: string,
-  maxTreatments = 5
-): Record<string, any> {
-  const fields: Record<string, any> = {
-    [`${prefix}_treatments_note`]: requiresEligibility({
-      kind: 'string',
-      variant: 'input',
-      label: `Nota: complete tratamiento, dosis (mg), fecha inicio y fecha fin (${sectionLabel}).`,
-      disabled: true
-    })
+function dateField(label: string): Record<string, any> {
+  return {
+    kind: 'string',
+    variant: 'input',
+    label,
+    placeholder: 'dd-mm-aaaa',
+    description: 'Formato: dd-mm-aaaa'
   };
+}
+
+function nonPersistentCheckboxSchema() {
+  return z
+    .boolean()
+    .optional()
+    .transform(() => undefined);
+}
+
+function isTreatmentComplete(data: FormData, prefix: string, treatmentNumber: number): boolean {
+  return Boolean(
+    data[`${prefix}_treatment_name_${treatmentNumber}`] &&
+      data[`${prefix}_treatment_dose_mg_${treatmentNumber}`] !== undefined &&
+      data[`${prefix}_treatment_start_${treatmentNumber}`] &&
+      data[`${prefix}_treatment_end_${treatmentNumber}`]
+  );
+}
+
+function treatmentCheckboxLabel(treatmentNumber: number): string {
+  const ordinal = ['segundo', 'tercer', 'cuarto'][treatmentNumber - 2];
+  return `¿Desea añadir un ${ordinal} tratamiento?`;
+}
+
+function showAddTreatmentCheckbox(prefix: 'prev' | 'current' | 'concomitant', treatmentNumber: number): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: [
+      'informed_consent',
+      ...INCLUSION_KEYS,
+      ...EXCLUSION_KEYS,
+      `${prefix}_treatment_name_${treatmentNumber}`,
+      `${prefix}_treatment_dose_mg_${treatmentNumber}`,
+      `${prefix}_treatment_start_${treatmentNumber}`,
+      `${prefix}_treatment_end_${treatmentNumber}`
+    ] as const,
+    render(data: FormData): any {
+      if (!isEligible(data) || !isTreatmentComplete(data, prefix, treatmentNumber)) {
+        return null;
+      }
+      return {
+        kind: 'boolean',
+        variant: 'checkbox',
+        label: treatmentCheckboxLabel(treatmentNumber + 1)
+      };
+    }
+  };
+}
+
+function requiresPreviousTreatment<T extends Record<string, any>>(
+  field: T,
+  prefix: 'prev' | 'current' | 'concomitant',
+  treatmentNumber: number
+): any {
+  if (treatmentNumber === 1) {
+    return requiresEligibility(field);
+  }
+
+  const previousTreatment = treatmentNumber - 1;
+  return {
+    kind: 'dynamic' as const,
+    deps: [
+      'informed_consent',
+      ...INCLUSION_KEYS,
+      ...EXCLUSION_KEYS,
+      `${prefix}_treatment_name_${previousTreatment}`,
+      `${prefix}_treatment_dose_mg_${previousTreatment}`,
+      `${prefix}_treatment_start_${previousTreatment}`,
+      `${prefix}_treatment_end_${previousTreatment}`,
+      `add_${prefix}_treatment_${treatmentNumber}`
+    ] as const,
+    render(data: FormData): any {
+      return isEligible(data) &&
+        isTreatmentComplete(data, prefix, previousTreatment) &&
+        data[`add_${prefix}_treatment_${treatmentNumber}`] === true
+        ? field
+        : null;
+    }
+  };
+}
+
+function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', maxTreatments = 4): Record<string, any> {
+  const fields: Record<string, any> = {};
 
   for (let i = 1; i <= maxTreatments; i++) {
-    const needsPrevious = i === 1 ? null : `${prefix}_add_treatment_${i}`;
+    fields[`${prefix}_treatment_name_${i}`] = requiresPreviousTreatment(
+      {
+        kind: 'string',
+        variant: 'input',
+        label: `Tratamiento ${i}`
+      },
+      prefix,
+      i
+    );
 
-    const fieldRenderer = (field: Record<string, any>) => {
-      if (!needsPrevious) {
-        return requiresEligibility(field);
-      }
-      return requiresEligibilityAndValue(needsPrevious, 'si', field);
-    };
+    fields[`${prefix}_treatment_dose_mg_${i}`] = requiresPreviousTreatment(
+      {
+        kind: 'number',
+        variant: 'input',
+        label: `Dosis (mg) - Tratamiento ${i}`
+      },
+      prefix,
+      i
+    );
 
-    fields[`${prefix}_treatment_header_${i}`] = fieldRenderer({
-      kind: 'string',
-      variant: 'input',
-      label: `Tratamiento ${i}`,
-      disabled: true
-    });
+    fields[`${prefix}_treatment_start_${i}`] = requiresPreviousTreatment(
+      dateField(`Fecha de inicio - Tratamiento ${i}`),
+      prefix,
+      i
+    );
 
-    fields[`${prefix}_treatment_name_${i}`] = fieldRenderer({
-      kind: 'string',
-      variant: 'input',
-      label: `Nombre del tratamiento ${i}`
-    });
-
-    fields[`${prefix}_treatment_dose_mg_${i}`] = fieldRenderer({
-      kind: 'number',
-      variant: 'input',
-      label: `Dosis (mg) del tratamiento ${i}`
-    });
-
-    fields[`${prefix}_treatment_start_${i}`] = fieldRenderer({
-      kind: 'string',
-      variant: 'input',
-      placeholder: 'DD-MM-YYYY',
-      label: `Fecha inicio del tratamiento ${i}`
-    });
-
-    fields[`${prefix}_treatment_end_${i}`] = fieldRenderer({
-      kind: 'string',
-      variant: 'input',
-      placeholder: 'DD-MM-YYYY',
-      label: `Fecha fin del tratamiento ${i}`
-    });
+    fields[`${prefix}_treatment_end_${i}`] = requiresPreviousTreatment(
+      dateField(`Fecha de fin - Tratamiento ${i}`),
+      prefix,
+      i
+    );
 
     if (i < maxTreatments) {
-      fields[`${prefix}_add_treatment_${i + 1}`] = {
+      fields[`add_${prefix}_treatment_${i + 1}`] = showAddTreatmentCheckbox(prefix, i);
+    }
+  }
+
+  return fields;
+}
+
+function treatmentValidation(prefix: 'prev' | 'current' | 'concomitant', maxTreatments = 4): Record<string, any> {
+  const schema: Record<string, any> = {};
+
+  for (let i = 1; i <= maxTreatments; i++) {
+    schema[`${prefix}_treatment_name_${i}`] = z.string().optional();
+    schema[`${prefix}_treatment_dose_mg_${i}`] = z.number().optional();
+    schema[`${prefix}_treatment_start_${i}`] = optionalManualDateSchema();
+    schema[`${prefix}_treatment_end_${i}`] = optionalManualDateSchema();
+    if (i < maxTreatments) {
+      schema[`add_${prefix}_treatment_${i + 1}`] = nonPersistentCheckboxSchema();
+    }
+  }
+
+  return schema;
+}
+
+function isComorbidityComplete(data: FormData, number: number): boolean {
+  return Boolean(data[`comorbidity_${number}`] && data[`comorbidity_${number}_diagnosis_date`]);
+}
+
+function generateComorbidityFields(maxComorbidities = 4): Record<string, any> {
+  const fields: Record<string, any> = {};
+
+  for (let i = 1; i <= maxComorbidities; i++) {
+    const previous = i - 1;
+    const showField = <T extends Record<string, any>>(field: T): any => {
+      if (i === 1) {
+        return requiresEligibility(field);
+      }
+      return {
         kind: 'dynamic' as const,
         deps: [
           'informed_consent',
           ...INCLUSION_KEYS,
           ...EXCLUSION_KEYS,
-          `${prefix}_treatment_name_${i}`,
-          `${prefix}_treatment_dose_mg_${i}`,
-          `${prefix}_treatment_start_${i}`,
-          `${prefix}_treatment_end_${i}`,
-          ...(i > 1 ? [`${prefix}_add_treatment_${i}`] : [])
+          `comorbidity_${previous}`,
+          `comorbidity_${previous}_diagnosis_date`,
+          `add_comorbidity_${i}`
         ] as const,
         render(data: FormData): any {
-          if (!isEligible(data)) {
-            return null;
-          }
+          return isEligible(data) && isComorbidityComplete(data, previous) && data[`add_comorbidity_${i}`] === true
+            ? field
+            : null;
+        }
+      };
+    };
 
-          if (i > 1 && data[`${prefix}_add_treatment_${i}`] !== 'si') {
-            return null;
-          }
+    fields[`comorbidity_${i}`] = showField({ kind: 'string', variant: 'input', label: `Comorbilidad ${i}` });
+    fields[`comorbidity_${i}_diagnosis_date`] = showField(dateField(`Fecha de diagnóstico - Comorbilidad ${i}`));
 
-          const currentComplete =
-            !!data[`${prefix}_treatment_name_${i}`] &&
-            data[`${prefix}_treatment_dose_mg_${i}`] !== undefined &&
-            !!data[`${prefix}_treatment_start_${i}`] &&
-            !!data[`${prefix}_treatment_end_${i}`];
-
-          if (!currentComplete) {
-            return null;
-          }
-
-          return {
-            kind: 'string',
-            variant: 'radio',
-            label: `¿Desea añadir un tratamiento ${i + 1}?`,
-            options: YES_NO_OPTIONS
-          };
+    if (i < maxComorbidities) {
+      fields[`add_comorbidity_${i + 1}`] = {
+        kind: 'dynamic' as const,
+        deps: [
+          'informed_consent',
+          ...INCLUSION_KEYS,
+          ...EXCLUSION_KEYS,
+          `comorbidity_${i}`,
+          `comorbidity_${i}_diagnosis_date`
+        ] as const,
+        render(data: FormData): any {
+          return isEligible(data) && isComorbidityComplete(data, i)
+            ? { kind: 'boolean', variant: 'checkbox', label: `¿Desea añadir una comorbilidad ${i + 1}?` }
+            : null;
         }
       };
     }
@@ -405,40 +503,29 @@ function generateTreatmentFields(
   return fields;
 }
 
-const isValidDate = (val: string | undefined) => {
-  if (!val) return true;
-  const [day, month, year] = val.split('-').map(Number);
-  if (day === undefined || month === undefined || year === undefined) {
-    return false;
-  }
-  const date = new Date(year, month - 1, day);
-  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
-};
-
-function treatmentValidation(prefix: 'prev' | 'current', maxTreatments = 5): Record<string, any> {
+function comorbidityValidation(maxComorbidities = 4): Record<string, any> {
   const schema: Record<string, any> = {};
-
-  for (let i = 1; i <= maxTreatments; i++) {
-    schema[`${prefix}_treatment_header_${i}`] = z.any().optional();
-    schema[`${prefix}_treatment_name_${i}`] = z.string().optional();
-    schema[`${prefix}_treatment_dose_mg_${i}`] = z.number().optional();
-    schema[`${prefix}_treatment_start_${i}`] = z
-      .string()
-      .optional()
-      .refine((val) => !val || isValidDate(val), { message: 'Fecha inválida' });
-    schema[`${prefix}_treatment_end_${i}`] = z
-      .string()
-      .optional()
-      .refine((val) => !val || isValidDate(val), { message: 'Fecha inválida' });
-
-    if (i < maxTreatments) {
-      schema[`${prefix}_add_treatment_${i + 1}`] = z.enum(['si', 'no']).optional();
+  for (let i = 1; i <= maxComorbidities; i++) {
+    schema[`comorbidity_${i}`] = z.string().optional();
+    schema[`comorbidity_${i}_diagnosis_date`] = optionalManualDateSchema();
+    if (i < maxComorbidities) {
+      schema[`add_comorbidity_${i + 1}`] = nonPersistentCheckboxSchema();
     }
   }
-
-  schema[`${prefix}_treatments_note`] = z.any().optional();
-
   return schema;
+}
+
+const PHARMACOVIGILANCE_INSTRUCTION =
+  'Si la reacción adversa cumple los criterios de registro sistemático del protocolo (grave o de especial interés), cumplimente el registro de reacciones adversas, rellene el formulario de notificación y envíelo a farmacovigilancia@gebro.es en menos de 24 horas. Para cualquier otra reacción adversa, notifíquela al Sistema Español de Farmacovigilancia siguiendo su práctica clínica habitual.';
+
+function pharmacovigilanceInstruction(eventKey: string): any {
+  return requiresEligibilityAndValue(eventKey, 'si', {
+    kind: 'string',
+    variant: 'textarea',
+    label: 'Instrucciones de farmacovigilancia',
+    description: PHARMACOVIGILANCE_INSTRUCTION,
+    disabled: true
+  });
 }
 
 export default defineInstrument({
@@ -446,19 +533,17 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 2,
-    name: 'ORION_PR_2026'
+    edition: 1,
+    name: 'ORION_PR_2026_SELECTION'
   },
   content: [
     {
-      title: 'DATOS DE VISITA',
-      description: 'Selección del paciente - Información inicial',
+      title: 'CÓDIGO DEL USUARIO',
       fields: {
-        site_hospital: {
+        user_code: {
           kind: 'string',
-          label: 'Hospital/Centro sanitario *',
-          variant: 'select',
-          options: (globalThis as any).__ODC_GROUP_HOSPITAL_OPTIONS__ ?? {}
+          variant: 'input',
+          label: 'Código del usuario *'
         }
       }
     },
@@ -477,7 +562,6 @@ export default defineInstrument({
       title: 'CRITERIOS DE INCLUSIÓN',
       description: 'Todos los criterios de inclusión deben ser SI para que el participante sea apto para el estudio',
       fields: {
-        _warningInclusionStart: consentWarning() as any,
         inclusion_1: requiresConsent({
           kind: 'string',
           label:
@@ -524,7 +608,6 @@ export default defineInstrument({
       title: 'CRITERIOS DE EXCLUSIÓN',
       description: 'Todos los criterios de exclusión deben ser NO para que el participante sea apto para el estudio',
       fields: {
-        _warningExclusionStart: consentWarning() as any,
         exclusion_1: requiresConsent({
           kind: 'string',
           label: '1. Pacientes tratados previamente con pregabalina PR antes del curso actual de tratamiento',
@@ -565,8 +648,18 @@ export default defineInstrument({
             '6. Participación en otro estudio clínico o de investigación que pueda interferir con la interpretación de los datos',
           variant: 'radio',
           options: YES_NO_OPTIONS
-        }),
-        _eligibilityWarning: eligibilityWarning() as any
+        })
+      }
+    },
+    {
+      title: 'CENTRO DE ATENCIÓN PRIMARIA',
+      fields: {
+        site_hospital: requiresConsent({
+          kind: 'string',
+          label: '¿Cuál es el centro de atención primaria donde se visita el paciente?',
+          variant: 'select',
+          options: (globalThis as any).__ODC_GROUP_HOSPITAL_OPTIONS__ ?? {}
+        })
       }
     },
     {
@@ -599,12 +692,12 @@ export default defineInstrument({
       }
     },
     {
-      title: 'DIAGNÓSTICO NEUROPÁTICO',
+      title: 'DOLOR NEUROPÁTICO',
       description: 'Clasificación etiológica y anatómica del dolor neuropático',
       fields: {
         neuropathy_etiology: requiresEligibility({
           kind: 'string',
-          label: 'Diagnóstico etiológico (central/periférico) *',
+          label: 'Diagnóstico etiológico central y periférico *',
           variant: 'select',
           options: {
             spinal_injury: 'Dolor neuropático relacionado con lesión medular',
@@ -636,31 +729,25 @@ export default defineInstrument({
           }
         }),
         diagnosis_date: requiresEligibility({
-          kind: 'string',
-          variant: 'input',
-          placeholder: 'DD-MM-YYYY',
-          label: 'Fecha diagnóstico *',
-          description: 'Introduzca la fecha en formato DD-MM-YYYY'
+          ...dateField('Fecha diagnóstico *')
         })
       }
     },
     {
-      title: 'TRATAMIENTOS PREVIOS',
-      description: 'Pregabalina IR y otros tratamientos para el dolor neuropático',
+      title: 'TRATAMIENTOS PREVIOS PARA EL DOLOR NEUROPÁTICO (Debe incluir la PREGABALINA IR)',
       fields: {
-        ...generateTreatmentFields('prev', 'tratamientos previos')
+        ...generateTreatmentFields('prev')
       }
     },
     {
-      title: 'TRATAMIENTOS ACTUALES',
-      description: 'Pregabalina PR y otros tratamientos concomitantes',
+      title: 'TRATAMIENTOS ACTUALES PARA EL DOLOR NEUROPÁTICO (Debe incluir la PREGABALINA PR)',
       fields: {
-        ...generateTreatmentFields('current', 'tratamientos actuales')
+        ...generateTreatmentFields('current')
       }
     },
     {
-      title: 'MOTIVOS CAMBIO IR A PR',
-      description: 'Razones del cambio de pregabalina IR a pregabalina PR',
+      title: 'MOTIVOS PARA EL CAMBIO DE PREGABALINA DE LIBERACIÓN INMEDIATA A PREGABALINA DE LIBERACIÓN PROLONGADA',
+      description: 'Puede seleccionar una o varias opciones, según corresponda',
       fields: {
         change_reason_adherence: requiresEligibility({
           kind: 'boolean',
@@ -700,31 +787,56 @@ export default defineInstrument({
       }
     },
     {
-      title: 'COMORBILIDADES',
+      title: 'OTROS TRATAMIENTOS CONCOMITANTES DE INTERÉS (ACTUALES)',
       fields: {
-        comorbidities_info: requiresEligibility({
-          kind: 'string',
-          variant: 'textarea',
-          label: 'Indique comorbilidades presentes con fecha de diagnóstico'
-        })
-      } as any
+        ...generateTreatmentFields('concomitant')
+      }
     },
     {
-      title: 'EVALUACIÓN RETROSPECTIVA - PREGABALINA IR',
-      description: 'Valoraciones durante el tratamiento con pregabalina IR',
+      title: 'COMORBILIDADES DE INTERÉS',
       fields: {
-        ...eq5d5lFields('retrospective'),
-        ...sleepQualityFields('retrospective'),
+        ...generateComorbidityFields()
+      }
+    },
+    {
+      title: 'EVALUACIÓN RETROSPECTIVA DE LAS ESCALAS - CALIDAD DE VIDA (CUESTIONARIO EQ-5D-5L)',
+      description: 'Referidas al periodo en el que el paciente se encontraba en tratamiento con PREGABALINA IR',
+      fields: {
+        ...eq5d5lFields('retrospective')
+      }
+    },
+    {
+      title: 'CALIDAD DE SUEÑO',
+      description: 'Durante el tratamiento con pregabalina IR',
+      fields: {
+        ...sleepQualityFields('retrospective')
+      }
+    },
+    {
+      title: 'ADHERENCIA AL TRATAMIENTO (ESCALA MMAS-4)',
+      fields: {
         ...adherenceFields('retrospective')
       }
     },
     {
-      title: 'EVALUACIÓN PROSPECTIVA - PREGABALINA PR',
-      description: 'Valoraciones actuales durante el tratamiento con pregabalina PR',
+      title: 'EVALUACIÓN PROSPECTIVA DE LAS ESCALAS - CALIDAD DE VIDA (CUESTIONARIO EQ-5D-5L)',
+      description: 'Referidas al MOMENTO ACTUAL, cuando están tratados con PREGABALINA PR',
       fields: {
-        ...eq5d5lFields('prospective'),
-        ...sleepQualityFields('prospective'),
-        ...adherenceFields('prospective'),
+        ...eq5d5lFields('prospective')
+      }
+    },
+    {
+      title: 'CALIDAD DE SUEÑO',
+      description: 'Actualmente, durante el tratamiento con pregabalina PR',
+      fields: {
+        ...sleepQualityFields('prospective')
+      }
+    },
+    {
+      title: 'MEJORÍA CLÍNICA (ESCALA CGI-I)',
+      description:
+        'Califique la mejoría global, independientemente de si, según su juicio clínico, se debe por completo al tratamiento farmacológico. En comparación con su estado basal, ¿cuánto ha cambiado?',
+      fields: {
         cgi_improvement: requiresEligibility({
           kind: 'string',
           label: 'Mejoría clínica (Escala CGI-I) - Cambio respecto a estado basal',
@@ -739,112 +851,29 @@ export default defineInstrument({
             '7': 'Bastante peor',
             '8': 'Mucho peor'
           }
-        })
-      }
-    },
-    {
-      title: 'SEGUIMIENTO - 3 MESES',
-      description: 'Valoración de seguimiento a los 3 meses ± 2 semanas',
-      fields: {
-        followup_date: requiresEligibility({
-          kind: 'string',
-          variant: 'input',
-          placeholder: 'DD-MM-YYYY',
-          label: 'Fecha de visita de seguimiento *',
-          description: 'Introduzca la fecha en formato DD-MM-YYYY'
         }),
-        ...eq5d5lFields('prospective'),
-        ...sleepQualityFields('prospective'),
-        ...adherenceFields('prospective'),
-        objective_achieved: requiresEligibility({
+        baseline_adverse_events: requiresEligibility({
           kind: 'string',
-          label: '¿Se ha alcanzado el objetivo que motivó el cambio a pregabalina PR?',
+          label: '¿Ha presentado algún acontecimiento adverso durante el tratamiento con pregabalina PR?',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
-        dose_change: requiresEligibility({
-          kind: 'string',
-          label: '¿Ha tenido algún cambio en la dosis de la pregabalina PR desde su última visita?',
-          variant: 'radio',
-          options: YES_NO_OPTIONS
-        }),
-        dose_change_date: requiresEligibilityAndValue('dose_change', 'si', {
-          kind: 'string',
-          variant: 'input',
-          placeholder: 'DD-MM-YYYY',
-          label: 'Fecha del cambio de dosis',
-          description: 'Introduzca la fecha en formato DD-MM-YYYY'
-        }),
-        new_dose: requiresEligibilityAndValue('dose_change', 'si', {
-          kind: 'number',
-          variant: 'input',
-          label: 'Nueva dosis (mg)'
-        })
+        _baseline_pharmacovigilance_instruction: pharmacovigilanceInstruction('baseline_adverse_events')
       }
     },
     {
-      title: 'EVENTOS ADVERSOS',
-      fields: {
-        adverse_events: requiresEligibility({
-          kind: 'string',
-          label: '¿Ha presentado algún acontecimiento adverso durante el tratamiento?',
-          variant: 'radio',
-          options: YES_NO_OPTIONS
-        }),
-        adverse_events_details: requiresEligibilityAndValue('adverse_events', 'si', {
-          kind: 'string',
-          label: 'Detalles del acontecimiento adverso',
-          variant: 'textarea'
-        })
-      }
-    },
-    {
-      title: 'FINALIZACIÓN DEL ESTUDIO',
-      fields: {
-        end_date: requiresEligibility({
-          kind: 'string',
-          variant: 'input',
-          placeholder: 'DD-MM-YYYY',
-          label: 'Fecha de finalización del estudio',
-          description: 'Introduzca la fecha en formato DD-MM-YYYY'
-        }),
-        study_completed: requiresEligibility({
-          kind: 'string',
-          label: '¿Ha completado el paciente el estudio?',
-          variant: 'radio',
-          options: YES_NO_OPTIONS
-        }),
-        reason_not_completed: requiresEligibilityAndValue('study_completed', 'no', {
-          kind: 'string',
-          label: 'En caso negativo, indique el motivo',
-          variant: 'select',
-          options: {
-            investigator: 'Decisión del investigador',
-            patient: 'Decisión del paciente',
-            other: 'Otro'
-          }
-        }),
-        reason_not_completed_other: requiresEligibilityAndValue('reason_not_completed', 'other', {
-          kind: 'string',
-          label: 'Especifique otro motivo',
-          variant: 'textarea'
-        })
-      }
-    },
-    {
-      title: 'PROFESIONAL SANITARIO',
+      title: 'INICIALES Y FIRMA DEL PROFESIONAL SANITARIO QUE HA RELLENADO LOS DATOS',
       fields: {
         professional_initials: requiresEligibility({
           kind: 'string',
           variant: 'input',
-          label: 'Iniciales del profesional sanitario',
-          description: 'Introduzca las iniciales de quien rellena el formulario'
+          label: 'Iniciales *'
         }),
-        professional_signature: requiresEligibility({
-          kind: 'string',
-          label: 'Firma del profesional sanitario',
-          variant: 'input',
-          description: 'Campo para firma digital o impresa'
+        professional_attestation: requiresEligibility({
+          kind: 'boolean',
+          variant: 'checkbox',
+          label:
+            'Confirmo que he revisado y validado la información clínica registrada en este formulario conforme a la historia clínica del paciente *'
         })
       }
     }
@@ -857,117 +886,208 @@ export default defineInstrument({
     ]
   },
   details: {
-    title: 'ORION-PR-2026',
+    title: 'ORION-PR-2026 - Visita de selección',
     description:
       'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada.',
     license: 'Apache-2.0',
-    authors: ['Equipo de Investigación ORION']
+    authors: ['Antonio Alcántara', 'Ana Navarro']
   },
   measures: {},
-  validationSchema: z.object({
-    site_hospital: z.string().optional(),
-    informed_consent: z.enum(['si', 'no']),
+  validationSchema: z
+    .object({
+      user_code: z.string().min(1, 'El código del usuario es obligatorio'),
+      site_hospital: z.string().optional(),
+      informed_consent: z.enum(['si', 'no']),
 
-    inclusion_1: z.enum(['si', 'no']).optional(),
-    inclusion_2: z.enum(['si', 'no']).optional(),
-    inclusion_3: z.enum(['si', 'no']).optional(),
-    inclusion_4: z.enum(['si', 'no']).optional(),
-    inclusion_5: z.enum(['si', 'no']).optional(),
-    inclusion_6: z.enum(['si', 'no']).optional(),
+      inclusion_1: z.enum(['si', 'no']).optional(),
+      inclusion_2: z.enum(['si', 'no']).optional(),
+      inclusion_3: z.enum(['si', 'no']).optional(),
+      inclusion_4: z.enum(['si', 'no']).optional(),
+      inclusion_5: z.enum(['si', 'no']).optional(),
+      inclusion_6: z.enum(['si', 'no']).optional(),
 
-    exclusion_1: z.enum(['si', 'no']).optional(),
-    exclusion_2: z.enum(['si', 'no']).optional(),
-    exclusion_3: z.enum(['si', 'no']).optional(),
-    exclusion_4: z.enum(['si', 'no']).optional(),
-    exclusion_5: z.enum(['si', 'no']).optional(),
-    exclusion_6: z.enum(['si', 'no']).optional(),
+      exclusion_1: z.enum(['si', 'no']).optional(),
+      exclusion_2: z.enum(['si', 'no']).optional(),
+      exclusion_3: z.enum(['si', 'no']).optional(),
+      exclusion_4: z.enum(['si', 'no']).optional(),
+      exclusion_5: z.enum(['si', 'no']).optional(),
+      exclusion_6: z.enum(['si', 'no']).optional(),
 
-    _warningInclusionStart: z.any().optional(),
-    _warningExclusionStart: z.any().optional(),
-    _eligibilityWarning: z.any().optional(),
+      age: z.number().optional(),
+      sex: z.enum(['femenino', 'masculino']).optional(),
+      weight: z.number().optional(),
+      height: z.number().optional(),
 
-    age: z.number().optional(),
-    sex: z.enum(['femenino', 'masculino']).optional(),
-    weight: z.number().optional(),
-    height: z.number().optional(),
+      neuropathy_etiology: z.string().optional(),
+      neuropathy_etiology_other: z.string().optional(),
+      neuropathy_location: z.enum(['central', 'peripheral']).optional(),
+      diagnosis_date: optionalManualDateSchema(),
 
-    neuropathy_etiology: z.string().optional(),
-    neuropathy_etiology_other: z.string().optional(),
-    neuropathy_location: z.enum(['central', 'peripheral']).optional(),
-    diagnosis_date: z
-      .string()
-      .optional()
-      .refine((val) => !val || isValidDate(val), { message: 'Fecha inválida' }),
+      ...treatmentValidation('prev'),
+      ...treatmentValidation('current'),
+      ...treatmentValidation('concomitant'),
 
-    ...treatmentValidation('prev'),
-    ...treatmentValidation('current'),
+      change_reason_adherence: z.boolean().optional(),
+      change_reason_efficacy: z.boolean().optional(),
+      change_reason_tolerability: z.boolean().optional(),
+      change_reason_patient_pref: z.boolean().optional(),
+      change_reason_investigator_pref: z.boolean().optional(),
+      change_reason_other_checked: z.boolean().optional(),
+      change_reason_other: z.string().optional(),
 
-    change_reason_adherence: z.boolean().optional(),
-    change_reason_efficacy: z.boolean().optional(),
-    change_reason_tolerability: z.boolean().optional(),
-    change_reason_patient_pref: z.boolean().optional(),
-    change_reason_investigator_pref: z.boolean().optional(),
-    change_reason_other_checked: z.boolean().optional(),
-    change_reason_other: z.string().optional(),
+      ...comorbidityValidation(),
 
-    comorbidities_info: z.string().optional(),
+      retro_eq5d_mobility: z.enum(['1', '2', '3', '4', '5']).optional(),
+      retro_eq5d_selfcare: z.enum(['1', '2', '3', '4', '5']).optional(),
+      retro_eq5d_activities: z.enum(['1', '2', '3', '4', '5']).optional(),
+      retro_eq5d_pain: z.enum(['1', '2', '3', '4', '5']).optional(),
+      retro_eq5d_anxiety: z.enum(['1', '2', '3', '4', '5']).optional(),
+      retro_eq5d_vas: z.coerce.number().min(0).max(100).optional(),
+      retro_sleep_onset: z.enum(['1', '2', '3', '4', '5']).optional(),
+      retro_sleep_maintenance: z.enum(['1', '2', '3', '4', '5']).optional(),
+      retro_sleep_quality: z.enum(['1', '2', '3', '4', '5']).optional(),
+      retro_sleep_daytime: z.enum(['1', '2', '3', '4', '5']).optional(),
+      retro_mmas_forget: z.enum(['si', 'no']).optional(),
+      retro_mmas_remember: z.enum(['si', 'no']).optional(),
+      retro_mmas_better: z.enum(['si', 'no']).optional(),
+      retro_mmas_worse: z.enum(['si', 'no']).optional(),
 
-    retro_eq5d_mobility: z.enum(['1', '2', '3', '4', '5']).optional(),
-    retro_eq5d_selfcare: z.enum(['1', '2', '3', '4', '5']).optional(),
-    retro_eq5d_activities: z.enum(['1', '2', '3', '4', '5']).optional(),
-    retro_eq5d_pain: z.enum(['1', '2', '3', '4', '5']).optional(),
-    retro_eq5d_anxiety: z.enum(['1', '2', '3', '4', '5']).optional(),
-    retro_eq5d_vas: z.number().min(0).max(100).optional(),
-    retro_sleep_onset: z.enum(['1', '2', '3', '4', '5']).optional(),
-    retro_sleep_maintenance: z.enum(['1', '2', '3', '4', '5']).optional(),
-    retro_sleep_quality: z.enum(['1', '2', '3', '4', '5']).optional(),
-    retro_sleep_daytime: z.enum(['1', '2', '3', '4', '5']).optional(),
-    retro_mmas_forget: z.enum(['si', 'no']).optional(),
-    retro_mmas_remember: z.enum(['si', 'no']).optional(),
-    retro_mmas_better: z.enum(['si', 'no']).optional(),
-    retro_mmas_worse: z.enum(['si', 'no']).optional(),
+      prosp_eq5d_mobility: z.enum(['1', '2', '3', '4', '5']).optional(),
+      prosp_eq5d_selfcare: z.enum(['1', '2', '3', '4', '5']).optional(),
+      prosp_eq5d_activities: z.enum(['1', '2', '3', '4', '5']).optional(),
+      prosp_eq5d_pain: z.enum(['1', '2', '3', '4', '5']).optional(),
+      prosp_eq5d_anxiety: z.enum(['1', '2', '3', '4', '5']).optional(),
+      prosp_eq5d_vas: z.coerce.number().min(0).max(100).optional(),
+      prosp_sleep_onset: z.enum(['1', '2', '3', '4', '5']).optional(),
+      prosp_sleep_maintenance: z.enum(['1', '2', '3', '4', '5']).optional(),
+      prosp_sleep_quality: z.enum(['1', '2', '3', '4', '5']).optional(),
+      prosp_sleep_daytime: z.enum(['1', '2', '3', '4', '5']).optional(),
+      prosp_mmas_forget: z.enum(['si', 'no']).optional(),
+      prosp_mmas_remember: z.enum(['si', 'no']).optional(),
+      prosp_mmas_better: z.enum(['si', 'no']).optional(),
+      prosp_mmas_worse: z.enum(['si', 'no']).optional(),
 
-    prosp_eq5d_mobility: z.enum(['1', '2', '3', '4', '5']).optional(),
-    prosp_eq5d_selfcare: z.enum(['1', '2', '3', '4', '5']).optional(),
-    prosp_eq5d_activities: z.enum(['1', '2', '3', '4', '5']).optional(),
-    prosp_eq5d_pain: z.enum(['1', '2', '3', '4', '5']).optional(),
-    prosp_eq5d_anxiety: z.enum(['1', '2', '3', '4', '5']).optional(),
-    prosp_eq5d_vas: z.number().min(0).max(100).optional(),
-    prosp_sleep_onset: z.enum(['1', '2', '3', '4', '5']).optional(),
-    prosp_sleep_maintenance: z.enum(['1', '2', '3', '4', '5']).optional(),
-    prosp_sleep_quality: z.enum(['1', '2', '3', '4', '5']).optional(),
-    prosp_sleep_daytime: z.enum(['1', '2', '3', '4', '5']).optional(),
-    prosp_mmas_forget: z.enum(['si', 'no']).optional(),
-    prosp_mmas_remember: z.enum(['si', 'no']).optional(),
-    prosp_mmas_better: z.enum(['si', 'no']).optional(),
-    prosp_mmas_worse: z.enum(['si', 'no']).optional(),
+      followup_eq5d_mobility: z.enum(['1', '2', '3', '4', '5']).optional(),
+      followup_eq5d_selfcare: z.enum(['1', '2', '3', '4', '5']).optional(),
+      followup_eq5d_activities: z.enum(['1', '2', '3', '4', '5']).optional(),
+      followup_eq5d_pain: z.enum(['1', '2', '3', '4', '5']).optional(),
+      followup_eq5d_anxiety: z.enum(['1', '2', '3', '4', '5']).optional(),
+      followup_eq5d_vas: z.coerce.number().min(0).max(100).optional(),
+      followup_sleep_onset: z.enum(['1', '2', '3', '4', '5']).optional(),
+      followup_sleep_maintenance: z.enum(['1', '2', '3', '4', '5']).optional(),
+      followup_sleep_quality: z.enum(['1', '2', '3', '4', '5']).optional(),
+      followup_sleep_daytime: z.enum(['1', '2', '3', '4', '5']).optional(),
+      followup_mmas_forget: z.enum(['si', 'no']).optional(),
+      followup_mmas_remember: z.enum(['si', 'no']).optional(),
+      followup_mmas_better: z.enum(['si', 'no']).optional(),
+      followup_mmas_worse: z.enum(['si', 'no']).optional(),
 
-    cgi_improvement: z.enum(['1', '2', '3', '4', '5', '6', '7', '8']).optional(),
+      cgi_improvement: z.enum(['1', '2', '3', '4', '5', '6', '7', '8']).optional(),
+      followup_cgi_improvement: z.enum(['1', '2', '3', '4', '5', '6', '7', '8']).optional(),
 
-    followup_date: z
-      .string()
-      .optional()
-      .refine((val) => !val || isValidDate(val), { message: 'Fecha inválida' }),
-    objective_achieved: z.enum(['si', 'no']).optional(),
-    dose_change: z.enum(['si', 'no']).optional(),
-    dose_change_date: z
-      .string()
-      .optional()
-      .refine((val) => !val || isValidDate(val), { message: 'Fecha inválida' }),
-    new_dose: z.number().optional(),
+      followup_date: optionalManualDateSchema(),
+      objective_achieved: z.enum(['si', 'no']).optional(),
+      dose_change: z.enum(['si', 'no']).optional(),
+      dose_change_date: optionalManualDateSchema(),
+      new_dose: z.number().optional(),
 
-    adverse_events: z.enum(['si', 'no']).optional(),
-    adverse_events_details: z.string().optional(),
+      baseline_adverse_events: z.enum(['si', 'no']).optional(),
+      _baseline_pharmacovigilance_instruction: z.any().optional(),
 
-    end_date: z
-      .string()
-      .optional()
-      .refine((val) => !val || isValidDate(val), { message: 'Fecha inválida' }),
-    study_completed: z.enum(['si', 'no']).optional(),
-    reason_not_completed: z.enum(['investigator', 'patient', 'other']).optional(),
-    reason_not_completed_other: z.string().optional(),
+      end_date: optionalManualDateSchema(),
+      study_completed: z.enum(['si', 'no']).optional(),
+      reason_not_completed: z.enum(['investigator', 'patient', 'other']).optional(),
+      reason_not_completed_other: z.string().optional(),
 
-    professional_initials: z.string().optional(),
-    professional_signature: z.string().optional()
-  })
+      professional_initials: z.string().optional(),
+      professional_attestation: z.boolean().optional()
+    })
+    .superRefine((data, context) => {
+      const values = data as FormData;
+
+      const addRequiredIssue = (field: string) => {
+        const value = values[field];
+        if (value === undefined || value === null || value === '') {
+          context.addIssue({ code: z.ZodIssueCode.custom, message: 'Este campo es obligatorio', path: [field] });
+        }
+      };
+
+      if (data.informed_consent === 'si') {
+        for (const field of [...INCLUSION_KEYS, ...EXCLUSION_KEYS]) {
+          addRequiredIssue(field);
+        }
+      }
+
+      if (data.informed_consent === 'si' && isEligible(values)) {
+        for (const field of [
+          'site_hospital',
+          'age',
+          'sex',
+          'neuropathy_etiology',
+          'neuropathy_location',
+          'diagnosis_date',
+          'retro_eq5d_mobility',
+          'retro_eq5d_selfcare',
+          'retro_eq5d_activities',
+          'retro_eq5d_pain',
+          'retro_eq5d_anxiety',
+          'retro_eq5d_vas',
+          'retro_sleep_onset',
+          'retro_sleep_maintenance',
+          'retro_sleep_quality',
+          'retro_sleep_daytime',
+          'retro_mmas_forget',
+          'retro_mmas_remember',
+          'retro_mmas_better',
+          'retro_mmas_worse',
+          'prosp_eq5d_mobility',
+          'prosp_eq5d_selfcare',
+          'prosp_eq5d_activities',
+          'prosp_eq5d_pain',
+          'prosp_eq5d_anxiety',
+          'prosp_eq5d_vas',
+          'prosp_sleep_onset',
+          'prosp_sleep_maintenance',
+          'prosp_sleep_quality',
+          'prosp_sleep_daytime',
+          'cgi_improvement',
+          'baseline_adverse_events',
+          'professional_initials'
+        ]) {
+          addRequiredIssue(field);
+        }
+
+        if (data.professional_attestation !== true) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Debe confirmar la validación del formulario',
+            path: ['professional_attestation']
+          });
+        }
+      }
+
+      if (data.neuropathy_etiology === 'other') {
+        addRequiredIssue('neuropathy_etiology_other');
+      }
+      if (data.change_reason_other_checked === true) {
+        addRequiredIssue('change_reason_other');
+      }
+
+      for (const prefix of ['prev', 'current', 'concomitant']) {
+        for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
+          const startKey = `${prefix}_treatment_start_${treatmentNumber}`;
+          const endKey = `${prefix}_treatment_end_${treatmentNumber}`;
+          const startDate = values[startKey] as Date | undefined;
+          const endDate = values[endKey] as Date | undefined;
+
+          if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'La fecha de inicio no puede ser posterior a la fecha de fin',
+              path: [endKey]
+            });
+          }
+        }
+      }
+    })
 });

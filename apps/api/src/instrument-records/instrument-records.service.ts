@@ -28,6 +28,7 @@ import { AuditLogService } from '@/audit-log/audit-log.service';
 import type { EntityOperationOptions } from '@/core/types';
 import { GroupsService } from '@/groups/groups.service';
 import { InstrumentsService } from '@/instruments/instruments.service';
+import { OrionFollowupService } from '@/orion-followup/orion-followup.service';
 import { SessionsService } from '@/sessions/sessions.service';
 import { CreateSubjectDto } from '@/subjects/dto/create-subject.dto';
 import { SubjectsService } from '@/subjects/subjects.service';
@@ -54,6 +55,7 @@ export class InstrumentRecordsService {
     private readonly groupsService: GroupsService,
     private readonly instrumentMeasuresService: InstrumentMeasuresService,
     private readonly instrumentsService: InstrumentsService,
+    private readonly orionFollowupService: OrionFollowupService,
     private readonly sessionsService: SessionsService,
     private readonly subjectsService: SubjectsService
   ) {}
@@ -92,9 +94,20 @@ export class InstrumentRecordsService {
       });
     }
 
+    const userCode: string =
+      typeof (parseResult.data as Record<string, unknown>).user_code === 'string'
+        ? ((parseResult.data as Record<string, string>).user_code ?? '')
+        : '';
+    const selectionRecordId = await this.orionFollowupService.validateFollowup({
+      groupId,
+      instrument,
+      subjectId,
+      userCode
+    });
+
     this.validateHospitalSelection(parseResult.data, group?.hospitals ?? []);
 
-    return this.instrumentRecordModel.create({
+    const record = await this.instrumentRecordModel.create({
       data: {
         computedMeasures: instrument.measures
           ? this.instrumentMeasuresService.computeMeasures(instrument.measures, parseResult.data)
@@ -123,6 +136,19 @@ export class InstrumentRecordsService {
         }
       }
     });
+
+    await this.orionFollowupService.scheduleReminder({
+      groupId,
+      instrument,
+      investigator: options?.user,
+      selectionData: parseResult.data as Record<string, unknown>,
+      selectionRecordId: record.id!,
+      subjectId,
+      userCode
+    });
+    await this.orionFollowupService.completeFollowup({ followupRecordId: record.id!, selectionRecordId });
+
+    return record;
   }
 
   async deleteById(id: string, { ability, user }: EntityOperationOptions = {}) {
@@ -140,7 +166,9 @@ export class InstrumentRecordsService {
 
     // Safety rule: admins can only delete records created by admin users.
     if (user?.basePermissionLevel === 'ADMIN') {
-      const recordOwner = await this.userModel.findById(instrumentRecord.session.userId);
+      const recordOwner = instrumentRecord.session.userId
+        ? await this.userModel.findFirst({ where: { id: instrumentRecord.session.userId } })
+        : null;
       if (!recordOwner || recordOwner.basePermissionLevel !== 'ADMIN') {
         throw new ForbiddenException('Admin users can only delete records created by admin users.');
       }

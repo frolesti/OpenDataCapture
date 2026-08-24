@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 import { AuditLogModule } from '@/audit-log/audit-log.module';
 import { GroupsModule } from '@/groups/groups.module';
 import { InstrumentsModule } from '@/instruments/instruments.module';
+import { OrionFollowupModule } from '@/orion-followup/orion-followup.module';
 import { SessionsModule } from '@/sessions/sessions.module';
 import { SubjectsModule } from '@/subjects/subjects.module';
 
@@ -13,7 +14,14 @@ import { InstrumentRecordsService } from './instrument-records.service';
 @Module({
   controllers: [InstrumentRecordsController],
   exports: [InstrumentRecordsService],
-  imports: [AuditLogModule, GroupsModule, InstrumentsModule, SessionsModule, SubjectsModule],
+  imports: [
+    AuditLogModule,
+    GroupsModule,
+    InstrumentsModule,
+    forwardRef(() => OrionFollowupModule),
+    SessionsModule,
+    SubjectsModule
+  ],
   providers: [InstrumentMeasuresService, InstrumentRecordsService]
 })
 export class InstrumentRecordsModule {}

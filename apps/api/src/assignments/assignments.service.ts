@@ -3,13 +3,24 @@ import crypto from 'node:crypto';
 import { HybridCrypto } from '@douglasneuroinformatics/libcrypto';
 import { accessibleQuery, ConfigService, InjectModel } from '@douglasneuroinformatics/libnest';
 import type { Model } from '@douglasneuroinformatics/libnest';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Assignment, UpdateAssignmentData } from '@opendatacapture/schemas/assignment';
 
 import type { EntityOperationOptions } from '@/core/types';
 import { GatewayService } from '@/gateway/gateway.service';
+import { InstrumentsService } from '@/instruments/instruments.service';
 
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
+
+const ORION_SELECTION_INTERNAL = {
+  edition: 1,
+  name: 'ORION_PR_2026_SELECTION'
+} as const;
+
+const ORION_FOLLOWUP_INTERNAL = {
+  edition: 1,
+  name: 'ORION_PR_2026_FOLLOWUP'
+} as const;
 
 @Injectable()
 export class AssignmentsService {
@@ -17,8 +28,10 @@ export class AssignmentsService {
 
   constructor(
     @InjectModel('Assignment') private readonly assignmentModel: Model<'Assignment'>,
+    @InjectModel('InstrumentRecord') private readonly instrumentRecordModel: Model<'InstrumentRecord'>,
     configService: ConfigService,
-    private readonly gatewayService: GatewayService
+    private readonly gatewayService: GatewayService,
+    private readonly instrumentsService: InstrumentsService
   ) {
     if (configService.get('NODE_ENV') === 'production') {
       const siteAddress = configService.getOrThrow('GATEWAY_SITE_ADDRESS');
@@ -30,6 +43,8 @@ export class AssignmentsService {
   }
 
   async create({ expiresAt, groupId, instrumentId, subjectId }: CreateAssignmentDto): Promise<Assignment> {
+    await this.assertOrionFollowupEligibilityForAssignment({ groupId, instrumentId, subjectId });
+
     const { privateKey, publicKey } = await HybridCrypto.generateKeyPair();
     const id = crypto.randomUUID();
     const assignment = await this.assignmentModel.create({
@@ -99,5 +114,54 @@ export class AssignmentsService {
       data,
       where: { AND: [accessibleQuery(ability, 'update', 'Assignment')], id }
     });
+  }
+
+  private async assertOrionFollowupEligibilityForAssignment({
+    groupId,
+    instrumentId,
+    subjectId
+  }: {
+    groupId?: string;
+    instrumentId: string;
+    subjectId: string;
+  }) {
+    const instrument = await this.instrumentsService.findById(instrumentId);
+    const isOrionFollowup =
+      instrument.kind === 'FORM' &&
+      instrument.internal.name === ORION_FOLLOWUP_INTERNAL.name &&
+      instrument.internal.edition === ORION_FOLLOWUP_INTERNAL.edition;
+
+    if (!isOrionFollowup) {
+      return;
+    }
+
+    const selectionInstrumentId = this.instrumentsService.generateScalarInstrumentId({
+      internal: ORION_SELECTION_INTERNAL
+    });
+    const selectionRecord = await this.instrumentRecordModel.findFirst({
+      orderBy: { createdAt: 'desc' },
+      where: {
+        groupId: groupId ?? null,
+        instrumentId: selectionInstrumentId,
+        subjectId
+      }
+    });
+
+    const selectionData = selectionRecord?.data as Record<string, unknown> | null;
+    if (!selectionRecord || !selectionData || !this.isEligibleSelection(selectionData)) {
+      throw new BadRequestException(
+        'No se puede asignar la visita de 3 meses de ORION sin una visita de selección completada y apta.'
+      );
+    }
+  }
+
+  private isEligibleSelection(data: Record<string, unknown>) {
+    const inclusionKeys = ['inclusion_1', 'inclusion_2', 'inclusion_3', 'inclusion_4', 'inclusion_5', 'inclusion_6'];
+    const exclusionKeys = ['exclusion_1', 'exclusion_2', 'exclusion_3', 'exclusion_4', 'exclusion_5', 'exclusion_6'];
+    return (
+      data.informed_consent === 'si' &&
+      inclusionKeys.every((key) => data[key] === 'si') &&
+      exclusionKeys.every((key) => data[key] === 'no')
+    );
   }
 }

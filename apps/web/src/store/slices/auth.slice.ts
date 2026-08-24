@@ -33,5 +33,34 @@ export const createAuthSlice: SliceCreator<AuthSlice> = (set) => ({
     set({ accessToken: null, currentGroup: null, currentUser: null });
     localStorage.removeItem('lastActivityTimestamp');
     window.location.reload();
+  },
+  syncCurrentUserFromProfile: (profile) => {
+    set((state) => {
+      if (!state.currentUser) {
+        return;
+      }
+
+      const nextGroups = profile.groups ?? [];
+      const hasCurrentGroup = state.currentGroup
+        ? nextGroups.some((group) => group.id === state.currentGroup?.id)
+        : false;
+
+      state.currentUser = {
+        ...state.currentUser,
+        basePermissionLevel: profile.basePermissionLevel,
+        firstName: profile.firstName,
+        groups: nextGroups,
+        id: profile.id,
+        lastName: profile.lastName,
+        username: profile.username
+      };
+
+      // If membership changed, keep a valid selected group or fallback to the first one.
+      state.currentGroup = hasCurrentGroup ? state.currentGroup : (nextGroups[0] ?? null);
+
+      if (!state.currentGroup) {
+        state.currentSession = null;
+      }
+    });
   }
 });

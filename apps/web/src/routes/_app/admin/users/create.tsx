@@ -80,6 +80,10 @@ function buildUserSearchText(user: User) {
   return `${user.firstName} ${user.lastName} ${user.username} ${user.email ?? ''}`.toLowerCase();
 }
 
+function toggleGroups(groupIds: string[], groupId: string) {
+  return groupIds.includes(groupId) ? groupIds.filter((id) => id !== groupId) : [...groupIds, groupId];
+}
+
 function buildUserEditForm(user?: User) {
   return {
     email: user?.email ?? '',
@@ -878,7 +882,7 @@ const RouteComponent = () => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             <Button
-              className="bg-violet-600 text-white hover:bg-violet-700"
+              className="bg-[#8f8df2] text-white hover:bg-[#7f7de4]"
               type="button"
               variant="primary"
               onClick={() => setIsUserDialogOpen(true)}
@@ -886,7 +890,7 @@ const RouteComponent = () => {
               {t({ en: 'Afegir usuari', fr: 'Añadir usuario' })}
             </Button>
             <Button
-              className="border-violet-600 bg-violet-100 text-violet-800 hover:bg-violet-200"
+              className="border-[#8f8df2] bg-[#ecebff] text-[#5f5acb] hover:bg-[#dfddff]"
               type="button"
               variant="outline"
               onClick={() => setIsInvestigatorDialogOpen(true)}
@@ -900,8 +904,8 @@ const RouteComponent = () => {
               aria-label={t({ en: 'Tots els usuaris', fr: 'Todos los usuarios' })}
               className={
                 viewMode === 'users'
-                  ? 'h-9 w-9 bg-violet-600 text-white hover:bg-violet-700'
-                  : 'h-9 w-9 text-violet-900 hover:bg-violet-200'
+                  ? 'h-9 w-9 bg-[#8f8df2] text-white hover:bg-[#7f7de4]'
+                  : 'h-9 w-9 text-[#5f5acb] hover:bg-[#dfddff]'
               }
               size="icon"
               title={t({ en: 'Tots els usuaris', fr: 'Todos los usuarios' })}
@@ -915,8 +919,8 @@ const RouteComponent = () => {
               aria-label={t({ en: 'Investigadors pendents', fr: 'Investigadores pendientes' })}
               className={
                 viewMode === 'pending'
-                  ? 'h-9 w-9 bg-violet-600 text-white hover:bg-violet-700'
-                  : 'h-9 w-9 text-violet-900 hover:bg-violet-200'
+                  ? 'h-9 w-9 bg-[#8f8df2] text-white hover:bg-[#7f7de4]'
+                  : 'h-9 w-9 text-[#5f5acb] hover:bg-[#dfddff]'
               }
               size="icon"
               title={t({ en: 'Investigadors pendents', fr: 'Investigadores pendientes' })}
@@ -1566,7 +1570,7 @@ const RouteComponent = () => {
               {t('core.cancel')}
             </Button>
             <Button
-              className="bg-violet-600 text-white hover:bg-violet-700 disabled:bg-violet-300 disabled:text-white"
+              className="bg-[#8f8df2] text-white hover:bg-[#7f7de4] disabled:bg-[#b9b7f8] disabled:text-white"
               disabled={!canCreateUser || isBusy}
               type="button"
               variant="primary"
@@ -1744,7 +1748,7 @@ const RouteComponent = () => {
               {t('core.cancel')}
             </Button>
             <Button
-              className="bg-violet-600 text-white hover:bg-violet-700 disabled:bg-violet-300 disabled:text-white"
+              className="bg-[#8f8df2] text-white hover:bg-[#7f7de4] disabled:bg-[#b9b7f8] disabled:text-white"
               disabled={!canCreateInvestigator || isBusy}
               type="button"
               variant="primary"
