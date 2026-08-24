@@ -46,6 +46,11 @@ type ExpandDataType =
       success: false;
     };
 
+type CurrentUserContext = {
+  basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER' | 'STANDARD';
+  id: string;
+};
+
 @Injectable()
 export class InstrumentRecordsService {
   constructor(
@@ -73,8 +78,9 @@ export class InstrumentRecordsService {
     { data: rawData, date, groupId, instrumentId, sessionId, subjectId }: CreateInstrumentRecordData,
     options?: EntityOperationOptions
   ): Promise<InstrumentRecord> {
+    const currentUser = this.buildCurrentUserContext(options?.user);
     const group = groupId ? await this.groupsService.findById(groupId, options) : null;
-    const instrument = await this.instrumentsService.findById(instrumentId);
+    const instrument = await this.instrumentsService.findById(instrumentId, { currentUser });
     if (instrument.kind === 'SERIES') {
       throw new UnprocessableEntityException(
         `Cannot create instrument record for series instrument '${instrument.id}'`
@@ -183,7 +189,8 @@ export class InstrumentRecordsService {
     return this.instrumentRecordModel.exists(where);
   }
 
-  async exportRecords({ groupId }: { groupId?: string } = {}, { ability }: EntityOperationOptions = {}) {
+  async exportRecords({ groupId }: { groupId?: string } = {}, { ability, user }: EntityOperationOptions = {}) {
+    const currentUser = this.buildCurrentUserContext(user);
     const data: InstrumentRecordsExport = [];
     const records = await this.instrumentRecordModel.findMany({
       include: {
@@ -212,8 +219,18 @@ export class InstrumentRecordsService {
       if (instruments.has(record.instrumentId)) {
         instrument = instruments.get(record.instrumentId)!;
       } else {
-        instrument = (await this.instrumentsService.findById(record.instrumentId)) as ScalarInstrument;
-        instruments.set(record.instrumentId, instrument);
+        try {
+          instrument = (await this.instrumentsService.findById(record.instrumentId, {
+            ability,
+            currentUser
+          })) as ScalarInstrument;
+          instruments.set(record.instrumentId, instrument);
+        } catch (error) {
+          if (error instanceof NotFoundException) {
+            continue;
+          }
+          throw error;
+        }
       }
 
       const rawData =
@@ -312,23 +329,39 @@ export class InstrumentRecordsService {
     return data;
   }
 
-  async find(
-    query: any, // InstrumentRecordQueryParams
-    options: EntityOperationOptions = {}
-  ): Promise<InstrumentRecord[]> {
+  async find(query: InstrumentRecordQueryParams, options: EntityOperationOptions = {}): Promise<InstrumentRecord[]> {
     const { ability } = options;
+    const currentUser = this.buildCurrentUserContext(options.user);
     const { groupId, instrumentId, kind, minDate, subjectId } = query;
-    console.log('Finding records with query:', query);
+
     if (groupId) {
-      await this.groupsService.findById(groupId);
-    }
-    if (instrumentId) {
-      await this.instrumentsService.findById(instrumentId);
+      await this.groupsService.findById(groupId, options);
     }
 
-    const instrumentKindIds = await this.instrumentsService
-      .find({ kind })
-      .then((instruments) => instruments.map((instrument) => instrument.id));
+    const allowedInstruments = await this.instrumentsService.find(
+      { kind },
+      {
+        ability,
+        currentUser
+      }
+    );
+    const instrumentKindIds = allowedInstruments.map((instrument) => instrument.id);
+
+    if (instrumentId) {
+      // If the specific instrument is no longer accessible, return an empty list instead of throwing.
+      if (!instrumentKindIds.includes(instrumentId)) {
+        return [];
+      }
+
+      try {
+        await this.instrumentsService.findById(instrumentId, { ability, currentUser });
+      } catch (error) {
+        if (error instanceof NotFoundException) {
+          return [];
+        }
+        throw error;
+      }
+    }
 
     const records = await this.instrumentRecordModel.findMany({
       include: {
@@ -351,12 +384,14 @@ export class InstrumentRecordsService {
 
   async linearModel(
     { groupId, instrumentId }: { groupId?: string; instrumentId: string },
-    { ability }: EntityOperationOptions = {}
+    options: EntityOperationOptions = {}
   ): Promise<LinearRegressionResults> {
+    const { ability } = options;
+    const currentUser = this.buildCurrentUserContext(options.user);
     if (groupId) {
-      await this.groupsService.findById(groupId);
+      await this.groupsService.findById(groupId, options);
     }
-    const instrument = await this.getInstrumentById(instrumentId);
+    const instrument = await this.getInstrumentById(instrumentId, { ability, currentUser });
 
     if (instrument.kind === 'SERIES') {
       throw new UnprocessableEntityException(`Cannot create linear model for series instrument '${instrument.id}'`);
@@ -483,9 +518,10 @@ export class InstrumentRecordsService {
     { groupId, instrumentId, records }: UploadInstrumentRecordsData,
     options?: EntityOperationOptions
   ): Promise<InstrumentRecord[]> {
+    const currentUser = this.buildCurrentUserContext(options?.user);
     const group = groupId ? await this.groupsService.findById(groupId, options) : null;
 
-    const instrument = await this.instrumentsService.findById(instrumentId);
+    const instrument = await this.instrumentsService.findById(instrumentId, { currentUser });
     if (instrument.kind === 'SERIES') {
       throw new UnprocessableEntityException(
         `Cannot create instrument record for series instrument '${instrument.id}'`
@@ -583,10 +619,27 @@ export class InstrumentRecordsService {
     return validRecordArrayList;
   }
 
-  private getInstrumentById(instrumentId: string) {
+  private getInstrumentById(
+    instrumentId: string,
+    options: {
+      ability?: EntityOperationOptions['ability'];
+      currentUser?: CurrentUserContext;
+    } = {}
+  ) {
     return this.instrumentsService
-      .findById(instrumentId)
+      .findById(instrumentId, options)
       .then((instrument) => this.instrumentsService.getInstrumentInstance(instrument));
+  }
+
+  private buildCurrentUserContext(user?: EntityOperationOptions['user']): CurrentUserContext | undefined {
+    if (!user) {
+      return undefined;
+    }
+
+    return {
+      basePermissionLevel: user.basePermissionLevel,
+      id: user.id
+    };
   }
 
   private parseJson(data: unknown) {

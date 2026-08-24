@@ -45,6 +45,7 @@ export class InstrumentRecordsController {
   @RouteAccess({ action: 'read', subject: 'InstrumentRecord' })
   find(
     @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: User,
     @Query('kind') kind?: InstrumentKind,
     @Query(
       'minDate',
@@ -58,10 +59,7 @@ export class InstrumentRecordsController {
     @Query('instrumentId') instrumentId?: string,
     @Query('subjectId') subjectId?: string
   ) {
-    if (kind) {
-      // debug log to ensure controller is fresh
-    }
-    return this.instrumentRecordsService.find({ groupId, instrumentId, kind, minDate, subjectId }, { ability });
+    return this.instrumentRecordsService.find({ groupId, instrumentId, kind, minDate, subjectId }, { ability, user });
   }
 
   @ApiOperation({ summary: 'Delete Record' })
@@ -79,8 +77,12 @@ export class InstrumentRecordsController {
   @ApiOperation({ summary: 'Export Records' })
   @Get('export')
   @RouteAccess({ action: 'read', subject: 'InstrumentRecord' })
-  exportRecords(@CurrentUser('ability') ability: AppAbility, @Query('groupId') groupId?: string) {
-    return this.instrumentRecordsService.exportRecords({ groupId }, { ability });
+  exportRecords(
+    @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: User,
+    @Query('groupId') groupId?: string
+  ) {
+    return this.instrumentRecordsService.exportRecords({ groupId }, { ability, user });
   }
 
   @ApiOperation({ description: 'Compute a Linear Model', summary: 'Linear Model' })
@@ -88,10 +90,11 @@ export class InstrumentRecordsController {
   @RouteAccess({ action: 'read', subject: 'InstrumentRecord' })
   linearModel(
     @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: User,
     @Query('instrumentId') instrumentId: string,
     @Query('groupId') groupId?: string
   ): Promise<{ [key: string]: { intercept: number; slope: number; stdErr: number } }> {
-    return this.instrumentRecordsService.linearModel({ groupId, instrumentId }, { ability });
+    return this.instrumentRecordsService.linearModel({ groupId, instrumentId }, { ability, user });
   }
 
   @ApiOperation({ summary: 'Update Instrument Record' })
