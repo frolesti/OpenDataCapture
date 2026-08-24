@@ -1,4 +1,4 @@
-import { camelToSnakeCase, toBasicISOString } from '@douglasneuroinformatics/libjs';
+import { camelToSnakeCase } from '@douglasneuroinformatics/libjs';
 import { ActionDropdown, ClientTable } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { createFileRoute } from '@tanstack/react-router';
@@ -6,6 +6,12 @@ import { createFileRoute } from '@tanstack/react-router';
 import { SelectInstrument } from '@/components/SelectInstrument';
 import { TimeDropdown } from '@/components/TimeDropdown';
 import { useInstrumentVisualization } from '@/hooks/useInstrumentVisualization';
+
+const formatDisplayDate = (value: Date) => {
+  const isoDate = value.toISOString().slice(0, 10);
+  const [year, month, day] = isoDate.split('-');
+  return `${day}-${month}-${year}`;
+};
 
 const RouteComponent = () => {
   const params = Route.useParams();
@@ -51,7 +57,7 @@ const RouteComponent = () => {
         columns={[
           {
             field: '__date__',
-            formatter: (value: Date) => toBasicISOString(value),
+            formatter: formatDisplayDate,
             label: 'DATE_COLLECTED'
           },
           ...fields

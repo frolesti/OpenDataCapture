@@ -36,6 +36,12 @@ const SelectTrigger = Select.Trigger as unknown as React.ComponentType<React.Pro
 const SelectContent = Select.Content as unknown as React.ComponentType<React.PropsWithChildren<unknown>>;
 const SelectItem = Select.Item as unknown as React.ComponentType<React.PropsWithChildren<{ value: string }>>;
 
+const formatDisplayDate = (value: Date) => {
+  const isoDate = toBasicISOString(value);
+  const [year, month, day] = isoDate.split('-');
+  return `${day}-${month}-${year}`;
+};
+
 const RouteComponent = () => {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -396,7 +402,7 @@ const RouteComponent = () => {
               },
               {
                 field: '__date__',
-                formatter: (value: Date) => toBasicISOString(value),
+                formatter: formatDisplayDate,
                 label: 'DATE_COLLECTED'
               },
               {
