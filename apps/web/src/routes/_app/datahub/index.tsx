@@ -45,6 +45,7 @@ const formatDisplayDate = (value: Date) => {
 const RouteComponent = () => {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(15);
   const [selectedRecordId, setSelectedRecordId] = useState<null | string>(null);
 
   const currentGroup = useAppStore((store) => store.currentGroup);
@@ -207,6 +208,18 @@ const RouteComponent = () => {
               <SelectInstrument options={instrumentOptions} onSelect={setInstrumentId} />
             </div>
             <div className="flex min-w-60 gap-2 lg:shrink">
+              <Select value={String(entriesPerPage)} onValueChange={(value) => setEntriesPerPage(Number(value))}>
+                <SelectTrigger className="min-w-32">
+                  <span>{entriesPerPage} filas</span>
+                </SelectTrigger>
+                <SelectContent>
+                  {[15, 25, 50, 100].map((value) => (
+                    <SelectItem key={value} value={String(value)}>
+                      {value} filas
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {instrumentId ? (
                 <React.Fragment>
                   {(() => {
@@ -350,48 +363,43 @@ const RouteComponent = () => {
                   const canDeleteRecord =
                     isAdminUser && removeSubjectIdScope(record.__subjectId__ as string) === currentUser?.username;
 
-                  if (!canEditRecord && !canDeleteRecord) {
-                    return <div className="w-16" />;
-                  }
-
                   return (
                     <div className="flex items-center gap-1">
-                      {canEditRecord && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => {
-                            const rawData = record && typeof record === 'object' ? record.__data__ : undefined;
-                            // Ensure empty objects are treated as undefined to trigger fetch in target page
-                            const initialData = rawData && Object.keys(rawData).length > 0 ? rawData : undefined;
+                      <Button
+                        aria-label="Editar registro"
+                        disabled={isAdminUser || !canEditRecord}
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          const rawData = record && typeof record === 'object' ? record.__data__ : undefined;
+                          const initialData = rawData && Object.keys(rawData).length > 0 ? rawData : undefined;
 
-                            void navigate({
-                              params: { id: instrumentId },
-                              search: { recordId: id },
-                              state: {
-                                instrumentTitle: instrument?.clientDetails?.title ?? instrument?.details?.title,
-                                initialData: initialData,
-                                recordId: id
-                              },
-                              to: '/instruments/render/$id'
-                            });
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {canDeleteRecord && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => {
-                            setSelectedRecordId(id);
-                            setIsDeleteConfirmOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                          void navigate({
+                            params: { id: instrumentId },
+                            search: { recordId: id },
+                            state: {
+                              instrumentTitle: instrument?.clientDetails?.title ?? instrument?.details?.title,
+                              initialData: initialData,
+                              recordId: id
+                            },
+                            to: '/instruments/render/$id'
+                          });
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        aria-label="Eliminar registro"
+                        disabled={isAdminUser || !canDeleteRecord}
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          setSelectedRecordId(id);
+                          setIsDeleteConfirmOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   );
                 },
@@ -417,8 +425,8 @@ const RouteComponent = () => {
             ]}
             data={records}
             data-testid="instrument-table"
-            entriesPerPage={15}
-            minRows={15}
+            entriesPerPage={entriesPerPage}
+            minRows={entriesPerPage}
           />
         ) : (
           <div className="flex grow flex-col items-center justify-center gap-2 text-slate-500">

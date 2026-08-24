@@ -1,11 +1,17 @@
 import { camelToSnakeCase } from '@douglasneuroinformatics/libjs';
-import { ActionDropdown, ClientTable } from '@douglasneuroinformatics/libui/components';
+import React from 'react';
+
+import { ActionDropdown, ClientTable, Select } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { SelectInstrument } from '@/components/SelectInstrument';
 import { TimeDropdown } from '@/components/TimeDropdown';
 import { useInstrumentVisualization } from '@/hooks/useInstrumentVisualization';
+
+const SelectTrigger = Select.Trigger as React.ComponentType<React.PropsWithChildren<{ className?: string }>>;
+const SelectContent = Select.Content as React.ComponentType<React.PropsWithChildren<unknown>>;
+const SelectItem = Select.Item as React.ComponentType<React.PropsWithChildren<{ value: string }>>;
 
 const formatDisplayDate = (value: Date) => {
   const isoDate = value.toISOString().slice(0, 10);
@@ -15,6 +21,7 @@ const formatDisplayDate = (value: Date) => {
 
 const RouteComponent = () => {
   const params = Route.useParams();
+  const [entriesPerPage, setEntriesPerPage] = React.useState(15);
   const { dl, instrumentId, instrumentOptions, records, setInstrumentId, setMinDate } = useInstrumentVisualization({
     params: { subjectId: params.subjectId }
   });
@@ -39,6 +46,18 @@ const RouteComponent = () => {
             <SelectInstrument options={instrumentOptions} onSelect={setInstrumentId} />
           </div>
           <div className="flex flex-col gap-2 lg:flex-row">
+            <Select value={String(entriesPerPage)} onValueChange={(value) => setEntriesPerPage(Number(value))}>
+              <SelectTrigger className="min-w-32">
+                <span>{entriesPerPage} filas</span>
+              </SelectTrigger>
+              <SelectContent>
+                {[15, 25, 50, 100].map((value) => (
+                  <SelectItem key={value} value={String(value)}>
+                    {value} filas
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <TimeDropdown disabled={!instrumentId} setMinTime={setMinDate} />
             <ActionDropdown
               widthFull
@@ -64,8 +83,8 @@ const RouteComponent = () => {
         ]}
         data={records}
         data-testid="subject-table"
-        entriesPerPage={15}
-        minRows={15}
+        entriesPerPage={entriesPerPage}
+        minRows={entriesPerPage}
       />
     </div>
   );
