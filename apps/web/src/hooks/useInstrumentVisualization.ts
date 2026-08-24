@@ -69,11 +69,26 @@ export function useInstrumentVisualization({ params }: UseInstrumentVisualizatio
   const instrumentInfoQuery = useInstrumentInfoQuery({
     params: { kind: params.kind, subjectId: params.subjectId }
   });
+  const availableInstrumentIds = useMemo(
+    () => new Set((instrumentInfoQuery.data ?? []).map((instrument) => instrument.id)),
+    [instrumentInfoQuery.data]
+  );
+
+  useEffect(() => {
+    if (instrumentInfoQuery.isLoading || instrumentId === null) {
+      return;
+    }
+    if (!availableInstrumentIds.has(instrumentId)) {
+      setInstrumentId(null);
+    }
+  }, [availableInstrumentIds, instrumentId, instrumentInfoQuery.isLoading]);
+
+  const selectedInstrumentId = instrumentId && availableInstrumentIds.has(instrumentId) ? instrumentId : null;
   const recordsQuery = useInstrumentRecords({
-    enabled: instrumentId !== null,
+    enabled: selectedInstrumentId !== null,
     params: {
       groupId: currentGroup?.id,
-      instrumentId: instrumentId!,
+      instrumentId: selectedInstrumentId ?? undefined,
       kind: params.kind,
       minDate: minDate ?? undefined,
       subjectId: params.subjectId
@@ -244,7 +259,16 @@ export function useInstrumentVisualization({ params }: UseInstrumentVisualizatio
     return options;
   }, [instrumentInfoQuery.data]);
 
-  return { dl, instrument, instrumentId, instrumentOptions, minDate, records, setInstrumentId, setMinDate };
+  return {
+    dl,
+    instrument,
+    instrumentId: selectedInstrumentId,
+    instrumentOptions,
+    minDate,
+    records,
+    setInstrumentId,
+    setMinDate
+  };
 }
 
 export type { InstrumentVisualizationRecord };
