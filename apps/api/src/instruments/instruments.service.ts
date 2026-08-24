@@ -44,6 +44,15 @@ type InstrumentQuery<TKind extends InstrumentKind> = {
   subjectId?: string;
 };
 
+type CurrentUserContext = {
+  basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER' | 'STANDARD';
+  id: string;
+};
+
+type InstrumentEntityOptions = EntityOperationOptions & {
+  currentUser?: CurrentUserContext;
+};
+
 @Injectable()
 export class InstrumentsService {
   constructor(
@@ -56,7 +65,7 @@ export class InstrumentsService {
 
   async count<TKind extends InstrumentKind>(
     query: InstrumentQuery<TKind> = {},
-    options: EntityOperationOptions = {}
+    options: InstrumentEntityOptions = {}
   ): Promise<number> {
     return (await this.find(query, options)).length;
   }
@@ -112,8 +121,10 @@ export class InstrumentsService {
 
   async find<TKind extends InstrumentKind>(
     query: InstrumentQuery<TKind> = {},
-    { ability }: EntityOperationOptions = {}
+    { ability, currentUser }: InstrumentEntityOptions = {}
   ): Promise<WithID<SomeInstrument<TKind>>[]> {
+    const accessibleInstrumentIds = await this.resolveAccessibleInstrumentIds(currentUser);
+
     const instruments = await this.instrumentModel.findMany({
       where: {
         AND: [
@@ -126,6 +137,7 @@ export class InstrumentsService {
                 }
               : undefined
           },
+          accessibleInstrumentIds ? { id: { in: accessibleInstrumentIds } } : undefined,
           accessibleQuery(ability, 'read', 'Instrument')
         ]
       }
@@ -137,7 +149,7 @@ export class InstrumentsService {
     return instances.filter((instance) => instance.kind === query.kind) as WithID<SomeInstrument<TKind>>[];
   }
 
-  async findBundleById(id: string, options: EntityOperationOptions = {}): Promise<InstrumentBundleContainer> {
+  async findBundleById(id: string, options: InstrumentEntityOptions = {}): Promise<InstrumentBundleContainer> {
     const instance = await this.findById(id, options);
     if (isScalarInstrument(instance)) {
       return {
@@ -163,10 +175,18 @@ export class InstrumentsService {
 
   async findById(
     id: string,
-    { ability }: EntityOperationOptions = {}
+    { ability, currentUser }: InstrumentEntityOptions = {}
   ): Promise<AnyInstrument & { bundle: string; id: string }> {
+    const accessibleInstrumentIds = await this.resolveAccessibleInstrumentIds(currentUser);
+
     const instrument = await this.instrumentModel.findFirst({
-      where: { AND: [accessibleQuery(ability, 'read', 'Instrument')], id }
+      where: {
+        AND: [
+          accessibleQuery(ability, 'read', 'Instrument'),
+          accessibleInstrumentIds ? { id: { in: accessibleInstrumentIds } } : undefined
+        ],
+        id
+      }
     });
     if (!instrument) {
       throw new NotFoundException(`Failed to find instrument with ID: ${id}`);
@@ -177,7 +197,7 @@ export class InstrumentsService {
 
   async findInfo<TKind extends InstrumentKind>(
     query: InstrumentQuery<TKind> = {},
-    options: EntityOperationOptions = {}
+    options: InstrumentEntityOptions = {}
   ): Promise<InstrumentInfo[]> {
     const instances = await this.find(query, options);
     const results = new Map<string, InstrumentInfo>();
@@ -234,14 +254,37 @@ export class InstrumentsService {
     return instance;
   }
 
-  async list<TKind extends InstrumentKind>(query: InstrumentQuery<TKind> = {}, ability: AppAbility) {
-    return this.find(query, { ability }).then((arr) => {
+  async list<TKind extends InstrumentKind>(
+    query: InstrumentQuery<TKind> = {},
+    ability: AppAbility,
+    currentUser?: CurrentUserContext
+  ) {
+    return this.find(query, { ability, currentUser }).then((arr) => {
       return arr.map((instrument) => ({
         id: instrument.id,
         internal: instrument.internal,
         title: instrument.details.title
       }));
     });
+  }
+
+  private async resolveAccessibleInstrumentIds(currentUser?: CurrentUserContext): Promise<null | string[]> {
+    if (!currentUser || currentUser.basePermissionLevel === 'ADMIN') {
+      return null;
+    }
+
+    const groups = await this.groupModel.findMany({
+      select: {
+        accessibleInstrumentIds: true
+      },
+      where: {
+        userIds: {
+          has: currentUser.id
+        }
+      }
+    });
+
+    return Array.from(new Set(groups.flatMap((group) => group.accessibleInstrumentIds)));
   }
 
   private async instantiate(instruments: Pick<InstrumentBundleContainer, 'bundle' | 'id'>[]) {

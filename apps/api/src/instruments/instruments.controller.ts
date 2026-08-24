@@ -25,9 +25,10 @@ export class InstrumentsController {
   @RouteAccess({ action: 'read', subject: 'Instrument' })
   async findBundleById(
     @Param('id') id: string,
-    @CurrentUser('ability') ability: AppAbility
+    @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: { basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER' | 'STANDARD'; id: string }
   ): Promise<InstrumentBundleContainer> {
-    return this.instrumentsService.findBundleById(id, { ability });
+    return this.instrumentsService.findBundleById(id, { ability, currentUser: user });
   }
 
   @ApiOperation({ summary: 'Summarize Instruments' })
@@ -35,16 +36,21 @@ export class InstrumentsController {
   @RouteAccess({ action: 'read', subject: 'Instrument' })
   async findInfo(
     @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: { basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER' | 'STANDARD'; id: string },
     @Query('kind') kind?: InstrumentKind,
     @Query('subjectId') subjectId?: string
   ): Promise<InstrumentInfo[]> {
-    return this.instrumentsService.findInfo({ kind, subjectId }, { ability });
+    return this.instrumentsService.findInfo({ kind, subjectId }, { ability, currentUser: user });
   }
 
   @ApiOperation({ summary: 'List Instruments' })
   @Get('list')
   @RouteAccess({ action: 'read', subject: 'Instrument' })
-  async list(@CurrentUser('ability') ability: AppAbility, @Query('kind') kind?: InstrumentKind) {
-    return this.instrumentsService.list({ kind }, ability);
+  async list(
+    @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: { basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER' | 'STANDARD'; id: string },
+    @Query('kind') kind?: InstrumentKind
+  ) {
+    return this.instrumentsService.list({ kind }, ability, user);
   }
 }
