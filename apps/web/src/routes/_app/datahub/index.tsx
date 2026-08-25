@@ -208,18 +208,20 @@ const RouteComponent = () => {
               <SelectInstrument options={instrumentOptions} onSelect={setInstrumentId} />
             </div>
             <div className="flex min-w-60 gap-2 lg:shrink">
-              <Select value={String(entriesPerPage)} onValueChange={(value) => setEntriesPerPage(Number(value))}>
-                <SelectTrigger className="min-w-32">
-                  <span>{entriesPerPage} filas</span>
-                </SelectTrigger>
-                <SelectContent>
-                  {[15, 25, 50, 100].map((value) => (
-                    <SelectItem key={value} value={String(value)}>
-                      {value} filas
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {instrumentId && (
+                <Select value={String(entriesPerPage)} onValueChange={(value) => setEntriesPerPage(Number(value))}>
+                  <SelectTrigger className="min-w-32">
+                    <span>Número de filas</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[15, 25, 50, 100].map((value) => (
+                      <SelectItem key={value} value={String(value)}>
+                        {value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               {instrumentId ? (
                 <React.Fragment>
                   {(() => {
