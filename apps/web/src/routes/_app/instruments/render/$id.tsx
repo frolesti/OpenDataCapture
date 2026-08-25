@@ -274,7 +274,7 @@ const RouteComponent = () => {
   return (
     <div className="flex grow flex-col">
       {currentStep === 1 && !recordId && (
-        <div className="sticky top-0 z-20 flex justify-center border-b bg-white/90 py-2 backdrop-blur-sm dark:bg-slate-900/90">
+        <div className="fixed right-6 top-6 z-30">
           <Button className="gap-2" size="sm" variant="outline" onClick={handleSaveDraft}>
             <Save className="h-4 w-4" />
             {t({

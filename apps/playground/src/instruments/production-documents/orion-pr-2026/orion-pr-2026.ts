@@ -447,6 +447,17 @@ function treatmentValidation(prefix: 'prev' | 'current' | 'concomitant', maxTrea
   return schema;
 }
 
+function getTime(value: unknown): number | undefined {
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const time = new Date(value).getTime();
+    return Number.isNaN(time) ? undefined : time;
+  }
+  return undefined;
+}
+
 function isComorbidityComplete(data: FormData, number: number): boolean {
   return Boolean(data[`comorbidity_${number}`] && data[`comorbidity_${number}_diagnosis_date`]);
 }
@@ -1077,10 +1088,10 @@ export default defineInstrument({
         for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
           const startKey = `${prefix}_treatment_start_${treatmentNumber}`;
           const endKey = `${prefix}_treatment_end_${treatmentNumber}`;
-          const startDate = values[startKey] as Date | undefined;
-          const endDate = values[endKey] as Date | undefined;
+          const startDate = getTime(values[startKey]);
+          const endDate = getTime(values[endKey]);
 
-          if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
+          if (startDate !== undefined && endDate !== undefined && startDate > endDate) {
             context.addIssue({
               code: z.ZodIssueCode.custom,
               message: 'La fecha de inicio no puede ser posterior a la fecha de fin',

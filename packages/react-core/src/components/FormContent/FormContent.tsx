@@ -46,9 +46,10 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
         return;
       }
 
-      const firstError = formRef.current?.querySelector(
+      const errors = formRef.current?.querySelectorAll(
         '[role="alert"], .text-destructive, [aria-invalid="true"], [data-invalid="true"]'
       );
+      const firstError = errors?.[0];
       if (firstError) {
         firstError.scrollIntoView({ behavior: 'smooth', block: 'start' });
         hasScrolledRef.current = true;
