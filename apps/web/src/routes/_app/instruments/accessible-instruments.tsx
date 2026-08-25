@@ -2,6 +2,7 @@ import React from 'react';
 
 import { Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
+import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
 import { InstrumentShowcase } from '@/components/InstrumentShowcase';
@@ -9,6 +10,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { WithFallback } from '@/components/WithFallback';
 import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
+import { useCreateSessionMutation } from '@/hooks/useCreateSessionMutation';
 import { useAppStore } from '@/store';
 
 const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
@@ -19,9 +21,12 @@ const RouteComponent = () => {
   const currentUser = useAppStore((store) => store.currentUser);
   const currentGroup = useAppStore((store) => store.currentGroup);
   const changeGroup = useAppStore((store) => store.changeGroup);
+  const startSession = useAppStore((store) => store.startSession);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const createSessionMutation = useCreateSessionMutation();
   const instrumentInfoQuery = useInstrumentInfoQuery();
+  const selectedGroup = currentGroup ?? currentUser?.groups[0] ?? null;
   const accessibleInstrumentIds = new Set(currentUser?.groups.flatMap((group) => group.accessibleInstrumentIds) ?? []);
   const orionSelectionInstrument = (instrumentInfoQuery.data ?? []).find(
     (instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME
@@ -54,26 +59,37 @@ const RouteComponent = () => {
       <WithFallback
         Component={InstrumentShowcase}
         props={{
-          data: currentUser
-            ? instrumentInfoQuery.data?.filter((instrument) => {
-                if (!accessibleInstrumentIds.has(instrument.id)) {
-                  return false;
-                }
-                if (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME) {
-                  return hasEligibleOrionSelection;
-                }
-                return true;
-              })
-            : instrumentInfoQuery.data,
+          data: instrumentInfoQuery.data?.filter((instrument) => {
+            if (!accessibleInstrumentIds.has(instrument.id)) {
+              return false;
+            }
+            if (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME) {
+              return hasEligibleOrionSelection;
+            }
+            return true;
+          }),
           onSelect: (instrument) => {
-            void navigate({
-              params: { id: instrument.id },
-              search: {
-                recordId: undefined
-              },
-              state: { instrumentTitle: instrument.details.title },
-              to: `/instruments/render/$id`
-            });
+            void (async () => {
+              if (!currentUser || !selectedGroup) return;
+              if (!currentSession) {
+                const session = await createSessionMutation.mutateAsync({
+                  date: new Date(),
+                  groupId: selectedGroup.id,
+                  subjectData: {
+                    id: encodeScopedSubjectId(currentUser.username, { groupName: selectedGroup.name })
+                  },
+                  type: 'RETROSPECTIVE',
+                  username: currentUser.username
+                });
+                startSession({ ...session, type: 'RETROSPECTIVE' });
+              }
+              await navigate({
+                params: { id: instrument.id },
+                search: { recordId: undefined },
+                state: { instrumentTitle: instrument.details.title },
+                to: `/instruments/render/$id`
+              });
+            })();
           },
           groups: currentUser?.groups,
           onGroupChange: (groupId) => {
@@ -82,7 +98,7 @@ const RouteComponent = () => {
               changeGroup(group);
             }
           },
-          selectedGroupId: currentGroup?.id
+          selectedGroupId: selectedGroup?.id
         }}
       />
     </div>
