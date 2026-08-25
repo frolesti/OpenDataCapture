@@ -3,7 +3,7 @@ import React from 'react';
 import { Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
-import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
 import { InstrumentShowcase } from '@/components/InstrumentShowcase';
 import { PageHeader } from '@/components/PageHeader';
@@ -19,7 +19,7 @@ const RouteComponent = () => {
   const navigate = useNavigate();
   const sessionGroup = currentGroup ?? currentUser?.groups[0] ?? null;
 
-  const { t } = useTranslation('session');
+  const { t } = useTranslation();
   const createSessionMutation = useCreateSessionMutation();
   const instrumentInfoQuery = useInstrumentInfoQuery();
 
@@ -51,7 +51,7 @@ const RouteComponent = () => {
     <React.Fragment>
       <PageHeader>
         <Heading className="text-center" variant="h2">
-          {t('accessibleInstruments')}
+          {t('instruments.accessible.title')}
         </Heading>
       </PageHeader>
       <div className="mx-auto w-full max-w-5xl">
