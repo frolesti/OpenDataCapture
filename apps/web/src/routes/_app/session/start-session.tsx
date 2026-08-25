@@ -18,9 +18,10 @@ const RouteComponent = () => {
   const currentUser = useAppStore((store) => store.currentUser);
   const location = useLocation();
   const navigate = useNavigate();
+  const sessionGroup = currentGroup ?? currentUser?.groups[0] ?? null;
   const defaultInitialValues = {
     sessionType: 'IN_PERSON',
-    subjectIdentificationMethod: currentGroup?.settings.defaultIdentificationMethod ?? 'CUSTOM_ID'
+    subjectIdentificationMethod: sessionGroup?.settings.defaultIdentificationMethod ?? 'CUSTOM_ID'
   } as const;
   const [initialValues, setInitialValues] = useState<FormTypes.PartialNullableData<StartSessionFormData>>(
     location.state?.initialValues ?? defaultInitialValues
@@ -33,7 +34,7 @@ const RouteComponent = () => {
     if (currentSession === null) {
       setInitialValues(defaultInitialValues);
     }
-  }, [currentSession]);
+  }, [currentSession, sessionGroup]);
 
   return (
     <React.Fragment>
@@ -43,7 +44,7 @@ const RouteComponent = () => {
         </Heading>
       </PageHeader>
       <StartSessionForm
-        currentGroup={currentGroup}
+        currentGroup={sessionGroup}
         initialValues={initialValues}
         readOnly={currentSession !== null || createSessionMutation.isPending}
         username={currentUser?.username}
