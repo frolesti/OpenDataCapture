@@ -1,39 +1,34 @@
 import React, { useEffect, useState } from 'react';
 
-import { ListboxDropdown, SearchBar } from '@douglasneuroinformatics/libui/components';
-import type { ListboxDropdownOption } from '@douglasneuroinformatics/libui/components';
+import { SearchBar, Select } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { TranslatedInstrumentInfo } from '@opendatacapture/schemas/instrument';
+import type { Group } from '@opendatacapture/schemas/group';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { InstrumentCard } from '../InstrumentCard';
-import { InstrumentKindDropdown } from './InstrumentKindDropdown';
-import { InstrumentLanguageDropdown } from './InstrumentLanguageDropdown';
-
-import type { InstrumentShowcaseKindOption } from './InstrumentKindDropdown';
-import type { InstrumentShowcaseLanguageOption } from './InstrumentLanguageDropdown';
+const SelectTrigger = Select.Trigger as React.ComponentType<React.PropsWithChildren<{ className?: string }>>;
+const SelectContent = Select.Content as React.ComponentType<React.PropsWithChildren<unknown>>;
+const SelectItem = Select.Item as React.ComponentType<React.PropsWithChildren<{ value: string }>>;
 
 export const InstrumentShowcase: React.FC<{
   data: TranslatedInstrumentInfo[];
+  groups?: Group[];
+  onGroupChange?: (groupId: string) => void;
   onSelect: (instrument: TranslatedInstrumentInfo) => void;
-}> = ({ data: availableInstruments, onSelect }) => {
+  selectedGroupId?: string;
+}> = ({ data: availableInstruments, groups = [], onGroupChange, onSelect, selectedGroupId }) => {
   const { t } = useTranslation();
   const [filteredInstruments, setFilteredInstruments] = useState<TranslatedInstrumentInfo[]>(
     availableInstruments.toSorted((a, b) => a.details.title.localeCompare(b.details.title))
   );
-  const [tagOptions, setTagOptions] = useState<ListboxDropdownOption[]>([]);
-  const [selectedKinds, setSelectedKinds] = useState<InstrumentShowcaseKindOption[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<InstrumentShowcaseLanguageOption[]>([]);
-  const [selectedTags, setSelectedTags] = useState<ListboxDropdownOption[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const updatedFilteredInstruments = availableInstruments.filter(({ details, kind, supportedLanguages, tags }) => {
-      if (selectedKinds.length && !selectedKinds.some(({ key }) => key === kind)) {
-        return false;
-      } else if (selectedLanguages.length && !selectedLanguages.some(({ key }) => supportedLanguages.includes(key))) {
-        return false;
-      } else if (selectedTags.length && !selectedTags.some(({ key }) => tags.includes(key))) {
+    const selectedGroup = groups.find((group) => group.id === selectedGroupId);
+    const accessibleInstrumentIds = selectedGroup ? new Set(selectedGroup.accessibleInstrumentIds) : null;
+    const updatedFilteredInstruments = availableInstruments.filter(({ details, id, tags }) => {
+      if (accessibleInstrumentIds && !accessibleInstrumentIds.has(id)) {
         return false;
       }
       return (
@@ -45,18 +40,7 @@ export const InstrumentShowcase: React.FC<{
       return a.details.title.localeCompare(b.details.title);
     });
     setFilteredInstruments(updatedFilteredInstruments);
-  }, [availableInstruments, selectedKinds, selectedLanguages, selectedTags, searchTerm]);
-
-  useEffect(() => {
-    setTagOptions(
-      Array.from(new Set(filteredInstruments.flatMap((item) => item.tags)))
-        .map((item) => ({
-          key: item,
-          label: item
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label))
-    );
-  }, [availableInstruments]);
+  }, [availableInstruments, groups, searchTerm, selectedGroupId]);
 
   return (
     <div className="flex flex-col gap-5" data-testid="instrument-showcase">
@@ -68,21 +52,25 @@ export const InstrumentShowcase: React.FC<{
           onValueChange={setSearchTerm}
         />
         <div className="flex items-center gap-2.5">
-          <div data-testid="instrument-kind-filter">
-            <InstrumentKindDropdown selected={selectedKinds} setSelected={setSelectedKinds} />
-          </div>
-          <div data-testid="instrument-tag-filter">
-            <ListboxDropdown
-              widthFull
-              options={tagOptions}
-              selected={selectedTags}
-              setSelected={setSelectedTags}
-              title={t('core.tags')}
-            />
-          </div>
-          <div data-testid="instrument-language-filter">
-            <InstrumentLanguageDropdown selected={selectedLanguages} setSelected={setSelectedLanguages} />
-          </div>
+          {groups.length > 0 && onGroupChange && (
+            <Select value={selectedGroupId} onValueChange={onGroupChange}>
+              <SelectTrigger className="min-w-56">
+                <Select.Value
+                  placeholder={t({
+                    en: 'Group',
+                    fr: 'Grupo'
+                  })}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {groups.map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
       <ul className="flex flex-col gap-5">

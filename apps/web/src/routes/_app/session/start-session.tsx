@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
@@ -16,8 +16,10 @@ const RouteComponent = () => {
   const currentSession = useAppStore((store) => store.currentSession);
   const startSession = useAppStore((store) => store.startSession);
   const currentUser = useAppStore((store) => store.currentUser);
+  const changeGroup = useAppStore((store) => store.changeGroup);
   const navigate = useNavigate();
-  const sessionGroup = currentGroup ?? currentUser?.groups[0] ?? null;
+  const [selectedGroupId, setSelectedGroupId] = useState(currentGroup?.id ?? currentUser?.groups[0]?.id);
+  const sessionGroup = currentUser?.groups.find((group) => group.id === selectedGroupId) ?? currentGroup;
 
   const { t } = useTranslation();
   const createSessionMutation = useCreateSessionMutation();
@@ -57,7 +59,16 @@ const RouteComponent = () => {
       <div className="mx-auto w-full max-w-5xl">
         <InstrumentShowcase
           data={instrumentInfoQuery.data ?? []}
+          groups={currentUser?.groups}
+          onGroupChange={(groupId) => {
+            setSelectedGroupId(groupId);
+            const group = currentUser?.groups.find((entry) => entry.id === groupId);
+            if (group) {
+              changeGroup(group);
+            }
+          }}
           onSelect={(instrument) => void handleInstrumentSelect(instrument)}
+          selectedGroupId={sessionGroup?.id}
         />
       </div>
     </React.Fragment>
