@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import { Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
-import type { FormTypes } from '@opendatacapture/runtime-core';
+import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 
+import { InstrumentShowcase } from '@/components/InstrumentShowcase';
 import { PageHeader } from '@/components/PageHeader';
-import { StartSessionForm } from '@/components/StartSessionForm';
-import type { StartSessionFormData } from '@/components/StartSessionForm';
 import { useCreateSessionMutation } from '@/hooks/useCreateSessionMutation';
+import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 import { useAppStore } from '@/store';
 
 const RouteComponent = () => {
@@ -16,44 +16,50 @@ const RouteComponent = () => {
   const currentSession = useAppStore((store) => store.currentSession);
   const startSession = useAppStore((store) => store.startSession);
   const currentUser = useAppStore((store) => store.currentUser);
-  const location = useLocation();
   const navigate = useNavigate();
   const sessionGroup = currentGroup ?? currentUser?.groups[0] ?? null;
-  const defaultInitialValues = {
-    sessionType: 'IN_PERSON',
-    subjectIdentificationMethod: sessionGroup?.settings.defaultIdentificationMethod ?? 'CUSTOM_ID'
-  } as const;
-  const [initialValues, setInitialValues] = useState<FormTypes.PartialNullableData<StartSessionFormData>>(
-    location.state?.initialValues ?? defaultInitialValues
-  );
 
   const { t } = useTranslation('session');
   const createSessionMutation = useCreateSessionMutation();
+  const instrumentInfoQuery = useInstrumentInfoQuery();
 
-  useEffect(() => {
-    if (currentSession === null) {
-      setInitialValues(defaultInitialValues);
+  const handleInstrumentSelect = async (instrument: { details: { title: string }; id: string }) => {
+    if (currentSession || !currentUser || !sessionGroup) {
+      return;
     }
-  }, [currentSession, sessionGroup]);
+
+    const session = await createSessionMutation.mutateAsync({
+      date: new Date(),
+      groupId: sessionGroup.id,
+      subjectData: {
+        id: encodeScopedSubjectId(currentUser.username, {
+          groupName: sessionGroup.name
+        })
+      },
+      type: 'RETROSPECTIVE',
+      username: currentUser.username
+    });
+    startSession({ ...session, type: 'RETROSPECTIVE' });
+    await navigate({
+      params: { id: instrument.id },
+      state: { instrumentTitle: instrument.details.title },
+      to: '/instruments/render/$id'
+    });
+  };
 
   return (
     <React.Fragment>
       <PageHeader>
         <Heading className="text-center" variant="h2">
-          {t('startSession')}
+          {t('accessibleInstruments')}
         </Heading>
       </PageHeader>
-      <StartSessionForm
-        currentGroup={sessionGroup}
-        initialValues={initialValues}
-        readOnly={currentSession !== null || createSessionMutation.isPending}
-        username={currentUser?.username}
-        onSubmit={async (formData) => {
-          const session = await createSessionMutation.mutateAsync(formData);
-          startSession({ ...session, type: formData.type });
-          await navigate({ to: '/instruments/accessible-instruments' });
-        }}
-      />
+      <div className="mx-auto w-full max-w-5xl">
+        <InstrumentShowcase
+          data={instrumentInfoQuery.data ?? []}
+          onSelect={(instrument) => void handleInstrumentSelect(instrument)}
+        />
+      </div>
     </React.Fragment>
   );
 };
