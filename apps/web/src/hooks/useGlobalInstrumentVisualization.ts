@@ -66,17 +66,32 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     }
   }, [instrumentId]);
 
-  const instrument = useInstrument(instrumentId) as AnyUnilingualScalarInstrument;
-
   const instrumentInfoQuery = useInstrumentInfoQuery({
     params: { kind: params?.kind }
   });
 
+  const availableInstrumentIds = useMemo(
+    () => new Set((instrumentInfoQuery.data ?? []).map((availableInstrument) => availableInstrument.id)),
+    [instrumentInfoQuery.data]
+  );
+
+  useEffect(() => {
+    if (instrumentInfoQuery.isLoading || instrumentId === null) {
+      return;
+    }
+    if (!availableInstrumentIds.has(instrumentId)) {
+      setInstrumentId(null);
+    }
+  }, [availableInstrumentIds, instrumentId, instrumentInfoQuery.isLoading]);
+
+  const selectedInstrumentId = instrumentId && availableInstrumentIds.has(instrumentId) ? instrumentId : null;
+  const instrument = useInstrument(selectedInstrumentId) as AnyUnilingualScalarInstrument;
+
   const recordsQuery = useInstrumentRecords({
-    enabled: instrumentId !== null,
+    enabled: selectedInstrumentId !== null,
     params: {
       groupId: currentGroup?.id,
-      instrumentId: instrumentId!,
+      instrumentId: selectedInstrumentId ?? undefined,
       kind: params?.kind,
       minDate: minDate ?? undefined
     }
@@ -375,7 +390,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     filterOptions,
     filters,
     instrument,
-    instrumentId,
+    instrumentId: selectedInstrumentId,
     instrumentOptions,
     minDate,
     records: filteredRecords,

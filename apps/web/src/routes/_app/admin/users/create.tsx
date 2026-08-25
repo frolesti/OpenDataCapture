@@ -101,6 +101,7 @@ function buildPendingSearchText(entry: PendingInvestigator) {
 
 type UserFormState = {
   basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER';
+  email: string;
   firstName: string;
   groupIds: string[];
   lastName: string;
@@ -154,6 +155,7 @@ const ENTRIES_PER_PAGE = 10;
 
 const DEFAULT_USER_FORM: UserFormState = {
   basePermissionLevel: 'GROUP_MANAGER',
+  email: '',
   firstName: '',
   groupIds: [],
   lastName: '',
@@ -636,6 +638,7 @@ const RouteComponent = () => {
       await createUserMutation.mutateAsync({
         data: {
           basePermissionLevel: userForm.basePermissionLevel as BasePermissionLevel,
+          email: userForm.email.trim() || undefined,
           firstName: userForm.firstName.trim(),
           groupIds: userForm.groupIds,
           lastName: userForm.lastName.trim(),
@@ -1491,6 +1494,15 @@ const RouteComponent = () => {
                   id="user-username"
                   value={userForm.username}
                   onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="user-email">{t({ en: 'Correu', fr: 'Correo' })}</Label>
+                <Input
+                  id="user-email"
+                  type="email"
+                  value={userForm.email}
+                  onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))}
                 />
               </div>
               <div className="grid gap-2">

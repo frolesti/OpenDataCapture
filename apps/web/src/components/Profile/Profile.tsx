@@ -11,7 +11,6 @@ import { z } from 'zod/v4';
 import { PageHeader } from '@/components/PageHeader';
 import { UserIcon } from '@/components/UserIcon';
 import { formatHospitalLabel } from '@/components/admin/groups/hospitals';
-import { config } from '@/config';
 import type { CurrentUser } from '@/store/types';
 
 export type ProfileProps = {
@@ -77,33 +76,6 @@ export const Profile = ({ currentGroup, currentUser, onSubmit, profileUser }: Pr
         }
       });
   }, [resolvedLanguage, t]);
-
-  const $SupportFormData = useMemo(() => {
-    return z.object({
-      message: z.string().min(1),
-      reason: z.enum(['issue', 'change'])
-    });
-  }, []);
-
-  const handleSupportSubmit = ({ message, reason }: { message: string; reason: 'change' | 'issue' }) => {
-    const reasonLabel =
-      reason === 'issue'
-        ? t({ en: 'Incidencia tècnica', fr: 'Incidencia técnica' })
-        : t({ en: 'Petició de canvi de dades', fr: 'Petición de cambio de datos' });
-
-    const subject = encodeURIComponent(`[Perfil] ${reasonLabel} - ${currentUser.username}`);
-    const body = encodeURIComponent(
-      [
-        `Usuario: ${currentUser.username}`,
-        `ID: ${currentUser.id}`,
-        `Grupo activo: ${currentGroup?.name ?? '-'}`,
-        '',
-        message
-      ].join('\n')
-    );
-
-    window.open(`mailto:${config.meta.contactEmail}?subject=${subject}&body=${body}`, '_blank');
-  };
 
   return (
     <div className="container mx-auto max-w-3xl p-4">
@@ -264,59 +236,6 @@ export const Profile = ({ currentGroup, currentUser, onSubmit, profileUser }: Pr
             })}
             validationSchema={$ChangePasswordFormData}
             onSubmit={onSubmit}
-          />
-        </div>
-
-        <div className="rounded-lg border bg-white p-6 shadow-sm dark:bg-slate-950">
-          <div className="mb-4">
-            <Heading variant="h4">
-              {t({
-                en: 'Assistència tècnica',
-                fr: 'Soporte técnico'
-              })}
-            </Heading>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {t({
-                en: "Notifiqueu incidències o demaneu canvis de dades directament a l'equip tècnic.",
-                fr: 'Notifique incidencias o solicite cambios de datos directamente al equipo técnico.'
-              })}
-            </p>
-          </div>
-
-          <Form
-            content={[
-              {
-                fields: {
-                  message: {
-                    kind: 'string',
-                    label: t({
-                      en: 'Missatge',
-                      fr: 'Mensaje'
-                    }),
-                    variant: 'textarea'
-                  },
-                  reason: {
-                    kind: 'string',
-                    label: t({
-                      en: 'Tipus de petició',
-                      fr: 'Tipo de solicitud'
-                    }),
-                    options: {
-                      change: t({ en: 'Canvi de dades', fr: 'Cambio de datos' }),
-                      issue: t({ en: 'Incidència tècnica', fr: 'Incidencia técnica' })
-                    },
-                    variant: 'select'
-                  }
-                },
-                title: ''
-              }
-            ]}
-            submitBtnLabel={t({
-              en: 'Contactar amb suport',
-              fr: 'Contactar con soporte'
-            })}
-            validationSchema={$SupportFormData}
-            onSubmit={handleSupportSubmit}
           />
         </div>
       </div>
