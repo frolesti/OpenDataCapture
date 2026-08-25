@@ -46,8 +46,7 @@ export const StartSessionForm = ({
   onSubmit
 }: StartSessionFormProps) => {
   const { resolvedLanguage, t } = useTranslation();
-  const usesStreamlinedSessionStart =
-    currentGroup?.name === 'Alta Health Services' || currentGroup?.type === 'RESEARCH';
+  const usesStreamlinedSessionStart = currentGroup !== null;
 
   // Research/study groups use the streamlined production workflow:
   // start one session, then register multiple patient records within it.
