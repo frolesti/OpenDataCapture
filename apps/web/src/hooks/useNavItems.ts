@@ -118,7 +118,7 @@ export function useNavItems() {
     }
     if (ability?.can('create', 'Session')) {
       sessionItems.push({
-        disabled: currentSession === null,
+        disabled: currentSession !== null,
         icon: CirclePlayIcon,
         label: t('layout.navLinks.startSession'),
         url: '/session/start-session'
