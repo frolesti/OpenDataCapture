@@ -116,40 +116,51 @@ export class OrionFollowupService {
       return;
     }
 
-    await this.reminderClient.upsert({
-      create: {
-        dueAt: new Date(Date.now() + FOLLOWUP_DELAY_MS),
-        investigatorEmail: investigator?.email,
-        investigatorName: investigator ? `${investigator.firstName} ${investigator.lastName}`.trim() : 'Investigador',
-        selectionRecordId,
-        subjectId,
-        userCode: userCode.trim()
-      },
-      update: {},
-      where: { selectionRecordId }
-    });
-
-    if (this.configService.get('GATEWAY_ENABLED') !== true) {
-      return;
-    }
-
-    const followupInstrumentId = this.instrumentsService.generateScalarInstrumentId({
-      internal: ORION_FOLLOWUP_INTERNAL
-    });
-    const existingAssignment = await this.prismaClient.assignment.findFirst({
-      where: {
-        instrumentId: followupInstrumentId,
-        subjectId,
-        status: 'OUTSTANDING'
+    try {
+      const reminderClient = this.reminderClient;
+      if (!reminderClient) {
+        this.logger.warn('Skipping ORION reminder persistence because reminder client is unavailable.');
+      } else {
+        await reminderClient.upsert({
+          create: {
+            dueAt: new Date(Date.now() + FOLLOWUP_DELAY_MS),
+            investigatorEmail: investigator?.email,
+            investigatorName: investigator
+              ? `${investigator.firstName} ${investigator.lastName}`.trim()
+              : 'Investigador',
+            selectionRecordId,
+            subjectId,
+            userCode: userCode.trim()
+          },
+          update: {},
+          where: { selectionRecordId }
+        });
       }
-    });
-    if (!existingAssignment) {
-      await this.assignmentsService.create({
-        expiresAt: new Date(Date.now() + FOLLOWUP_ASSIGNMENT_EXPIRY_MS),
-        groupId,
-        instrumentId: followupInstrumentId,
-        subjectId
+
+      if (this.configService.get('GATEWAY_ENABLED') !== true) {
+        return;
+      }
+
+      const followupInstrumentId = this.instrumentsService.generateScalarInstrumentId({
+        internal: ORION_FOLLOWUP_INTERNAL
       });
+      const existingAssignment = await this.prismaClient.assignment.findFirst({
+        where: {
+          instrumentId: followupInstrumentId,
+          subjectId,
+          status: 'OUTSTANDING'
+        }
+      });
+      if (!existingAssignment) {
+        await this.assignmentsService.create({
+          expiresAt: new Date(Date.now() + FOLLOWUP_ASSIGNMENT_EXPIRY_MS),
+          groupId,
+          instrumentId: followupInstrumentId,
+          subjectId
+        });
+      }
+    } catch (error) {
+      this.logger.error(`ORION reminder/assignment side effect failed: ${String(error)}`);
     }
   }
 
@@ -163,10 +174,18 @@ export class OrionFollowupService {
     if (!selectionRecordId) {
       return;
     }
-    await this.reminderClient.updateMany({
-      data: { completedAt: new Date(), followupRecordId, status: 'COMPLETE' },
-      where: { selectionRecordId }
-    });
+    const reminderClient = this.reminderClient;
+    if (!reminderClient) {
+      return;
+    }
+    try {
+      await reminderClient.updateMany({
+        data: { completedAt: new Date(), followupRecordId, status: 'COMPLETE' },
+        where: { selectionRecordId }
+      });
+    } catch (error) {
+      this.logger.error(`Failed to complete ORION follow-up reminder state: ${String(error)}`);
+    }
   }
 
   private async sendDueReminders() {
@@ -174,7 +193,12 @@ export class OrionFollowupService {
       return;
     }
 
-    const reminders = await this.reminderClient.findMany({
+    const reminderClient = this.reminderClient;
+    if (!reminderClient) {
+      return;
+    }
+
+    const reminders = await reminderClient.findMany({
       where: {
         dueAt: { lte: new Date() },
         investigatorEmail: { not: null },
@@ -194,10 +218,10 @@ export class OrionFollowupService {
           subject: `Recordatorio ORION: visita de seguimiento pendiente para ${reminder.userCode}`,
           to: reminder.investigatorEmail
         });
-        await this.reminderClient.update({ data: { status: 'SENT' }, where: { id: reminder.id } });
+        await reminderClient.update({ data: { status: 'SENT' }, where: { id: reminder.id } });
       } catch (error) {
         this.logger.error(`Failed to send ORION reminder ${reminder.id}: ${String(error)}`);
-        await this.reminderClient.update({
+        await reminderClient.update({
           data: { error: String(error), status: 'FAILED' },
           where: { id: reminder.id }
         });
@@ -222,7 +246,14 @@ export class OrionFollowupService {
     );
   }
 
-  private get reminderClient() {
+  private get reminderClient():
+    | {
+        findMany: (...args: any[]) => Promise<any[]>;
+        update: (...args: any[]) => Promise<any>;
+        updateMany: (...args: any[]) => Promise<any>;
+        upsert: (...args: any[]) => Promise<any>;
+      }
+    | undefined {
     return (this.prismaClient as unknown as Record<string, any>).orionFollowupReminder;
   }
 

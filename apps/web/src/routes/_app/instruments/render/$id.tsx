@@ -72,6 +72,7 @@ function clearDraft(instrumentId: string): void {
 const RouteComponent = () => {
   const currentGroup = useAppStore((store) => store.currentGroup);
   const currentSession = useAppStore((store) => store.currentSession);
+  const endSession = useAppStore((store) => store.endSession);
 
   const params = Route.useParams();
   const search = Route.useSearch();
@@ -169,17 +170,25 @@ const RouteComponent = () => {
 
   // Save draft
   const handleSaveDraft = useCallback(() => {
-    if (latestDataRef.current && !recordId) {
-      saveDraft(params.id, latestDataRef.current);
-      notifications.addNotification({
-        message: t({
-          en: 'Esborrany desat correctament',
-          fr: 'Borrador guardado correctamente'
-        } as any),
-        type: 'success'
-      });
+    if (recordId) {
+      return;
     }
-  }, [params.id, recordId, notifications, t]);
+
+    if (latestDataRef.current) {
+      saveDraft(params.id, latestDataRef.current);
+    }
+
+    notifications.addNotification({
+      message: t({
+        en: 'Esborrany desat. Tornant a seleccionar estudi.',
+        fr: 'Borrador guardado. Volviendo a seleccionar estudio.'
+      } as any),
+      type: 'success'
+    });
+
+    endSession();
+    void navigate({ to: '/instruments/accessible-instruments' });
+  }, [endSession, navigate, notifications, params.id, recordId, t]);
 
   // Auto-save draft when session expires
   useEffect(() => {
@@ -190,6 +199,27 @@ const RouteComponent = () => {
     };
     window.addEventListener('session-expiring', handleSessionExpiring);
     return () => window.removeEventListener('session-expiring', handleSessionExpiring);
+  }, [params.id, recordId]);
+
+  useEffect(() => {
+    const handleSaveDraftBeforeClose = () => {
+      if (latestDataRef.current && !recordId) {
+        saveDraft(params.id, latestDataRef.current);
+      }
+    };
+
+    const handleDiscardDraftBeforeClose = () => {
+      if (!recordId) {
+        clearDraft(params.id);
+      }
+    };
+
+    window.addEventListener('odc-save-draft-before-close', handleSaveDraftBeforeClose);
+    window.addEventListener('odc-discard-draft-before-close', handleDiscardDraftBeforeClose);
+    return () => {
+      window.removeEventListener('odc-save-draft-before-close', handleSaveDraftBeforeClose);
+      window.removeEventListener('odc-discard-draft-before-close', handleDiscardDraftBeforeClose);
+    };
   }, [params.id, recordId]);
 
   useEffect(() => {
@@ -274,8 +304,13 @@ const RouteComponent = () => {
   return (
     <div className="flex grow flex-col">
       {currentStep === 1 && !recordId && (
-        <div className="fixed right-6 top-6 z-30">
-          <Button className="gap-2" size="sm" variant="outline" onClick={handleSaveDraft}>
+        <div className="fixed right-6 top-6 z-[70]">
+          <Button
+            className="gap-2 bg-white shadow-md dark:bg-slate-900"
+            size="sm"
+            variant="outline"
+            onClick={handleSaveDraft}
+          >
             <Save className="h-4 w-4" />
             {t({
               en: 'Desar esborrany',

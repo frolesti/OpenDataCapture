@@ -21,6 +21,17 @@ export const Sidebar = () => {
   const navigate = useNavigate();
 
   const { t } = useTranslation();
+
+  const closeCurrentSession = ({ preserveDraft }: { preserveDraft: boolean }) => {
+    if (location.pathname.startsWith('/instruments/render/')) {
+      window.dispatchEvent(
+        new CustomEvent(preserveDraft ? 'odc-save-draft-before-close' : 'odc-discard-draft-before-close')
+      );
+    }
+    endSession();
+    void navigate({ to: '/instruments/accessible-instruments' });
+  };
+
   return (
     <div
       className="flex h-screen w-[19rem] flex-col bg-slate-900 px-3 py-2 text-slate-100 shadow-lg dark:border-r dark:border-slate-700"
@@ -55,20 +66,48 @@ export const Sidebar = () => {
                 </AlertDialog.Trigger>
                 <AlertDialog.Content>
                   <AlertDialog.Header>
-                    <AlertDialog.Title>{t('layout.endSessionModal.title')}</AlertDialog.Title>
-                    <AlertDialog.Description>{t('layout.endSessionModal.message')}</AlertDialog.Description>
+                    <AlertDialog.Title>
+                      {t({
+                        en: 'Tancar registre actual',
+                        fr: 'Cerrar registro actual'
+                      } as any)}
+                    </AlertDialog.Title>
+                    <AlertDialog.Description>
+                      {t({
+                        en: 'Podeu guardar el progrés per continuar més tard o tancar sense desar.',
+                        fr: 'Puede guardar el progreso para continuar más tarde o cerrar sin guardar.'
+                      } as any)}
+                    </AlertDialog.Description>
                   </AlertDialog.Header>
-                  <AlertDialog.Footer>
+                  <AlertDialog.Footer className="flex flex-wrap gap-2">
                     <AlertDialog.Action
                       className="min-w-24"
                       onClick={() => {
-                        endSession();
-                        void navigate({ to: '/session/start-session' });
+                        closeCurrentSession({ preserveDraft: true });
                       }}
                     >
-                      {t('core.yes')}
+                      {t({
+                        en: 'Guardar i tancar',
+                        fr: 'Guardar y cerrar'
+                      } as any)}
                     </AlertDialog.Action>
-                    <AlertDialog.Cancel className="min-w-24">{t('core.no')}</AlertDialog.Cancel>
+                    <AlertDialog.Action
+                      className="min-w-24"
+                      onClick={() => {
+                        closeCurrentSession({ preserveDraft: false });
+                      }}
+                    >
+                      {t({
+                        en: 'Tancar sense guardar',
+                        fr: 'Cerrar sin guardar'
+                      } as any)}
+                    </AlertDialog.Action>
+                    <AlertDialog.Cancel className="min-w-24">
+                      {t({
+                        en: 'Cancel·lar',
+                        fr: 'Cancelar'
+                      } as any)}
+                    </AlertDialog.Cancel>
                   </AlertDialog.Footer>
                 </AlertDialog.Content>
               </AlertDialog>

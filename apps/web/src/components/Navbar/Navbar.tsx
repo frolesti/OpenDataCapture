@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 
-import { Button, LanguageToggle, Sheet, ThemeToggle } from '@douglasneuroinformatics/libui/components';
+import { AlertDialog, Button, LanguageToggle, Sheet, ThemeToggle } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { Branding } from '@opendatacapture/react-core';
-import { useNavigate } from '@tanstack/react-router';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { Info, LogOutIcon, MenuIcon, SchoolIcon, StopCircle } from 'lucide-react';
 
 import { useIsDesktop } from '@/hooks/useIsDesktop';
@@ -15,13 +15,26 @@ import { UserIcon } from '../UserIcon';
 
 export const Navbar = () => {
   const currentSession = useAppStore((store) => store.currentSession);
+  const endSession = useAppStore((store) => store.endSession);
   const currentUser = useAppStore((store) => store.currentUser);
   const logout = useAppStore((store) => store.logout);
   const setIsWalkthroughOpen = useAppStore((store) => store.setIsWalkthroughOpen);
   const [isOpen, setIsOpen] = useState(false);
   const navItems = useNavItems();
   const { t } = useTranslation('layout');
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const closeCurrentSession = ({ preserveDraft }: { preserveDraft: boolean }) => {
+    if (location.pathname.startsWith('/instruments/render/')) {
+      window.dispatchEvent(
+        new CustomEvent(preserveDraft ? 'odc-save-draft-before-close' : 'odc-discard-draft-before-close')
+      );
+    }
+    endSession();
+    setIsOpen(false);
+    void navigate({ to: '/instruments/accessible-instruments' });
+  };
 
   // This is to prevent ugly styling when resizing the viewport
   const isDesktop = useIsDesktop();
@@ -81,15 +94,63 @@ export const Navbar = () => {
                 />
               ))}
               {i === navItems.length - 1 && (
-                <NavButton
-                  activeClassName="bg-slate-200 text-slate-900"
-                  className="text-slate-700 hover:bg-slate-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 hover:dark:text-slate-100"
-                  disabled={currentSession === null}
-                  icon={StopCircle}
-                  isActive={false}
-                  label={t('navLinks.endSession')}
-                  url="#"
-                />
+                <AlertDialog>
+                  <AlertDialog.Trigger asChild>
+                    <div>
+                      <NavButton
+                        activeClassName="bg-slate-200 text-slate-900"
+                        className="text-slate-700 hover:bg-slate-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 hover:dark:text-slate-100"
+                        disabled={currentSession === null}
+                        icon={StopCircle}
+                        isActive={false}
+                        label={t('navLinks.endSession')}
+                        url="#"
+                      />
+                    </div>
+                  </AlertDialog.Trigger>
+                  <AlertDialog.Content>
+                    <AlertDialog.Header>
+                      <AlertDialog.Title>
+                        {t({
+                          en: 'Tancar registre actual',
+                          fr: 'Cerrar registro actual'
+                        } as any)}
+                      </AlertDialog.Title>
+                      <AlertDialog.Description>
+                        {t({
+                          en: 'Podeu guardar el progrés per continuar més tard o tancar sense desar.',
+                          fr: 'Puede guardar el progreso para continuar más tarde o cerrar sin guardar.'
+                        } as any)}
+                      </AlertDialog.Description>
+                    </AlertDialog.Header>
+                    <AlertDialog.Footer className="flex flex-wrap gap-2">
+                      <AlertDialog.Action
+                        className="min-w-24"
+                        onClick={() => closeCurrentSession({ preserveDraft: true })}
+                      >
+                        {t({
+                          en: 'Guardar i tancar',
+                          fr: 'Guardar y cerrar'
+                        } as any)}
+                      </AlertDialog.Action>
+                      <AlertDialog.Action
+                        className="min-w-24"
+                        onClick={() => closeCurrentSession({ preserveDraft: false })}
+                      >
+                        {t({
+                          en: 'Tancar sense guardar',
+                          fr: 'Cerrar sin guardar'
+                        } as any)}
+                      </AlertDialog.Action>
+                      <AlertDialog.Cancel className="min-w-24">
+                        {t({
+                          en: 'Cancel·lar',
+                          fr: 'Cancelar'
+                        } as any)}
+                      </AlertDialog.Cancel>
+                    </AlertDialog.Footer>
+                  </AlertDialog.Content>
+                </AlertDialog>
               )}
             </div>
           ))}

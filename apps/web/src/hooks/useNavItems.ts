@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import {
   BarChartBigIcon,
-  CirclePlayIcon,
   CogIcon,
   ComputerIcon,
   DatabaseIcon,
@@ -116,14 +115,7 @@ export function useNavItems() {
         url: '/instruments/accessible-instruments'
       });
     }
-    if (ability?.can('create', 'Session')) {
-      sessionItems.push({
-        disabled: currentSession !== null,
-        icon: CirclePlayIcon,
-        label: t('layout.navLinks.startSession'),
-        url: '/session/start-session'
-      });
-    }
+    // Keep a single production entry point: select study, then continue in instrument flow.
     if (
       ability?.can('read', 'Subject') &&
       ability.can('read', 'InstrumentRecord') &&

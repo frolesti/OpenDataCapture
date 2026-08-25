@@ -29,7 +29,12 @@ const $FormInstrumentStringField = z.discriminatedUnion('variant', [
   }),
   $FormInstrumentBaseField.extend({
     kind: z.literal('string'),
-    variant: z.enum(['input', 'password', 'textarea'])
+    placeholder: z.string().min(1).optional(),
+    variant: z.enum(['input', 'textarea'])
+  }),
+  $FormInstrumentBaseField.extend({
+    kind: z.literal('string'),
+    variant: z.literal('password')
   })
 ]) satisfies z.ZodType<FormInstrument.StringField>;
 
