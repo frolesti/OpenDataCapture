@@ -20,7 +20,7 @@ export const InstrumentShowcase: React.FC<{
 }> = ({ data: availableInstruments, groups = [], onGroupChange, onSelect, selectedGroupId }) => {
   const { t } = useTranslation();
   const [filteredInstruments, setFilteredInstruments] = useState<TranslatedInstrumentInfo[]>(
-    availableInstruments.toSorted((a, b) => a.details.title.localeCompare(b.details.title))
+    availableInstruments.toSorted(compareInstruments)
   );
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -36,9 +36,7 @@ export const InstrumentShowcase: React.FC<{
         tags.join(', ').toUpperCase().includes(searchTerm.toUpperCase())
       );
     });
-    updatedFilteredInstruments.sort((a, b) => {
-      return a.details.title.localeCompare(b.details.title);
-    });
+    updatedFilteredInstruments.sort(compareInstruments);
     setFilteredInstruments(updatedFilteredInstruments);
   }, [availableInstruments, groups, searchTerm, selectedGroupId]);
 
@@ -94,3 +92,19 @@ export const InstrumentShowcase: React.FC<{
     </div>
   );
 };
+
+function compareInstruments(first: TranslatedInstrumentInfo, second: TranslatedInstrumentInfo): number {
+  const firstName = first.internal?.name ?? first.details.title;
+  const secondName = second.internal?.name ?? second.details.title;
+  const firstIsFollowup = firstName.includes('FOLLOWUP');
+  const secondIsFollowup = secondName.includes('FOLLOWUP');
+  if (firstIsFollowup !== secondIsFollowup) {
+    return firstIsFollowup ? 1 : -1;
+  }
+  const firstIsSelection = firstName.includes('SELECTION');
+  const secondIsSelection = secondName.includes('SELECTION');
+  if (firstIsSelection !== secondIsSelection) {
+    return firstIsSelection ? -1 : 1;
+  }
+  return first.details.title.localeCompare(second.details.title);
+}

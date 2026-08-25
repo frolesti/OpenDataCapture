@@ -108,20 +108,20 @@ export function useNavItems() {
     }
 
     const sessionItems: NavItem[] = [];
-    if (ability?.can('create', 'Session')) {
-      sessionItems.push({
-        disabled: currentSession !== null,
-        icon: CirclePlayIcon,
-        label: t('layout.navLinks.startSession'),
-        url: '/session/start-session'
-      });
-    }
     if (ability?.can('create', 'InstrumentRecord')) {
       sessionItems.push({
-        disabled: currentSession === null,
+        disabled: currentSession !== null,
         icon: ComputerIcon,
         label: t('layout.navLinks.accessibleInstruments'),
         url: '/instruments/accessible-instruments'
+      });
+    }
+    if (ability?.can('create', 'Session')) {
+      sessionItems.push({
+        disabled: currentSession === null,
+        icon: CirclePlayIcon,
+        label: t('layout.navLinks.startSession'),
+        url: '/session/start-session'
       });
     }
     if (
