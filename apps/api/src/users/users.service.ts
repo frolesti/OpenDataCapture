@@ -135,6 +135,7 @@ export class UsersService {
 
   async findById(id: string, { ability }: EntityOperationOptions = {}) {
     const user = await this.userModel.findFirst({
+      include: { groups: true },
       omit: {
         hashedPassword: true
       },
@@ -151,6 +152,7 @@ export class UsersService {
     { ability }: EntityOperationOptions = {}
   ): Promise<User & { hospital: null | string }> {
     const user = await this.userModel.findFirst({
+      include: { groups: true },
       omit: {
         hashedPassword: true
       },
