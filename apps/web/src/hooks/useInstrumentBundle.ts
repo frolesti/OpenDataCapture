@@ -10,8 +10,12 @@ export function useInstrumentBundle(id: null | string) {
     enabled: Boolean(id),
     queryFn: async () => {
       const queryKey = ['instrument-bundle', id] as const;
+      const cacheBust = Date.now();
 
-      const response = await axios.get(`/v1/instruments/bundle/${id}`, {
+      const response = await axios.get(`/v1/instruments/bundle/${id}?cb=${cacheBust}`, {
+        headers: {
+          'Cache-Control': 'no-cache'
+        },
         validateStatus: (status) => (status >= 200 && status < 300) || status === 304
       });
 

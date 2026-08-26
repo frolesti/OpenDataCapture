@@ -131,7 +131,7 @@ const RouteComponent = () => {
           // IMPORTANT: `evaluateInstrument` wraps this string with `return ${bundle}`.
           // Any bare assignment prepended here becomes `return X = Y`, which returns Y
           // and skips the instrument IIFE. Wrap in an arrow so the IIFE is what gets returned.
-          bundle: `(()=>{globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions}; return ${instrumentBundleQuery.data.bundle}})()`
+          bundle: `(()=>{const runtimeCacheBust = globalThis.__ODC_RUNTIME_CACHE_BUST__ ??= Date.now().toString(36); globalThis.__resolveImport = (specifier) => specifier.startsWith('/runtime/') ? specifier + (specifier.includes('?') ? '&' : '?') + 'v=' + runtimeCacheBust : specifier; globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions}; return ${instrumentBundleQuery.data.bundle}})()`
         }
       : instrumentBundleQuery.data;
 
