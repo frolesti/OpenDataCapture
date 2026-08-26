@@ -26,9 +26,15 @@ const EXCLUSION_KEYS = [
 
 type FormData = Record<string, any>;
 
-const DATE_FORMAT_ERROR = 'Formato de fecha inválido. Use dd-mm-aaaa';
+const DATE_FORMAT_ERROR = 'Formato de fecha inválido. Use DD-MM-AAAA';
 const ORION_SELECTION_DATE_MIN = new Date(2026, 11, 1, 0, 0, 0, 0);
 const ORION_SELECTION_DATE_MAX = new Date(2027, 11, 31, 23, 59, 59, 999);
+const ORION_AGE_MIN = 18;
+const ORION_AGE_MAX = 120;
+const ORION_WEIGHT_MIN = 30;
+const ORION_WEIGHT_MAX = 250;
+const ORION_HEIGHT_MIN = 120;
+const ORION_HEIGHT_MAX = 230;
 
 function parseManualDate(value: unknown): Date | undefined {
   if (value === undefined || value === null || value === '') {
@@ -124,6 +130,69 @@ function requiresEligibilityAndValue<T extends Record<string, any>>(dep: string,
         return field;
       }
       return null;
+    }
+  };
+}
+
+function eligibilityStatusMessage(data: FormData): string {
+  if (data.informed_consent !== 'si') {
+    return 'No se puede continuar: el paciente debe haber firmado el consentimiento informado.';
+  }
+
+  const pendingInclusion = INCLUSION_KEYS.filter((key) => data[key] === undefined);
+  const pendingExclusion = EXCLUSION_KEYS.filter((key) => data[key] === undefined);
+  if (pendingInclusion.length > 0 || pendingExclusion.length > 0) {
+    return `Complete todos los criterios antes de continuar (inclusión pendientes: ${pendingInclusion.length}; exclusión pendientes: ${pendingExclusion.length}).`;
+  }
+
+  if (!isEligible(data)) {
+    return 'No se puede continuar: todos los criterios de inclusión deben ser SI y todos los de exclusión deben ser NO.';
+  }
+
+  return 'Criterios completos y válidos. Ya puede continuar con el resto del formulario.';
+}
+
+function eligibilityStatusField(): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['informed_consent', ...INCLUSION_KEYS, ...EXCLUSION_KEYS] as const,
+    render(data: FormData): any {
+      return {
+        kind: 'string',
+        variant: 'textarea',
+        label: 'Estado de validación para continuar',
+        description: eligibilityStatusMessage(data),
+        disabled: true
+      };
+    }
+  };
+}
+
+function eligibilityLiveWarningField(
+  dep: string,
+  label: string,
+  isInvalid: (value: unknown) => boolean,
+  message: string
+): any {
+  return {
+    kind: 'dynamic' as const,
+    deps: ['informed_consent', ...INCLUSION_KEYS, ...EXCLUSION_KEYS, dep] as const,
+    render(data: FormData): any {
+      if (!isEligible(data)) {
+        return null;
+      }
+
+      if (!isInvalid(data[dep])) {
+        return null;
+      }
+
+      return {
+        kind: 'string',
+        variant: 'textarea',
+        label,
+        description: message,
+        disabled: true
+      };
     }
   };
 }
@@ -306,8 +375,8 @@ function dateField(label: string): Record<string, any> {
     kind: 'string',
     variant: 'input',
     label,
-    placeholder: 'dd-mm-aaaa',
-    description: 'Formato: dd-mm-aaaa'
+    placeholder: 'DD-MM-AAAA',
+    description: 'Formato: DD-MM-AAAA'
   };
 }
 
@@ -671,7 +740,10 @@ export default defineInstrument({
     },
     {
       title: 'CENTRO DE ATENCIÓN PRIMARIA',
+      description:
+        'Hasta que no estén cumplidos y validados el consentimiento informado y todos los criterios de inclusión/exclusión, no se podrá continuar correctamente con el formulario.',
       fields: {
+        eligibility_status: eligibilityStatusField(),
         site_hospital: requiresConsent({
           kind: 'string',
           label: '¿Cuál es el centro de atención primaria donde se visita el paciente?',
@@ -686,7 +758,8 @@ export default defineInstrument({
         age: requiresEligibility({
           kind: 'number',
           variant: 'input',
-          label: 'Edad (años) *'
+          label: 'Edad (años) *',
+          description: `Solo se admiten pacientes adultos (${ORION_AGE_MIN}-${ORION_AGE_MAX} años).`
         }),
         sex: requiresEligibility({
           kind: 'string',
@@ -700,13 +773,33 @@ export default defineInstrument({
         weight: requiresEligibility({
           kind: 'number',
           variant: 'input',
-          label: 'Peso (kg)'
+          label: 'Peso (kg)',
+          description: `Rango razonable esperado: ${ORION_WEIGHT_MIN}-${ORION_WEIGHT_MAX} kg.`
         }),
         height: requiresEligibility({
           kind: 'number',
           variant: 'input',
-          label: 'Altura (cm)'
-        })
+          label: 'Altura (cm)',
+          description: `Rango razonable esperado: ${ORION_HEIGHT_MIN}-${ORION_HEIGHT_MAX} cm.`
+        }),
+        age_live_warning: eligibilityLiveWarningField(
+          'age',
+          'Aviso de edad',
+          (value) => typeof value === 'number' && (value < ORION_AGE_MIN || value > ORION_AGE_MAX),
+          `La edad indicada no es válida para este estudio. Debe estar entre ${ORION_AGE_MIN} y ${ORION_AGE_MAX} años.`
+        ),
+        weight_live_warning: eligibilityLiveWarningField(
+          'weight',
+          'Aviso de peso',
+          (value) => typeof value === 'number' && (value < ORION_WEIGHT_MIN || value > ORION_WEIGHT_MAX),
+          `El peso indicado está fuera del rango razonable (${ORION_WEIGHT_MIN}-${ORION_WEIGHT_MAX} kg). Revise el dato antes de continuar.`
+        ),
+        height_live_warning: eligibilityLiveWarningField(
+          'height',
+          'Aviso de altura',
+          (value) => typeof value === 'number' && (value < ORION_HEIGHT_MIN || value > ORION_HEIGHT_MAX),
+          `La altura indicada está fuera del rango razonable (${ORION_HEIGHT_MIN}-${ORION_HEIGHT_MAX} cm). Revise el dato antes de continuar.`
+        )
       }
     },
     {
@@ -880,7 +973,7 @@ export default defineInstrument({
       }
     },
     {
-      title: 'INICIALES Y FIRMA DEL PROFESIONAL SANITARIO QUE HA RELLENADO LOS DATOS',
+      title: 'FIRMA DEL PROFESIONAL SANITARIO QUE HA RELLENADO LOS DATOS',
       fields: {
         professional_attestation: requiresEligibility({
           kind: 'boolean',
@@ -1124,11 +1217,27 @@ export default defineInstrument({
           addRequiredIssue(field);
         }
 
-        if (typeof data.age === 'number' && data.age < 18) {
+        if (typeof data.age === 'number' && (data.age < ORION_AGE_MIN || data.age > ORION_AGE_MAX)) {
           context.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'No se puede continuar: el paciente debe ser mayor de edad (≥ 18 años).',
+            message: `No se puede continuar: la edad debe estar entre ${ORION_AGE_MIN} y ${ORION_AGE_MAX} años.`,
             path: ['age']
+          });
+        }
+
+        if (typeof data.weight === 'number' && (data.weight < ORION_WEIGHT_MIN || data.weight > ORION_WEIGHT_MAX)) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `El peso debe estar entre ${ORION_WEIGHT_MIN} y ${ORION_WEIGHT_MAX} kg para considerarse válido.`,
+            path: ['weight']
+          });
+        }
+
+        if (typeof data.height === 'number' && (data.height < ORION_HEIGHT_MIN || data.height > ORION_HEIGHT_MAX)) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `La altura debe estar entre ${ORION_HEIGHT_MIN} y ${ORION_HEIGHT_MAX} cm para considerarse válida.`,
+            path: ['height']
           });
         }
 
