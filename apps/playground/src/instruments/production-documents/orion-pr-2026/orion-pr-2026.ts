@@ -36,6 +36,13 @@ const ORION_WEIGHT_MAX = 250;
 const ORION_HEIGHT_MIN = 120;
 const ORION_HEIGHT_MAX = 230;
 
+const SELECTION_VISIT_DATE_ERROR =
+  'La fecha de la visita de selección debe estar entre diciembre de 2026 y diciembre de 2027.';
+const CONSENT_SIGNED_DATE_ERROR =
+  'La fecha de firma del consentimiento debe estar entre diciembre de 2026 y diciembre de 2027.';
+const CONSENT_DATE_ORDER_ERROR =
+  'La fecha de firma del consentimiento no puede ser posterior a la visita de selección.';
+
 function parseManualDate(value: unknown): Date | undefined {
   if (value === undefined || value === null || value === '') {
     return undefined;
@@ -130,40 +137,6 @@ function requiresEligibilityAndValue<T extends Record<string, any>>(dep: string,
         return field;
       }
       return null;
-    }
-  };
-}
-
-function eligibilityStatusMessage(data: FormData): string {
-  if (data.informed_consent !== 'si') {
-    return 'No se puede continuar: el paciente debe haber firmado el consentimiento informado.';
-  }
-
-  const pendingInclusion = INCLUSION_KEYS.filter((key) => data[key] === undefined);
-  const pendingExclusion = EXCLUSION_KEYS.filter((key) => data[key] === undefined);
-  if (pendingInclusion.length > 0 || pendingExclusion.length > 0) {
-    return `Complete todos los criterios antes de continuar (inclusión pendientes: ${pendingInclusion.length}; exclusión pendientes: ${pendingExclusion.length}).`;
-  }
-
-  if (!isEligible(data)) {
-    return 'No se puede continuar: todos los criterios de inclusión deben ser SI y todos los de exclusión deben ser NO.';
-  }
-
-  return 'Criterios completos y válidos. Ya puede continuar con el resto del formulario.';
-}
-
-function eligibilityStatusField(): any {
-  return {
-    kind: 'dynamic' as const,
-    deps: ['informed_consent', ...INCLUSION_KEYS, ...EXCLUSION_KEYS] as const,
-    render(data: FormData): any {
-      return {
-        kind: 'string',
-        variant: 'textarea',
-        label: 'Estado de validación para continuar',
-        description: eligibilityStatusMessage(data),
-        disabled: true
-      };
     }
   };
 }
@@ -370,13 +343,13 @@ function adherenceFields(
   };
 }
 
-function dateField(label: string): Record<string, any> {
+function dateField(label: string, description = 'Formato: DD-MM-AAAA'): Record<string, any> {
   return {
     kind: 'string',
     variant: 'input',
     label,
     placeholder: 'DD-MM-AAAA',
-    description: 'Formato: DD-MM-AAAA'
+    description
   };
 }
 
@@ -639,10 +612,13 @@ export default defineInstrument({
           options: YES_NO_OPTIONS
         },
         selection_visit_date: requiresConsent({
-          ...dateField('Fecha de la visita de selección *')
+          ...dateField('Fecha de la visita de selección *', 'Fecha permitida: del 01-12-2026 al 31-12-2027.')
         }),
         consent_signed_date: requiresConsent({
-          ...dateField('Fecha de firma del consentimiento informado *')
+          ...dateField(
+            'Fecha de firma del consentimiento informado *',
+            'Fecha permitida: del 01-12-2026 al 31-12-2027 y no posterior a la visita de selección.'
+          )
         })
       }
     },
@@ -740,10 +716,7 @@ export default defineInstrument({
     },
     {
       title: 'CENTRO DE ATENCIÓN PRIMARIA',
-      description:
-        'Hasta que no estén cumplidos y validados el consentimiento informado y todos los criterios de inclusión/exclusión, no se podrá continuar correctamente con el formulario.',
       fields: {
-        eligibility_status: eligibilityStatusField(),
         site_hospital: requiresConsent({
           kind: 'string',
           label: '¿Cuál es el centro de atención primaria donde se visita el paciente?',
@@ -1152,7 +1125,7 @@ export default defineInstrument({
         if (visitTime < minTime || visitTime > maxTime) {
           context.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'La fecha de la visita de selección debe estar entre diciembre de 2026 y diciembre de 2027.',
+            message: SELECTION_VISIT_DATE_ERROR,
             path: ['selection_visit_date']
           });
         }
@@ -1163,7 +1136,7 @@ export default defineInstrument({
         if (consentTime < minTime || consentTime > maxTime) {
           context.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'La fecha de firma del consentimiento debe estar entre diciembre de 2026 y diciembre de 2027.',
+            message: CONSENT_SIGNED_DATE_ERROR,
             path: ['consent_signed_date']
           });
         }
@@ -1173,7 +1146,7 @@ export default defineInstrument({
         if (consentSignedDate.getTime() > selectionVisitDate.getTime()) {
           context.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'La fecha de firma del consentimiento no puede ser posterior a la visita de selección.',
+            message: CONSENT_DATE_ORDER_ERROR,
             path: ['consent_signed_date']
           });
         }
