@@ -27,6 +27,8 @@ const EXCLUSION_KEYS = [
 type FormData = Record<string, any>;
 
 const DATE_FORMAT_ERROR = 'Formato de fecha inválido. Use dd-mm-aaaa';
+const ORION_SELECTION_DATE_MIN = new Date(2026, 11, 1, 0, 0, 0, 0);
+const ORION_SELECTION_DATE_MAX = new Date(2027, 11, 31, 23, 59, 59, 999);
 
 function parseManualDate(value: unknown): Date | undefined {
   if (value === undefined || value === null || value === '') {
@@ -566,7 +568,13 @@ export default defineInstrument({
           label: '¿El paciente ha firmado el consentimiento informado? *',
           variant: 'radio',
           options: YES_NO_OPTIONS
-        }
+        },
+        selection_visit_date: requiresConsent({
+          ...dateField('Fecha de la visita de selección *')
+        }),
+        consent_signed_date: requiresConsent({
+          ...dateField('Fecha de firma del consentimiento informado *')
+        })
       }
     },
     {
@@ -576,40 +584,39 @@ export default defineInstrument({
         inclusion_1: requiresConsent({
           kind: 'string',
           label:
-            '1. Pacientes con diagnóstico de dolor neuropático (periférico o central) documentado en su historia clínica',
+            '1. El paciente tiene diagnóstico de dolor neuropático (periférico o central) documentado en su historia clínica',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         inclusion_2: requiresConsent({
           kind: 'string',
           label:
-            '2. Pacientes previamente tratados con pregabalina de liberación inmediata (IR) antes de iniciar tratamiento con pregabalina de liberación prolongada (PR)',
+            '2. El paciente está previamente tratado con pregabalina de liberación inmediata (IR) antes de iniciar tratamiento con pregabalina de liberación prolongada (PR)',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         inclusion_3: requiresConsent({
           kind: 'string',
-          label:
-            '3. Pacientes que hayan estado en tratamiento con pregabalina PR durante al menos 3 meses y hasta 6 meses',
+          label: '3. El paciente ha estado en tratamiento con pregabalina PR durante al menos 3 meses y hasta 6 meses',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         inclusion_4: requiresConsent({
           kind: 'string',
           label:
-            '4. Pacientes que hayan recibido pregabalina PR durante al menos el último mes a una dosis terapéutica (165-660 mg), aunque el tratamiento puede haber comenzado con dosis inferiores en la práctica clínica habitual antes de la titulación a 165 mg o superior',
+            '4. El paciente ha recibido pregabalina PR durante al menos el último mes a una dosis terapéutica (165-660 mg), aunque el tratamiento puede haber comenzado con dosis inferiores en la práctica clínica habitual antes de la titulación a 165 mg o superior',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         inclusion_5: requiresConsent({
           kind: 'string',
-          label: '5. Pacientes ≥ 18 años en el momento de la inclusión',
+          label: '5. El paciente es ≥ 18 años en el momento de la inclusión',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         inclusion_6: requiresConsent({
           kind: 'string',
-          label: '6. Pacientes que hayan proporcionado consentimiento informado por escrito',
+          label: '6. El paciente ha proporcionado consentimiento informado por escrito',
           variant: 'radio',
           options: YES_NO_OPTIONS
         })
@@ -875,11 +882,6 @@ export default defineInstrument({
     {
       title: 'INICIALES Y FIRMA DEL PROFESIONAL SANITARIO QUE HA RELLENADO LOS DATOS',
       fields: {
-        professional_initials: requiresEligibility({
-          kind: 'string',
-          variant: 'input',
-          label: 'Iniciales *'
-        }),
         professional_attestation: requiresEligibility({
           kind: 'boolean',
           variant: 'checkbox',
@@ -909,6 +911,8 @@ export default defineInstrument({
       user_code: z.string().min(1, 'El código del usuario es obligatorio'),
       site_hospital: z.string().optional(),
       informed_consent: z.enum(['si', 'no']),
+      selection_visit_date: optionalManualDateSchema(),
+      consent_signed_date: optionalManualDateSchema(),
 
       inclusion_1: z.enum(['si', 'no']).optional(),
       inclusion_2: z.enum(['si', 'no']).optional(),
@@ -1010,7 +1014,6 @@ export default defineInstrument({
       reason_not_completed: z.enum(['investigator', 'patient', 'other']).optional(),
       reason_not_completed_other: z.string().optional(),
 
-      professional_initials: z.string().optional(),
       professional_attestation: z.boolean().optional()
     })
     .superRefine((data, context) => {
@@ -1026,6 +1029,60 @@ export default defineInstrument({
       if (data.informed_consent === 'si') {
         for (const field of [...INCLUSION_KEYS, ...EXCLUSION_KEYS]) {
           addRequiredIssue(field);
+        }
+        addRequiredIssue('selection_visit_date');
+        addRequiredIssue('consent_signed_date');
+      } else {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'No se puede continuar sin consentimiento informado firmado.',
+          path: ['informed_consent']
+        });
+      }
+
+      if (data.informed_consent === 'si' && !isEligible(values)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'No se puede continuar: revise los criterios de inclusión y exclusión (todos los criterios de inclusión deben ser SI y los de exclusión NO).',
+          path: ['inclusion_1']
+        });
+      }
+
+      const selectionVisitDate = values.selection_visit_date;
+      const consentSignedDate = values.consent_signed_date;
+      const minTime = ORION_SELECTION_DATE_MIN.getTime();
+      const maxTime = ORION_SELECTION_DATE_MAX.getTime();
+
+      if (selectionVisitDate instanceof Date) {
+        const visitTime = selectionVisitDate.getTime();
+        if (visitTime < minTime || visitTime > maxTime) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'La fecha de la visita de selección debe estar entre diciembre de 2026 y diciembre de 2027.',
+            path: ['selection_visit_date']
+          });
+        }
+      }
+
+      if (consentSignedDate instanceof Date) {
+        const consentTime = consentSignedDate.getTime();
+        if (consentTime < minTime || consentTime > maxTime) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'La fecha de firma del consentimiento debe estar entre diciembre de 2026 y diciembre de 2027.',
+            path: ['consent_signed_date']
+          });
+        }
+      }
+
+      if (selectionVisitDate instanceof Date && consentSignedDate instanceof Date) {
+        if (consentSignedDate.getTime() > selectionVisitDate.getTime()) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'La fecha de firma del consentimiento no puede ser posterior a la visita de selección.',
+            path: ['consent_signed_date']
+          });
         }
       }
 
@@ -1062,10 +1119,17 @@ export default defineInstrument({
           'prosp_sleep_quality',
           'prosp_sleep_daytime',
           'cgi_improvement',
-          'baseline_adverse_events',
-          'professional_initials'
+          'baseline_adverse_events'
         ]) {
           addRequiredIssue(field);
+        }
+
+        if (typeof data.age === 'number' && data.age < 18) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'No se puede continuar: el paciente debe ser mayor de edad (≥ 18 años).',
+            path: ['age']
+          });
         }
 
         if (data.professional_attestation !== true) {

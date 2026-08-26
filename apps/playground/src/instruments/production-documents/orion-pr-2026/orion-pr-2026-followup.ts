@@ -345,11 +345,6 @@ export default defineInstrument({
           label: 'Especifique otro motivo',
           variant: 'textarea'
         }),
-        professional_initials: {
-          kind: 'string',
-          label: 'Iniciales del profesional sanitario que ha rellenado los datos',
-          variant: 'input'
-        },
         professional_attestation: {
           kind: 'boolean',
           label:
@@ -399,7 +394,6 @@ export default defineInstrument({
       study_completed: z.enum(['si', 'no']),
       reason_not_completed: z.enum(['investigator', 'patient', 'other']).optional(),
       reason_not_completed_other: z.string().optional(),
-      professional_initials: z.string().min(1, 'Este campo es obligatorio'),
       professional_attestation: z.boolean().refine((value) => value === true, {
         message: 'Debe confirmar la validación del formulario'
       })
