@@ -28,25 +28,24 @@ const RouteComponent = () => {
   const instrumentInfoQuery = useInstrumentInfoQuery();
   const selectedGroup = currentGroup ?? currentUser?.groups[0] ?? null;
   const accessibleInstrumentIds = new Set(currentUser?.groups.flatMap((group) => group.accessibleInstrumentIds) ?? []);
+  const scopedSubjectId =
+    currentUser && selectedGroup
+      ? encodeScopedSubjectId(currentUser.username, { groupName: selectedGroup.name })
+      : undefined;
   const orionSelectionInstrument = (instrumentInfoQuery.data ?? []).find(
     (instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME
   );
   const orionSelectionRecordsQuery = useInstrumentRecords({
-    enabled: Boolean(currentSession?.subject.id && orionSelectionInstrument?.id),
+    enabled: Boolean(scopedSubjectId && orionSelectionInstrument?.id),
     params: {
+      groupId: selectedGroup?.id,
       instrumentId: orionSelectionInstrument?.id,
-      subjectId: currentSession?.subject.id
+      subjectId: scopedSubjectId
     }
   });
-  const hasEligibleOrionSelection = (orionSelectionRecordsQuery.data ?? []).some((record) => {
+  const hasOrionSelectionWithUserCode = (orionSelectionRecordsQuery.data ?? []).some((record) => {
     const data = record.data as Record<string, unknown>;
-    const inclusionKeys = ['inclusion_1', 'inclusion_2', 'inclusion_3', 'inclusion_4', 'inclusion_5', 'inclusion_6'];
-    const exclusionKeys = ['exclusion_1', 'exclusion_2', 'exclusion_3', 'exclusion_4', 'exclusion_5', 'exclusion_6'];
-    return (
-      data.informed_consent === 'si' &&
-      inclusionKeys.every((key) => data[key] === 'si') &&
-      exclusionKeys.every((key) => data[key] === 'no')
-    );
+    return typeof data.user_code === 'string' && data.user_code.trim().length > 0;
   });
 
   return (
@@ -64,7 +63,7 @@ const RouteComponent = () => {
               return false;
             }
             if (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME) {
-              return hasEligibleOrionSelection;
+              return hasOrionSelectionWithUserCode;
             }
             return true;
           }),

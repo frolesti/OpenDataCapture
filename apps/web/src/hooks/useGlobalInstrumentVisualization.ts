@@ -28,6 +28,10 @@ type UseGlobalInstrumentVisualizationOptions = {
   };
 };
 
+const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
+const ORION_FOLLOWUP_INTERNAL_NAME = 'ORION_PR_2026_FOLLOWUP';
+const ORION_UNIFIED_OPTION_ID = '__ORION_PR_2026__';
+
 export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrumentVisualizationOptions = {}) {
   const currentGroup = useAppStore((store) => store.currentGroup);
   const currentUser = useAppStore((store) => store.currentUser);
@@ -70,28 +74,76 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     params: { kind: params?.kind }
   });
 
+  const orionSelectionInstrument = useMemo(
+    () =>
+      (instrumentInfoQuery.data ?? []).find(
+        (instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME
+      ),
+    [instrumentInfoQuery.data]
+  );
+  const orionFollowupInstrument = useMemo(
+    () =>
+      (instrumentInfoQuery.data ?? []).find((instrument) => instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME),
+    [instrumentInfoQuery.data]
+  );
+  const orionInstrumentIds = useMemo(
+    () =>
+      new Set(
+        [orionSelectionInstrument?.id, orionFollowupInstrument?.id].filter((id): id is string => typeof id === 'string')
+      ),
+    [orionFollowupInstrument?.id, orionSelectionInstrument?.id]
+  );
+  const isUnifiedOrionSelected = instrumentId === ORION_UNIFIED_OPTION_ID;
+
   const availableInstrumentIds = useMemo(
     () => new Set((instrumentInfoQuery.data ?? []).map((availableInstrument) => availableInstrument.id)),
     [instrumentInfoQuery.data]
+  );
+
+  const hasOrionInOptions = useMemo(
+    () =>
+      (orionSelectionInstrument?.id && availableInstrumentIds.has(orionSelectionInstrument.id)) ||
+      (orionFollowupInstrument?.id && availableInstrumentIds.has(orionFollowupInstrument.id)),
+    [availableInstrumentIds, orionFollowupInstrument?.id, orionSelectionInstrument?.id]
   );
 
   useEffect(() => {
     if (instrumentInfoQuery.isLoading || instrumentId === null) {
       return;
     }
+    if (instrumentId === ORION_UNIFIED_OPTION_ID) {
+      if (!hasOrionInOptions) {
+        setInstrumentId(null);
+      }
+      return;
+    }
+    if (orionInstrumentIds.has(instrumentId) && hasOrionInOptions) {
+      setInstrumentId(ORION_UNIFIED_OPTION_ID);
+      return;
+    }
     if (!availableInstrumentIds.has(instrumentId)) {
       setInstrumentId(null);
     }
-  }, [availableInstrumentIds, instrumentId, instrumentInfoQuery.isLoading]);
+  }, [availableInstrumentIds, hasOrionInOptions, instrumentId, instrumentInfoQuery.isLoading, orionInstrumentIds]);
 
-  const selectedInstrumentId = instrumentId && availableInstrumentIds.has(instrumentId) ? instrumentId : null;
-  const instrument = useInstrument(selectedInstrumentId) as AnyUnilingualScalarInstrument;
+  const selectedInstrumentId =
+    instrumentId === ORION_UNIFIED_OPTION_ID
+      ? ORION_UNIFIED_OPTION_ID
+      : instrumentId && availableInstrumentIds.has(instrumentId)
+        ? instrumentId
+        : null;
+
+  const instrument = useInstrument(
+    isUnifiedOrionSelected
+      ? (orionSelectionInstrument?.id ?? orionFollowupInstrument?.id ?? null)
+      : selectedInstrumentId
+  ) as AnyUnilingualScalarInstrument;
 
   const recordsQuery = useInstrumentRecords({
     enabled: selectedInstrumentId !== null,
     params: {
       groupId: currentGroup?.id,
-      instrumentId: selectedInstrumentId ?? undefined,
+      instrumentId: isUnifiedOrionSelected ? undefined : (selectedInstrumentId ?? undefined),
       kind: params?.kind,
       minDate: minDate ?? undefined
     }
@@ -353,7 +405,11 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       }
 
       const records: InstrumentVisualizationRecord[] = [];
-      for (const record of recordsQuery.data) {
+      const sourceRecords = isUnifiedOrionSelected
+        ? recordsQuery.data.filter((record) => orionInstrumentIds.has(record.instrumentId))
+        : recordsQuery.data;
+
+      for (const record of sourceRecords) {
         const props = record.data && typeof record.data === 'object' ? record.data : {};
         const cleanProps = Object.fromEntries(Object.entries(props).filter(([k]) => !k.startsWith('_warning')));
 
@@ -375,15 +431,24 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       }
       setRecords(records);
     }
-  }, [recordsQuery.data, instrument]);
+  }, [instrument, isUnifiedOrionSelected, orionInstrumentIds, recordsQuery.data]);
 
   const instrumentOptions: { [key: string]: string } = useMemo(() => {
     const options: { [key: string]: string } = {};
     for (const instrument of instrumentInfoQuery.data ?? []) {
+      if (
+        instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME ||
+        instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME
+      ) {
+        continue;
+      }
       options[instrument.id] = instrument.details.title;
     }
+    if (hasOrionInOptions) {
+      options[ORION_UNIFIED_OPTION_ID] = 'ORION-PR-2026';
+    }
     return options;
-  }, [instrumentInfoQuery.data]);
+  }, [hasOrionInOptions, instrumentInfoQuery.data]);
 
   return {
     dl,
