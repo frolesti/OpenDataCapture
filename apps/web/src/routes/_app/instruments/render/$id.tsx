@@ -1,20 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button, Dialog, Heading, Spinner } from '@douglasneuroinformatics/libui/components';
 import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { InstrumentRenderer } from '@opendatacapture/react-core';
 import type { InstrumentSubmitHandler } from '@opendatacapture/react-core';
 import type { CreateInstrumentRecordData } from '@opendatacapture/schemas/instrument-records';
+import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { Save } from 'lucide-react';
 
 import { PageHeader } from '@/components/PageHeader';
 import { useInstrumentBundle } from '@/hooks/useInstrumentBundle';
+import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
 import { useAppStore } from '@/store';
 
 const HOSPITAL_META_SEPARATOR = '|||';
+const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
+const ORION_FOLLOWUP_INTERNAL_NAME = 'ORION_PR_2026_FOLLOWUP';
 
 function formatHospitalLabel(raw: string) {
   if (raw.includes(HOSPITAL_META_SEPARATOR)) {
@@ -72,6 +76,7 @@ function clearDraft(instrumentId: string): void {
 const RouteComponent = () => {
   const currentGroup = useAppStore((store) => store.currentGroup);
   const currentSession = useAppStore((store) => store.currentSession);
+  const currentUser = useAppStore((store) => store.currentUser);
   const endSession = useAppStore((store) => store.endSession);
 
   const params = Route.useParams();
@@ -122,18 +127,71 @@ const RouteComponent = () => {
           : (draftData ?? undefined);
 
   const instrumentBundleQuery = useInstrumentBundle(params.id);
+  const instrumentInfoQuery = useInstrumentInfoQuery();
   const groupHospitalOptions = buildGroupHospitalOptions(currentGroup?.hospitals ?? []);
 
-  const instrumentTarget =
-    instrumentBundleQuery.data && instrumentBundleQuery.data.kind !== 'SERIES'
-      ? {
-          ...instrumentBundleQuery.data,
-          // IMPORTANT: `evaluateInstrument` wraps this string with `return ${bundle}`.
-          // Any bare assignment prepended here becomes `return X = Y`, which returns Y
-          // and skips the instrument IIFE. Wrap in an arrow so the IIFE is what gets returned.
-          bundle: `(()=>{const runtimeCacheBust = globalThis.__ODC_RUNTIME_CACHE_BUST__ ??= Date.now().toString(36); globalThis.__resolveImport = (specifier) => specifier.startsWith('/runtime/') ? specifier + (specifier.includes('?') ? '&' : '?') + 'v=' + runtimeCacheBust : specifier; globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions}; return ${instrumentBundleQuery.data.bundle}})()`
-        }
-      : instrumentBundleQuery.data;
+  const orionSelectionInstrumentId = (instrumentInfoQuery.data ?? []).find(
+    (instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME
+  )?.id;
+  const scopedSubjectId =
+    currentSession?.subject.id ??
+    (currentUser && currentGroup
+      ? encodeScopedSubjectId(currentUser.username, { groupName: currentGroup.name })
+      : undefined);
+
+  const isOrionFollowup = instrumentBundleQuery.data?.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME;
+  const orionSelectionRecordsQuery = useInstrumentRecords({
+    enabled: Boolean(isOrionFollowup && orionSelectionInstrumentId && scopedSubjectId),
+    params: {
+      groupId: currentGroup?.id,
+      instrumentId: orionSelectionInstrumentId,
+      subjectId: scopedSubjectId
+    }
+  });
+
+  const orionFollowupUserCodeOptions = useMemo(() => {
+    if (!isOrionFollowup) {
+      return {} as Record<string, string>;
+    }
+    const codes = new Set<string>();
+    for (const record of orionSelectionRecordsQuery.data ?? []) {
+      const value = (record.data as Record<string, unknown>)?.user_code;
+      if (typeof value === 'string' && value.trim().length > 0) {
+        codes.add(value.trim());
+      }
+    }
+    return Object.fromEntries(
+      Array.from(codes)
+        .sort()
+        .map((code) => [code, code])
+    );
+  }, [isOrionFollowup, orionSelectionRecordsQuery.data]);
+
+  const orionFollowupUserCodeOptionsJson = JSON.stringify(orionFollowupUserCodeOptions);
+
+  const instrumentBundleWithOverrides = useMemo(() => {
+    if (!instrumentBundleQuery.data || instrumentBundleQuery.data.kind === 'SERIES') {
+      return instrumentBundleQuery.data;
+    }
+
+    let bundle = instrumentBundleQuery.data.bundle;
+    if (isOrionFollowup) {
+      bundle = bundle.replace(
+        /user_code:\{kind:"string",label:"[^"]*",variant:"input"\}/,
+        'user_code:{kind:"string",label:"Código del usuario *",variant:"select",options:globalThis.__ODC_ORION_USER_CODE_OPTIONS__}'
+      );
+    }
+
+    return {
+      ...instrumentBundleQuery.data,
+      // IMPORTANT: `evaluateInstrument` wraps this string with `return ${bundle}`.
+      // Any bare assignment prepended here becomes `return X = Y`, which returns Y
+      // and skips the instrument IIFE. Wrap in an arrow so the IIFE is what gets returned.
+      bundle: `(()=>{const runtimeCacheBust = globalThis.__ODC_RUNTIME_CACHE_BUST__ ??= Date.now().toString(36); globalThis.__resolveImport = (specifier) => specifier.startsWith('/runtime/') ? specifier + (specifier.includes('?') ? '&' : '?') + 'v=' + runtimeCacheBust : specifier; globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions}; globalThis.__ODC_ORION_USER_CODE_OPTIONS__ = ${orionFollowupUserCodeOptionsJson}; return ${bundle}})()`
+    };
+  }, [groupHospitalOptions, instrumentBundleQuery.data, isOrionFollowup, orionFollowupUserCodeOptionsJson]);
+
+  const instrumentTarget = instrumentBundleWithOverrides;
 
   const title = instrumentTitle;
 
