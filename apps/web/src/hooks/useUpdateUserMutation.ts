@@ -3,6 +3,7 @@ import type { UpdateUserData } from '@opendatacapture/schemas/user';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
+import { PENDING_INVESTIGATORS_QUERY_KEY } from './usePendingInvestigatorsQuery';
 import { USERS_QUERY_KEY } from './useUsersQuery';
 
 export function useUpdateUserMutation() {
@@ -15,6 +16,7 @@ export function useUpdateUserMutation() {
     onSuccess() {
       addNotification({ type: 'success' });
       void queryClient.invalidateQueries({ queryKey: [USERS_QUERY_KEY] });
+      void queryClient.invalidateQueries({ queryKey: [PENDING_INVESTIGATORS_QUERY_KEY] });
     }
   });
 }

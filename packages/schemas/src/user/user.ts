@@ -15,6 +15,7 @@ export const $User = $BaseModel.extend({
   email: z.string().email().nullish(),
   firstName: z.string().min(1),
   groupIds: z.array(z.string()),
+  hospital: z.string().nullish(),
   lastName: z.string().min(1),
   sex: $Sex.nullish(),
   username: z.string().min(1)
@@ -37,7 +38,8 @@ export const $CreateUserData = $User
 
 export type UpdateUserData = z.infer<typeof $UpdateUserData>;
 export const $UpdateUserData = $CreateUserData.partial().extend({
-  additionalPermissions: $Permissions.optional()
+  additionalPermissions: $Permissions.optional(),
+  hospital: z.string().optional()
 });
 
 export const $PendingInvestigatorStatus = z.enum(['PENDING', 'IN_PROGRESS', 'READY_FOR_ACCOUNT', 'COMPLETED']);

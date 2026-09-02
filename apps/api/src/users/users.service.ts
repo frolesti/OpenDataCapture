@@ -123,7 +123,7 @@ export class UsersService {
   }
 
   async find({ groupId }: { groupId?: string } = {}, { ability }: EntityOperationOptions = {}) {
-    return this.userModel.findMany({
+    const users = await this.userModel.findMany({
       omit: {
         hashedPassword: true
       },
@@ -131,6 +131,7 @@ export class UsersService {
         AND: [accessibleQuery(ability, 'read', 'User'), { groupIds: groupId ? { has: groupId } : undefined }]
       }
     });
+    return this.withPromotedInvestigatorHospitals(users);
   }
 
   async findById(id: string, { ability }: EntityOperationOptions = {}) {
@@ -193,7 +194,7 @@ export class UsersService {
 
   async updateById(
     id: string,
-    { groupIds, password, ...data }: UpdateUserDto,
+    { groupIds, hospital, password, ...data }: UpdateUserDto,
     { ability }: EntityOperationOptions = {}
   ) {
     const currentUser = await this.userModel.findUnique({ where: { id } });
@@ -225,6 +226,12 @@ export class UsersService {
             set: groupIds.map((id) => ({ id }))
           };
 
+    if (hospital !== undefined && currentUser.basePermissionLevel === 'STANDARD') {
+      const nextGroupIds = groupIds ?? currentUser.groupIds;
+      await this.validateHospitalForGroups(hospital, nextGroupIds, { ability });
+      await this.updatePromotedInvestigatorHospital(id, hospital);
+    }
+
     return this.userModel.update({
       data: {
         ...data,
@@ -237,6 +244,43 @@ export class UsersService {
       },
       where: { AND: [accessibleQuery(ability, 'update', 'User')], id }
     });
+  }
+
+  private async validateHospitalForGroups(hospital: string, groupIds: string[], options?: EntityOperationOptions) {
+    if (!hospital.trim()) {
+      throw new BadRequestException('Hospital is required for investigators');
+    }
+
+    const groups = [];
+    for (const id of groupIds) {
+      const group = await this.groupsService.findById(id, options);
+      if (!group) {
+        throw new NotFoundException(`Failed to resolve group with ID: ${id}`);
+      }
+      groups.push(group);
+    }
+
+    const availableHospitals = new Set(groups.flatMap(({ hospitals }) => hospitals));
+    if (!availableHospitals.has(hospital)) {
+      throw new BadRequestException(`Hospital '${hospital}' is not configured in the selected groups`);
+    }
+  }
+
+  private async updatePromotedInvestigatorHospital(userId: string, hospital: string) {
+    const pending = await this.pendingInvestigatorModel.findFirst({ where: { promotedUserId: userId } });
+    if (!pending) {
+      throw new NotFoundException(`Failed to find promoted investigator metadata for user ID: ${userId}`);
+    }
+    await this.pendingInvestigatorModel.update({ data: { hospital }, where: { id: pending.id } });
+  }
+
+  private async withPromotedInvestigatorHospitals<T extends { id: string }>(users: T[]) {
+    const promoted = await this.pendingInvestigatorModel.findMany({
+      select: { hospital: true, promotedUserId: true },
+      where: { promotedUserId: { in: users.map((user) => user.id) } }
+    });
+    const hospitalByUserId = new Map(promoted.map((entry) => [entry.promotedUserId, entry.hospital]));
+    return users.map((user) => ({ ...user, hospital: hospitalByUserId.get(user.id) ?? null }));
   }
 
   async createPending(

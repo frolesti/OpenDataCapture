@@ -89,6 +89,7 @@ function buildUserEditForm(user?: User) {
     email: user?.email ?? '',
     firstName: user?.firstName ?? '',
     groupIds: user?.groupIds ?? [],
+    hospital: user?.hospital ?? '',
     lastName: user?.lastName ?? '',
     password: '',
     username: user?.username ?? ''
@@ -123,6 +124,7 @@ type CreatedUserFormState = {
   email: string;
   firstName: string;
   groupIds: string[];
+  hospital: string;
   lastName: string;
   password: string;
   username: string;
@@ -177,6 +179,7 @@ const DEFAULT_CREATED_USER_FORM: CreatedUserFormState = {
   email: '',
   firstName: '',
   groupIds: [],
+  hospital: '',
   lastName: '',
   password: '',
   username: ''
@@ -224,7 +227,7 @@ const RouteComponent = () => {
   const [userPage, setUserPage] = useState(1);
   const [pendingPage, setPendingPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [hospitalDialogTarget, setHospitalDialogTarget] = useState<'create' | 'edit'>('create');
+  const [hospitalDialogTarget, setHospitalDialogTarget] = useState<'create' | 'createdUser' | 'edit'>('create');
   const [userForm, setUserForm] = useState<UserFormState>(DEFAULT_USER_FORM);
   const [investigatorForm, setInvestigatorForm] = useState<InvestigatorFormState>(DEFAULT_INVESTIGATOR_FORM);
   const [pendingDialogForm, setPendingDialogForm] = useState<InvestigatorFormState>(DEFAULT_INVESTIGATOR_FORM);
@@ -258,6 +261,10 @@ const RouteComponent = () => {
   const pendingDialogHospitalOptions = useMemo(() => {
     return getHospitalOptions(pendingDialogForm.groupIds);
   }, [groupOptions, pendingDialogForm.groupIds]);
+
+  const createdUserDialogHospitalOptions = useMemo(() => {
+    return getHospitalOptions(createdUserDialogForm.groupIds);
+  }, [createdUserDialogForm.groupIds, groupOptions]);
 
   const pendingRows = useMemo(
     () => (pendingInvestigatorsQuery.data ?? []).filter((entry) => !entry.promotedAt),
@@ -550,6 +557,8 @@ const RouteComponent = () => {
     createdUserDialogForm.firstName.trim().length > 0 &&
     createdUserDialogForm.lastName.trim().length > 0 &&
     createdUserDialogForm.username.trim().length > 0 &&
+    (selectedCreatedUser?.basePermissionLevel !== 'STANDARD' ||
+      (createdUserDialogForm.groupIds.length > 0 && createdUserDialogForm.hospital.trim().length > 0)) &&
     (createdUserDialogForm.password.trim().length === 0 || isCreatedUserPasswordStrong);
 
   const isBusy =
@@ -785,7 +794,7 @@ const RouteComponent = () => {
   };
 
   const handleSaveCreatedUserDialog = async () => {
-    if (!selectedUserId || !canSaveCreatedUserDialog) {
+    if (!selectedUserId || !selectedCreatedUser || !canSaveCreatedUserDialog) {
       return;
     }
 
@@ -794,6 +803,7 @@ const RouteComponent = () => {
         data: {
           firstName: createdUserDialogForm.firstName.trim(),
           groupIds: createdUserDialogForm.groupIds,
+          hospital: selectedCreatedUser.basePermissionLevel === 'STANDARD' ? createdUserDialogForm.hospital : undefined,
           lastName: createdUserDialogForm.lastName.trim(),
           password: createdUserDialogForm.password.trim() || undefined,
           username: createdUserDialogForm.username.trim()
@@ -839,7 +849,12 @@ const RouteComponent = () => {
   };
 
   const handleCreateHospital = async () => {
-    const targetGroupIds = hospitalDialogTarget === 'edit' ? pendingDialogForm.groupIds : investigatorForm.groupIds;
+    const targetGroupIds =
+      hospitalDialogTarget === 'edit'
+        ? pendingDialogForm.groupIds
+        : hospitalDialogTarget === 'createdUser'
+          ? createdUserDialogForm.groupIds
+          : investigatorForm.groupIds;
     if (!canCreateHospital(targetGroupIds)) {
       return;
     }
@@ -861,6 +876,8 @@ const RouteComponent = () => {
 
       if (hospitalDialogTarget === 'edit') {
         setPendingDialogForm((current) => ({ ...current, hospital: serializedHospital }));
+      } else if (hospitalDialogTarget === 'createdUser') {
+        setCreatedUserDialogForm((current) => ({ ...current, hospital: serializedHospital }));
       } else {
         setInvestigatorForm((current) => ({ ...current, hospital: serializedHospital }));
       }
@@ -1396,10 +1413,15 @@ const RouteComponent = () => {
                         <Checkbox
                           checked={checked}
                           onCheckedChange={() =>
-                            setCreatedUserDialogForm((current) => ({
-                              ...current,
-                              groupIds: toggleGroups(current.groupIds, group.id)
-                            }))
+                            setCreatedUserDialogForm((current) => {
+                              const nextGroupIds = toggleGroups(current.groupIds, group.id);
+                              const nextHospitalOptions = getHospitalOptions(nextGroupIds);
+                              return {
+                                ...current,
+                                groupIds: nextGroupIds,
+                                hospital: nextHospitalOptions.includes(current.hospital) ? current.hospital : ''
+                              };
+                            })
                           }
                         />
                         <span>{group.name}</span>
@@ -1408,6 +1430,56 @@ const RouteComponent = () => {
                   })}
                 </div>
               </div>
+              {selectedCreatedUser?.basePermissionLevel === 'STANDARD' ? (
+                <div className="grid gap-2">
+                  <Label>{t({ en: 'Hospital / Centre', fr: 'Hospital / Centro' })}</Label>
+                  <p className="text-muted-foreground text-xs">
+                    {t({
+                      en: "L'hospital disponible depèn dels grups seleccionats. Si no hi és, el podeu crear directament des d'aquí.",
+                      fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
+                    })}
+                  </p>
+                  <Select
+                    value={createdUserDialogForm.hospital}
+                    onValueChange={(value) => setCreatedUserDialogForm((current) => ({ ...current, hospital: value }))}
+                  >
+                    <Select.Trigger disabled={createdUserDialogHospitalOptions.length === 0}>
+                      {createdUserDialogForm.hospital ? (
+                        formatHospitalLabel(createdUserDialogForm.hospital)
+                      ) : (
+                        <Select.Value placeholder={t({ en: 'Selecciona un hospital', fr: 'Selecciona un hospital' })} />
+                      )}
+                    </Select.Trigger>
+                    <Select.Content>
+                      {createdUserDialogHospitalOptions.map((hospital) => (
+                        <Select.Item key={hospital} value={hospital}>
+                          {formatHospitalLabel(hospital)}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select>
+                  <Button
+                    disabled={!canOpenCreateHospitalDialog(createdUserDialogForm.groupIds) || isCreatedUserDialogBusy}
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setHospitalDialogTarget('createdUser');
+                      setHospitalForm(DEFAULT_HOSPITAL_FORM);
+                      setIsHospitalDialogOpen(true);
+                    }}
+                  >
+                    {t({ en: 'Crear hospital nou', fr: 'Crear hospital nuevo' })}
+                  </Button>
+                  {createdUserDialogForm.groupIds.length === 0 ? (
+                    <p className="text-muted-foreground text-xs">
+                      {t({
+                        en: 'Selecciona primer un o més grups per carregar els hospitals disponibles.',
+                        fr: 'Selecciona primero uno o más grupos para cargar los hospitales disponibles.'
+                      })}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               {selectedCreatedUser?.basePermissionLevel === 'STANDARD' ? (
                 <div className="grid gap-2">
                   <Label>{t({ en: 'Històric de sessions', fr: 'Histórico de sesiones' })}</Label>
@@ -2013,7 +2085,11 @@ const RouteComponent = () => {
               className="bg-violet-600 text-white hover:bg-violet-700 disabled:bg-violet-300 disabled:text-white"
               disabled={
                 !canCreateHospital(
-                  hospitalDialogTarget === 'edit' ? pendingDialogForm.groupIds : investigatorForm.groupIds
+                  hospitalDialogTarget === 'edit'
+                    ? pendingDialogForm.groupIds
+                    : hospitalDialogTarget === 'createdUser'
+                      ? createdUserDialogForm.groupIds
+                      : investigatorForm.groupIds
                 ) || isBusy
               }
               type="button"
