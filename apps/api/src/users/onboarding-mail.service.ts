@@ -132,6 +132,8 @@ export class OnboardingMailService {
 
   private resolveLogoPath() {
     const candidates = [
+      path.resolve(process.cwd(), 'public/alta-medical-services-logo.png'),
+      path.resolve(process.cwd(), '../public/alta-medical-services-logo.png'),
       path.resolve(process.cwd(), '../../alta-medical-services-logo.png'),
       path.resolve(process.cwd(), '../alta-medical-services-logo.png'),
       path.resolve(process.cwd(), 'alta-medical-services-logo.png')
@@ -141,6 +143,8 @@ export class OnboardingMailService {
 
   private resolveTemplatePath() {
     const candidates = [
+      path.resolve(process.cwd(), 'public/mail-template.html'),
+      path.resolve(process.cwd(), '../public/mail-template.html'),
       path.resolve(process.cwd(), '../../scripts/mail-template.html'),
       path.resolve(process.cwd(), '../scripts/mail-template.html'),
       path.resolve(process.cwd(), 'scripts/mail-template.html')
