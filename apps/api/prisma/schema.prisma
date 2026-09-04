@@ -141,6 +141,20 @@ model OrionFollowupReminder {
   @@map("OrionFollowupReminderModel")
 }
 
+model OrionPatientCode {
+  createdAt      DateTime @default(now()) @db.Date
+  updatedAt      DateTime @updatedAt @db.Date
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  code           String   @unique
+  groupId        String   @db.ObjectId
+  hospital       String
+  investigatorId String   @db.ObjectId
+  sequence       Int
+
+  @@unique([groupId, hospital, investigatorId, sequence])
+  @@map("OrionPatientCodeModel")
+}
+
 // Instruments 
 
 enum InstrumentKind {

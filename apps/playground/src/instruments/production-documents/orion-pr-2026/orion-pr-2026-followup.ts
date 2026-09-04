@@ -107,6 +107,12 @@ function conditionalField<T extends Record<string, any>>(dependency: string, val
   };
 }
 
+function whenStudyContinues<T extends Record<string, any>>(fields: Record<string, T>) {
+  return Object.fromEntries(
+    Object.entries(fields).map(([key, field]) => [key, conditionalField('continues_study', 'si', field)])
+  );
+}
+
 function eq5dFields() {
   return {
     eq5d_mobility: {
@@ -257,39 +263,51 @@ export default defineInstrument({
       fields: { user_code: { kind: 'string', label: 'Código del usuario *', variant: 'input' } }
     },
     {
+      title: 'CONTINUIDAD EN EL ESTUDIO',
+      fields: {
+        continues_study: {
+          kind: 'string',
+          label: '¿El paciente continúa en el estudio? *',
+          options: YES_NO_OPTIONS,
+          variant: 'radio'
+        }
+      }
+    },
+    {
       title: 'VISITA DE SEGUIMIENTO (A LOS TRES MESES ± 2 SEMANAS)',
-      fields: { followup_date: dateField('Fecha de visita *') }
+      fields: whenStudyContinues({ followup_date: dateField('Fecha de visita *') })
     },
     {
       title: 'EVALUACIÓN PROSPECTIVA DE LAS ESCALAS - CALIDAD DE VIDA (CUESTIONARIO EQ-5D-5L)',
       description: 'Referida al momento actual, durante el tratamiento con pregabalina PR',
-      fields: eq5dFields()
+      fields: whenStudyContinues(eq5dFields())
     },
     {
       title: 'CALIDAD DE SUEÑO',
       description: 'Actualmente, durante el tratamiento con pregabalina PR',
-      fields: sleepFields()
+      fields: whenStudyContinues(sleepFields())
     },
     {
       title: 'ADHERENCIA AL TRATAMIENTO (ESCALA MMAS-4)',
-      fields: adherenceFields()
+      description: 'Actualmente, durante el tratamiento con pregabalina PR',
+      fields: whenStudyContinues(adherenceFields())
     },
     {
       title: 'MEJORÍA CLÍNICA (ESCALA CGI-I)',
       description:
         'Califique la mejoría global, independientemente de si, según su juicio clínico, se debe por completo al tratamiento farmacológico. En comparación con su estado basal, ¿cuánto ha cambiado?',
-      fields: {
+      fields: whenStudyContinues({
         cgi_improvement: {
           kind: 'string',
           label: 'En comparación con su estado basal, ¿cuánto ha cambiado?',
           options: SCALE_OPTIONS,
           variant: 'radio'
         }
-      }
+      })
     },
     {
       title: 'CAMBIO DE PREGABALINA IR A PREGABALINA PR',
-      fields: {
+      fields: whenStudyContinues({
         objective_achieved: {
           kind: 'string',
           label: '¿Se ha alcanzado el objetivo que motivó el cambio a pregabalina PR?',
@@ -304,17 +322,62 @@ export default defineInstrument({
         },
         dose_change_date: conditionalField('dose_change', 'si', dateField('Fecha del cambio de dosis')),
         new_dose: conditionalField('dose_change', 'si', { kind: 'number', label: 'Nueva dosis (mg)', variant: 'input' })
-      }
+      })
+    },
+    {
+      title: 'CAMBIOS EN TRATAMIENTOS CONCOMITANTES',
+      fields: whenStudyContinues({
+        concomitant_treatment_changes: {
+          kind: 'string',
+          label: '¿Ha habido cambios en los tratamientos concomitantes desde la visita de selección?',
+          options: YES_NO_OPTIONS,
+          variant: 'radio'
+        },
+        concomitant_treatment_changes_detail: conditionalField('concomitant_treatment_changes', 'si', {
+          kind: 'string',
+          label: 'Indique los cambios en los tratamientos concomitantes, incluyendo producto y dosis',
+          variant: 'textarea'
+        })
+      })
     },
     {
       title: 'ACONTECIMIENTOS ADVERSOS',
-      fields: {
+      fields: whenStudyContinues({
         adverse_events: {
           kind: 'string',
           label: '¿Ha presentado algún acontecimiento adverso durante el periodo de estudio?',
           options: YES_NO_OPTIONS,
           variant: 'radio'
         },
+        adverse_event_records: conditionalField('adverse_events', 'si', {
+          kind: 'record-array',
+          label: 'Registro de reacciones adversas *',
+          fieldset: {
+            reaction: { kind: 'string', label: 'Reacción adversa', variant: 'input' },
+            onset_date: dateField('Fecha de inicio'),
+            intensity: {
+              kind: 'string',
+              label: 'Intensidad',
+              options: { leve: 'Leve', moderada: 'Moderada', intensa: 'Intensa' },
+              variant: 'select'
+            },
+            outcome: {
+              kind: 'string',
+              label: 'Desenlace',
+              options: {
+                recuperado: 'Recuperado',
+                recuperado_con_secuelas: 'Recuperado con secuelas',
+                en_recuperacion: 'En recuperación',
+                continua: 'Continúa',
+                desconocido: 'Desconocido'
+              },
+              variant: 'select'
+            },
+            resolution_date: dateField('Fecha de resolución, si aplica'),
+            actions_taken: { kind: 'string', label: 'Medidas adoptadas', variant: 'textarea' },
+            seriousness: { kind: 'string', label: 'Gravedad', variant: 'textarea' }
+          }
+        }),
         _pharmacovigilance_instruction: conditionalField('adverse_events', 'si', {
           description: PHARMACOVIGILANCE_INSTRUCTION,
           disabled: true,
@@ -322,19 +385,13 @@ export default defineInstrument({
           label: 'Instrucciones de farmacovigilancia',
           variant: 'textarea'
         })
-      }
+      })
     },
     {
       title: 'FORMULARIO FIN DE ESTUDIO',
       fields: {
-        end_date: dateField('¿Fecha en que se rellena el formulario de fin de estudio?'),
-        study_completed: {
-          kind: 'string',
-          label: '¿Ha completado el paciente el estudio?',
-          options: YES_NO_OPTIONS,
-          variant: 'radio'
-        },
-        reason_not_completed: conditionalField('study_completed', 'no', {
+        end_date: conditionalField('continues_study', 'no', dateField('Fecha de finalización del estudio *')),
+        reason_not_completed: conditionalField('continues_study', 'no', {
           kind: 'string',
           label: 'En caso negativo, indique el motivo',
           options: { investigator: 'Decisión del investigador', patient: 'Decisión del paciente', other: 'Otro' },
@@ -368,30 +425,47 @@ export default defineInstrument({
   validationSchema: z
     .object({
       user_code: z.string().min(1, 'El código del usuario es obligatorio'),
-      followup_date: requiredManualDateSchema(),
-      eq5d_mobility: responseSchema,
-      eq5d_selfcare: responseSchema,
-      eq5d_activities: responseSchema,
-      eq5d_pain: responseSchema,
-      eq5d_anxiety: responseSchema,
-      eq5d_vas: z.coerce.number().min(0).max(100),
-      sleep_onset: responseSchema,
-      sleep_maintenance: responseSchema,
-      sleep_quality: responseSchema,
-      sleep_daytime: responseSchema,
-      mmas_forget: z.enum(['si', 'no']),
-      mmas_remember: z.enum(['si', 'no']),
-      mmas_better: z.enum(['si', 'no']),
-      mmas_worse: z.enum(['si', 'no']),
-      cgi_improvement: z.enum(['1', '2', '3', '4', '5', '6', '7', '8']),
-      objective_achieved: z.enum(['si', 'no']),
-      dose_change: z.enum(['si', 'no']),
+      continues_study: z.enum(['si', 'no']),
+      followup_date: optionalManualDateSchema(),
+      eq5d_mobility: responseSchema.optional(),
+      eq5d_selfcare: responseSchema.optional(),
+      eq5d_activities: responseSchema.optional(),
+      eq5d_pain: responseSchema.optional(),
+      eq5d_anxiety: responseSchema.optional(),
+      eq5d_vas: z.coerce.number().min(0).max(100).optional(),
+      sleep_onset: responseSchema.optional(),
+      sleep_maintenance: responseSchema.optional(),
+      sleep_quality: responseSchema.optional(),
+      sleep_daytime: responseSchema.optional(),
+      mmas_forget: z.enum(['si', 'no']).optional(),
+      mmas_remember: z.enum(['si', 'no']).optional(),
+      mmas_better: z.enum(['si', 'no']).optional(),
+      mmas_worse: z.enum(['si', 'no']).optional(),
+      cgi_improvement: z.enum(['1', '2', '3', '4', '5', '6', '7', '8']).optional(),
+      objective_achieved: z.enum(['si', 'no']).optional(),
+      dose_change: z.enum(['si', 'no']).optional(),
       dose_change_date: optionalManualDateSchema(),
       new_dose: z.number().optional(),
-      adverse_events: z.enum(['si', 'no']),
+      concomitant_treatment_changes: z.enum(['si', 'no']).optional(),
+      concomitant_treatment_changes_detail: z.string().optional(),
+      adverse_events: z.enum(['si', 'no']).optional(),
+      adverse_event_records: z
+        .array(
+          z.object({
+            actions_taken: z.string().optional(),
+            intensity: z.enum(['leve', 'moderada', 'intensa']).optional(),
+            onset_date: optionalManualDateSchema(),
+            outcome: z
+              .enum(['recuperado', 'recuperado_con_secuelas', 'en_recuperacion', 'continua', 'desconocido'])
+              .optional(),
+            reaction: z.string().optional(),
+            resolution_date: optionalManualDateSchema(),
+            seriousness: z.string().optional()
+          })
+        )
+        .optional(),
       _pharmacovigilance_instruction: z.any().optional(),
-      end_date: requiredManualDateSchema(),
-      study_completed: z.enum(['si', 'no']),
+      end_date: optionalManualDateSchema(),
       reason_not_completed: z.enum(['investigator', 'patient', 'other']).optional(),
       reason_not_completed_other: z.string().optional(),
       professional_attestation: z.boolean().refine((value) => value === true, {
@@ -399,6 +473,40 @@ export default defineInstrument({
       })
     })
     .superRefine((data, context) => {
+      if (data.continues_study === 'si') {
+        for (const field of [
+          'followup_date',
+          'eq5d_mobility',
+          'eq5d_selfcare',
+          'eq5d_activities',
+          'eq5d_pain',
+          'eq5d_anxiety',
+          'eq5d_vas',
+          'sleep_onset',
+          'sleep_maintenance',
+          'sleep_quality',
+          'sleep_daytime',
+          'mmas_forget',
+          'mmas_remember',
+          'mmas_better',
+          'mmas_worse',
+          'cgi_improvement',
+          'objective_achieved',
+          'dose_change',
+          'concomitant_treatment_changes',
+          'adverse_events'
+        ]) {
+          if (data[field as keyof typeof data] === undefined) {
+            context.addIssue({ code: z.ZodIssueCode.custom, message: 'Este campo es obligatorio', path: [field] });
+          }
+        }
+      } else if (!data.end_date || !data.reason_not_completed) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Indique la fecha y el motivo de finalización',
+          path: ['end_date']
+        });
+      }
       if (data.dose_change === 'si' && (!data.dose_change_date || data.new_dose === undefined)) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
@@ -415,6 +523,46 @@ export default defineInstrument({
           message: 'Especifique el motivo',
           path: ['reason_not_completed_other']
         });
+      }
+      if (data.concomitant_treatment_changes === 'si' && !data.concomitant_treatment_changes_detail?.trim()) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Indique los cambios realizados',
+          path: ['concomitant_treatment_changes_detail']
+        });
+      }
+      if (data.adverse_events === 'si' && !data.adverse_event_records?.length) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'Debe registrar al menos una reacción adversa y completar la notificación de farmacovigilancia cuando corresponda.',
+          path: ['adverse_event_records']
+        });
+      }
+      for (const [index, event] of (data.adverse_event_records ?? []).entries()) {
+        for (const field of [
+          'reaction',
+          'onset_date',
+          'intensity',
+          'outcome',
+          'actions_taken',
+          'seriousness'
+        ] as const) {
+          if (!event[field]) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Este campo es obligatorio',
+              path: ['adverse_event_records', index, field]
+            });
+          }
+        }
+        if ((event.outcome === 'recuperado' || event.outcome === 'recuperado_con_secuelas') && !event.resolution_date) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Indique la fecha de resolución para este desenlace.',
+            path: ['adverse_event_records', index, 'resolution_date']
+          });
+        }
       }
     })
 });

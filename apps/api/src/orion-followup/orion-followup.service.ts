@@ -10,6 +10,8 @@ import { AssignmentsService } from '@/assignments/assignments.service';
 
 const FOLLOWUP_DELAY_MS = 10 * 7 * 24 * 60 * 60 * 1000;
 const FOLLOWUP_ASSIGNMENT_EXPIRY_MS = 14 * 7 * 24 * 60 * 60 * 1000;
+const FOLLOWUP_WINDOW_MIN_DAYS = 76;
+const FOLLOWUP_WINDOW_MAX_DAYS = 104;
 const REMINDER_POLL_INTERVAL_MS = 60 * 60 * 1000;
 const ORION_SELECTION_INTERNAL = {
   edition: 1,
@@ -61,11 +63,13 @@ export class OrionFollowupService {
   }
 
   async validateFollowup({
+    followupData,
     groupId,
     instrument,
     subjectId,
     userCode
   }: {
+    followupData: Record<string, unknown>;
     groupId?: string;
     instrument: AnyScalarInstrument;
     subjectId: string;
@@ -78,21 +82,55 @@ export class OrionFollowupService {
     const selectionInstrumentId = this.instrumentsService.generateScalarInstrumentId({
       internal: ORION_SELECTION_INTERNAL
     });
-    const selectionRecord = await this.instrumentRecordModel.findFirst({
+    const selectionRecords = await this.instrumentRecordModel.findMany({
       orderBy: { createdAt: 'desc' },
       where: { groupId: groupId ?? null, instrumentId: selectionInstrumentId, subjectId }
     });
+    const selectionRecord = selectionRecords.find((record) => {
+      const selectionData = record.data as Record<string, unknown> | null;
+      return typeof selectionData?.user_code === 'string' && selectionData.user_code.trim() === userCode.trim();
+    });
     const selectionData = selectionRecord?.data as Record<string, unknown> | null;
 
-    if (!selectionRecord || !selectionData || typeof selectionData.user_code !== 'string') {
-      throw new UnprocessableEntityException('La visita de selección ORION debe estar completada para este paciente.');
+    if (!selectionRecord || !selectionData) {
+      throw new UnprocessableEntityException(
+        'La visita de selección ORION debe estar completada para este código de paciente.'
+      );
     }
 
-    if (selectionData.user_code.trim() !== userCode.trim()) {
-      throw new UnprocessableEntityException('El código del paciente no coincide con la visita de selección ORION.');
+    if (followupData.continues_study === 'si') {
+      const selectionVisitDate = this.parseInstrumentDate(selectionData.selection_visit_date);
+      const followupDate = this.parseInstrumentDate(followupData.followup_date);
+      if (!selectionVisitDate || !followupDate) {
+        throw new UnprocessableEntityException(
+          'No se puede verificar la ventana de seguimiento sin las fechas de selección y seguimiento.'
+        );
+      }
+
+      const elapsedDays = (followupDate.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
+      if (elapsedDays < FOLLOWUP_WINDOW_MIN_DAYS || elapsedDays > FOLLOWUP_WINDOW_MAX_DAYS) {
+        throw new UnprocessableEntityException(
+          'La visita de seguimiento debe realizarse entre 76 y 104 días después de la visita de selección.'
+        );
+      }
     }
 
     return selectionRecord.id;
+  }
+
+  private parseInstrumentDate(value: unknown) {
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return value;
+    }
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+    const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value.trim());
+    if (!match) {
+      return undefined;
+    }
+    const parsed = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]), 12);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
   }
 
   async scheduleReminder({

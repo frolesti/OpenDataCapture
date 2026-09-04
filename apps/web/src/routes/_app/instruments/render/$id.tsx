@@ -71,6 +71,11 @@ function normalizeOrionBundle(bundle: string, mode: 'followup' | 'selection'): s
   patched = patched.replace(/,"professional_initials"/g, '');
 
   if (mode === 'selection') {
+    patched = patched.replace(
+      /user_code:\{kind:"string",label:"[^"]*",variant:"input"\}/,
+      'user_code:{kind:"string",label:"Código del paciente",variant:"input",disabled:true}'
+    );
+
     // Add visit/consent dates near informed consent section.
     patched = patched.replace(
       /informed_consent:\{kind:"string",label:"[^"]*",variant:"radio",options:YES_NO_OPTIONS\}/,
@@ -257,6 +262,7 @@ const RouteComponent = () => {
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
   const pendingSubmitRef = useRef<{ data: unknown; instrumentId: string } | null>(null);
   const [liveValidationErrors, setLiveValidationErrors] = useState<string[]>([]);
+  const [reservedOrionPatientCode, setReservedOrionPatientCode] = useState<string | null>(null);
 
   const recordsQuery = useInstrumentRecords({
     // Enable fetching if we have a recordId but no valid initial data
@@ -292,6 +298,48 @@ const RouteComponent = () => {
 
   const isOrionFollowup = instrumentBundleQuery.data?.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME;
   const isOrionSelection = instrumentBundleQuery.data?.internal?.name === ORION_SELECTION_INTERNAL_NAME;
+
+  useEffect(() => {
+    if (
+      !isOrionSelection ||
+      recordId ||
+      reservedOrionPatientCode ||
+      effectiveInitialData?.user_code ||
+      !currentGroup?.id
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    void axios
+      .post<{ code: string }>('/v1/instrument-records/orion-patient-code', { groupId: currentGroup.id })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setReservedOrionPatientCode(data.code);
+          setRendererKey((current) => current + 1);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          notifications.addNotification({
+            message:
+              'No se ha podido generar el código del paciente ORION. Revise la asignación de hospital del investigador.',
+            type: 'error'
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    currentGroup?.id,
+    effectiveInitialData?.user_code,
+    isOrionSelection,
+    notifications,
+    recordId,
+    reservedOrionPatientCode
+  ]);
   const orionSelectionRecordsQuery = useInstrumentRecords({
     enabled: Boolean(isOrionFollowup && orionSelectionInstrumentId && scopedSubjectId),
     params: {
@@ -354,6 +402,10 @@ const RouteComponent = () => {
   ]);
 
   const instrumentTarget = instrumentBundleWithOverrides;
+  const formInitialData =
+    isOrionSelection && reservedOrionPatientCode && !effectiveInitialData?.user_code
+      ? { ...effectiveInitialData, user_code: reservedOrionPatientCode }
+      : effectiveInitialData;
 
   const title = instrumentTitle;
 
@@ -633,7 +685,7 @@ const RouteComponent = () => {
         <InstrumentRenderer
           key={rendererKey}
           className="mx-auto max-w-3xl"
-          initialData={effectiveInitialData}
+          initialData={formInitialData}
           isEditing={Boolean(recordId)}
           isResuming={Boolean(recordId) || Boolean(effectiveInitialData)}
           subject={currentSession?.subject}

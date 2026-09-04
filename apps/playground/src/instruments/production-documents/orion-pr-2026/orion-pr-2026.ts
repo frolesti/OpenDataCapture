@@ -146,8 +146,7 @@ function eq5d5lFields(
   fieldPrefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_'
 ): Record<string, any> {
   const prefix = fieldPrefix;
-  const labelSuffix =
-    timeframe === 'retrospective' ? ' (durante tratamiento con pregabalina IR)' : ' (actualmente con pregabalina PR)';
+  const labelSuffix = '';
 
   return {
     [`${prefix}eq5d_mobility`]: requiresEligibility({
@@ -226,7 +225,7 @@ function sleepQualityFields(
   fieldPrefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_'
 ): Record<string, any> {
   const prefix = fieldPrefix;
-  const labelSuffix = timeframe === 'retrospective' ? ' (durante pregabalina IR)' : ' (actualmente con pregabalina PR)';
+  const labelSuffix = '';
 
   return {
     [`${prefix}sleep_onset`]: requiresEligibility({
@@ -285,7 +284,7 @@ function adherenceFields(
   fieldPrefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_'
 ): Record<string, any> {
   const prefix = fieldPrefix;
-  const labelSuffix = timeframe === 'retrospective' ? ' (durante pregabalina IR)' : ' (actualmente con pregabalina PR)';
+  const labelSuffix = '';
 
   return {
     [`${prefix}mmas_forget`]: requiresEligibility({
@@ -415,7 +414,12 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
       {
         kind: 'string',
         variant: 'input',
-        label: `Tratamiento ${i}`
+        label:
+          i === 1 && prefix === 'prev'
+            ? 'Tratamiento con pregabalina IR *'
+            : i === 1 && prefix === 'current'
+              ? 'Tratamiento con pregabalina PR *'
+              : `Tratamiento ${i}`
       },
       prefix,
       i
@@ -425,14 +429,14 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
       {
         kind: 'number',
         variant: 'input',
-        label: `Dosis (mg) - Tratamiento ${i}`
+        label: i === 1 && prefix !== 'concomitant' ? 'Dosis actual (mg) *' : `Dosis (mg) - Tratamiento ${i}`
       },
       prefix,
       i
     );
 
     fields[`${prefix}_treatment_start_${i}`] = requiresPreviousTreatment(
-      dateField(`Fecha de inicio - Tratamiento ${i}`),
+      dateField(i === 1 && prefix !== 'concomitant' ? 'Fecha de inicio *' : `Fecha de inicio - Tratamiento ${i}`),
       prefix,
       i
     );
@@ -447,38 +451,9 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
         prefix,
         i
       );
-
-      fields[`current_treatment_end_notice_${i}`] = {
-        kind: 'dynamic' as const,
-        deps: [
-          'informed_consent',
-          ...INCLUSION_KEYS,
-          ...EXCLUSION_KEYS,
-          `${prefix}_treatment_name_${i}`,
-          `${prefix}_treatment_dose_mg_${i}`,
-          `${prefix}_treatment_start_${i}`,
-          `${prefix}_treatment_end_${i}`
-        ] as const,
-        render(data: FormData): any {
-          const hasBaseData =
-            data[`${prefix}_treatment_name_${i}`] &&
-            data[`${prefix}_treatment_dose_mg_${i}`] !== undefined &&
-            data[`${prefix}_treatment_start_${i}`];
-          if (!isEligible(data) || !hasBaseData || data[`${prefix}_treatment_end_${i}`] === true) {
-            return null;
-          }
-          return {
-            kind: 'string',
-            variant: 'textarea',
-            label: 'Fecha de fin',
-            description: 'Si el paciente no continúa con pregabalina PR, no puede continuar con el formulario.',
-            disabled: true
-          };
-        }
-      };
     } else {
       fields[`${prefix}_treatment_end_${i}`] = requiresPreviousTreatment(
-        dateField(`Fecha de fin - Tratamiento ${i}`),
+        dateField(i === 1 && prefix === 'prev' ? 'Fecha de fin *' : `Fecha de fin - Tratamiento ${i}`),
         prefix,
         i
       );
@@ -500,9 +475,6 @@ function treatmentValidation(prefix: 'prev' | 'current' | 'concomitant', maxTrea
     schema[`${prefix}_treatment_dose_mg_${i}`] = z.number().optional();
     schema[`${prefix}_treatment_start_${i}`] = optionalManualDateSchema();
     schema[`${prefix}_treatment_end_${i}`] = prefix === 'current' ? z.boolean().optional() : optionalManualDateSchema();
-    if (prefix === 'current') {
-      schema[`current_treatment_end_notice_${i}`] = z.any().optional();
-    }
     if (i < maxTreatments) {
       schema[`add_${prefix}_treatment_${i + 1}`] = nonPersistentCheckboxSchema();
     }
@@ -626,7 +598,8 @@ export default defineInstrument({
         user_code: {
           kind: 'string',
           variant: 'input',
-          label: 'Código del usuario *'
+          label: 'Código del paciente',
+          disabled: true
         }
       }
     },
@@ -930,6 +903,13 @@ export default defineInstrument({
       }
     },
     {
+      title: 'ADHERENCIA AL TRATAMIENTO (ESCALA MMAS-4)',
+      description: 'Evaluación del momento actual, durante el tratamiento con pregabalina PR',
+      fields: {
+        ...adherenceFields('prospective')
+      }
+    },
+    {
       title: 'MEJORÍA CLÍNICA (ESCALA CGI-I)',
       description:
         'Califique la mejoría global respecto al estado durante el tratamiento con pregabalina IR, independientemente de si, según su juicio clínico, se debe por completo al tratamiento farmacológico.',
@@ -954,6 +934,35 @@ export default defineInstrument({
           label: '¿Ha presentado algún acontecimiento adverso durante el tratamiento con pregabalina PR?',
           variant: 'radio',
           options: YES_NO_OPTIONS
+        }),
+        adverse_event_records: requiresEligibilityAndValue('baseline_adverse_events', 'si', {
+          kind: 'record-array',
+          label: 'Registro de reacciones adversas *',
+          fieldset: {
+            reaction: { kind: 'string', label: 'Reacción adversa', variant: 'input' },
+            onset_date: dateField('Fecha de inicio'),
+            intensity: {
+              kind: 'string',
+              label: 'Intensidad',
+              options: { leve: 'Leve', moderada: 'Moderada', intensa: 'Intensa' },
+              variant: 'select'
+            },
+            outcome: {
+              kind: 'string',
+              label: 'Desenlace',
+              options: {
+                recuperado: 'Recuperado',
+                recuperado_con_secuelas: 'Recuperado con secuelas',
+                en_recuperacion: 'En recuperación',
+                continua: 'Continúa',
+                desconocido: 'Desconocido'
+              },
+              variant: 'select'
+            },
+            resolution_date: dateField('Fecha de resolución'),
+            actions_taken: { kind: 'string', label: 'Medidas adoptadas', variant: 'textarea' },
+            seriousness: { kind: 'string', label: 'Gravedad', variant: 'textarea' }
+          }
         }),
         _baseline_pharmacovigilance_instruction: pharmacovigilanceInstruction('baseline_adverse_events')
       }
@@ -1088,6 +1097,21 @@ export default defineInstrument({
       new_dose: z.number().optional(),
 
       baseline_adverse_events: z.enum(['si', 'no']).optional(),
+      adverse_event_records: z
+        .array(
+          z.object({
+            actions_taken: z.string().optional(),
+            intensity: z.enum(['leve', 'moderada', 'intensa']).optional(),
+            onset_date: optionalManualDateSchema(),
+            outcome: z
+              .enum(['recuperado', 'recuperado_con_secuelas', 'en_recuperacion', 'continua', 'desconocido'])
+              .optional(),
+            reaction: z.string().optional(),
+            resolution_date: optionalManualDateSchema(),
+            seriousness: z.string().optional()
+          })
+        )
+        .optional(),
       _baseline_pharmacovigilance_instruction: z.any().optional(),
 
       end_date: optionalManualDateSchema(),
@@ -1199,6 +1223,10 @@ export default defineInstrument({
           'prosp_sleep_maintenance',
           'prosp_sleep_quality',
           'prosp_sleep_daytime',
+          'prosp_mmas_forget',
+          'prosp_mmas_remember',
+          'prosp_mmas_better',
+          'prosp_mmas_worse',
           'cgi_improvement',
           'baseline_adverse_events'
         ]) {
@@ -1218,6 +1246,99 @@ export default defineInstrument({
             code: z.ZodIssueCode.custom,
             message: 'Debe seleccionar al menos un motivo para el cambio de tratamiento.',
             path: ['change_reason_adherence']
+          });
+        }
+
+        if (data.baseline_adverse_events === 'si' && !data.adverse_event_records?.length) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              'Debe registrar al menos una reacción adversa y completar la notificación de farmacovigilancia cuando corresponda.',
+            path: ['adverse_event_records']
+          });
+        }
+        for (const [index, event] of (data.adverse_event_records ?? []).entries()) {
+          for (const field of [
+            'reaction',
+            'onset_date',
+            'intensity',
+            'outcome',
+            'actions_taken',
+            'seriousness'
+          ] as const) {
+            if (!event[field]) {
+              context.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Este campo es obligatorio',
+                path: ['adverse_event_records', index, field]
+              });
+            }
+          }
+          if (
+            (event.outcome === 'recuperado' || event.outcome === 'recuperado_con_secuelas') &&
+            !event.resolution_date
+          ) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Indique la fecha de resolución para este desenlace.',
+              path: ['adverse_event_records', index, 'resolution_date']
+            });
+          }
+        }
+
+        for (const field of [
+          'prev_treatment_name_1',
+          'prev_treatment_dose_mg_1',
+          'prev_treatment_start_1',
+          'prev_treatment_end_1',
+          'current_treatment_name_1',
+          'current_treatment_dose_mg_1',
+          'current_treatment_start_1'
+        ]) {
+          addRequiredIssue(field);
+        }
+        if (values.current_treatment_end_1 !== true) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'El paciente debe continuar con pregabalina PR para completar la selección.',
+            path: ['current_treatment_end_1']
+          });
+        }
+
+        const previousTreatmentName = String(values.prev_treatment_name_1 ?? '').toLowerCase();
+        if (
+          previousTreatmentName &&
+          (!previousTreatmentName.includes('pregabalina') || !previousTreatmentName.includes('ir'))
+        ) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'El tratamiento previo obligatorio debe corresponder a pregabalina IR.',
+            path: ['prev_treatment_name_1']
+          });
+        }
+
+        const currentTreatmentName = String(values.current_treatment_name_1 ?? '').toLowerCase();
+        if (
+          currentTreatmentName &&
+          (!currentTreatmentName.includes('pregabalina') || !currentTreatmentName.includes('pr'))
+        ) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'El tratamiento actual obligatorio debe corresponder a pregabalina PR.',
+            path: ['current_treatment_name_1']
+          });
+        }
+
+        const currentTreatmentStart = values.current_treatment_start_1;
+        if (
+          currentTreatmentStart instanceof Date &&
+          selectionVisitDate instanceof Date &&
+          currentTreatmentStart.getTime() > selectionVisitDate.getTime()
+        ) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'La fecha de inicio de pregabalina PR no puede ser posterior a la visita de selección.',
+            path: ['current_treatment_start_1']
           });
         }
 

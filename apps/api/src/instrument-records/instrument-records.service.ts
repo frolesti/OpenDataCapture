@@ -1,6 +1,7 @@
 import { replacer, reviver, yearsPassed } from '@douglasneuroinformatics/libjs';
-import { accessibleQuery, InjectModel } from '@douglasneuroinformatics/libnest';
-import type { Model } from '@douglasneuroinformatics/libnest';
+import { accessibleQuery, InjectModel, InjectPrismaClient } from '@douglasneuroinformatics/libnest';
+import type { ExtendedPrismaClient, Model } from '@douglasneuroinformatics/libnest';
+import { createHash } from 'node:crypto';
 import { linearRegression } from '@douglasneuroinformatics/libstats';
 import {
   BadRequestException,
@@ -55,7 +56,9 @@ type CurrentUserContext = {
 export class InstrumentRecordsService {
   constructor(
     @InjectModel('InstrumentRecord') private readonly instrumentRecordModel: Model<'InstrumentRecord'>,
+    @InjectModel('PendingInvestigator') private readonly pendingInvestigatorModel: Model<'PendingInvestigator'>,
     @InjectModel('User') private readonly userModel: Model<'User'>,
+    @InjectPrismaClient() private readonly prismaClient: ExtendedPrismaClient,
     private readonly auditLogService: AuditLogService,
     private readonly groupsService: GroupsService,
     private readonly instrumentMeasuresService: InstrumentMeasuresService,
@@ -72,6 +75,55 @@ export class InstrumentRecordsService {
     return this.instrumentRecordModel.count({
       where: { AND: [accessibleQuery(ability, 'read', 'InstrumentRecord'), filter] }
     });
+  }
+
+  async reserveOrionPatientCode({ groupId, user }: { groupId: string; user: EntityOperationOptions['user'] }) {
+    if (!user) {
+      throw new ForbiddenException('A signed-in investigator is required to reserve an ORION patient code');
+    }
+
+    const group = await this.groupsService.findById(groupId, { user });
+    if (!group) {
+      throw new NotFoundException(`Failed to resolve group with ID: ${groupId}`);
+    }
+
+    const investigator = await this.pendingInvestigatorModel.findFirst({
+      select: { hospital: true },
+      where: { promotedUserId: user.id }
+    });
+    const hospital = investigator?.hospital ?? (group.hospitals.length === 1 ? group.hospitals[0] : undefined);
+    if (!hospital || !group.hospitals.includes(hospital)) {
+      throw new BadRequestException('Assign a hospital to the investigator before creating an ORION patient code');
+    }
+
+    const centerCode = this.orionCodeSegment(`${group.id}:${hospital}`);
+    const investigatorCode = this.orionCodeSegment(user.id);
+    const codeClient = (this.prismaClient as unknown as Record<string, any>).orionPatientCode;
+    if (!codeClient) {
+      throw new UnprocessableEntityException('ORION patient-code storage is unavailable');
+    }
+
+    for (let sequence = 1; sequence <= 100000; sequence++) {
+      const code = `OR-C${centerCode}-I${investigatorCode}-P${String(sequence).padStart(3, '0')}`;
+      try {
+        await codeClient.create({
+          data: {
+            code,
+            groupId: group.id,
+            hospital,
+            investigatorId: user.id,
+            sequence
+          }
+        });
+        return { code };
+      } catch (error) {
+        if ((error as { code?: string }).code !== 'P2002') {
+          throw error;
+        }
+      }
+    }
+
+    throw new UnprocessableEntityException('Unable to reserve an ORION patient code');
   }
 
   async create(
@@ -105,6 +157,7 @@ export class InstrumentRecordsService {
         ? ((parseResult.data as Record<string, string>).user_code ?? '')
         : '';
     const selectionRecordId = await this.orionFollowupService.validateFollowup({
+      followupData: parseResult.data as Record<string, unknown>,
       groupId,
       instrument,
       subjectId,
@@ -640,6 +693,10 @@ export class InstrumentRecordsService {
       basePermissionLevel: user.basePermissionLevel,
       id: user.id
     };
+  }
+
+  private orionCodeSegment(value: string) {
+    return createHash('sha256').update(value).digest('hex').slice(0, 6).toUpperCase();
   }
 
   private parseJson(data: unknown) {
