@@ -593,12 +593,18 @@ const RouteComponent = () => {
 
   return (
     <div className="flex grow flex-col">
-      {currentStep === 1 && !recordId && (
-        <div className="fixed right-6 top-6 z-[70]">
+      <PageHeader>
+        <Heading className="text-center" variant="h2">
+          {title ?? t('core.instrument')}
+        </Heading>
+      </PageHeader>
+      {currentStep === 1 && !recordId ? (
+        <div className="mx-auto flex w-full max-w-3xl justify-end px-4 pb-3 sm:px-6">
           <Button
-            className="gap-2 bg-white shadow-md dark:bg-slate-900"
+            className="gap-2 bg-[#8f8df2] text-white shadow-sm hover:bg-[#7f7de4]"
             size="sm"
-            variant="outline"
+            type="button"
+            variant="primary"
             onClick={handleSaveDraft}
           >
             <Save className="h-4 w-4" />
@@ -608,12 +614,7 @@ const RouteComponent = () => {
             } as any)}
           </Button>
         </div>
-      )}
-      <PageHeader>
-        <Heading className="text-center" variant="h2">
-          {title ?? t('core.instrument')}
-        </Heading>
-      </PageHeader>
+      ) : null}
       <div className="grow">
         {(isOrionSelection || isOrionFollowup) && liveValidationErrors.length > 0 ? (
           <div className="mx-auto mb-4 max-w-3xl px-6">
