@@ -19,6 +19,97 @@ import { useAppStore } from '@/store';
 const HOSPITAL_META_SEPARATOR = '|||';
 const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
 const ORION_FOLLOWUP_INTERNAL_NAME = 'ORION_PR_2026_FOLLOWUP';
+const ORION_DATE_MIN = new Date(2026, 11, 1, 0, 0, 0, 0);
+const ORION_DATE_MAX = new Date(2027, 11, 31, 23, 59, 59, 999);
+const ORION_AGE_MIN = 18;
+const ORION_AGE_MAX = 120;
+const ORION_WEIGHT_MIN = 30;
+const ORION_WEIGHT_MAX = 250;
+const ORION_HEIGHT_MIN = 120;
+const ORION_HEIGHT_MAX = 230;
+
+function parseOrionDate(value: unknown): Date | null {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value.trim());
+    if (!match) {
+      return null;
+    }
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const year = Number(match[3]);
+    const parsed = new Date(year, month - 1, day, 12, 0, 0, 0);
+    if (
+      Number.isNaN(parsed.getTime()) ||
+      parsed.getFullYear() !== year ||
+      parsed.getMonth() !== month - 1 ||
+      parsed.getDate() !== day
+    ) {
+      return null;
+    }
+    return parsed;
+  }
+  return null;
+}
+
+function normalizeOrionBundle(bundle: string, mode: 'followup' | 'selection'): string {
+  let patched = bundle;
+
+  // Remove investigator initials from ORION forms.
+  patched = patched.replace(
+    /professional_initials:requiresEligibility\(\{kind:"string",variant:"input",label:"Iniciales \*"\}\),?/g,
+    ''
+  );
+  patched = patched.replace(
+    /professional_initials:\{kind:"string",label:"Iniciales del profesional sanitario que ha rellenado los datos",variant:"input"\},?/g,
+    ''
+  );
+  patched = patched.replace(/professional_initials:z\.string\(\)\.min\(1,"Este campo es obligatorio"\),?/g, '');
+  patched = patched.replace(/professional_initials:z\.string\(\)\.optional\(\),?/g, '');
+  patched = patched.replace(/,"professional_initials"/g, '');
+
+  if (mode === 'selection') {
+    // Add visit/consent dates near informed consent section.
+    patched = patched.replace(
+      /informed_consent:\{kind:"string",label:"[^"]*",variant:"radio",options:YES_NO_OPTIONS\}/,
+      'informed_consent:{kind:"string",label:"¿El paciente ha firmado el consentimiento informado? *",variant:"radio",options:YES_NO_OPTIONS},selection_visit_date:requiresConsent({...dateField("Fecha de la visita de selección *")}),consent_signed_date:requiresConsent({...dateField("Fecha de firma del consentimiento informado *")})'
+    );
+    patched = patched.replace(
+      'informed_consent:z.enum(["si","no"]),',
+      'informed_consent:z.enum(["si","no"]),selection_visit_date:optionalManualDateSchema(),consent_signed_date:optionalManualDateSchema(),'
+    );
+
+    // Singular phrasing for inclusion criteria.
+    patched = patched.replace(
+      'Pacientes con diagnóstico de dolor neuropático (periférico o central) documentado en su historia clínica',
+      'El paciente tiene diagnóstico de dolor neuropático (periférico o central) documentado en su historia clínica'
+    );
+    patched = patched.replace(
+      'Pacientes previamente tratados con pregabalina de liberación inmediata (IR) antes de iniciar tratamiento con pregabalina de liberación prolongada (PR)',
+      'El paciente está previamente tratado con pregabalina de liberación inmediata (IR) antes de iniciar tratamiento con pregabalina de liberación prolongada (PR)'
+    );
+    patched = patched.replace(
+      'Pacientes que hayan estado en tratamiento con pregabalina PR durante al menos 3 meses y hasta 6 meses',
+      'El paciente ha estado en tratamiento con pregabalina PR durante al menos 3 meses y hasta 6 meses'
+    );
+    patched = patched.replace(
+      'Pacientes que hayan recibido pregabalina PR durante al menos el último mes a una dosis terapéutica (165-660 mg), aunque el tratamiento puede haber comenzado con dosis inferiores en la práctica clínica habitual antes de la titulación a 165 mg o superior',
+      'El paciente ha recibido pregabalina PR durante al menos el último mes a una dosis terapéutica (165-660 mg), aunque el tratamiento puede haber comenzado con dosis inferiores en la práctica clínica habitual antes de la titulación a 165 mg o superior'
+    );
+    patched = patched.replace(
+      'Pacientes ≥ 18 años en el momento de la inclusión',
+      'El paciente es ≥ 18 años en el momento de la inclusión'
+    );
+    patched = patched.replace(
+      'Pacientes que hayan proporcionado consentimiento informado por escrito',
+      'El paciente ha proporcionado consentimiento informado por escrito'
+    );
+  }
+
+  return patched;
+}
 
 function formatHospitalLabel(raw: string) {
   if (raw.includes(HOSPITAL_META_SEPARATOR)) {
@@ -36,6 +127,65 @@ function buildGroupHospitalOptions(hospitals: string[]): string {
   const normalized = Array.from(new Set(hospitals.map((hospital) => hospital.trim()).filter(Boolean)));
   const optionsObject = Object.fromEntries(normalized.map((hospital) => [hospital, formatHospitalLabel(hospital)]));
   return JSON.stringify(optionsObject);
+}
+
+function getOrionLiveValidationErrors(data: Record<string, unknown>): string[] {
+  const errors: string[] = [];
+
+  const addNumberError = (value: unknown, min: number, max: number, message: string) => {
+    if (value === undefined || value === null || value === '') {
+      return;
+    }
+    const number = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(number) || number < min || number > max) {
+      errors.push(message);
+    }
+  };
+
+  addNumberError(
+    data.age,
+    ORION_AGE_MIN,
+    ORION_AGE_MAX,
+    `La edad indicada no es válida para este estudio. Debe estar entre ${ORION_AGE_MIN} y ${ORION_AGE_MAX} años.`
+  );
+  addNumberError(
+    data.weight,
+    ORION_WEIGHT_MIN,
+    ORION_WEIGHT_MAX,
+    `El peso indicado está fuera del rango razonable (${ORION_WEIGHT_MIN}-${ORION_WEIGHT_MAX} kg). Revise el dato antes de continuar.`
+  );
+  addNumberError(
+    data.height,
+    ORION_HEIGHT_MIN,
+    ORION_HEIGHT_MAX,
+    `La altura indicada está fuera del rango razonable (${ORION_HEIGHT_MIN}-${ORION_HEIGHT_MAX} cm). Revise el dato antes de continuar.`
+  );
+
+  const selectionVisitDate = parseOrionDate(data.selection_visit_date);
+  if (
+    data.selection_visit_date &&
+    (!selectionVisitDate || selectionVisitDate < ORION_DATE_MIN || selectionVisitDate > ORION_DATE_MAX)
+  ) {
+    errors.push('La fecha de la visita de selección debe estar entre diciembre de 2026 y diciembre de 2027.');
+  }
+
+  const consentSignedDate = parseOrionDate(data.consent_signed_date);
+  if (
+    data.consent_signed_date &&
+    (!consentSignedDate || consentSignedDate < ORION_DATE_MIN || consentSignedDate > ORION_DATE_MAX)
+  ) {
+    errors.push('La fecha de firma del consentimiento debe estar entre diciembre de 2026 y diciembre de 2027.');
+  }
+
+  if (selectionVisitDate && consentSignedDate && consentSignedDate > selectionVisitDate) {
+    errors.push('La fecha de firma del consentimiento no puede ser posterior a la visita de selección.');
+  }
+
+  for (const prefix of ['retro', 'prosp', 'followup'] as const) {
+    addNumberError(data[`${prefix}_eq5d_vas`], 0, 100, 'La valoración del estado de salud debe estar entre 0 y 100.');
+  }
+
+  return Array.from(new Set(errors));
 }
 
 const DRAFT_PREFIX = 'instrument-draft:';
@@ -106,6 +256,7 @@ const RouteComponent = () => {
   // Edit confirmation dialog state
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
   const pendingSubmitRef = useRef<{ data: unknown; instrumentId: string } | null>(null);
+  const [liveValidationErrors, setLiveValidationErrors] = useState<string[]>([]);
 
   const recordsQuery = useInstrumentRecords({
     // Enable fetching if we have a recordId but no valid initial data
@@ -140,6 +291,7 @@ const RouteComponent = () => {
       : undefined);
 
   const isOrionFollowup = instrumentBundleQuery.data?.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME;
+  const isOrionSelection = instrumentBundleQuery.data?.internal?.name === ORION_SELECTION_INTERNAL_NAME;
   const orionSelectionRecordsQuery = useInstrumentRecords({
     enabled: Boolean(isOrionFollowup && orionSelectionInstrumentId && scopedSubjectId),
     params: {
@@ -175,7 +327,11 @@ const RouteComponent = () => {
     }
 
     let bundle = instrumentBundleQuery.data.bundle;
+    if (isOrionSelection) {
+      bundle = normalizeOrionBundle(bundle, 'selection');
+    }
     if (isOrionFollowup) {
+      bundle = normalizeOrionBundle(bundle, 'followup');
       bundle = bundle.replace(
         /user_code:\{kind:"string",label:"[^"]*",variant:"input"\}/,
         'user_code:{kind:"string",label:"Código del usuario *",variant:"select",options:globalThis.__ODC_ORION_USER_CODE_OPTIONS__}'
@@ -189,7 +345,13 @@ const RouteComponent = () => {
       // and skips the instrument IIFE. Wrap in an arrow so the IIFE is what gets returned.
       bundle: `(()=>{const runtimeCacheBust = globalThis.__ODC_RUNTIME_CACHE_BUST__ ??= Date.now().toString(36); globalThis.__resolveImport = (specifier) => specifier.startsWith('/runtime/') ? specifier + (specifier.includes('?') ? '&' : '?') + 'v=' + runtimeCacheBust : specifier; globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions}; globalThis.__ODC_ORION_USER_CODE_OPTIONS__ = ${orionFollowupUserCodeOptionsJson}; return ${bundle}})()`
     };
-  }, [groupHospitalOptions, instrumentBundleQuery.data, isOrionFollowup, orionFollowupUserCodeOptionsJson]);
+  }, [
+    groupHospitalOptions,
+    instrumentBundleQuery.data,
+    isOrionFollowup,
+    isOrionSelection,
+    orionFollowupUserCodeOptionsJson
+  ]);
 
   const instrumentTarget = instrumentBundleWithOverrides;
 
@@ -201,12 +363,17 @@ const RouteComponent = () => {
   const handleDataChange = useCallback(
     (data: Record<string, unknown>) => {
       latestDataRef.current = data;
+      if (isOrionSelection || isOrionFollowup) {
+        setLiveValidationErrors(getOrionLiveValidationErrors(data));
+      } else {
+        setLiveValidationErrors([]);
+      }
       // Only auto-save for new records, not when editing existing ones
       if (!recordId) {
         saveDraft(params.id, data);
       }
     },
-    [params.id, recordId]
+    [isOrionFollowup, isOrionSelection, params.id, recordId]
   );
 
   // Discard draft and restart form
@@ -291,6 +458,71 @@ const RouteComponent = () => {
   }, [currentSession?.id, recordId]);
 
   const handleSubmit: InstrumentSubmitHandler = async ({ data, instrumentId }) => {
+    if (isOrionSelection) {
+      const values = data as Record<string, unknown>;
+      const inclusionKeys = ['inclusion_1', 'inclusion_2', 'inclusion_3', 'inclusion_4', 'inclusion_5', 'inclusion_6'];
+      const exclusionKeys = ['exclusion_1', 'exclusion_2', 'exclusion_3', 'exclusion_4', 'exclusion_5', 'exclusion_6'];
+
+      if (values.informed_consent !== 'si') {
+        notifications.addNotification({
+          message: 'No se puede continuar sin consentimiento informado firmado.',
+          type: 'error'
+        });
+        return;
+      }
+
+      const eligible =
+        inclusionKeys.every((key) => values[key] === 'si') && exclusionKeys.every((key) => values[key] === 'no');
+      if (!eligible) {
+        notifications.addNotification({
+          message:
+            'No se puede continuar: revise los criterios de inclusión y exclusión (inclusión=SI y exclusión=NO).',
+          type: 'error'
+        });
+        return;
+      }
+
+      const age = typeof values.age === 'number' ? values.age : undefined;
+      if (typeof age === 'number' && age < 18) {
+        notifications.addNotification({
+          message: 'No se puede continuar: el paciente debe ser mayor de edad (≥ 18 años).',
+          type: 'error'
+        });
+        return;
+      }
+
+      const selectionVisitDate = parseOrionDate(values.selection_visit_date);
+      const consentSignedDate = parseOrionDate(values.consent_signed_date);
+      if (!selectionVisitDate || !consentSignedDate) {
+        notifications.addNotification({
+          message: 'Debe indicar la fecha de visita de selección y la fecha de firma del consentimiento.',
+          type: 'error'
+        });
+        return;
+      }
+
+      if (
+        selectionVisitDate.getTime() < ORION_DATE_MIN.getTime() ||
+        selectionVisitDate.getTime() > ORION_DATE_MAX.getTime() ||
+        consentSignedDate.getTime() < ORION_DATE_MIN.getTime() ||
+        consentSignedDate.getTime() > ORION_DATE_MAX.getTime()
+      ) {
+        notifications.addNotification({
+          message: 'Las fechas deben estar entre diciembre de 2026 y diciembre de 2027.',
+          type: 'error'
+        });
+        return;
+      }
+
+      if (consentSignedDate.getTime() > selectionVisitDate.getTime()) {
+        notifications.addNotification({
+          message: 'La firma del consentimiento no puede ser posterior a la visita de selección.',
+          type: 'error'
+        });
+        return;
+      }
+    }
+
     if (recordId) {
       // For edits, show confirmation dialog first
       pendingSubmitRef.current = { data, instrumentId };
@@ -383,6 +615,20 @@ const RouteComponent = () => {
         </Heading>
       </PageHeader>
       <div className="grow">
+        {(isOrionSelection || isOrionFollowup) && liveValidationErrors.length > 0 ? (
+          <div className="mx-auto mb-4 max-w-3xl px-6">
+            <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-4">
+              <p className="mb-2 text-sm font-semibold">
+                {t({ en: 'Revise estos datos antes de continuar', fr: 'Revise estos datos antes de continuar' } as any)}
+              </p>
+              <ul className="list-disc space-y-1 pl-5 text-sm">
+                {liveValidationErrors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ) : null}
         <InstrumentRenderer
           key={rendererKey}
           className="mx-auto max-w-3xl"

@@ -141,35 +141,6 @@ function requiresEligibilityAndValue<T extends Record<string, any>>(dep: string,
   };
 }
 
-function eligibilityLiveWarningField(
-  dep: string,
-  label: string,
-  isInvalid: (value: unknown) => boolean,
-  message: string
-): any {
-  return {
-    kind: 'dynamic' as const,
-    deps: ['informed_consent', ...INCLUSION_KEYS, ...EXCLUSION_KEYS, dep] as const,
-    render(data: FormData): any {
-      if (!isEligible(data)) {
-        return null;
-      }
-
-      if (!isInvalid(data[dep])) {
-        return null;
-      }
-
-      return {
-        kind: 'string',
-        variant: 'textarea',
-        label,
-        description: message,
-        disabled: true
-      };
-    }
-  };
-}
-
 function eq5d5lFields(
   timeframe: 'retrospective' | 'prospective',
   fieldPrefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_'
@@ -240,10 +211,10 @@ function eq5d5lFields(
       }
     }),
     [`${prefix}eq5d_vas`]: requiresEligibility({
-      kind: 'string',
+      kind: 'number',
       variant: 'input',
       label: `¿Cómo considera su estado de salud hoy en una escala de 0 a 100?${labelSuffix}`,
-      placeholder: 'Su salud hoy',
+      placeholder: 'Indique un valor entre 0 y 100',
       description:
         'Donde 100 es la mejor salud que pueda imaginar y 0 la peor. Indique a continuación el número que mejor refleje su estado de salud actual.'
     })
@@ -314,29 +285,30 @@ function adherenceFields(
   fieldPrefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_'
 ): Record<string, any> {
   const prefix = fieldPrefix;
+  const labelSuffix = timeframe === 'retrospective' ? ' (durante pregabalina IR)' : ' (actualmente con pregabalina PR)';
 
   return {
     [`${prefix}mmas_forget`]: requiresEligibility({
       kind: 'string',
-      label: '¿Alguna vez olvida tomar su medicación?',
+      label: `¿Alguna vez olvida tomar su medicación?${labelSuffix}`,
       variant: 'radio',
       options: YES_NO_OPTIONS
     }),
     [`${prefix}mmas_remember`]: requiresEligibility({
       kind: 'string',
-      label: '¿Alguna vez tiene problemas para recordar tomar su medicación?',
+      label: `¿Alguna vez tiene problemas para recordar tomar su medicación?${labelSuffix}`,
       variant: 'radio',
       options: YES_NO_OPTIONS
     }),
     [`${prefix}mmas_better`]: requiresEligibility({
       kind: 'string',
-      label: 'Cuando se siente mejor, ¿a veces deja de tomar su medicación?',
+      label: `Cuando se siente mejor, ¿a veces deja de tomar su medicación?${labelSuffix}`,
       variant: 'radio',
       options: YES_NO_OPTIONS
     }),
     [`${prefix}mmas_worse`]: requiresEligibility({
       kind: 'string',
-      label: 'A veces, si se siente peor cuando toma su medicación, ¿deja de tomarla?',
+      label: `A veces, si se siente peor cuando toma su medicación, ¿deja de tomarla?${labelSuffix}`,
       variant: 'radio',
       options: YES_NO_OPTIONS
     })
@@ -361,17 +333,21 @@ function nonPersistentCheckboxSchema() {
 }
 
 function isTreatmentComplete(data: FormData, prefix: string, treatmentNumber: number): boolean {
-  return Boolean(
+  const baseComplete = Boolean(
     data[`${prefix}_treatment_name_${treatmentNumber}`] &&
       data[`${prefix}_treatment_dose_mg_${treatmentNumber}`] !== undefined &&
-      data[`${prefix}_treatment_start_${treatmentNumber}`] &&
-      data[`${prefix}_treatment_end_${treatmentNumber}`]
+      data[`${prefix}_treatment_start_${treatmentNumber}`]
   );
+
+  if (prefix === 'current') {
+    return baseComplete && data[`${prefix}_treatment_end_${treatmentNumber}`] === true;
+  }
+
+  return baseComplete && Boolean(data[`${prefix}_treatment_end_${treatmentNumber}`]);
 }
 
 function treatmentCheckboxLabel(treatmentNumber: number): string {
-  const ordinal = ['segundo', 'tercer', 'cuarto'][treatmentNumber - 2];
-  return `¿Desea añadir un ${ordinal} tratamiento?`;
+  return treatmentNumber === 1 ? 'Añadir otro tratamiento' : 'Añadir otro tratamiento más';
 }
 
 function showAddTreatmentCheckbox(prefix: 'prev' | 'current' | 'concomitant', treatmentNumber: number): any {
@@ -461,11 +437,52 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
       i
     );
 
-    fields[`${prefix}_treatment_end_${i}`] = requiresPreviousTreatment(
-      dateField(`Fecha de fin - Tratamiento ${i}`),
-      prefix,
-      i
-    );
+    if (prefix === 'current') {
+      fields[`${prefix}_treatment_end_${i}`] = requiresPreviousTreatment(
+        {
+          kind: 'boolean',
+          variant: 'checkbox',
+          label: `Continúa con el tratamiento - Tratamiento ${i}`
+        },
+        prefix,
+        i
+      );
+
+      fields[`current_treatment_end_notice_${i}`] = {
+        kind: 'dynamic' as const,
+        deps: [
+          'informed_consent',
+          ...INCLUSION_KEYS,
+          ...EXCLUSION_KEYS,
+          `${prefix}_treatment_name_${i}`,
+          `${prefix}_treatment_dose_mg_${i}`,
+          `${prefix}_treatment_start_${i}`,
+          `${prefix}_treatment_end_${i}`
+        ] as const,
+        render(data: FormData): any {
+          const hasBaseData =
+            data[`${prefix}_treatment_name_${i}`] &&
+            data[`${prefix}_treatment_dose_mg_${i}`] !== undefined &&
+            data[`${prefix}_treatment_start_${i}`];
+          if (!isEligible(data) || !hasBaseData || data[`${prefix}_treatment_end_${i}`] === true) {
+            return null;
+          }
+          return {
+            kind: 'string',
+            variant: 'textarea',
+            label: 'Fecha de fin',
+            description: 'Si el paciente no continúa con pregabalina PR, no puede continuar con el formulario.',
+            disabled: true
+          };
+        }
+      };
+    } else {
+      fields[`${prefix}_treatment_end_${i}`] = requiresPreviousTreatment(
+        dateField(`Fecha de fin - Tratamiento ${i}`),
+        prefix,
+        i
+      );
+    }
 
     if (i < maxTreatments) {
       fields[`add_${prefix}_treatment_${i + 1}`] = showAddTreatmentCheckbox(prefix, i);
@@ -482,7 +499,10 @@ function treatmentValidation(prefix: 'prev' | 'current' | 'concomitant', maxTrea
     schema[`${prefix}_treatment_name_${i}`] = z.string().optional();
     schema[`${prefix}_treatment_dose_mg_${i}`] = z.number().optional();
     schema[`${prefix}_treatment_start_${i}`] = optionalManualDateSchema();
-    schema[`${prefix}_treatment_end_${i}`] = optionalManualDateSchema();
+    schema[`${prefix}_treatment_end_${i}`] = prefix === 'current' ? z.boolean().optional() : optionalManualDateSchema();
+    if (prefix === 'current') {
+      schema[`current_treatment_end_notice_${i}`] = z.any().optional();
+    }
     if (i < maxTreatments) {
       schema[`add_${prefix}_treatment_${i + 1}`] = nonPersistentCheckboxSchema();
     }
@@ -548,7 +568,15 @@ function generateComorbidityFields(maxComorbidities = 4): Record<string, any> {
         ] as const,
         render(data: FormData): any {
           return isEligible(data) && isComorbidityComplete(data, i)
-            ? { kind: 'boolean', variant: 'checkbox', label: `¿Desea añadir una comorbilidad ${i + 1}?` }
+            ? {
+                kind: 'boolean',
+                variant: 'checkbox',
+                label: [
+                  'Añadir una segunda comorbilidad',
+                  'Añadir una tercera comorbilidad',
+                  'Añadir una cuarta comorbilidad'
+                ][i - 1]
+              }
             : null;
         }
       };
@@ -754,25 +782,7 @@ export default defineInstrument({
           variant: 'input',
           label: 'Altura (cm)',
           description: `Rango razonable esperado: ${ORION_HEIGHT_MIN}-${ORION_HEIGHT_MAX} cm.`
-        }),
-        age_live_warning: eligibilityLiveWarningField(
-          'age',
-          'Aviso de edad',
-          (value) => typeof value === 'number' && (value < ORION_AGE_MIN || value > ORION_AGE_MAX),
-          `La edad indicada no es válida para este estudio. Debe estar entre ${ORION_AGE_MIN} y ${ORION_AGE_MAX} años.`
-        ),
-        weight_live_warning: eligibilityLiveWarningField(
-          'weight',
-          'Aviso de peso',
-          (value) => typeof value === 'number' && (value < ORION_WEIGHT_MIN || value > ORION_WEIGHT_MAX),
-          `El peso indicado está fuera del rango razonable (${ORION_WEIGHT_MIN}-${ORION_WEIGHT_MAX} kg). Revise el dato antes de continuar.`
-        ),
-        height_live_warning: eligibilityLiveWarningField(
-          'height',
-          'Aviso de altura',
-          (value) => typeof value === 'number' && (value < ORION_HEIGHT_MIN || value > ORION_HEIGHT_MAX),
-          `La altura indicada está fuera del rango razonable (${ORION_HEIGHT_MIN}-${ORION_HEIGHT_MAX} cm). Revise el dato antes de continuar.`
-        )
+        })
       }
     },
     {
@@ -825,6 +835,8 @@ export default defineInstrument({
     },
     {
       title: 'TRATAMIENTOS ACTUALES PARA EL DOLOR NEUROPÁTICO (Debe incluir la PREGABALINA PR)',
+      description:
+        'Los pacientes incluidos deben continuar el tratamiento actual con pregabalina PR. Si no continúa, no puede continuar con el formulario.',
       fields: {
         ...generateTreatmentFields('current')
       }
@@ -891,13 +903,14 @@ export default defineInstrument({
     },
     {
       title: 'CALIDAD DE SUEÑO',
-      description: 'Durante el tratamiento con pregabalina IR',
+      description: 'Evaluación retrospectiva referida al periodo en tratamiento con pregabalina IR',
       fields: {
         ...sleepQualityFields('retrospective')
       }
     },
     {
       title: 'ADHERENCIA AL TRATAMIENTO (ESCALA MMAS-4)',
+      description: 'Evaluación retrospectiva referida al periodo en tratamiento con pregabalina IR',
       fields: {
         ...adherenceFields('retrospective')
       }
@@ -911,7 +924,7 @@ export default defineInstrument({
     },
     {
       title: 'CALIDAD DE SUEÑO',
-      description: 'Actualmente, durante el tratamiento con pregabalina PR',
+      description: 'Evaluación del momento actual, durante el tratamiento con pregabalina PR',
       fields: {
         ...sleepQualityFields('prospective')
       }
@@ -919,11 +932,11 @@ export default defineInstrument({
     {
       title: 'MEJORÍA CLÍNICA (ESCALA CGI-I)',
       description:
-        'Califique la mejoría global, independientemente de si, según su juicio clínico, se debe por completo al tratamiento farmacológico. En comparación con su estado basal, ¿cuánto ha cambiado?',
+        'Califique la mejoría global respecto al estado durante el tratamiento con pregabalina IR, independientemente de si, según su juicio clínico, se debe por completo al tratamiento farmacológico.',
       fields: {
         cgi_improvement: requiresEligibility({
           kind: 'string',
-          label: 'Mejoría clínica (Escala CGI-I) - Cambio respecto a estado basal',
+          label: 'Mejoría clínica (Escala CGI-I) - Cambio respecto al estado durante pregabalina IR',
           variant: 'radio',
           options: {
             '1': 'No evaluado',
@@ -1190,6 +1203,39 @@ export default defineInstrument({
           addRequiredIssue(field);
         }
 
+        const changeReasonProvided =
+          data.change_reason_adherence === true ||
+          data.change_reason_efficacy === true ||
+          data.change_reason_tolerability === true ||
+          data.change_reason_patient_pref === true ||
+          data.change_reason_investigator_pref === true ||
+          data.change_reason_other_checked === true;
+
+        if (!changeReasonProvided) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Debe seleccionar al menos un motivo para el cambio de tratamiento.',
+            path: ['change_reason_adherence']
+          });
+        }
+
+        for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
+          const hasCurrentTreatmentData = Boolean(
+            values[`current_treatment_name_${treatmentNumber}`] ||
+              values[`current_treatment_dose_mg_${treatmentNumber}`] !== undefined ||
+              values[`current_treatment_start_${treatmentNumber}`] ||
+              values[`current_treatment_end_${treatmentNumber}`] !== undefined
+          );
+
+          if (hasCurrentTreatmentData && values[`current_treatment_end_${treatmentNumber}`] !== true) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Si el paciente no continúa con pregabalina PR, no puede continuar con el formulario.',
+              path: [`current_treatment_end_${treatmentNumber}`]
+            });
+          }
+        }
+
         if (typeof data.age === 'number' && (data.age < ORION_AGE_MIN || data.age > ORION_AGE_MAX)) {
           context.addIssue({
             code: z.ZodIssueCode.custom,
@@ -1230,7 +1276,7 @@ export default defineInstrument({
         addRequiredIssue('change_reason_other');
       }
 
-      for (const prefix of ['prev', 'current', 'concomitant']) {
+      for (const prefix of ['prev', 'concomitant']) {
         for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
           const startKey = `${prefix}_treatment_start_${treatmentNumber}`;
           const endKey = `${prefix}_treatment_end_${treatmentNumber}`;
