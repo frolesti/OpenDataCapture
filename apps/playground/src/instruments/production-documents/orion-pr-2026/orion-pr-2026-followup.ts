@@ -15,7 +15,7 @@ const SCALE_OPTIONS = {
 const PHARMACOVIGILANCE_INSTRUCTION =
   'Si la reacción adversa cumple los criterios de registro sistemático del protocolo (grave o de especial interés), cumplimente el registro de reacciones adversas, rellene el formulario de notificación y envíelo a farmacovigilancia@gebro.es en menos de 24 horas. Para cualquier otra reacción adversa, notifíquela al Sistema Español de Farmacovigilancia siguiendo su práctica clínica habitual.';
 
-const DATE_FORMAT_ERROR = 'Formato de fecha inválido. Use dd-mm-aaaa';
+const DATE_FORMAT_ERROR = 'Formato de fecha inválido. Use DD-MM-AAAA';
 
 function parseManualDate(value: unknown): Date | undefined {
   if (value === undefined || value === null || value === '') {
@@ -93,7 +93,7 @@ function dateField(label: string) {
     kind: 'string' as const,
     variant: 'input' as const,
     label,
-    placeholder: 'dd-mm-aaaa'
+    placeholder: 'DD-MM-AAAA'
   };
 }
 

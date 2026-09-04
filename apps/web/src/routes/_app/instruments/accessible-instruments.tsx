@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
@@ -15,6 +15,27 @@ import { useAppStore } from '@/store';
 
 const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
 const ORION_FOLLOWUP_INTERNAL_NAME = 'ORION_PR_2026_FOLLOWUP';
+const LAST_INSTRUMENT_PREFIX = 'last-instrument:';
+
+function getLastInstrumentKey(sessionId: string) {
+  return `${LAST_INSTRUMENT_PREFIX}${sessionId}`;
+}
+
+function loadLastInstrumentId(sessionId: string): string | null {
+  try {
+    return localStorage.getItem(getLastInstrumentKey(sessionId));
+  } catch {
+    return null;
+  }
+}
+
+function saveLastInstrumentId(sessionId: string, instrumentId: string) {
+  try {
+    localStorage.setItem(getLastInstrumentKey(sessionId), instrumentId);
+  } catch {
+    // Ignore unavailable browser storage; the session can still continue normally.
+  }
+}
 
 const RouteComponent = () => {
   const currentSession = useAppStore((store) => store.currentSession);
@@ -26,6 +47,7 @@ const RouteComponent = () => {
   const { t } = useTranslation();
   const createSessionMutation = useCreateSessionMutation();
   const instrumentInfoQuery = useInstrumentInfoQuery();
+  const hasRestoredLastInstrument = useRef(false);
   const selectedGroup = currentGroup ?? currentUser?.groups[0] ?? null;
   const accessibleInstrumentIds = new Set(currentUser?.groups.flatMap((group) => group.accessibleInstrumentIds) ?? []);
   const scopedSubjectId =
@@ -47,6 +69,30 @@ const RouteComponent = () => {
     const data = record.data as Record<string, unknown>;
     return typeof data.user_code === 'string' && data.user_code.trim().length > 0;
   });
+
+  useEffect(() => {
+    if (hasRestoredLastInstrument.current || !currentSession || !instrumentInfoQuery.data) {
+      return;
+    }
+
+    hasRestoredLastInstrument.current = true;
+    const lastInstrumentId = loadLastInstrumentId(currentSession.id);
+    if (!lastInstrumentId || !accessibleInstrumentIds.has(lastInstrumentId)) {
+      return;
+    }
+
+    const instrument = instrumentInfoQuery.data.find((entry) => entry.id === lastInstrumentId);
+    if (!instrument || (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME && !hasOrionSelectionWithUserCode)) {
+      return;
+    }
+
+    void navigate({
+      params: { id: instrument.id },
+      search: { recordId: undefined },
+      state: { instrumentTitle: instrument.details.title },
+      to: `/instruments/render/$id`
+    });
+  }, [accessibleInstrumentIds, currentSession, hasOrionSelectionWithUserCode, instrumentInfoQuery.data, navigate]);
 
   return (
     <div data-testid="accessible-instruments-page">
@@ -81,6 +127,9 @@ const RouteComponent = () => {
                   username: currentUser.username
                 });
                 startSession({ ...session, type: 'RETROSPECTIVE' });
+                saveLastInstrumentId(session.id, instrument.id);
+              } else {
+                saveLastInstrumentId(currentSession.id, instrument.id);
               }
               await navigate({
                 params: { id: instrument.id },
