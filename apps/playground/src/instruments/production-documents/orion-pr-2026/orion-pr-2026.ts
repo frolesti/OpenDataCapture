@@ -811,8 +811,8 @@ export default defineInstrument({
       }
     },
     {
-      title: 'MOTIVOS PARA EL CAMBIO DE PREGABALINA DE LIBERACIÓN INMEDIATA A PREGABALINA DE LIBERACIÓN PROLONGADA',
-      description: 'Puede seleccionar una o varias opciones, según corresponda',
+      title: 'MOTIVOS PARA EL CAMBIO DE PREGABALINA DE LIBERACIÓN INMEDIATA A PREGABALINA DE LIBERACIÓN PROLONGADA *',
+      description: 'Seleccione al menos una opción.',
       fields: {
         change_reason_adherence: requiresEligibility({
           kind: 'boolean',
@@ -978,10 +978,7 @@ export default defineInstrument({
   clientDetails: {
     estimatedDuration: 20,
     instructions: [
-      'Complete el instrumento utilizando los datos clínicos disponibles en la historia médica y registre un código de paciente seudonimizado.',
-      'Antes de continuar, confirme el consentimiento informado y los criterios de inclusión y exclusión. Todos los campos marcados con * son obligatorios.',
-      'Indique las evaluaciones retrospectivas respecto al periodo con pregabalina IR y las prospectivas respecto al tratamiento actual con pregabalina PR.',
-      'Revise la información antes de enviar el formulario. Los datos se guardarán vinculados a la sesión de estudio actual.'
+      'Complete el instrumento utilizando los datos clínicos disponibles en la historia médica y registre un código de paciente seudonimizado. Antes de continuar, confirme el consentimiento informado y los criterios de inclusión y exclusión. Todos los campos marcados con * son obligatorios. Indique las evaluaciones retrospectivas respecto al periodo con pregabalina IR y las prospectivas respecto al tratamiento actual con pregabalina PR. Revise la información antes de enviar el formulario. Los datos se guardarán vinculados a la sesión de estudio actual.'
     ]
   },
   details: {
