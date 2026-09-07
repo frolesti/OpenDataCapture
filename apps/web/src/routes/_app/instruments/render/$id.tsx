@@ -506,6 +506,53 @@ const RouteComponent = () => {
     }
   }, [liveValidationErrors, orionTouchedFields]);
 
+  useEffect(() => {
+    if (!isOrionSelection || currentStep !== 1) {
+      return;
+    }
+
+    const styledElements: HTMLElement[] = [];
+    const styles = [
+      { background: '#fff1f2', border: '#e11d48', color: '#9f1239', marker: 'PREGABALINA IR' },
+      { background: '#f5f3ff', border: '#7c3aed', color: '#5b21b6', marker: 'PREGABALINA PR' }
+    ];
+
+    for (const heading of document.querySelectorAll<HTMLElement>('h4')) {
+      const style = styles.find(({ marker }) => heading.textContent?.toUpperCase().includes(marker));
+      if (!style) {
+        continue;
+      }
+      const section = heading.closest('.flex.flex-col.gap-6') as HTMLElement | null;
+      if (!section || section.dataset.orionTreatmentBand) {
+        continue;
+      }
+      section.dataset.orionTreatmentBand = 'true';
+      section.style.backgroundColor = style.background;
+      section.style.borderInlineStart = `4px solid ${style.border}`;
+      section.style.borderRadius = '6px';
+      section.style.padding = '20px';
+      heading.style.color = style.color;
+      heading.style.fontSize = '1.125rem';
+      heading.style.fontWeight = '700';
+      const description = heading.parentElement?.querySelector<HTMLElement>('p');
+      if (description) {
+        description.style.color = style.color;
+        description.style.fontWeight = '600';
+      }
+      styledElements.push(section);
+    }
+
+    return () => {
+      for (const section of styledElements) {
+        section.removeAttribute('data-orion-treatment-band');
+        section.removeAttribute('style');
+        const heading = section.querySelector<HTMLElement>('h4');
+        heading?.removeAttribute('style');
+        heading?.parentElement?.querySelector<HTMLElement>('p')?.removeAttribute('style');
+      }
+    };
+  }, [currentStep, isOrionSelection, rendererKey]);
+
   // Discard draft and restart form
   const handleDiscardDraft = useCallback(() => {
     clearDraft(params.id);

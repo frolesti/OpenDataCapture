@@ -419,7 +419,9 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
             ? 'Tratamiento con pregabalina IR *'
             : i === 1 && prefix === 'current'
               ? 'Tratamiento con pregabalina PR *'
-              : `Tratamiento ${i} *`,
+              : prefix === 'concomitant'
+                ? 'Tratamiento *'
+                : `Tratamiento ${i} *`,
         options:
           i === 1 && prefix === 'prev'
             ? { pregabalina_ir: 'Pregabalina IR' }
@@ -435,14 +437,25 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
       {
         kind: 'number',
         variant: 'input',
-        label: i === 1 && prefix !== 'concomitant' ? 'Dosis actual (mg) *' : `Dosis (mg) - Tratamiento ${i} *`
+        label:
+          i === 1 && prefix !== 'concomitant'
+            ? 'Dosis actual (mg) *'
+            : prefix === 'concomitant'
+              ? 'Dosis (mg) *'
+              : `Dosis (mg) - Tratamiento ${i} *`
       },
       prefix,
       i
     );
 
     fields[`${prefix}_treatment_start_${i}`] = requiresPreviousTreatment(
-      dateField(i === 1 && prefix !== 'concomitant' ? 'Fecha de inicio *' : `Fecha de inicio - Tratamiento ${i} *`),
+      dateField(
+        i === 1 && prefix !== 'concomitant'
+          ? 'Fecha de inicio *'
+          : prefix === 'concomitant'
+            ? 'Fecha de inicio *'
+            : `Fecha de inicio - Tratamiento ${i} *`
+      ),
       prefix,
       i
     );
@@ -460,7 +473,13 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
       );
     } else {
       fields[`${prefix}_treatment_end_${i}`] = requiresPreviousTreatment(
-        dateField(i === 1 && prefix === 'prev' ? 'Fecha de fin *' : `Fecha de fin - Tratamiento ${i} *`),
+        dateField(
+          i === 1 && prefix === 'prev'
+            ? 'Fecha de fin *'
+            : prefix === 'concomitant'
+              ? 'Fecha de fin *'
+              : `Fecha de fin - Tratamiento ${i} *`
+        ),
         prefix,
         i
       );
@@ -533,8 +552,8 @@ function generateComorbidityFields(maxComorbidities = 4): Record<string, any> {
       };
     };
 
-    fields[`comorbidity_${i}`] = showField({ kind: 'string', variant: 'input', label: `Comorbilidad ${i}` });
-    fields[`comorbidity_${i}_diagnosis_date`] = showField(dateField(`Fecha de diagnóstico - Comorbilidad ${i}`));
+    fields[`comorbidity_${i}`] = showField({ kind: 'string', variant: 'input', label: 'Comorbilidad' });
+    fields[`comorbidity_${i}_diagnosis_date`] = showField(dateField('Fecha de diagnóstico'));
 
     if (i < maxComorbidities) {
       fields[`add_comorbidity_${i + 1}`] = {
