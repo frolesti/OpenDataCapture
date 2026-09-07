@@ -1,7 +1,6 @@
 import { replacer, reviver, yearsPassed } from '@douglasneuroinformatics/libjs';
 import { accessibleQuery, InjectModel, InjectPrismaClient } from '@douglasneuroinformatics/libnest';
 import type { ExtendedPrismaClient, Model } from '@douglasneuroinformatics/libnest';
-import { createHash } from 'node:crypto';
 import { linearRegression } from '@douglasneuroinformatics/libstats';
 import {
   BadRequestException,
@@ -96,8 +95,16 @@ export class InstrumentRecordsService {
       throw new BadRequestException('Assign a hospital to the investigator before creating an ORION patient code');
     }
 
-    const centerCode = this.orionCodeSegment(`${group.id}:${hospital}`);
-    const investigatorCode = this.orionCodeSegment(user.id);
+    const centerCode = String(
+      [...group.hospitals]
+        .sort((first, second) => first.localeCompare(second))
+        .findIndex((entry) => entry === hospital) + 1
+    ).padStart(2, '0');
+    const investigatorCode =
+      user.username
+        .replace(/[^a-z0-9]/gi, '')
+        .toUpperCase()
+        .slice(0, 12) || user.id.slice(-6).toUpperCase();
     const codeClient = (this.prismaClient as unknown as Record<string, any>).orionPatientCode;
     if (!codeClient) {
       throw new UnprocessableEntityException('ORION patient-code storage is unavailable');
@@ -693,10 +700,6 @@ export class InstrumentRecordsService {
       basePermissionLevel: user.basePermissionLevel,
       id: user.id
     };
-  }
-
-  private orionCodeSegment(value: string) {
-    return createHash('sha256').update(value).digest('hex').slice(0, 6).toUpperCase();
   }
 
   private parseJson(data: unknown) {
