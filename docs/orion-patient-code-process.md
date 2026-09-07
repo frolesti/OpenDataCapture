@@ -4,11 +4,11 @@
 
 La plataforma genera automáticamente el código de paciente al iniciar una nueva visita de selección ORION. El código aparece en el formulario como una referencia visible y no editable para el investigador.
 
-El formato es `OR-C<centro>-I<investigador>-P<secuencia>`. Por ejemplo: `OR-C01-IMARTINEZ-P001`.
+El formato es `OR-C<centro>-I<investigador>-P<secuencia>`. Por ejemplo: `OR-C001-I001-P001`.
 
 - `OR` identifica el estudio ORION.
-- `C<centro>` es el número estable del centro dentro del estudio.
-- `I<investigador>` identifica al investigador que registra la visita.
+- `C<centro>` es el número anónimo de tres cifras del centro dentro del estudio.
+- `I<investigador>` es el número anónimo de tres cifras del investigador dentro del estudio.
 - `P<secuencia>` es el número correlativo de paciente para esa combinación concreta de centro e investigador.
 
 El código no contiene ningún dato clínico ni identificador directo del paciente.
@@ -23,11 +23,11 @@ El código se guarda con la visita de selección y se utiliza como referencia pa
 
 La plataforma genera automàticament el codi de pacient quan s'inicia una nova visita de selecció ORION. El codi apareix al formulari com una referència visible i no editable per a l'investigador.
 
-El format és `OR-C<centre>-I<investigador>-P<seqüència>`. Per exemple: `OR-C01-IMARTINEZ-P001`.
+El format és `OR-C<centre>-I<investigador>-P<seqüència>`. Per exemple: `OR-C001-I001-P001`.
 
 - `OR` identifica l'estudi ORION.
-- `C<centre>` és el número estable del centre dins de l'estudi.
-- `I<investigador>` identifica l'investigador que registra la visita.
+- `C<centre>` és el número anònim de tres xifres del centre dins de l'estudi.
+- `I<investigador>` és el número anònim de tres xifres de l'investigador dins de l'estudi.
 - `P<seqüència>` és el número correlatiu de pacient per a aquella combinació concreta de centre i investigador.
 
 El codi no conté cap dada clínica ni identificador directe del pacient.

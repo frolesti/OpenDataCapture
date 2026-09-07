@@ -59,6 +59,10 @@ function parseOrionDate(value: unknown): Date | null {
   return null;
 }
 
+function isCompleteDateEntry(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length >= 10;
+}
+
 function normalizeOrionBundle(bundle: string, mode: 'followup' | 'selection'): string {
   let patched = bundle;
 
@@ -176,7 +180,7 @@ function getOrionLiveValidationErrors(data: Record<string, unknown>): OrionLiveV
 
   const selectionVisitDate = parseOrionDate(data.selection_visit_date);
   if (
-    data.selection_visit_date &&
+    isCompleteDateEntry(data.selection_visit_date) &&
     (!selectionVisitDate || selectionVisitDate < ORION_DATE_MIN || selectionVisitDate > ORION_DATE_MAX)
   ) {
     errors.push({
@@ -187,7 +191,7 @@ function getOrionLiveValidationErrors(data: Record<string, unknown>): OrionLiveV
 
   const consentSignedDate = parseOrionDate(data.consent_signed_date);
   if (
-    data.consent_signed_date &&
+    isCompleteDateEntry(data.consent_signed_date) &&
     (!consentSignedDate || consentSignedDate < ORION_DATE_MIN || consentSignedDate > ORION_DATE_MAX)
   ) {
     errors.push({

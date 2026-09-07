@@ -99,12 +99,18 @@ export class InstrumentRecordsService {
       [...group.hospitals]
         .sort((first, second) => first.localeCompare(second))
         .findIndex((entry) => entry === hospital) + 1
-    ).padStart(2, '0');
-    const investigatorCode =
-      user.username
-        .replace(/[^a-z0-9]/gi, '')
-        .toUpperCase()
-        .slice(0, 12) || user.id.slice(-6).toUpperCase();
+    ).padStart(3, '0');
+    const groupInvestigators = await this.userModel.findMany({
+      orderBy: { id: 'asc' },
+      select: { id: true },
+      where: { groupIds: { has: group.id } }
+    });
+    const investigatorCode = String(
+      groupInvestigators.findIndex((investigator) => investigator.id === user.id) + 1
+    ).padStart(3, '0');
+    if (investigatorCode === '000') {
+      throw new ForbiddenException('The investigator is not assigned to this ORION group');
+    }
     const codeClient = (this.prismaClient as unknown as Record<string, any>).orionPatientCode;
     if (!codeClient) {
       throw new UnprocessableEntityException('ORION patient-code storage is unavailable');
