@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
 
 import { Button, Dialog, Heading, Spinner } from '@douglasneuroinformatics/libui/components';
 import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
@@ -439,6 +440,34 @@ const RouteComponent = () => {
     [isOrionFollowup, isOrionSelection, params.id, recordId]
   );
 
+  const handleOrionFieldChange = useCallback(
+    (event: FormEvent<HTMLDivElement>) => {
+      if (!isOrionSelection && !isOrionFollowup) {
+        return;
+      }
+
+      const field = event.target;
+      if (
+        !(
+          field instanceof HTMLInputElement ||
+          field instanceof HTMLSelectElement ||
+          field instanceof HTMLTextAreaElement
+        )
+      ) {
+        return;
+      }
+      if (!field.name || (field instanceof HTMLInputElement && field.type === 'radio' && !field.checked)) {
+        return;
+      }
+
+      const value = field instanceof HTMLInputElement && field.type === 'checkbox' ? field.checked : field.value;
+      const data = { ...latestDataRef.current, [field.name]: value };
+      latestDataRef.current = data;
+      setLiveValidationErrors(getOrionLiveValidationErrors(data));
+    },
+    [isOrionFollowup, isOrionSelection]
+  );
+
   // Discard draft and restart form
   const handleDiscardDraft = useCallback(() => {
     clearDraft(params.id);
@@ -678,7 +707,7 @@ const RouteComponent = () => {
           </Button>
         </div>
       ) : null}
-      <div className="grow">
+      <div className="grow" onChangeCapture={handleOrionFieldChange} onInputCapture={handleOrionFieldChange}>
         {(isOrionSelection || isOrionFollowup) && liveValidationErrors.length > 0 ? (
           <div className="mx-auto mb-4 max-w-3xl px-6">
             <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-4">
