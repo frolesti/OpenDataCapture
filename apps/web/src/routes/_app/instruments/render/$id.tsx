@@ -263,6 +263,7 @@ const RouteComponent = () => {
   const pendingSubmitRef = useRef<{ data: unknown; instrumentId: string } | null>(null);
   const [liveValidationErrors, setLiveValidationErrors] = useState<string[]>([]);
   const [reservedOrionPatientCode, setReservedOrionPatientCode] = useState<string | null>(null);
+  const [orionPatientCodeReservationFailed, setOrionPatientCodeReservationFailed] = useState(false);
 
   const recordsQuery = useInstrumentRecords({
     // Enable fetching if we have a recordId but no valid initial data
@@ -321,6 +322,7 @@ const RouteComponent = () => {
       })
       .catch(() => {
         if (!cancelled) {
+          setOrionPatientCodeReservationFailed(true);
           notifications.addNotification({
             message:
               'No se ha podido generar el código del paciente ORION. Revise la asignación de hospital del investigador.',
@@ -410,6 +412,12 @@ const RouteComponent = () => {
   const title = instrumentTitle;
 
   const isLoadingData = Boolean(recordId) && !effectiveInitialData && recordsQuery.isLoading;
+  const isWaitingForOrionPatientCode =
+    isOrionSelection &&
+    !recordId &&
+    !effectiveInitialData?.user_code &&
+    !reservedOrionPatientCode &&
+    !orionPatientCodeReservationFailed;
 
   // Auto-save form data to localStorage as draft
   const handleDataChange = useCallback(
@@ -627,7 +635,7 @@ const RouteComponent = () => {
     }
   };
 
-  if (!instrumentTarget || isLoadingData) {
+  if (!instrumentTarget || isLoadingData || isWaitingForOrionPatientCode) {
     if (instrumentBundleQuery.isError) {
       return (
         <div className="flex grow items-center justify-center px-6">
