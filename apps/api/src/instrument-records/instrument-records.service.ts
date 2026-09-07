@@ -77,6 +77,50 @@ export class InstrumentRecordsService {
   }
 
   async reserveOrionPatientCode({ groupId, user }: { groupId: string; user: EntityOperationOptions['user'] }) {
+    const context = await this.getOrionPatientCodeContext({ groupId, user });
+    const latestCode = await context.codeClient.findFirst({
+      orderBy: { sequence: 'desc' },
+      where: {
+        groupId: context.group.id,
+        hospital: context.hospital,
+        investigatorId: context.user.id
+      }
+    });
+    return { code: this.formatOrionPatientCode(context, (latestCode?.sequence ?? 0) + 1) };
+  }
+
+  private async createOrionPatientCode({ groupId, user }: { groupId: string; user: EntityOperationOptions['user'] }) {
+    const context = await this.getOrionPatientCodeContext({ groupId, user });
+    for (let sequence = 1; sequence <= 100000; sequence++) {
+      const code = this.formatOrionPatientCode(context, sequence);
+      try {
+        await context.codeClient.create({
+          data: {
+            code,
+            groupId: context.group.id,
+            hospital: context.hospital,
+            investigatorId: context.user.id,
+            sequence
+          }
+        });
+        return code;
+      } catch (error) {
+        if ((error as { code?: string }).code !== 'P2002') {
+          throw error;
+        }
+      }
+    }
+
+    throw new UnprocessableEntityException('Unable to create an ORION patient code');
+  }
+
+  private async getOrionPatientCodeContext({
+    groupId,
+    user
+  }: {
+    groupId: string;
+    user: EntityOperationOptions['user'];
+  }) {
     if (!user) {
       throw new ForbiddenException('A signed-in investigator is required to reserve an ORION patient code');
     }
@@ -116,27 +160,11 @@ export class InstrumentRecordsService {
       throw new UnprocessableEntityException('ORION patient-code storage is unavailable');
     }
 
-    for (let sequence = 1; sequence <= 100000; sequence++) {
-      const code = `OR-C${centerCode}-I${investigatorCode}-P${String(sequence).padStart(3, '0')}`;
-      try {
-        await codeClient.create({
-          data: {
-            code,
-            groupId: group.id,
-            hospital,
-            investigatorId: user.id,
-            sequence
-          }
-        });
-        return { code };
-      } catch (error) {
-        if ((error as { code?: string }).code !== 'P2002') {
-          throw error;
-        }
-      }
-    }
+    return { centerCode, codeClient, group, hospital, investigatorCode, user };
+  }
 
-    throw new UnprocessableEntityException('Unable to reserve an ORION patient code');
+  private formatOrionPatientCode(context: { centerCode: string; investigatorCode: string }, sequence: number) {
+    return `OR-C${context.centerCode}-I${context.investigatorCode}-P${String(sequence).padStart(3, '0')}`;
   }
 
   async create(
@@ -165,26 +193,32 @@ export class InstrumentRecordsService {
       });
     }
 
-    const userCode: string =
-      typeof (parseResult.data as Record<string, unknown>).user_code === 'string'
-        ? ((parseResult.data as Record<string, string>).user_code ?? '')
-        : '';
+    const parsedData = parseResult.data as Record<string, unknown>;
+    const userCode =
+      instrument.internal.name === 'ORION_PR_2026_SELECTION'
+        ? await this.createOrionPatientCode({ groupId: groupId!, user: options?.user })
+        : typeof parsedData.user_code === 'string'
+          ? parsedData.user_code
+          : '';
+    if (instrument.internal.name === 'ORION_PR_2026_SELECTION') {
+      parsedData.user_code = userCode;
+    }
     const selectionRecordId = await this.orionFollowupService.validateFollowup({
-      followupData: parseResult.data as Record<string, unknown>,
+      followupData: parsedData,
       groupId,
       instrument,
       subjectId,
       userCode
     });
 
-    this.validateHospitalSelection(parseResult.data, group?.hospitals ?? []);
+    this.validateHospitalSelection(parsedData, group?.hospitals ?? []);
 
     const record = await this.instrumentRecordModel.create({
       data: {
         computedMeasures: instrument.measures
-          ? this.instrumentMeasuresService.computeMeasures(instrument.measures, parseResult.data)
+          ? this.instrumentMeasuresService.computeMeasures(instrument.measures, parsedData)
           : null,
-        data: this.serializeData(parseResult.data),
+        data: this.serializeData(parsedData),
         date,
         group: groupId
           ? {
@@ -213,7 +247,7 @@ export class InstrumentRecordsService {
       groupId,
       instrument,
       investigator: options?.user,
-      selectionData: parseResult.data as Record<string, unknown>,
+      selectionData: parsedData,
       selectionRecordId: record.id!,
       subjectId,
       userCode

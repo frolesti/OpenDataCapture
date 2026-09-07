@@ -79,16 +79,17 @@ export class OrionFollowupService {
       return undefined;
     }
 
-    const selectionInstrumentId = this.instrumentsService.generateScalarInstrumentId({
-      internal: ORION_SELECTION_INTERNAL
-    });
     const selectionRecords = await this.instrumentRecordModel.findMany({
       orderBy: { createdAt: 'desc' },
-      where: { groupId: groupId ?? null, instrumentId: selectionInstrumentId, subjectId }
+      where: { groupId: groupId ?? null, subjectId }
     });
     const selectionRecord = selectionRecords.find((record) => {
       const selectionData = record.data as Record<string, unknown> | null;
-      return typeof selectionData?.user_code === 'string' && selectionData.user_code.trim() === userCode.trim();
+      return (
+        typeof selectionData?.user_code === 'string' &&
+        /^OR-C\d{3}-I\d{3}-P\d+$/.test(selectionData.user_code) &&
+        selectionData.user_code === userCode.trim()
+      );
     });
     const selectionData = selectionRecord?.data as Record<string, unknown> | null;
 
@@ -268,10 +269,7 @@ export class OrionFollowupService {
   }
 
   private isSelectionInstrument(instrument: AnyScalarInstrument) {
-    return (
-      instrument.internal.name === ORION_SELECTION_INTERNAL.name &&
-      instrument.internal.edition === ORION_SELECTION_INTERNAL.edition
-    );
+    return instrument.internal.name === ORION_SELECTION_INTERNAL.name;
   }
 
   private isEligibleSelection(data: Record<string, unknown>) {
@@ -296,10 +294,7 @@ export class OrionFollowupService {
   }
 
   private isFollowupInstrument(instrument: AnyScalarInstrument) {
-    return (
-      instrument.internal.name === ORION_FOLLOWUP_INTERNAL.name &&
-      instrument.internal.edition === ORION_FOLLOWUP_INTERNAL.edition
-    );
+    return instrument.internal.name === ORION_FOLLOWUP_INTERNAL.name;
   }
 
   private renderReminderEmail(investigatorName: string, userCode: string) {
