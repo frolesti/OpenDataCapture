@@ -291,6 +291,7 @@ const RouteComponent = () => {
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
   const pendingSubmitRef = useRef<{ data: unknown; instrumentId: string } | null>(null);
   const [liveValidationErrors, setLiveValidationErrors] = useState<OrionLiveValidationError[]>([]);
+  const [orionTouchedFields, setOrionTouchedFields] = useState<Set<string>>(new Set());
   const [reservedOrionPatientCode, setReservedOrionPatientCode] = useState<string | null>(null);
   const [orionPatientCodeReservationFailed, setOrionPatientCodeReservationFailed] = useState(false);
 
@@ -468,10 +469,29 @@ const RouteComponent = () => {
     [isOrionFollowup, isOrionSelection, params.id, recordId]
   );
 
+  const handleOrionFieldBlur = useCallback(
+    (event: React.FocusEvent<HTMLDivElement>) => {
+      if (!isOrionSelection && !isOrionFollowup) {
+        return;
+      }
+      const field = event.target;
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement ||
+        field instanceof HTMLTextAreaElement
+      ) {
+        if (field.name) {
+          setOrionTouchedFields((current) => new Set(current).add(field.name));
+        }
+      }
+    },
+    [isOrionFollowup, isOrionSelection]
+  );
+
   useEffect(() => {
     document.querySelectorAll('[data-orion-live-error]').forEach((element) => element.remove());
 
-    for (const error of liveValidationErrors) {
+    for (const error of liveValidationErrors.filter((candidate) => orionTouchedFields.has(candidate.field))) {
       const field = document.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
         `[name="${error.field}"]`
       );
@@ -484,7 +504,7 @@ const RouteComponent = () => {
       message.textContent = error.message;
       field.insertAdjacentElement('afterend', message);
     }
-  }, [liveValidationErrors]);
+  }, [liveValidationErrors, orionTouchedFields]);
 
   // Discard draft and restart form
   const handleDiscardDraft = useCallback(() => {
@@ -725,7 +745,7 @@ const RouteComponent = () => {
           </Button>
         </div>
       ) : null}
-      <div className="grow">
+      <div className="grow" onBlurCapture={handleOrionFieldBlur}>
         <InstrumentRenderer
           key={rendererKey}
           className="mx-auto max-w-3xl"

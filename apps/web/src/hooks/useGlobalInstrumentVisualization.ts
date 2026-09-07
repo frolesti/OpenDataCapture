@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { toBasicISOString } from '@douglasneuroinformatics/libjs';
 import { useDownload, useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
@@ -44,31 +44,9 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
   const [minDate, setMinDate] = useState<Date | null>(null);
   const [instrumentId, setInstrumentId] = useState<null | string>(null);
   const [filters, setFilters] = useState<{ [key: string]: null | string }>({});
-
-  // Persist selected instrument for this datahub view within the session.
-  useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem('datahub:selectedInstrument');
-      if (stored) {
-        setInstrumentId(stored);
-      }
-    } catch (err) {
-      // ignore storage errors (e.g., SSR or restricted environments)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    try {
-      if (instrumentId) {
-        sessionStorage.setItem('datahub:selectedInstrument', instrumentId);
-      } else {
-        sessionStorage.removeItem('datahub:selectedInstrument');
-      }
-    } catch (err) {
-      // ignore storage errors
-    }
-  }, [instrumentId]);
+  const hasRestoredDatahubInstrument = useRef(false);
+  const datahubInstrumentKey =
+    currentUser && currentGroup ? `datahub:last-instrument:${currentUser.id}:${currentGroup.id}` : null;
 
   const instrumentInfoQuery = useInstrumentInfoQuery({
     params: { kind: params?.kind }
@@ -99,6 +77,36 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     () => new Set((instrumentInfoQuery.data ?? []).map((availableInstrument) => availableInstrument.id)),
     [instrumentInfoQuery.data]
   );
+
+  useEffect(() => {
+    if (hasRestoredDatahubInstrument.current || !datahubInstrumentKey || instrumentInfoQuery.isLoading) {
+      return;
+    }
+    hasRestoredDatahubInstrument.current = true;
+    try {
+      const stored = localStorage.getItem(datahubInstrumentKey);
+      if (stored && (stored === ORION_UNIFIED_OPTION_ID || availableInstrumentIds.has(stored))) {
+        setInstrumentId(stored);
+      }
+    } catch {
+      // Browser storage is optional for the datahub workflow.
+    }
+  }, [availableInstrumentIds, datahubInstrumentKey, instrumentInfoQuery.isLoading]);
+
+  useEffect(() => {
+    if (!datahubInstrumentKey || !hasRestoredDatahubInstrument.current) {
+      return;
+    }
+    try {
+      if (instrumentId) {
+        localStorage.setItem(datahubInstrumentKey, instrumentId);
+      } else {
+        localStorage.removeItem(datahubInstrumentKey);
+      }
+    } catch {
+      // Browser storage is optional for the datahub workflow.
+    }
+  }, [datahubInstrumentKey, instrumentId]);
 
   const hasOrionInOptions = useMemo(
     () =>
