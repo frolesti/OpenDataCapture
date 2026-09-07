@@ -306,6 +306,7 @@ const RouteComponent = () => {
       !isOrionSelection ||
       recordId ||
       reservedOrionPatientCode ||
+      orionPatientCodeReservationFailed ||
       effectiveInitialData?.user_code ||
       !currentGroup?.id
     ) {
@@ -340,6 +341,7 @@ const RouteComponent = () => {
     effectiveInitialData?.user_code,
     isOrionSelection,
     notifications,
+    orionPatientCodeReservationFailed,
     recordId,
     reservedOrionPatientCode
   ]);
