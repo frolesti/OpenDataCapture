@@ -81,7 +81,7 @@ export const Sidebar = () => {
                   </AlertDialog.Header>
                   <AlertDialog.Footer className="flex flex-wrap gap-2">
                     <AlertDialog.Action
-                      className="min-w-24 bg-emerald-600 text-white hover:bg-emerald-700"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-24"
                       onClick={() => {
                         closeCurrentSession({ preserveDraft: true });
                       }}
@@ -92,7 +92,7 @@ export const Sidebar = () => {
                       } as any)}
                     </AlertDialog.Action>
                     <AlertDialog.Action
-                      className="min-w-24 bg-red-600 text-white hover:bg-red-700"
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-w-24"
                       onClick={() => {
                         closeCurrentSession({ preserveDraft: false });
                       }}
