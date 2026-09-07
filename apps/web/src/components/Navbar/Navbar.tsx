@@ -125,7 +125,7 @@ export const Navbar = () => {
                     </AlertDialog.Header>
                     <AlertDialog.Footer className="flex flex-wrap gap-2">
                       <AlertDialog.Action
-                        className="min-w-24"
+                        className="min-w-24 bg-emerald-600 text-white hover:bg-emerald-700"
                         onClick={() => closeCurrentSession({ preserveDraft: true })}
                       >
                         {t({
@@ -134,7 +134,7 @@ export const Navbar = () => {
                         } as any)}
                       </AlertDialog.Action>
                       <AlertDialog.Action
-                        className="min-w-24"
+                        className="min-w-24 bg-red-600 text-white hover:bg-red-700"
                         onClick={() => closeCurrentSession({ preserveDraft: false })}
                       >
                         {t({

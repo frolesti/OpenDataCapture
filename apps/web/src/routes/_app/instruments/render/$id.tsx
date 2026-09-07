@@ -288,6 +288,7 @@ const RouteComponent = () => {
   const instrumentInfoQuery = useInstrumentInfoQuery();
   const groupHospitalOptions = buildGroupHospitalOptions(currentGroup?.hospitals ?? []);
 
+  const instrumentInfo = (instrumentInfoQuery.data ?? []).find((instrument) => instrument.id === params.id);
   const orionSelectionInstrumentId = (instrumentInfoQuery.data ?? []).find(
     (instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME
   )?.id;
@@ -297,8 +298,8 @@ const RouteComponent = () => {
       ? encodeScopedSubjectId(currentUser.username, { groupName: currentGroup.name })
       : undefined);
 
-  const isOrionFollowup = instrumentBundleQuery.data?.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME;
-  const isOrionSelection = instrumentBundleQuery.data?.internal?.name === ORION_SELECTION_INTERNAL_NAME;
+  const isOrionFollowup = instrumentInfo?.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME;
+  const isOrionSelection = instrumentInfo?.internal?.name === ORION_SELECTION_INTERNAL_NAME;
 
   useEffect(() => {
     if (
@@ -661,10 +662,10 @@ const RouteComponent = () => {
       {currentStep === 1 && !recordId ? (
         <div className="fixed right-6 top-6 z-[70]">
           <Button
-            className="gap-2 bg-white shadow-md"
+            className="gap-2 bg-[#8f8df2] text-white shadow-md hover:bg-[#7f7de4]"
             size="sm"
             type="button"
-            variant="outline"
+            variant="primary"
             onClick={handleSaveDraft}
           >
             <Save className="h-4 w-4" />

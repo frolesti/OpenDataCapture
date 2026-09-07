@@ -588,7 +588,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 2,
+    edition: 3,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
