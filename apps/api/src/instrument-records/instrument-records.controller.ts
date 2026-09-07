@@ -9,6 +9,7 @@ import type { User } from '@prisma/client';
 import { z } from 'zod/v4';
 
 import { CreateInstrumentRecordDto } from './dto/create-instrument-record.dto';
+import { ReserveOrionPatientCodeDto } from './dto/reserve-orion-patient-code.dto';
 import { UpdateInstrumentRecordDto } from './dto/update-instrument-record.dto';
 import { UploadInstrumentRecordsDto } from './dto/upload-instrument-record.dto';
 import { InstrumentRecordsService } from './instrument-records.service';
@@ -32,8 +33,8 @@ export class InstrumentRecordsController {
   @ApiOperation({ summary: 'Reserve ORION Patient Code' })
   @Post('orion-patient-code')
   @RouteAccess({ action: 'create', subject: 'InstrumentRecord' })
-  reserveOrionPatientCode(@Body('groupId') groupId: string, @CurrentUser() user: User) {
-    return this.instrumentRecordsService.reserveOrionPatientCode({ groupId, user });
+  reserveOrionPatientCode(@Body() data: ReserveOrionPatientCodeDto, @CurrentUser() user: User) {
+    return this.instrumentRecordsService.reserveOrionPatientCode({ groupId: data.groupId, user });
   }
 
   @ApiOperation({ summary: 'Upload Multiple Instrument Records' })
