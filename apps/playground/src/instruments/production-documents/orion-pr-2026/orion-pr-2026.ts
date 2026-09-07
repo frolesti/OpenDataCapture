@@ -151,7 +151,7 @@ function eq5d5lFields(
   return {
     [`${prefix}eq5d_mobility`]: requiresEligibility({
       kind: 'string',
-      label: `Movilidad${labelSuffix}`,
+      label: `Movilidad${labelSuffix} *`,
       variant: 'radio',
       options: {
         '1': 'No tengo problemas para caminar',
@@ -163,7 +163,7 @@ function eq5d5lFields(
     }),
     [`${prefix}eq5d_selfcare`]: requiresEligibility({
       kind: 'string',
-      label: `Auto-cuidado${labelSuffix}`,
+      label: `Auto-cuidado${labelSuffix} *`,
       variant: 'radio',
       options: {
         '1': 'No tengo problemas para lavarme o vestirme',
@@ -175,7 +175,7 @@ function eq5d5lFields(
     }),
     [`${prefix}eq5d_activities`]: requiresEligibility({
       kind: 'string',
-      label: `Actividades cotidianas(Ej.: trabajar, estudiar, hacer tareas domésticas, actividades familiares o actividades durante el tiempo libre)}`,
+      label: `Actividades cotidianas (Ej.: trabajar, estudiar, hacer tareas domésticas, actividades familiares o actividades durante el tiempo libre) *`,
       variant: 'radio',
       options: {
         '1': 'No tengo problemas para realizar mis actividades cotidianas',
@@ -187,7 +187,7 @@ function eq5d5lFields(
     }),
     [`${prefix}eq5d_pain`]: requiresEligibility({
       kind: 'string',
-      label: `Dolor/Malestar${labelSuffix}`,
+      label: `Dolor/Malestar${labelSuffix} *`,
       variant: 'radio',
       options: {
         '1': 'No tengo dolor ni malestar',
@@ -199,7 +199,7 @@ function eq5d5lFields(
     }),
     [`${prefix}eq5d_anxiety`]: requiresEligibility({
       kind: 'string',
-      label: `Ansiedad/Depresión${labelSuffix}`,
+      label: `Ansiedad/Depresión${labelSuffix} *`,
       variant: 'radio',
       options: {
         '1': 'No estoy ansioso ni deprimido',
@@ -212,7 +212,7 @@ function eq5d5lFields(
     [`${prefix}eq5d_vas`]: requiresEligibility({
       kind: 'number',
       variant: 'input',
-      label: `¿Cómo considera su estado de salud hoy en una escala de 0 a 100?${labelSuffix}`,
+      label: `¿Cómo considera su estado de salud hoy en una escala de 0 a 100?${labelSuffix} *`,
       placeholder: 'Indique un valor entre 0 y 100',
       description:
         'Donde 100 es la mejor salud que pueda imaginar y 0 la peor. Indique a continuación el número que mejor refleje su estado de salud actual.'
@@ -230,7 +230,7 @@ function sleepQualityFields(
   return {
     [`${prefix}sleep_onset`]: requiresEligibility({
       kind: 'string',
-      label: `¿Tenía dificultad para quedarse dormido al acostarse?${labelSuffix}`,
+      label: `¿Tenía dificultad para quedarse dormido al acostarse?${labelSuffix} *`,
       variant: 'radio',
       options: {
         '1': 'Nunca',
@@ -242,7 +242,7 @@ function sleepQualityFields(
     }),
     [`${prefix}sleep_maintenance`]: requiresEligibility({
       kind: 'string',
-      label: `¿Tenía dificultad para mantener el sueño durante la noche?${labelSuffix}`,
+      label: `¿Tenía dificultad para mantener el sueño durante la noche?${labelSuffix} *`,
       variant: 'radio',
       options: {
         '1': 'Nunca',
@@ -254,7 +254,7 @@ function sleepQualityFields(
     }),
     [`${prefix}sleep_quality`]: requiresEligibility({
       kind: 'string',
-      label: `¿Cómo valoraría la calidad global de su sueño?${labelSuffix}`,
+      label: `¿Cómo valoraría la calidad global de su sueño?${labelSuffix} *`,
       variant: 'radio',
       options: {
         '1': 'Muy buena',
@@ -266,7 +266,7 @@ function sleepQualityFields(
     }),
     [`${prefix}sleep_daytime`]: requiresEligibility({
       kind: 'string',
-      label: `¿Tiene somnolencia diurna?${labelSuffix}`,
+      label: `¿Tiene somnolencia diurna?${labelSuffix} *`,
       variant: 'radio',
       options: {
         '1': 'Nunca',
@@ -289,25 +289,25 @@ function adherenceFields(
   return {
     [`${prefix}mmas_forget`]: requiresEligibility({
       kind: 'string',
-      label: `¿Alguna vez olvida tomar su medicación?${labelSuffix}`,
+      label: `¿Alguna vez olvida tomar su medicación?${labelSuffix} *`,
       variant: 'radio',
       options: YES_NO_OPTIONS
     }),
     [`${prefix}mmas_remember`]: requiresEligibility({
       kind: 'string',
-      label: `¿Alguna vez tiene problemas para recordar tomar su medicación?${labelSuffix}`,
+      label: `¿Alguna vez tiene problemas para recordar tomar su medicación?${labelSuffix} *`,
       variant: 'radio',
       options: YES_NO_OPTIONS
     }),
     [`${prefix}mmas_better`]: requiresEligibility({
       kind: 'string',
-      label: `Cuando se siente mejor, ¿a veces deja de tomar su medicación?${labelSuffix}`,
+      label: `Cuando se siente mejor, ¿a veces deja de tomar su medicación?${labelSuffix} *`,
       variant: 'radio',
       options: YES_NO_OPTIONS
     }),
     [`${prefix}mmas_worse`]: requiresEligibility({
       kind: 'string',
-      label: `A veces, si se siente peor cuando toma su medicación, ¿deja de tomarla?${labelSuffix}`,
+      label: `A veces, si se siente peor cuando toma su medicación, ¿deja de tomarla?${labelSuffix} *`,
       variant: 'radio',
       options: YES_NO_OPTIONS
     })
@@ -419,7 +419,7 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
             ? 'Tratamiento con pregabalina IR *'
             : i === 1 && prefix === 'current'
               ? 'Tratamiento con pregabalina PR *'
-              : `Tratamiento ${i}`,
+              : `Tratamiento ${i} *`,
         options:
           i === 1 && prefix === 'prev'
             ? { pregabalina_ir: 'Pregabalina IR' }
@@ -435,14 +435,14 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
       {
         kind: 'number',
         variant: 'input',
-        label: i === 1 && prefix !== 'concomitant' ? 'Dosis actual (mg) *' : `Dosis (mg) - Tratamiento ${i}`
+        label: i === 1 && prefix !== 'concomitant' ? 'Dosis actual (mg) *' : `Dosis (mg) - Tratamiento ${i} *`
       },
       prefix,
       i
     );
 
     fields[`${prefix}_treatment_start_${i}`] = requiresPreviousTreatment(
-      dateField(i === 1 && prefix !== 'concomitant' ? 'Fecha de inicio *' : `Fecha de inicio - Tratamiento ${i}`),
+      dateField(i === 1 && prefix !== 'concomitant' ? 'Fecha de inicio *' : `Fecha de inicio - Tratamiento ${i} *`),
       prefix,
       i
     );
@@ -460,7 +460,7 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
       );
     } else {
       fields[`${prefix}_treatment_end_${i}`] = requiresPreviousTreatment(
-        dateField(i === 1 && prefix === 'prev' ? 'Fecha de fin *' : `Fecha de fin - Tratamiento ${i}`),
+        dateField(i === 1 && prefix === 'prev' ? 'Fecha de fin *' : `Fecha de fin - Tratamiento ${i} *`),
         prefix,
         i
       );
@@ -586,7 +586,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 3,
+    edition: 4,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -625,39 +625,40 @@ export default defineInstrument({
         inclusion_1: requiresConsent({
           kind: 'string',
           label:
-            '1. El paciente tiene diagnóstico de dolor neuropático (periférico o central) documentado en su historia clínica',
+            '1. El paciente tiene diagnóstico de dolor neuropático (periférico o central) documentado en su historia clínica *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         inclusion_2: requiresConsent({
           kind: 'string',
           label:
-            '2. El paciente está previamente tratado con pregabalina de liberación inmediata (IR) antes de iniciar tratamiento con pregabalina de liberación prolongada (PR)',
+            '2. El paciente está previamente tratado con pregabalina de liberación inmediata (IR) antes de iniciar tratamiento con pregabalina de liberación prolongada (PR) *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         inclusion_3: requiresConsent({
           kind: 'string',
-          label: '3. El paciente ha estado en tratamiento con pregabalina PR durante al menos 3 meses y hasta 6 meses',
+          label:
+            '3. El paciente ha estado en tratamiento con pregabalina PR durante al menos 3 meses y hasta 6 meses *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         inclusion_4: requiresConsent({
           kind: 'string',
           label:
-            '4. El paciente ha recibido pregabalina PR durante al menos el último mes a una dosis terapéutica (165-660 mg), aunque el tratamiento puede haber comenzado con dosis inferiores en la práctica clínica habitual antes de la titulación a 165 mg o superior',
+            '4. El paciente ha recibido pregabalina PR durante al menos el último mes a una dosis terapéutica (165-660 mg), aunque el tratamiento puede haber comenzado con dosis inferiores en la práctica clínica habitual antes de la titulación a 165 mg o superior *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         inclusion_5: requiresConsent({
           kind: 'string',
-          label: '5. El paciente es ≥ 18 años en el momento de la inclusión',
+          label: '5. El paciente es ≥ 18 años en el momento de la inclusión *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         inclusion_6: requiresConsent({
           kind: 'string',
-          label: '6. El paciente ha proporcionado consentimiento informado por escrito',
+          label: '6. El paciente ha proporcionado consentimiento informado por escrito *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         })
@@ -669,42 +670,42 @@ export default defineInstrument({
       fields: {
         exclusion_1: requiresConsent({
           kind: 'string',
-          label: '1. Pacientes tratados previamente con pregabalina PR antes del curso actual de tratamiento',
+          label: '1. Pacientes tratados previamente con pregabalina PR antes del curso actual de tratamiento *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         exclusion_2: requiresConsent({
           kind: 'string',
           label:
-            '2. Uso de pregabalina PR fuera de la ficha técnica aprobada localmente, incluyendo indicación de administración',
+            '2. Uso de pregabalina PR fuera de la ficha técnica aprobada localmente, incluyendo indicación de administración *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         exclusion_3: requiresConsent({
           kind: 'string',
           label:
-            '3. Pacientes que no puedan cumplir con los requisitos del estudio o que, a criterio del investigador, no deban participar en el estudio',
+            '3. Pacientes que no puedan cumplir con los requisitos del estudio o que, a criterio del investigador, no deban participar en el estudio *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         exclusion_4: requiresConsent({
           kind: 'string',
           label:
-            '4. Pacientes con cualquier contraindicación a pregabalina PR según se especifica en la ficha técnica del producto',
+            '4. Pacientes con cualquier contraindicación a pregabalina PR según se especifica en la ficha técnica del producto *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         exclusion_5: requiresConsent({
           kind: 'string',
           label:
-            '5. Cualquier situación clínica en la que el investigador considere que el tratamiento no es seguro (por ejemplo, enfermedad psiquiátrica grave no controlada, depresión, ideación suicida activa, alto riesgo de incumplimiento terapéutico)',
+            '5. Cualquier situación clínica en la que el investigador considere que el tratamiento no es seguro (por ejemplo, enfermedad psiquiátrica grave no controlada, depresión, ideación suicida activa, alto riesgo de incumplimiento terapéutico) *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
         exclusion_6: requiresConsent({
           kind: 'string',
           label:
-            '6. Participación en otro estudio clínico o de investigación que pueda interferir con la interpretación de los datos',
+            '6. Participación en otro estudio clínico o de investigación que pueda interferir con la interpretación de los datos *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         })
@@ -715,7 +716,7 @@ export default defineInstrument({
       fields: {
         site_hospital: requiresConsent({
           kind: 'string',
-          label: '¿Cuál es el centro de atención primaria donde se visita el paciente?',
+          label: '¿Cuál es el centro de atención primaria donde se visita el paciente? *',
           variant: 'select',
           options: (globalThis as any).__ODC_GROUP_HOSPITAL_OPTIONS__ ?? {}
         })
@@ -778,7 +779,7 @@ export default defineInstrument({
         }),
         neuropathy_etiology_other: requiresEligibilityAndValue('neuropathy_etiology', 'other', {
           kind: 'string',
-          label: 'Especifique otro diagnóstico',
+          label: 'Especifique otro diagnóstico *',
           variant: 'textarea'
         }),
         neuropathy_location: requiresEligibility({
@@ -845,7 +846,7 @@ export default defineInstrument({
         }),
         change_reason_other: requiresEligibilityAndValue('change_reason_other_checked', true, {
           kind: 'string',
-          label: 'Especifique otro motivo',
+          label: 'Especifique otro motivo *',
           variant: 'textarea'
         })
       }
@@ -911,7 +912,7 @@ export default defineInstrument({
       fields: {
         cgi_improvement: requiresEligibility({
           kind: 'string',
-          label: 'Mejoría clínica (Escala CGI-I) - Cambio respecto al estado durante pregabalina IR',
+          label: 'Mejoría clínica (Escala CGI-I) - Cambio respecto al estado durante pregabalina IR *',
           variant: 'radio',
           options: {
             '1': 'No evaluado',
@@ -926,7 +927,7 @@ export default defineInstrument({
         }),
         baseline_adverse_events: requiresEligibility({
           kind: 'string',
-          label: '¿Ha presentado algún acontecimiento adverso durante el tratamiento con pregabalina PR?',
+          label: '¿Ha presentado algún acontecimiento adverso durante el tratamiento con pregabalina PR? *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
@@ -955,7 +956,7 @@ export default defineInstrument({
               },
               variant: 'select'
             },
-            resolution_date: dateField('Fecha de resolución'),
+            resolution_date: dateField('Fecha de resolución * si aplica'),
             actions_taken: { kind: 'string', label: 'Medidas adoptadas *', variant: 'textarea' },
             seriousness: { kind: 'string', label: 'Gravedad *', variant: 'textarea' }
           }

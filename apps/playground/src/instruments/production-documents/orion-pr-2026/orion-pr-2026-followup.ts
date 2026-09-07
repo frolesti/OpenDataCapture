@@ -117,7 +117,7 @@ function eq5dFields() {
   return {
     eq5d_mobility: {
       kind: 'string' as const,
-      label: 'Movilidad',
+      label: 'Movilidad *',
       options: {
         '1': 'No tengo problemas para caminar',
         '2': 'Tengo problemas leves para caminar',
@@ -129,7 +129,7 @@ function eq5dFields() {
     },
     eq5d_selfcare: {
       kind: 'string' as const,
-      label: 'Auto-cuidado',
+      label: 'Auto-cuidado *',
       options: {
         '1': 'No tengo problemas para lavarme o vestirme',
         '2': 'Tengo problemas leves para lavarme o vestirme',
@@ -141,7 +141,7 @@ function eq5dFields() {
     },
     eq5d_activities: {
       kind: 'string' as const,
-      label: 'Actividades cotidianas (Ej.: trabajar, estudiar, tareas domésticas, actividades familiares o de ocio)',
+      label: 'Actividades cotidianas (Ej.: trabajar, estudiar, tareas domésticas, actividades familiares o de ocio) *',
       options: {
         '1': 'No tengo problemas para realizar mis actividades cotidianas',
         '2': 'Tengo problemas leves para realizar mis actividades cotidianas',
@@ -153,7 +153,7 @@ function eq5dFields() {
     },
     eq5d_pain: {
       kind: 'string' as const,
-      label: 'Dolor/Malestar',
+      label: 'Dolor/Malestar *',
       options: {
         '1': 'No tengo dolor ni malestar',
         '2': 'Tengo dolor o malestar leve',
@@ -165,7 +165,7 @@ function eq5dFields() {
     },
     eq5d_anxiety: {
       kind: 'string' as const,
-      label: 'Ansiedad/Depresión',
+      label: 'Ansiedad/Depresión *',
       options: {
         '1': 'No estoy ansioso ni deprimido',
         '2': 'Estoy levemente ansioso o deprimido',
@@ -178,7 +178,7 @@ function eq5dFields() {
     eq5d_vas: {
       description: 'Donde 100 es la mejor salud que pueda imaginar y 0 la peor.',
       kind: 'string' as const,
-      label: '¿Cómo considera su estado de salud hoy en una escala de 0 a 100?',
+      label: '¿Cómo considera su estado de salud hoy en una escala de 0 a 100? *',
       placeholder: 'Su salud hoy',
       variant: 'input' as const
     }
@@ -196,25 +196,25 @@ function sleepFields() {
   return {
     sleep_onset: {
       kind: 'string' as const,
-      label: '¿Tiene dificultad para quedarse dormido al acostarse?',
+      label: '¿Tiene dificultad para quedarse dormido al acostarse? *',
       options: frequencyOptions,
       variant: 'radio' as const
     },
     sleep_maintenance: {
       kind: 'string' as const,
-      label: '¿Tiene dificultad para mantener el sueño durante la noche?',
+      label: '¿Tiene dificultad para mantener el sueño durante la noche? *',
       options: frequencyOptions,
       variant: 'radio' as const
     },
     sleep_quality: {
       kind: 'string' as const,
-      label: '¿Cómo valora la calidad global de su sueño?',
+      label: '¿Cómo valora la calidad global de su sueño? *',
       options: { '1': 'Muy buena', '2': 'Buena', '3': 'Regular', '4': 'Mala', '5': 'Muy mala' },
       variant: 'radio' as const
     },
     sleep_daytime: {
       kind: 'string' as const,
-      label: '¿Tiene somnolencia diurna?',
+      label: '¿Tiene somnolencia diurna? *',
       options: frequencyOptions,
       variant: 'radio' as const
     }
@@ -225,25 +225,25 @@ function adherenceFields() {
   return {
     mmas_forget: {
       kind: 'string' as const,
-      label: '¿Alguna vez olvida tomar su medicación?',
+      label: '¿Alguna vez olvida tomar su medicación? *',
       options: YES_NO_OPTIONS,
       variant: 'radio' as const
     },
     mmas_remember: {
       kind: 'string' as const,
-      label: '¿Alguna vez tiene problemas para recordar tomar su medicación?',
+      label: '¿Alguna vez tiene problemas para recordar tomar su medicación? *',
       options: YES_NO_OPTIONS,
       variant: 'radio' as const
     },
     mmas_better: {
       kind: 'string' as const,
-      label: 'Cuando se siente mejor, ¿a veces deja de tomar su medicación?',
+      label: 'Cuando se siente mejor, ¿a veces deja de tomar su medicación? *',
       options: YES_NO_OPTIONS,
       variant: 'radio' as const
     },
     mmas_worse: {
       kind: 'string' as const,
-      label: 'A veces, si se siente peor cuando toma su medicación, ¿deja de tomarla?',
+      label: 'A veces, si se siente peor cuando toma su medicación, ¿deja de tomarla? *',
       options: YES_NO_OPTIONS,
       variant: 'radio' as const
     }
@@ -299,7 +299,7 @@ export default defineInstrument({
       fields: whenStudyContinues({
         cgi_improvement: {
           kind: 'string',
-          label: 'En comparación con su estado basal, ¿cuánto ha cambiado?',
+          label: 'En comparación con su estado basal, ¿cuánto ha cambiado? *',
           options: SCALE_OPTIONS,
           variant: 'radio'
         }
@@ -310,18 +310,22 @@ export default defineInstrument({
       fields: whenStudyContinues({
         objective_achieved: {
           kind: 'string',
-          label: '¿Se ha alcanzado el objetivo que motivó el cambio a pregabalina PR?',
+          label: '¿Se ha alcanzado el objetivo que motivó el cambio a pregabalina PR? *',
           options: YES_NO_OPTIONS,
           variant: 'radio'
         },
         dose_change: {
           kind: 'string',
-          label: '¿Ha tenido algún cambio en la dosis de la pregabalina PR desde su última visita?',
+          label: '¿Ha tenido algún cambio en la dosis de la pregabalina PR desde su última visita? *',
           options: YES_NO_OPTIONS,
           variant: 'radio'
         },
-        dose_change_date: conditionalField('dose_change', 'si', dateField('Fecha del cambio de dosis')),
-        new_dose: conditionalField('dose_change', 'si', { kind: 'number', label: 'Nueva dosis (mg)', variant: 'input' })
+        dose_change_date: conditionalField('dose_change', 'si', dateField('Fecha del cambio de dosis *')),
+        new_dose: conditionalField('dose_change', 'si', {
+          kind: 'number',
+          label: 'Nueva dosis (mg) *',
+          variant: 'input'
+        })
       })
     },
     {
@@ -329,13 +333,13 @@ export default defineInstrument({
       fields: whenStudyContinues({
         concomitant_treatment_changes: {
           kind: 'string',
-          label: '¿Ha habido cambios en los tratamientos concomitantes desde la visita de selección?',
+          label: '¿Ha habido cambios en los tratamientos concomitantes desde la visita de selección? *',
           options: YES_NO_OPTIONS,
           variant: 'radio'
         },
         concomitant_treatment_changes_detail: conditionalField('concomitant_treatment_changes', 'si', {
           kind: 'string',
-          label: 'Indique los cambios en los tratamientos concomitantes, incluyendo producto y dosis',
+          label: 'Indique los cambios en los tratamientos concomitantes, incluyendo producto y dosis *',
           variant: 'textarea'
         })
       })
@@ -345,25 +349,26 @@ export default defineInstrument({
       fields: whenStudyContinues({
         adverse_events: {
           kind: 'string',
-          label: '¿Ha presentado algún acontecimiento adverso durante el periodo de estudio?',
+          label: '¿Ha presentado algún acontecimiento adverso durante el periodo de estudio? *',
           options: YES_NO_OPTIONS,
           variant: 'radio'
         },
         adverse_event_records: conditionalField('adverse_events', 'si', {
           kind: 'record-array',
           label: 'Registro de reacciones adversas *',
+          description: PHARMACOVIGILANCE_INSTRUCTION,
           fieldset: {
-            reaction: { kind: 'string', label: 'Reacción adversa', variant: 'input' },
-            onset_date: dateField('Fecha de inicio'),
+            reaction: { kind: 'string', label: 'Reacción adversa *', variant: 'input' },
+            onset_date: dateField('Fecha de inicio *'),
             intensity: {
               kind: 'string',
-              label: 'Intensidad',
+              label: 'Intensidad *',
               options: { leve: 'Leve', moderada: 'Moderada', intensa: 'Intensa' },
               variant: 'select'
             },
             outcome: {
               kind: 'string',
-              label: 'Desenlace',
+              label: 'Desenlace *',
               options: {
                 recuperado: 'Recuperado',
                 recuperado_con_secuelas: 'Recuperado con secuelas',
@@ -373,17 +378,10 @@ export default defineInstrument({
               },
               variant: 'select'
             },
-            resolution_date: dateField('Fecha de resolución, si aplica'),
-            actions_taken: { kind: 'string', label: 'Medidas adoptadas', variant: 'textarea' },
-            seriousness: { kind: 'string', label: 'Gravedad', variant: 'textarea' }
+            resolution_date: dateField('Fecha de resolución * si aplica'),
+            actions_taken: { kind: 'string', label: 'Medidas adoptadas *', variant: 'textarea' },
+            seriousness: { kind: 'string', label: 'Gravedad *', variant: 'textarea' }
           }
-        }),
-        _pharmacovigilance_instruction: conditionalField('adverse_events', 'si', {
-          description: PHARMACOVIGILANCE_INSTRUCTION,
-          disabled: true,
-          kind: 'string',
-          label: 'Instrucciones de farmacovigilancia',
-          variant: 'textarea'
         })
       })
     },
@@ -393,19 +391,19 @@ export default defineInstrument({
         end_date: conditionalField('continues_study', 'no', dateField('Fecha de finalización del estudio *')),
         reason_not_completed: conditionalField('continues_study', 'no', {
           kind: 'string',
-          label: 'En caso negativo, indique el motivo',
+          label: 'En caso negativo, indique el motivo *',
           options: { investigator: 'Decisión del investigador', patient: 'Decisión del paciente', other: 'Otro' },
           variant: 'select'
         }),
         reason_not_completed_other: conditionalField('reason_not_completed', 'other', {
           kind: 'string',
-          label: 'Especifique otro motivo',
+          label: 'Especifique otro motivo *',
           variant: 'textarea'
         }),
         professional_attestation: {
           kind: 'boolean',
           label:
-            'Confirmo que he revisado y validado la información clínica registrada en este formulario conforme a la historia clínica del paciente',
+            'Confirmo que he revisado y validado la información clínica registrada en este formulario conforme a la historia clínica del paciente *',
           variant: 'checkbox'
         }
       }
@@ -464,7 +462,6 @@ export default defineInstrument({
           })
         )
         .optional(),
-      _pharmacovigilance_instruction: z.any().optional(),
       end_date: optionalManualDateSchema(),
       reason_not_completed: z.enum(['investigator', 'patient', 'other']).optional(),
       reason_not_completed_other: z.string().optional(),
