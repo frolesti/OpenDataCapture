@@ -651,12 +651,12 @@ const RouteComponent = () => {
         </Heading>
       </PageHeader>
       {currentStep === 1 && !recordId ? (
-        <div className="mx-auto flex w-full max-w-3xl justify-end px-4 pb-3 sm:px-6">
+        <div className="fixed right-6 top-6 z-[70]">
           <Button
-            className="gap-2 bg-[#8f8df2] text-white shadow-sm hover:bg-[#7f7de4]"
+            className="gap-2 bg-white shadow-md"
             size="sm"
             type="button"
-            variant="primary"
+            variant="outline"
             onClick={handleSaveDraft}
           >
             <Save className="h-4 w-4" />
