@@ -28,6 +28,11 @@ const ORION_WEIGHT_MAX = 250;
 const ORION_HEIGHT_MIN = 120;
 const ORION_HEIGHT_MAX = 230;
 
+type OrionLiveValidationError = {
+  field: string;
+  message: string;
+};
+
 function parseOrionDate(value: unknown): Date | null {
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     return value;
@@ -134,32 +139,35 @@ function buildGroupHospitalOptions(hospitals: string[]): string {
   return JSON.stringify(optionsObject);
 }
 
-function getOrionLiveValidationErrors(data: Record<string, unknown>): string[] {
-  const errors: string[] = [];
+function getOrionLiveValidationErrors(data: Record<string, unknown>): OrionLiveValidationError[] {
+  const errors: OrionLiveValidationError[] = [];
 
-  const addNumberError = (value: unknown, min: number, max: number, message: string) => {
+  const addNumberError = (field: string, value: unknown, min: number, max: number, message: string) => {
     if (value === undefined || value === null || value === '') {
       return;
     }
     const number = typeof value === 'number' ? value : Number(value);
     if (!Number.isFinite(number) || number < min || number > max) {
-      errors.push(message);
+      errors.push({ field, message });
     }
   };
 
   addNumberError(
+    'age',
     data.age,
     ORION_AGE_MIN,
     ORION_AGE_MAX,
     `La edad indicada no es válida para este estudio. Debe estar entre ${ORION_AGE_MIN} y ${ORION_AGE_MAX} años.`
   );
   addNumberError(
+    'weight',
     data.weight,
     ORION_WEIGHT_MIN,
     ORION_WEIGHT_MAX,
     `El peso indicado está fuera del rango razonable (${ORION_WEIGHT_MIN}-${ORION_WEIGHT_MAX} kg). Revise el dato antes de continuar.`
   );
   addNumberError(
+    'height',
     data.height,
     ORION_HEIGHT_MIN,
     ORION_HEIGHT_MAX,
@@ -171,7 +179,10 @@ function getOrionLiveValidationErrors(data: Record<string, unknown>): string[] {
     data.selection_visit_date &&
     (!selectionVisitDate || selectionVisitDate < ORION_DATE_MIN || selectionVisitDate > ORION_DATE_MAX)
   ) {
-    errors.push('La fecha de la visita de selección debe estar entre diciembre de 2026 y diciembre de 2027.');
+    errors.push({
+      field: 'selection_visit_date',
+      message: 'La fecha de la visita de selección debe estar entre diciembre de 2026 y diciembre de 2027.'
+    });
   }
 
   const consentSignedDate = parseOrionDate(data.consent_signed_date);
@@ -179,18 +190,32 @@ function getOrionLiveValidationErrors(data: Record<string, unknown>): string[] {
     data.consent_signed_date &&
     (!consentSignedDate || consentSignedDate < ORION_DATE_MIN || consentSignedDate > ORION_DATE_MAX)
   ) {
-    errors.push('La fecha de firma del consentimiento debe estar entre diciembre de 2026 y diciembre de 2027.');
+    errors.push({
+      field: 'consent_signed_date',
+      message: 'La fecha de firma del consentimiento debe estar entre diciembre de 2026 y diciembre de 2027.'
+    });
   }
 
   if (selectionVisitDate && consentSignedDate && consentSignedDate > selectionVisitDate) {
-    errors.push('La fecha de firma del consentimiento no puede ser posterior a la visita de selección.');
+    errors.push({
+      field: 'consent_signed_date',
+      message: 'La fecha de firma del consentimiento no puede ser posterior a la visita de selección.'
+    });
   }
 
   for (const prefix of ['retro', 'prosp', 'followup'] as const) {
-    addNumberError(data[`${prefix}_eq5d_vas`], 0, 100, 'La valoración del estado de salud debe estar entre 0 y 100.');
+    addNumberError(
+      `${prefix}_eq5d_vas`,
+      data[`${prefix}_eq5d_vas`],
+      0,
+      100,
+      'La valoración del estado de salud debe estar entre 0 y 100.'
+    );
   }
 
-  return Array.from(new Set(errors));
+  return errors.filter(
+    (error, index) => errors.findIndex((candidate) => candidate.message === error.message) === index
+  );
 }
 
 const DRAFT_PREFIX = 'instrument-draft:';
@@ -261,7 +286,7 @@ const RouteComponent = () => {
   // Edit confirmation dialog state
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
   const pendingSubmitRef = useRef<{ data: unknown; instrumentId: string } | null>(null);
-  const [liveValidationErrors, setLiveValidationErrors] = useState<string[]>([]);
+  const [liveValidationErrors, setLiveValidationErrors] = useState<OrionLiveValidationError[]>([]);
   const [reservedOrionPatientCode, setReservedOrionPatientCode] = useState<string | null>(null);
   const [orionPatientCodeReservationFailed, setOrionPatientCodeReservationFailed] = useState(false);
 
@@ -438,6 +463,24 @@ const RouteComponent = () => {
     },
     [isOrionFollowup, isOrionSelection, params.id, recordId]
   );
+
+  useEffect(() => {
+    document.querySelectorAll('[data-orion-live-error]').forEach((element) => element.remove());
+
+    for (const error of liveValidationErrors) {
+      const field = document.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+        `[name="${error.field}"]`
+      );
+      if (!field) {
+        continue;
+      }
+      const message = document.createElement('p');
+      message.className = 'mt-1 text-sm font-medium text-destructive';
+      message.dataset.orionLiveError = error.field;
+      message.textContent = error.message;
+      field.insertAdjacentElement('afterend', message);
+    }
+  }, [liveValidationErrors]);
 
   // Discard draft and restart form
   const handleDiscardDraft = useCallback(() => {
@@ -679,20 +722,6 @@ const RouteComponent = () => {
         </div>
       ) : null}
       <div className="grow">
-        {(isOrionSelection || isOrionFollowup) && liveValidationErrors.length > 0 ? (
-          <div className="mx-auto mb-4 max-w-3xl px-6">
-            <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-4">
-              <p className="mb-2 text-sm font-semibold">
-                {t({ en: 'Revise estos datos antes de continuar', fr: 'Revise estos datos antes de continuar' } as any)}
-              </p>
-              <ul className="list-disc space-y-1 pl-5 text-sm">
-                {liveValidationErrors.map((error) => (
-                  <li key={error}>{error}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ) : null}
         <InstrumentRenderer
           key={rendererKey}
           className="mx-auto max-w-3xl"
@@ -705,6 +734,7 @@ const RouteComponent = () => {
           onDiscardDraft={draftData && !recordId && !draftDiscarded ? handleDiscardDraft : undefined}
           onStepChange={setCurrentStep}
           onSubmit={handleSubmit}
+          revalidateOnChange={isOrionSelection || isOrionFollowup}
         />
       </div>
       {/* Edit confirmation dialog */}
