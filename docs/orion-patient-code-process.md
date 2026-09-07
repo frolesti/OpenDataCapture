@@ -4,14 +4,14 @@
 
 La plataforma genera automáticamente el código de paciente al iniciar una nueva visita de selección ORION. El código aparece en el formulario como una referencia visible y no editable para el investigador.
 
-El formato es `OR-C<centro>-I<investigador>-P<secuencia>`. Por ejemplo: `OR-C7A3B9-I19F2D4-P001`.
+El formato es `OR-C<centro>-I<investigador>-P<secuencia>`. Por ejemplo: `OR-C01-IMARTINEZ-P001`.
 
 - `OR` identifica el estudio ORION.
-- `C<centro>` es un código interno estable del centro asignado al investigador.
-- `I<investigador>` es un código interno estable del investigador.
+- `C<centro>` es el número estable del centro dentro del estudio.
+- `I<investigador>` identifica al investigador que registra la visita.
 - `P<secuencia>` es el número correlativo de paciente para esa combinación concreta de centro e investigador.
 
-Los segmentos de centro e investigador se calculan a partir de identificadores internos de la plataforma. No contienen nombres, iniciales, correo electrónico, número de colegiado, datos clínicos ni identificadores directos del paciente.
+El código no contiene ningún dato clínico ni identificador directo del paciente.
 
 La secuencia no tiene un límite predeterminado. Empieza en `P001` y continúa de forma correlativa (`P002`, `P003`, etc.). Cada combinación de centro e investigador mantiene su propia secuencia.
 
@@ -23,14 +23,14 @@ El código se guarda con la visita de selección y se utiliza como referencia pa
 
 La plataforma genera automàticament el codi de pacient quan s'inicia una nova visita de selecció ORION. El codi apareix al formulari com una referència visible i no editable per a l'investigador.
 
-El format és `OR-C<centre>-I<investigador>-P<seqüència>`. Per exemple: `OR-C7A3B9-I19F2D4-P001`.
+El format és `OR-C<centre>-I<investigador>-P<seqüència>`. Per exemple: `OR-C01-IMARTINEZ-P001`.
 
 - `OR` identifica l'estudi ORION.
-- `C<centre>` és un codi intern estable del centre assignat a l'investigador.
-- `I<investigador>` és un codi intern estable de l'investigador.
+- `C<centre>` és el número estable del centre dins de l'estudi.
+- `I<investigador>` identifica l'investigador que registra la visita.
 - `P<seqüència>` és el número correlatiu de pacient per a aquella combinació concreta de centre i investigador.
 
-Els segments de centre i investigador es calculen a partir d'identificadors interns de la plataforma. No contenen noms, inicials, correu electrònic, número de col·legiació, dades clíniques ni identificadors directes del pacient.
+El codi no conté cap dada clínica ni identificador directe del pacient.
 
 La seqüència no té un límit predeterminat. Comença a `P001` i continua de forma correlativa (`P002`, `P003`, etc.). Cada combinació de centre i investigador manté la seva pròpia seqüència.
 

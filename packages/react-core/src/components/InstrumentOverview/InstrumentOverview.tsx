@@ -62,7 +62,7 @@ export const InstrumentOverview = ({
         className={
           isResuming
             ? 'w-full bg-sky-600 text-white hover:bg-sky-700'
-            : 'bg-primary text-primary-foreground hover:bg-primary/90 w-full'
+            : 'w-full bg-[#8f8df2] text-white hover:bg-[#7f7de4]'
         }
         label={t({
           en: isEditing ? 'Modificar registre' : isResuming ? 'Continuar esborrany' : 'Començar',
