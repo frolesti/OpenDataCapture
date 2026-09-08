@@ -652,8 +652,17 @@ const RouteComponent = () => {
   }, [currentSession?.id, recordId]);
 
   const handleSubmit: InstrumentSubmitHandler = async ({ data, instrumentId }) => {
+    // The renderer's onSubmit payload can drop values entered on earlier pages of a
+    // multi-page form once their dynamic field condition is no longer being evaluated.
+    // latestDataRef tracks the cumulative values seen via onDataChange (used for draft
+    // autosave), so merge it in as the source of truth for fields missing from `data`.
+    const mergedData: Record<string, unknown> = {
+      ...(latestDataRef.current ?? {}),
+      ...(data as Record<string, unknown>)
+    };
+
     if (isOrionSelection) {
-      const values = data as Record<string, unknown>;
+      const values = mergedData;
       const inclusionKeys = ['inclusion_1', 'inclusion_2', 'inclusion_3', 'inclusion_4', 'inclusion_5', 'inclusion_6'];
       const exclusionKeys = ['exclusion_1', 'exclusion_2', 'exclusion_3', 'exclusion_4', 'exclusion_5', 'exclusion_6'];
 
@@ -716,12 +725,12 @@ const RouteComponent = () => {
 
     if (recordId) {
       // For edits, show confirmation dialog first
-      pendingSubmitRef.current = { data, instrumentId };
+      pendingSubmitRef.current = { data: mergedData, instrumentId };
       setShowEditConfirmation(true);
       return;
     }
     await axios.post('/v1/instrument-records', {
-      data,
+      data: mergedData,
       date: new Date(),
       groupId: currentGroup?.id,
       instrumentId,
