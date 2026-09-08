@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { FocusEvent } from 'react';
+import type React from 'react';
 
 import { Button, Dialog, Heading, Spinner } from '@douglasneuroinformatics/libui/components';
 import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
@@ -492,7 +492,7 @@ const RouteComponent = () => {
   );
 
   const handleOrionFieldBlur = useCallback(
-    (event: FocusEvent<HTMLDivElement>) => {
+    (event: React.FocusEvent<HTMLDivElement>) => {
       if (!isOrionSelection && !isOrionFollowup) {
         return;
       }
