@@ -15,6 +15,8 @@ export type InstrumentRendererProps = {
   onDiscardDraft?: () => void;
   onStepChange?: (step: number) => void;
   onSubmit: InstrumentSubmitHandler;
+  /** When true, hints the form to revalidate as data changes (used by custom live-validation overlays) */
+  revalidateOnChange?: boolean;
   subject?: SubjectDisplayInfo;
   target: InstrumentBundleContainer;
 };

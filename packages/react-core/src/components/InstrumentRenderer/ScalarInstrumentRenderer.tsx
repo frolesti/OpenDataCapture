@@ -32,6 +32,8 @@ export type ScalarInstrumentRendererProps = {
   onSubmit: InstrumentSubmitHandler;
   /** @deprecated */
   options?: InterpretOptions;
+  /** When true, hints the form to revalidate as data changes (used by custom live-validation overlays) */
+  revalidateOnChange?: boolean;
   subject?: SubjectDisplayInfo;
   target: Pick<ScalarInstrumentBundleContainer, 'bundle' | 'id'>;
 };
