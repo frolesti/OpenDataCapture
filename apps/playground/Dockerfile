@@ -4,7 +4,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 RUN npm i -g corepack@latest
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@10.7.0 --activate
 RUN pnpm install -g turbo@latest
 
 # PRUNE WORKSPACE

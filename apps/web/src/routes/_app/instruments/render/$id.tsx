@@ -37,25 +37,46 @@ function parseOrionDate(value: unknown): Date | null {
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     return value;
   }
+
   if (typeof value === 'string') {
-    const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value.trim());
-    if (!match) {
+    const trimmed = value.trim();
+    if (!trimmed) {
       return null;
     }
-    const day = Number(match[1]);
-    const month = Number(match[2]);
-    const year = Number(match[3]);
-    const parsed = new Date(year, month - 1, day, 12, 0, 0, 0);
-    if (
-      Number.isNaN(parsed.getTime()) ||
-      parsed.getFullYear() !== year ||
-      parsed.getMonth() !== month - 1 ||
-      parsed.getDate() !== day
-    ) {
-      return null;
+
+    const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/.exec(trimmed);
+    if (ddmmyyyy) {
+      const day = Number(ddmmyyyy[1]);
+      const month = Number(ddmmyyyy[2]);
+      const year = Number(ddmmyyyy[3]);
+      const parsed = new Date(year, month - 1, day, 12, 0, 0, 0);
+      if (
+        Number.isNaN(parsed.getTime()) ||
+        parsed.getFullYear() !== year ||
+        parsed.getMonth() !== month - 1 ||
+        parsed.getDate() !== day
+      ) {
+        return null;
+      }
+      return parsed;
     }
-    return parsed;
+
+    const isoCandidate = new Date(trimmed);
+    if (!Number.isNaN(isoCandidate.getTime())) {
+      return isoCandidate;
+    }
+
+    const isoDateLike = /^\d{4}-\d{2}-\d{2}(?:[T\s].*)?$/.exec(trimmed);
+    if (isoDateLike) {
+      const parsed = new Date(`${trimmed}T12:00:00`);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+
+    return null;
   }
+
   return null;
 }
 
@@ -513,12 +534,18 @@ const RouteComponent = () => {
 
     const styledElements: HTMLElement[] = [];
     const styles = [
-      { background: '#fff1f2', border: '#e11d48', color: '#9f1239', marker: 'PREGABALINA IR' },
-      { background: '#f5f3ff', border: '#7c3aed', color: '#5b21b6', marker: 'PREGABALINA PR' }
+      { background: 'rgba(142, 136, 255, 0.08)', border: 'rgba(142, 136, 255, 0.32)', markers: ['PREGABALINA IR'] },
+      { background: 'rgba(142, 136, 255, 0.10)', border: 'rgba(142, 136, 255, 0.38)', markers: ['PREGABALINA PR'] },
+      {
+        background: 'rgba(142, 136, 255, 0.06)',
+        border: 'rgba(142, 136, 255, 0.28)',
+        markers: ['RETROSPECTIVA', 'PROSPECTIVA', 'CALIDAD DE SUEÑO', 'ADHERENCIA AL TRATAMIENTO']
+      }
     ];
 
     for (const heading of document.querySelectorAll<HTMLElement>('h4')) {
-      const style = styles.find(({ marker }) => heading.textContent?.toUpperCase().includes(marker));
+      const sectionText = heading.textContent?.toUpperCase() ?? '';
+      const style = styles.find(({ markers }) => markers.some((marker) => sectionText.includes(marker)));
       if (!style) {
         continue;
       }
@@ -528,17 +555,9 @@ const RouteComponent = () => {
       }
       section.dataset.orionTreatmentBand = 'true';
       section.style.backgroundColor = style.background;
-      section.style.borderInlineStart = `4px solid ${style.border}`;
-      section.style.borderRadius = '6px';
-      section.style.padding = '20px';
-      heading.style.color = style.color;
-      heading.style.fontSize = '1.125rem';
-      heading.style.fontWeight = '700';
-      const description = heading.parentElement?.querySelector<HTMLElement>('p');
-      if (description) {
-        description.style.color = style.color;
-        description.style.fontWeight = '600';
-      }
+      section.style.borderInlineStart = `2px solid ${style.border}`;
+      section.style.borderRadius = '8px';
+      section.style.padding = '16px';
       styledElements.push(section);
     }
 
@@ -546,9 +565,6 @@ const RouteComponent = () => {
       for (const section of styledElements) {
         section.removeAttribute('data-orion-treatment-band');
         section.removeAttribute('style');
-        const heading = section.querySelector<HTMLElement>('h4');
-        heading?.removeAttribute('style');
-        heading?.parentElement?.querySelector<HTMLElement>('p')?.removeAttribute('style');
       }
     };
   }, [currentStep, isOrionSelection, rendererKey]);

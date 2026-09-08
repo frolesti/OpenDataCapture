@@ -61,7 +61,7 @@ export const InstrumentOverview = ({
       <Button
         className={
           isResuming
-            ? 'w-full bg-sky-600 text-white hover:bg-sky-700'
+            ? 'w-full bg-[#6b68d1] text-white hover:bg-[#5f5cc0]'
             : 'w-full bg-[#8f8df2] text-white hover:bg-[#7f7de4]'
         }
         label={t({
