@@ -798,14 +798,16 @@ const RouteComponent = () => {
       }
     }
 
+    const payloadData = mergedData as CreateInstrumentRecordData['data'];
+
     if (recordId) {
       // For edits, show confirmation dialog first
-      pendingSubmitRef.current = { data: mergedData, instrumentId };
+      pendingSubmitRef.current = { data: payloadData, instrumentId };
       setShowEditConfirmation(true);
       return;
     }
     await axios.post('/v1/instrument-records', {
-      data: mergedData,
+      data: payloadData,
       date: new Date(),
       groupId: currentGroup?.id,
       instrumentId,
