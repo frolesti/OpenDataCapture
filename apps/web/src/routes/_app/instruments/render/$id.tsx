@@ -657,42 +657,35 @@ const RouteComponent = () => {
       const inclusionKeys = ['inclusion_1', 'inclusion_2', 'inclusion_3', 'inclusion_4', 'inclusion_5', 'inclusion_6'];
       const exclusionKeys = ['exclusion_1', 'exclusion_2', 'exclusion_3', 'exclusion_4', 'exclusion_5', 'exclusion_6'];
 
+      // NOTE: these guards must throw (not return) on failure. The renderer treats a
+      // resolved onSubmit promise as a successful save and advances to the summary
+      // step, so returning normally here would show "completed" without persisting data.
+      const rejectSubmit = (message: string): never => {
+        notifications.addNotification({ message, type: 'error' });
+        throw new Error(message);
+      };
+
       if (values.informed_consent !== 'si') {
-        notifications.addNotification({
-          message: 'No se puede continuar sin consentimiento informado firmado.',
-          type: 'error'
-        });
-        return;
+        rejectSubmit('No se puede continuar sin consentimiento informado firmado.');
       }
 
       const eligible =
         inclusionKeys.every((key) => values[key] === 'si') && exclusionKeys.every((key) => values[key] === 'no');
       if (!eligible) {
-        notifications.addNotification({
-          message:
-            'No se puede continuar: revise los criterios de inclusión y exclusión (inclusión=SI y exclusión=NO).',
-          type: 'error'
-        });
-        return;
+        rejectSubmit(
+          'No se puede continuar: revise los criterios de inclusión y exclusión (inclusión=SI y exclusión=NO).'
+        );
       }
 
       const age = typeof values.age === 'number' ? values.age : undefined;
       if (typeof age === 'number' && age < 18) {
-        notifications.addNotification({
-          message: 'No se puede continuar: el paciente debe ser mayor de edad (≥ 18 años).',
-          type: 'error'
-        });
-        return;
+        rejectSubmit('No se puede continuar: el paciente debe ser mayor de edad (≥ 18 años).');
       }
 
       const selectionVisitDate = parseOrionDate(values.selection_visit_date);
       const consentSignedDate = parseOrionDate(values.consent_signed_date);
       if (!selectionVisitDate || !consentSignedDate) {
-        notifications.addNotification({
-          message: 'Debe indicar la fecha de visita de selección y la fecha de firma del consentimiento.',
-          type: 'error'
-        });
-        return;
+        rejectSubmit('Debe indicar la fecha de visita de selección y la fecha de firma del consentimiento.');
       }
 
       if (
@@ -701,19 +694,23 @@ const RouteComponent = () => {
         consentSignedDate.getTime() < ORION_DATE_MIN.getTime() ||
         consentSignedDate.getTime() > ORION_DATE_MAX.getTime()
       ) {
-        notifications.addNotification({
-          message: 'Las fechas deben estar entre diciembre de 2026 y diciembre de 2027.',
-          type: 'error'
-        });
-        return;
+        rejectSubmit('Las fechas deben estar entre diciembre de 2026 y diciembre de 2027.');
       }
 
       if (consentSignedDate.getTime() > selectionVisitDate.getTime()) {
-        notifications.addNotification({
-          message: 'La firma del consentimiento no puede ser posterior a la visita de selección.',
-          type: 'error'
-        });
-        return;
+        rejectSubmit('La firma del consentimiento no puede ser posterior a la visita de selección.');
+      }
+
+      for (const prefix of ['prev', 'current', 'concomitant']) {
+        for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
+          const startDate = parseOrionDate(values[`${prefix}_treatment_start_${treatmentNumber}`]);
+          const endDate = parseOrionDate(values[`${prefix}_treatment_end_${treatmentNumber}`]);
+          if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
+            rejectSubmit(
+              `La fecha de inicio del tratamiento no puede ser posterior a la fecha de fin (tratamiento ${treatmentNumber}).`
+            );
+          }
+        }
       }
     }
 
