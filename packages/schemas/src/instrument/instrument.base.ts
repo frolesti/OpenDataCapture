@@ -186,6 +186,7 @@ type InstrumentInfo<T extends BaseInstrument = BaseInstrument> = Omit<T, 'conten
   id: string;
   internal?: {
     edition: number;
+    name: string;
   };
 };
 

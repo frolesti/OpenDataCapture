@@ -11,23 +11,12 @@ import { InactivityProvider } from '@/providers/InactivityProvider';
 import { WalkthroughProvider } from '@/providers/WalkthroughProvider';
 import { useAppStore } from '@/store';
 
+import type { Group } from '@opendatacapture/schemas/group';
+
 type CurrentProfileResponse = {
   basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER' | 'STANDARD';
   firstName: string;
-  groups: Array<{
-    id: string;
-    accessibleInstrumentIds: string[];
-    hospitals: string[];
-    name: string;
-    settings?: {
-      defaultIdentificationMethod?: string;
-      defaultInstrumentId?: string;
-      defaultSubjectIdentifierDisplayType?: string;
-      idValidationRegex?: string;
-      subjectIdScopePrefix?: string;
-    };
-    type: string;
-  }>;
+  groups: Group[];
   id: string;
   lastName: string;
   username: string;

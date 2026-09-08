@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
+import type { InstrumentBundleContainer } from '@opendatacapture/schemas/instrument';
+
 export function useInstrumentBundle(id: null | string) {
   const queryClient = useQueryClient();
 
@@ -20,7 +22,7 @@ export function useInstrumentBundle(id: null | string) {
       });
 
       if (response.status === 304) {
-        const cached = queryClient.getQueryData(queryKey);
+        const cached = queryClient.getQueryData<InstrumentBundleContainer>(queryKey);
         if (cached) {
           return cached;
         }

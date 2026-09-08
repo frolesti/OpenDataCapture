@@ -283,6 +283,7 @@ export const StartSessionForm = ({
             .refine((date) => !date || date <= currentDate, { message: t('session.errors.assessmentMustBeInPast') })
         })
         .superRefine((val, ctx) => {
+          const group = currentGroup as Group | null;
           if (val.subjectIdentificationMethod === 'CUSTOM_ID') {
             if (!val.subjectId) {
               ctx.addIssue({
@@ -290,11 +291,11 @@ export const StartSessionForm = ({
                 message: t('core.form.requiredField'),
                 path: ['subjectId']
               });
-            } else if (currentGroup?.settings.idValidationRegex) {
+            } else if (group?.settings.idValidationRegex) {
               try {
-                const regex = new RegExp(currentGroup?.settings.idValidationRegex);
+                const regex = new RegExp(group.settings.idValidationRegex);
                 if (!regex.test(val.subjectId)) {
-                  const customErrorMessage = currentGroup.settings.idValidationRegexErrorMessage;
+                  const customErrorMessage = group.settings.idValidationRegexErrorMessage;
                   const errorMessageFromGroup = customErrorMessage?.[resolvedLanguage];
 
                   ctx.addIssue({
@@ -335,6 +336,7 @@ export const StartSessionForm = ({
         subjectDateOfBirth,
         subjectSex
       }) => {
+        const group = currentGroup as Group | null;
         const finalSessionType = usesStreamlinedSessionStart ? 'RETROSPECTIVE' : sessionType!;
         const finalSessionDate = usesStreamlinedSessionStart ? sessionDate! : (sessionDate ?? currentDate);
 
@@ -347,12 +349,12 @@ export const StartSessionForm = ({
           });
         } else {
           subjectId = encodeScopedSubjectId(subjectId, {
-            groupName: currentGroup?.name ?? DEFAULT_GROUP_NAME
+            groupName: group?.name ?? DEFAULT_GROUP_NAME
           });
         }
         await onSubmit({
           date: finalSessionDate,
-          groupId: currentGroup?.id ?? null,
+          groupId: group?.id ?? null,
           username: username ?? null,
           type: finalSessionType,
           subjectData: {

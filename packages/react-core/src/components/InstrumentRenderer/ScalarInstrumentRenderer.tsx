@@ -4,6 +4,7 @@ import { replacer } from '@douglasneuroinformatics/libjs';
 import { Spinner } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { InterpretOptions } from '@opendatacapture/instrument-interpreter';
+import type { AnyUnilingualFormInstrument } from '@opendatacapture/runtime-core';
 import type { Json } from '@opendatacapture/schemas/core';
 import type { ScalarInstrumentBundleContainer } from '@opendatacapture/schemas/instrument';
 import { match } from 'ts-pattern';
@@ -129,7 +130,7 @@ export const ScalarInstrumentRenderer = ({
               <FormContent
                 key={initialData ? 'loaded' : 'new'}
                 initialValues={initialData}
-                instrument={instrument}
+                instrument={instrument as AnyUnilingualFormInstrument}
                 onDataChange={onDataChange}
                 onSubmit={handleSubmit}
               />

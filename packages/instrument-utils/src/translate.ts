@@ -116,7 +116,7 @@ function translateScalarField(
     .with(
       { kind: 'number', variant: P.union('radio', 'select') },
       { kind: 'set' },
-      { kind: 'string', variant: P.union('radio', 'select') },
+      { kind: 'string', variant: P.union('radio', 'select', 'combobox') },
       (field) => ({
         ...field,
         ...base,

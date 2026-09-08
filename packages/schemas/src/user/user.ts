@@ -25,6 +25,7 @@ export type CreateUserData = z.infer<typeof $CreateUserData>;
 export const $CreateUserData = $User
   .pick({
     basePermissionLevel: true,
+    email: true,
     firstName: true,
     groupIds: true,
     lastName: true,
