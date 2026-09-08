@@ -39,6 +39,37 @@ function parseOrionDate(value: unknown): Date | null {
     return value;
   }
 
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  if (value && typeof value === 'object') {
+    const candidate = value as Record<string, unknown>;
+    const wrapped = candidate.value ?? candidate.date ?? candidate.raw;
+    if (wrapped !== undefined && wrapped !== value) {
+      const parsedWrapped = parseOrionDate(wrapped);
+      if (parsedWrapped) {
+        return parsedWrapped;
+      }
+    }
+
+    const day = Number(candidate.day ?? candidate.dd);
+    const month = Number(candidate.month ?? candidate.mm);
+    const year = Number(candidate.year ?? candidate.yyyy);
+    if (Number.isInteger(day) && Number.isInteger(month) && Number.isInteger(year)) {
+      const parsed = new Date(year, month - 1, day, 12, 0, 0, 0);
+      if (
+        !Number.isNaN(parsed.getTime()) &&
+        parsed.getFullYear() === year &&
+        parsed.getMonth() === month - 1 &&
+        parsed.getDate() === day
+      ) {
+        return parsed;
+      }
+    }
+  }
+
   if (typeof value === 'string') {
     const trimmed = value.trim();
     if (!trimmed) {
@@ -62,17 +93,17 @@ function parseOrionDate(value: unknown): Date | null {
       return parsed;
     }
 
-    const isoCandidate = new Date(trimmed);
-    if (!Number.isNaN(isoCandidate.getTime())) {
-      return isoCandidate;
-    }
-
     const isoDateLike = /^\d{4}-\d{2}-\d{2}(?:[T\s].*)?$/.exec(trimmed);
     if (isoDateLike) {
-      const parsed = new Date(`${trimmed}T12:00:00`);
+      const parsed = new Date(trimmed.includes('T') ? trimmed : `${trimmed}T12:00:00`);
       if (!Number.isNaN(parsed.getTime())) {
         return parsed;
       }
+    }
+
+    const isoCandidate = new Date(trimmed);
+    if (!Number.isNaN(isoCandidate.getTime())) {
+      return isoCandidate;
     }
 
     return null;
@@ -83,6 +114,39 @@ function parseOrionDate(value: unknown): Date | null {
 
 function isCompleteDateEntry(value: unknown): boolean {
   return typeof value === 'string' && value.trim().length >= 10;
+}
+
+function hasMeaningfulValue(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+  return true;
+}
+
+function mergeFormSnapshots(
+  previous: Record<string, unknown> | null | undefined,
+  incoming: Record<string, unknown>
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...(previous ?? {}) };
+  for (const [key, value] of Object.entries(incoming)) {
+    if (hasMeaningfulValue(value) || !hasMeaningfulValue(merged[key])) {
+      merged[key] = value;
+    }
+  }
+  return merged;
+}
+
+function getFirstDefinedFieldValue(values: Record<string, unknown>, keys: string[]): unknown {
+  for (const key of keys) {
+    const value = values[key];
+    if (hasMeaningfulValue(value)) {
+      return value;
+    }
+  }
+  return undefined;
 }
 
 function normalizeOrionBundle(bundle: string, mode: 'followup' | 'selection'): string {
@@ -477,15 +541,16 @@ const RouteComponent = () => {
   // Auto-save form data to localStorage as draft
   const handleDataChange = useCallback(
     (data: Record<string, unknown>) => {
-      latestDataRef.current = data;
+      const nextData = mergeFormSnapshots(latestDataRef.current, data);
+      latestDataRef.current = nextData;
       if (isOrionSelection || isOrionFollowup) {
-        setLiveValidationErrors(getOrionLiveValidationErrors(data));
+        setLiveValidationErrors(getOrionLiveValidationErrors(nextData));
       } else {
         setLiveValidationErrors([]);
       }
       // Only auto-save for new records, not when editing existing ones
       if (!recordId) {
-        saveDraft(params.id, data);
+        saveDraft(params.id, nextData);
       }
     },
     [isOrionFollowup, isOrionSelection, params.id, recordId]
@@ -654,12 +719,9 @@ const RouteComponent = () => {
   const handleSubmit: InstrumentSubmitHandler = async ({ data, instrumentId }) => {
     // The renderer's onSubmit payload can drop values entered on earlier pages of a
     // multi-page form once their dynamic field condition is no longer being evaluated.
-    // latestDataRef tracks the cumulative values seen via onDataChange (used for draft
-    // autosave), so merge it in as the source of truth for fields missing from `data`.
-    const mergedData: Record<string, unknown> = {
-      ...(latestDataRef.current ?? {}),
-      ...(data as Record<string, unknown>)
-    };
+    // latestDataRef tracks cumulative snapshots seen via onDataChange, so we merge both
+    // payloads while preserving previously entered non-empty values.
+    const mergedData = mergeFormSnapshots(latestDataRef.current, data as Record<string, unknown>);
 
     if (isOrionSelection) {
       const values = mergedData;
@@ -691,8 +753,21 @@ const RouteComponent = () => {
         return rejectSubmit('No se puede continuar: el paciente debe ser mayor de edad (≥ 18 años).');
       }
 
-      const selectionVisitDate = parseOrionDate(values.selection_visit_date);
-      const consentSignedDate = parseOrionDate(values.consent_signed_date);
+      const selectionVisitRaw = getFirstDefinedFieldValue(values, [
+        'selection_visit_date',
+        'selectionVisitDate',
+        'visit_selection_date',
+        'selectionDate'
+      ]);
+      const consentSignedRaw = getFirstDefinedFieldValue(values, [
+        'consent_signed_date',
+        'consentSignedDate',
+        'signed_consent_date',
+        'consentDate'
+      ]);
+
+      const selectionVisitDate = parseOrionDate(selectionVisitRaw);
+      const consentSignedDate = parseOrionDate(consentSignedRaw);
       if (!selectionVisitDate || !consentSignedDate) {
         return rejectSubmit('Debe indicar la fecha de visita de selección y la fecha de firma del consentimiento.');
       }
@@ -730,7 +805,7 @@ const RouteComponent = () => {
       return;
     }
     await axios.post('/v1/instrument-records', {
-      data: mergedData as CreateInstrumentRecordData['data'],
+      data: mergedData,
       date: new Date(),
       groupId: currentGroup?.id,
       instrumentId,
