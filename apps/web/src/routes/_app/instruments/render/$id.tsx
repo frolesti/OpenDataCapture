@@ -666,26 +666,26 @@ const RouteComponent = () => {
       };
 
       if (values.informed_consent !== 'si') {
-        rejectSubmit('No se puede continuar sin consentimiento informado firmado.');
+        return rejectSubmit('No se puede continuar sin consentimiento informado firmado.');
       }
 
       const eligible =
         inclusionKeys.every((key) => values[key] === 'si') && exclusionKeys.every((key) => values[key] === 'no');
       if (!eligible) {
-        rejectSubmit(
+        return rejectSubmit(
           'No se puede continuar: revise los criterios de inclusión y exclusión (inclusión=SI y exclusión=NO).'
         );
       }
 
       const age = typeof values.age === 'number' ? values.age : undefined;
       if (typeof age === 'number' && age < 18) {
-        rejectSubmit('No se puede continuar: el paciente debe ser mayor de edad (≥ 18 años).');
+        return rejectSubmit('No se puede continuar: el paciente debe ser mayor de edad (≥ 18 años).');
       }
 
       const selectionVisitDate = parseOrionDate(values.selection_visit_date);
       const consentSignedDate = parseOrionDate(values.consent_signed_date);
       if (!selectionVisitDate || !consentSignedDate) {
-        rejectSubmit('Debe indicar la fecha de visita de selección y la fecha de firma del consentimiento.');
+        return rejectSubmit('Debe indicar la fecha de visita de selección y la fecha de firma del consentimiento.');
       }
 
       if (
@@ -694,11 +694,11 @@ const RouteComponent = () => {
         consentSignedDate.getTime() < ORION_DATE_MIN.getTime() ||
         consentSignedDate.getTime() > ORION_DATE_MAX.getTime()
       ) {
-        rejectSubmit('Las fechas deben estar entre diciembre de 2026 y diciembre de 2027.');
+        return rejectSubmit('Las fechas deben estar entre diciembre de 2026 y diciembre de 2027.');
       }
 
       if (consentSignedDate.getTime() > selectionVisitDate.getTime()) {
-        rejectSubmit('La firma del consentimiento no puede ser posterior a la visita de selección.');
+        return rejectSubmit('La firma del consentimiento no puede ser posterior a la visita de selección.');
       }
 
       for (const prefix of ['prev', 'current', 'concomitant']) {
@@ -706,7 +706,7 @@ const RouteComponent = () => {
           const startDate = parseOrionDate(values[`${prefix}_treatment_start_${treatmentNumber}`]);
           const endDate = parseOrionDate(values[`${prefix}_treatment_end_${treatmentNumber}`]);
           if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
-            rejectSubmit(
+            return rejectSubmit(
               `La fecha de inicio del tratamiento no puede ser posterior a la fecha de fin (tratamiento ${treatmentNumber}).`
             );
           }
