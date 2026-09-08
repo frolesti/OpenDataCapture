@@ -730,7 +730,7 @@ const RouteComponent = () => {
       return;
     }
     await axios.post('/v1/instrument-records', {
-      data: mergedData,
+      data: mergedData as CreateInstrumentRecordData['data'],
       date: new Date(),
       groupId: currentGroup?.id,
       instrumentId,
