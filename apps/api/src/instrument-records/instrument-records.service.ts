@@ -184,10 +184,8 @@ export class InstrumentRecordsService {
     await this.sessionsService.findById(sessionId);
 
     const parsedData = this.parseJson(rawData);
-    console.log('[DEBUG] Parsed data structure:', JSON.stringify(parsedData, null, 2).substring(0, 500));
     const parseResult = instrument.validationSchema.safeParse(parsedData);
     if (!parseResult.success) {
-      console.log('[DEBUG] Validation issues:', parseResult.error.issues);
       throw new UnprocessableEntityException({
         error: 'Unprocessable Entity',
         issues: parseResult.error.issues,

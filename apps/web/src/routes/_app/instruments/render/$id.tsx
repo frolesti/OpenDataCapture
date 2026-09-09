@@ -373,6 +373,8 @@ const RouteComponent = () => {
   const [rendererKey, setRendererKey] = useState(0);
   // Track which step the InstrumentRenderer is on (0=overview, 1=form, 2=summary)
   const [currentStep, setCurrentStep] = useState(0);
+  // Hide draft button after successful submit
+  const [formSubmitted, setFormSubmitted] = useState(false);
   // Edit confirmation dialog state
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
   const pendingSubmitRef = useRef<{ data: unknown; instrumentId: string } | null>(null);
@@ -816,6 +818,7 @@ const RouteComponent = () => {
     } satisfies CreateInstrumentRecordData);
     // Clear draft on successful submit
     clearDraft(params.id);
+    setFormSubmitted(true);
     notifications.addNotification({
       message: t({
         en: 'Formulari desat correctament',
@@ -875,7 +878,7 @@ const RouteComponent = () => {
           {title ?? t('core.instrument')}
         </Heading>
       </PageHeader>
-      {currentStep === 1 && !recordId ? (
+      {currentStep === 1 && !recordId && !formSubmitted ? (
         <div className="fixed right-6 top-6 z-[70]">
           <Button
             className="gap-2 bg-[#8f8df2] text-white shadow-md hover:bg-[#7f7de4]"
