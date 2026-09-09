@@ -183,8 +183,7 @@ export class InstrumentRecordsService {
     await this.subjectsService.findById(subjectId);
     await this.sessionsService.findById(sessionId);
 
-    const parsedData = this.parseJson(rawData);
-    const parseResult = instrument.validationSchema.safeParse(parsedData);
+    const parseResult = instrument.validationSchema.safeParse(this.parseJson(rawData));
     if (!parseResult.success) {
       throw new UnprocessableEntityException({
         error: 'Unprocessable Entity',
