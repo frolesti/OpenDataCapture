@@ -212,7 +212,10 @@ export class InstrumentRecordsService {
       userCode
     });
 
-    this.validateHospitalSelection(parsedData, group?.hospitals ?? []);
+    // Only validate hospital selection for ORION instruments (OMEGA and others don't use group hospitals)
+    if (instrument.internal.name.startsWith('ORION_')) {
+      this.validateHospitalSelection(parsedData, group?.hospitals ?? []);
+    }
 
     const record = await this.instrumentRecordModel.create({
       data: {
@@ -653,7 +656,10 @@ export class InstrumentRecordsService {
             );
           }
 
-          this.validateHospitalSelection(parseResult.data, group?.hospitals ?? []);
+          // Only validate hospital selection for ORION instruments (OMEGA and others don't use group hospitals)
+          if (instrument.internal.name.startsWith('ORION_')) {
+            this.validateHospitalSelection(parseResult.data, group?.hospitals ?? []);
+          }
 
           const session = await this.sessionsService.create({
             date: date,
