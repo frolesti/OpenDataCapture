@@ -56,26 +56,34 @@ function parseManualDate(value: unknown): Date | undefined {
     return undefined;
   }
 
-  const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value.trim());
-  if (!match) {
+  const trimmed = value.trim();
+
+  // Accept DD-MM-AAAA format
+  const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/.exec(trimmed);
+  if (ddmmyyyy) {
+    const day = Number(ddmmyyyy[1]);
+    const month = Number(ddmmyyyy[2]);
+    const year = Number(ddmmyyyy[3]);
+    const parsed = new Date(year, month - 1, day, 12);
+
+    if (
+      !Number.isNaN(parsed.getTime()) &&
+      parsed.getFullYear() === year &&
+      parsed.getMonth() === month - 1 &&
+      parsed.getDate() === day
+    ) {
+      return parsed;
+    }
     return undefined;
   }
 
-  const day = Number(match[1]);
-  const month = Number(match[2]);
-  const year = Number(match[3]);
-  const parsed = new Date(year, month - 1, day, 12);
-
-  if (
-    Number.isNaN(parsed.getTime()) ||
-    parsed.getFullYear() !== year ||
-    parsed.getMonth() !== month - 1 ||
-    parsed.getDate() !== day
-  ) {
-    return undefined;
+  // Accept ISO date strings (from JSON serialization)
+  const isoDate = new Date(trimmed);
+  if (!Number.isNaN(isoDate.getTime())) {
+    return isoDate;
   }
 
-  return parsed;
+  return undefined;
 }
 
 function optionalManualDateSchema() {
