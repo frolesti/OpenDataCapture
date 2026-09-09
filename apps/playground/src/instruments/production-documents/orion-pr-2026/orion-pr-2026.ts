@@ -43,66 +43,23 @@ const CONSENT_SIGNED_DATE_ERROR =
 const CONSENT_DATE_ORDER_ERROR =
   'La fecha de firma del consentimiento no puede ser posterior a la visita de selección.';
 
-function parseManualDate(value: unknown): Date | undefined {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
+function isValidDate(val: string | undefined): boolean {
+  if (!val) return true;
+  const [day, month, year] = val.split('-').map(Number);
+  if (day === undefined || month === undefined || year === undefined) {
+    return false;
   }
-
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return value;
-  }
-
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-
-  // Accept DD-MM-AAAA format
-  const ddmmyyyy = /^(\d{2})-(\d{2})-(\d{4})$/.exec(trimmed);
-  if (ddmmyyyy) {
-    const day = Number(ddmmyyyy[1]);
-    const month = Number(ddmmyyyy[2]);
-    const year = Number(ddmmyyyy[3]);
-    const parsed = new Date(year, month - 1, day, 12);
-
-    if (
-      !Number.isNaN(parsed.getTime()) &&
-      parsed.getFullYear() === year &&
-      parsed.getMonth() === month - 1 &&
-      parsed.getDate() === day
-    ) {
-      return parsed;
-    }
-    return undefined;
-  }
-
-  // Accept ISO date strings (from JSON serialization)
-  const isoDate = new Date(trimmed);
-  if (!Number.isNaN(isoDate.getTime())) {
-    return isoDate;
-  }
-
-  return undefined;
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 }
 
 function optionalManualDateSchema() {
   return z
-    .any()
-    .optional()
-    .transform((value, context) => {
-      if (value === undefined || value === null || value === '') {
-        return undefined;
-      }
-
-      const parsed = parseManualDate(value);
-      if (!parsed) {
-        context.addIssue({ code: z.ZodIssueCode.custom, message: DATE_FORMAT_ERROR });
-        return z.NEVER;
-      }
-
-      return parsed;
-    });
+    .string()
+    .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, DATE_FORMAT_ERROR)
+    .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
+    .or(z.literal(''))
+    .optional();
 }
 
 function isEligible(data: FormData): boolean {
@@ -519,14 +476,15 @@ function treatmentValidation(prefix: 'prev' | 'current' | 'concomitant', maxTrea
 }
 
 function getTime(value: unknown): number | undefined {
-  if (value instanceof Date) {
-    return value.getTime();
+  if (typeof value !== 'string' || !value) {
+    return undefined;
   }
-  if (typeof value === 'string' || typeof value === 'number') {
-    const time = new Date(value).getTime();
-    return Number.isNaN(time) ? undefined : time;
+  const [day, month, year] = value.split('-').map(Number);
+  if (day === undefined || month === undefined || year === undefined) {
+    return undefined;
   }
-  return undefined;
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? undefined : date.getTime();
 }
 
 function isComorbidityComplete(data: FormData, number: number): boolean {
@@ -613,7 +571,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 5,
+    edition: 8,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -1178,30 +1136,26 @@ export default defineInstrument({
       const minTime = ORION_SELECTION_DATE_MIN.getTime();
       const maxTime = ORION_SELECTION_DATE_MAX.getTime();
 
-      if (selectionVisitDate instanceof Date) {
-        const visitTime = selectionVisitDate.getTime();
-        if (visitTime < minTime || visitTime > maxTime) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: SELECTION_VISIT_DATE_ERROR,
-            path: ['selection_visit_date']
-          });
-        }
+      const selectionVisitTime = getTime(selectionVisitDate);
+      if (selectionVisitTime !== undefined && (selectionVisitTime < minTime || selectionVisitTime > maxTime)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: SELECTION_VISIT_DATE_ERROR,
+          path: ['selection_visit_date']
+        });
       }
 
-      if (consentSignedDate instanceof Date) {
-        const consentTime = consentSignedDate.getTime();
-        if (consentTime < minTime || consentTime > maxTime) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: CONSENT_SIGNED_DATE_ERROR,
-            path: ['consent_signed_date']
-          });
-        }
+      const consentSignedTime = getTime(consentSignedDate);
+      if (consentSignedTime !== undefined && (consentSignedTime < minTime || consentSignedTime > maxTime)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: CONSENT_SIGNED_DATE_ERROR,
+          path: ['consent_signed_date']
+        });
       }
 
-      if (selectionVisitDate instanceof Date && consentSignedDate instanceof Date) {
-        if (consentSignedDate.getTime() > selectionVisitDate.getTime()) {
+      if (selectionVisitTime !== undefined && consentSignedTime !== undefined) {
+        if (consentSignedTime > selectionVisitTime) {
           context.addIssue({
             code: z.ZodIssueCode.custom,
             message: CONSENT_DATE_ORDER_ERROR,
@@ -1276,32 +1230,37 @@ export default defineInstrument({
             path: ['adverse_event_records']
           });
         }
-        for (const [index, event] of (data.adverse_event_records ?? []).entries()) {
-          for (const field of [
-            'reaction',
-            'onset_date',
-            'intensity',
-            'outcome',
-            'actions_taken',
-            'seriousness'
-          ] as const) {
-            if (!event[field]) {
+        // Only validate records when the user explicitly reported adverse events.
+        // Otherwise a hidden/ghost record (e.g. restored from a draft after switching
+        // back to "no") would be validated and block submission with unfixable errors.
+        if (data.baseline_adverse_events === 'si') {
+          for (const [index, event] of (data.adverse_event_records ?? []).entries()) {
+            for (const field of [
+              'reaction',
+              'onset_date',
+              'intensity',
+              'outcome',
+              'actions_taken',
+              'seriousness'
+            ] as const) {
+              if (!event[field]) {
+                context.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: 'Este campo es obligatorio',
+                  path: ['adverse_event_records', index, field]
+                });
+              }
+            }
+            if (
+              (event.outcome === 'recuperado' || event.outcome === 'recuperado_con_secuelas') &&
+              !event.resolution_date
+            ) {
               context.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Este campo es obligatorio',
-                path: ['adverse_event_records', index, field]
+                message: 'Indique la fecha de resolución para este desenlace.',
+                path: ['adverse_event_records', index, 'resolution_date']
               });
             }
-          }
-          if (
-            (event.outcome === 'recuperado' || event.outcome === 'recuperado_con_secuelas') &&
-            !event.resolution_date
-          ) {
-            context.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: 'Indique la fecha de resolución para este desenlace.',
-              path: ['adverse_event_records', index, 'resolution_date']
-            });
           }
         }
 
@@ -1349,10 +1308,11 @@ export default defineInstrument({
         }
 
         const currentTreatmentStart = values.current_treatment_start_1;
+        const currentTreatmentStartTime = getTime(currentTreatmentStart);
         if (
-          currentTreatmentStart instanceof Date &&
-          selectionVisitDate instanceof Date &&
-          currentTreatmentStart.getTime() > selectionVisitDate.getTime()
+          currentTreatmentStartTime !== undefined &&
+          selectionVisitTime !== undefined &&
+          currentTreatmentStartTime > selectionVisitTime
         ) {
           context.addIssue({
             code: z.ZodIssueCode.custom,
@@ -1447,5 +1407,13 @@ export default defineInstrument({
           }
         }
       }
+    })
+    .transform((data) => {
+      // Discard ghost adverse-event records when the user answered "no" so they are
+      // neither validated nor persisted.
+      if (data.baseline_adverse_events !== 'si') {
+        return { ...data, adverse_event_records: undefined };
+      }
+      return data;
     })
 });
