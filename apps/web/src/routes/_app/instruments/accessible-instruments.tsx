@@ -140,6 +140,7 @@ const RouteComponent = () => {
             })();
           },
           groups: currentUser?.groups,
+          isAdmin: currentUser?.basePermissionLevel === 'ADMIN',
           onGroupChange: (groupId) => {
             const group = currentUser?.groups.find((entry) => entry.id === groupId);
             if (group) {

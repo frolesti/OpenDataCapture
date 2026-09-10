@@ -14,10 +14,11 @@ const SelectItem = Select.Item as React.ComponentType<React.PropsWithChildren<{ 
 export const InstrumentShowcase: React.FC<{
   data: TranslatedInstrumentInfo[];
   groups?: Group[];
+  isAdmin?: boolean;
   onGroupChange?: (groupId: string) => void;
   onSelect: (instrument: TranslatedInstrumentInfo) => void;
   selectedGroupId?: string;
-}> = ({ data: availableInstruments, groups = [], onGroupChange, onSelect, selectedGroupId }) => {
+}> = ({ data: availableInstruments, groups = [], isAdmin, onGroupChange, onSelect, selectedGroupId }) => {
   const { t } = useTranslation();
   const [filteredInstruments, setFilteredInstruments] = useState<TranslatedInstrumentInfo[]>(
     availableInstruments.toSorted(compareInstruments)
@@ -83,7 +84,7 @@ export const InstrumentShowcase: React.FC<{
                 key={instrument.id}
                 transition={{ bounce: 0.2, delay: 0.15 * i, duration: 1.5, type: 'spring' }}
               >
-                <InstrumentCard instrument={instrument} onClick={() => onSelect(instrument)} />
+                <InstrumentCard instrument={instrument} isAdmin={isAdmin} onClick={() => onSelect(instrument)} />
               </motion.li>
             );
           })}

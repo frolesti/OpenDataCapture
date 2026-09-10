@@ -17,10 +17,11 @@ type CardItem = LinkCardItem | TextCardItem;
 
 type InstrumentCardProps = {
   instrument: TranslatedInstrumentInfo;
+  isAdmin?: boolean;
   onClick: () => void;
 };
 
-export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => {
+export const InstrumentCard = ({ instrument, isAdmin, onClick }: InstrumentCardProps) => {
   const { t } = useTranslation();
 
   const license = licenses.get(instrument.details.license);
@@ -43,7 +44,7 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       }),
       text: instrument.details.description
     },
-    ...(isOrionInstrument
+    ...(isOrionInstrument && !isAdmin
       ? []
       : [
           {
@@ -55,29 +56,42 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
             text: instrument.internal?.edition.toString()
           }
         ]),
-    {
-      kind: 'text',
-      label: t({
-        en: 'Idiomes',
-        fr: 'Idiomas'
-      }),
-      text: instrument.supportedLanguages
-        .map((language) => {
-          switch (language) {
-            case 'ca':
-              return 'Català';
-            case 'en':
-              return 'English';
-            case 'es':
-              return 'Español';
-            case 'fr':
-              return 'Français';
-            default:
-              return language;
+    ...(isOrionInstrument
+      ? [
+          {
+            kind: 'text' as const,
+            label: t({
+              en: 'Promotor',
+              fr: 'Promotor'
+            }),
+            text: 'Laboratorios Gebro Pharma S.A.'
           }
-        })
-        .join(', ')
-    },
+        ]
+      : [
+          {
+            kind: 'text' as const,
+            label: t({
+              en: 'Idiomes',
+              fr: 'Idiomas'
+            }),
+            text: instrument.supportedLanguages
+              .map((language) => {
+                switch (language) {
+                  case 'ca':
+                    return 'Català';
+                  case 'en':
+                    return 'English';
+                  case 'es':
+                    return 'Español';
+                  case 'fr':
+                    return 'Français';
+                  default:
+                    return language;
+                }
+              })
+              .join(', ')
+          }
+        ]),
     {
       kind: 'text',
       label: t({

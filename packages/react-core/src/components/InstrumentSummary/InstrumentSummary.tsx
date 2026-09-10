@@ -15,11 +15,12 @@ import type { SubjectDisplayInfo } from '../../types';
 export type InstrumentSummaryProps = {
   data: any;
   instrument: AnyUnilingualInstrument;
+  isAdmin?: boolean;
   subject?: SubjectDisplayInfo;
   timeCollected: number;
 };
 
-export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: InstrumentSummaryProps) => {
+export const InstrumentSummary = ({ data, instrument, isAdmin, subject, timeCollected }: InstrumentSummaryProps) => {
   const download = useDownload();
   const { resolvedLanguage, t } = useTranslation();
 
@@ -226,7 +227,7 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
           />
         )
       )}
-      {!internalName.startsWith('ORION_') && (
+      {(!internalName.startsWith('ORION_') || isAdmin) && (
         <InstrumentSummaryGroup
           items={[
             {

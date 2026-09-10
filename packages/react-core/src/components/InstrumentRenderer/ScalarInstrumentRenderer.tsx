@@ -22,6 +22,7 @@ import type { InstrumentSubmitHandler, SubjectDisplayInfo } from '../../types';
 export type ScalarInstrumentRendererProps = {
   className?: string;
   initialData?: Record<string, unknown>;
+  isAdmin?: boolean;
   isEditing?: boolean;
   isResuming?: boolean;
   /** @deprecated */
@@ -56,6 +57,7 @@ const fixDates = (data: unknown): unknown => {
 export const ScalarInstrumentRenderer = ({
   className,
   initialData,
+  isAdmin,
   isEditing,
   isResuming,
   onCompileError,
@@ -168,7 +170,13 @@ export const ScalarInstrumentRenderer = ({
               );
             })
             .with({ index: 2 }, () => (
-              <InstrumentSummary data={data} instrument={instrument} subject={subject} timeCollected={Date.now()} />
+              <InstrumentSummary
+                data={data}
+                instrument={instrument}
+                isAdmin={isAdmin}
+                subject={subject}
+                timeCollected={Date.now()}
+              />
             ))
             .otherwise(() => null)
         )

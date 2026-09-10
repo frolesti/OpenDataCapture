@@ -567,7 +567,7 @@ export default defineInstrument({
   language: 'es',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 11,
+    edition: 12,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -988,7 +988,7 @@ export default defineInstrument({
   details: {
     title: 'ORION-PR-2026 - Visita de selección',
     description:
-      'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada. Promotor: Laboratorios Gebro Pharma S.A.',
+      'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada.',
     license: 'Apache-2.0',
     authors: ['Antonio Alcántara', 'Ana Navarro']
   },

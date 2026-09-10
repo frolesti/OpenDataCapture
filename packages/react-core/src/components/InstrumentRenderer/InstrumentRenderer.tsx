@@ -9,6 +9,7 @@ export type InstrumentRendererProps = {
   className?: string;
   initialData?: Record<string, unknown>;
   initialSeriesIndex?: number;
+  isAdmin?: boolean;
   isEditing?: boolean;
   isResuming?: boolean;
   onDataChange?: (data: Record<string, unknown>) => void;

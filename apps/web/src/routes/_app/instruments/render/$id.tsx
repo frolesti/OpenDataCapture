@@ -926,6 +926,7 @@ const RouteComponent = () => {
           key={rendererKey}
           className="mx-auto max-w-3xl"
           initialData={formInitialData}
+          isAdmin={currentUser?.basePermissionLevel === 'ADMIN'}
           isEditing={Boolean(recordId)}
           isResuming={Boolean(recordId) || Boolean(effectiveInitialData)}
           subject={currentSession?.subject}
