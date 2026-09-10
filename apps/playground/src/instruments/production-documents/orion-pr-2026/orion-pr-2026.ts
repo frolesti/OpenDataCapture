@@ -6,8 +6,22 @@ const YES_NO_OPTIONS = {
   no: 'No'
 } as const;
 
-const INCLUSION_KEYS = ['inclusion_all'] as const;
-const EXCLUSION_KEYS = ['exclusion_all'] as const;
+const INCLUSION_KEYS = [
+  'inclusion_1',
+  'inclusion_2',
+  'inclusion_3',
+  'inclusion_4',
+  'inclusion_5',
+  'inclusion_6'
+] as const;
+const EXCLUSION_KEYS = [
+  'exclusion_1',
+  'exclusion_2',
+  'exclusion_3',
+  'exclusion_4',
+  'exclusion_5',
+  'exclusion_6'
+] as const;
 
 type FormData = Record<string, any>;
 
@@ -52,7 +66,10 @@ function isEligible(data: FormData): boolean {
     return false;
   }
 
-  return data.inclusion_all === 'si' && data.exclusion_all === 'no';
+  const inclusionOk = INCLUSION_KEYS.every((key) => data[key] === 'si');
+  const exclusionOk = EXCLUSION_KEYS.every((key) => data[key] === 'no');
+
+  return inclusionOk && exclusionOk;
 }
 
 function requiresConsent<T extends Record<string, any>>(field: T): any {
@@ -553,7 +570,7 @@ export default defineInstrument({
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 9,
+    edition: 10,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -589,10 +606,43 @@ export default defineInstrument({
       title: 'CRITERIOS DE INCLUSIÓN',
       description: 'Todos los criterios de inclusión deben ser SI para que el participante sea apto para el estudio',
       fields: {
-        inclusion_all: requiresConsent({
+        inclusion_1: requiresConsent({
           kind: 'string',
           label:
-            '1. Diagnóstico de dolor neuropático documentado. 2. Tratamiento previo con pregabalina IR. 3. Tratamiento con pregabalina PR durante 3-6 meses. 4. Dosis terapéutica (165-660 mg) el último mes. 5. Edad ≥ 18 años. 6. Consentimiento informado por escrito. ¿Cumple todos los criterios de inclusión? *',
+            '1. El paciente tiene diagnóstico de dolor neuropático (periférico o central) documentado en su historia clínica *',
+          variant: 'radio',
+          options: YES_NO_OPTIONS
+        }),
+        inclusion_2: requiresConsent({
+          kind: 'string',
+          label:
+            '2. El paciente está previamente tratado con pregabalina de liberación inmediata (IR) antes de iniciar tratamiento con pregabalina de liberación prolongada (PR) *',
+          variant: 'radio',
+          options: YES_NO_OPTIONS
+        }),
+        inclusion_3: requiresConsent({
+          kind: 'string',
+          label:
+            '3. El paciente ha estado en tratamiento con pregabalina PR durante al menos 3 meses y hasta 6 meses *',
+          variant: 'radio',
+          options: YES_NO_OPTIONS
+        }),
+        inclusion_4: requiresConsent({
+          kind: 'string',
+          label:
+            '4. El paciente ha recibido pregabalina PR durante al menos el último mes a una dosis terapéutica (165-660 mg), aunque el tratamiento puede haber comenzado con dosis inferiores en la práctica clínica habitual antes de la titulación a 165 mg o superior *',
+          variant: 'radio',
+          options: YES_NO_OPTIONS
+        }),
+        inclusion_5: requiresConsent({
+          kind: 'string',
+          label: '5. El paciente es ≥ 18 años en el momento de la inclusión *',
+          variant: 'radio',
+          options: YES_NO_OPTIONS
+        }),
+        inclusion_6: requiresConsent({
+          kind: 'string',
+          label: '6. El paciente ha proporcionado consentimiento informado por escrito *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         })
@@ -602,10 +652,44 @@ export default defineInstrument({
       title: 'CRITERIOS DE EXCLUSIÓN',
       description: 'Todos los criterios de exclusión deben ser NO para que el participante sea apto para el estudio',
       fields: {
-        exclusion_all: requiresConsent({
+        exclusion_1: requiresConsent({
+          kind: 'string',
+          label: '1. Pacientes tratados previamente con pregabalina PR antes del curso actual de tratamiento *',
+          variant: 'radio',
+          options: YES_NO_OPTIONS
+        }),
+        exclusion_2: requiresConsent({
           kind: 'string',
           label:
-            '1. Tratamiento previo con pregabalina PR. 2. Uso fuera de ficha técnica. 3. No cumplir requisitos del estudio. 4. Contraindicación a pregabalina PR. 5. Situación clínica no segura. 6. Participación en otro estudio. ¿Cumple algún criterio de exclusión? *',
+            '2. Uso de pregabalina PR fuera de la ficha técnica aprobada localmente, incluyendo indicación de administración *',
+          variant: 'radio',
+          options: YES_NO_OPTIONS
+        }),
+        exclusion_3: requiresConsent({
+          kind: 'string',
+          label:
+            '3. Pacientes que no puedan cumplir con los requisitos del estudio o que, a criterio del investigador, no deban participar en el estudio *',
+          variant: 'radio',
+          options: YES_NO_OPTIONS
+        }),
+        exclusion_4: requiresConsent({
+          kind: 'string',
+          label:
+            '4. Pacientes con cualquier contraindicación a pregabalina PR según se especifica en la ficha técnica del producto *',
+          variant: 'radio',
+          options: YES_NO_OPTIONS
+        }),
+        exclusion_5: requiresConsent({
+          kind: 'string',
+          label:
+            '5. Cualquier situación clínica en la que el investigador considere que el tratamiento no es seguro (por ejemplo, enfermedad psiquiátrica grave no controlada, depresión, ideación suicida activa, alto riesgo de incumplimiento terapéutico) *',
+          variant: 'radio',
+          options: YES_NO_OPTIONS
+        }),
+        exclusion_6: requiresConsent({
+          kind: 'string',
+          label:
+            '6. Participación en otro estudio clínico o de investigación que pueda interferir con la interpretación de los datos *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         })
@@ -897,8 +981,19 @@ export default defineInstrument({
       selection_visit_date: optionalManualDateSchema(),
       consent_signed_date: optionalManualDateSchema(),
 
-      inclusion_all: z.enum(['si', 'no']).optional(),
-      exclusion_all: z.enum(['si', 'no']).optional(),
+      inclusion_1: z.enum(['si', 'no']).optional(),
+      inclusion_2: z.enum(['si', 'no']).optional(),
+      inclusion_3: z.enum(['si', 'no']).optional(),
+      inclusion_4: z.enum(['si', 'no']).optional(),
+      inclusion_5: z.enum(['si', 'no']).optional(),
+      inclusion_6: z.enum(['si', 'no']).optional(),
+
+      exclusion_1: z.enum(['si', 'no']).optional(),
+      exclusion_2: z.enum(['si', 'no']).optional(),
+      exclusion_3: z.enum(['si', 'no']).optional(),
+      exclusion_4: z.enum(['si', 'no']).optional(),
+      exclusion_5: z.enum(['si', 'no']).optional(),
+      exclusion_6: z.enum(['si', 'no']).optional(),
 
       age: z.number().optional(),
       sex: z.enum(['femenino', 'masculino']).optional(),
@@ -1013,8 +1108,9 @@ export default defineInstrument({
       };
 
       if (data.informed_consent === 'si') {
-        addRequiredIssue('inclusion_all');
-        addRequiredIssue('exclusion_all');
+        for (const field of [...INCLUSION_KEYS, ...EXCLUSION_KEYS]) {
+          addRequiredIssue(field);
+        }
         addRequiredIssue('selection_visit_date');
         addRequiredIssue('consent_signed_date');
       } else {
@@ -1030,7 +1126,7 @@ export default defineInstrument({
           code: z.ZodIssueCode.custom,
           message:
             'No se puede continuar: revise los criterios de inclusión y exclusión (todos los criterios de inclusión deben ser SI y los de exclusión NO).',
-          path: ['inclusion_all']
+          path: ['inclusion_1']
         });
       }
 
@@ -1314,9 +1410,20 @@ export default defineInstrument({
     .transform((data) => {
       // Discard ghost adverse-event records when the user answered "no" so they are
       // neither validated nor persisted.
+      const result: FormData = { ...data };
       if (data.baseline_adverse_events !== 'si') {
-        return { ...data, adverse_event_records: undefined };
+        result.adverse_event_records = undefined;
       }
-      return data;
+
+      // Persist only the aggregate inclusion/exclusion outcome, not each individual answer.
+      if (data.informed_consent === 'si') {
+        result.inclusion_all = INCLUSION_KEYS.every((key) => data[key] === 'si') ? 'si' : 'no';
+        result.exclusion_all = EXCLUSION_KEYS.every((key) => data[key] === 'no') ? 'no' : 'si';
+      }
+      for (const key of [...INCLUSION_KEYS, ...EXCLUSION_KEYS]) {
+        result[key] = undefined;
+      }
+
+      return result;
     })
 });
