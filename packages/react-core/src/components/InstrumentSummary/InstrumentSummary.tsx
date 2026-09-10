@@ -226,28 +226,30 @@ export const InstrumentSummary = ({ data, instrument, subject, timeCollected }: 
           />
         )
       )}
-      <InstrumentSummaryGroup
-        items={[
-          {
-            label: t({
-              en: 'Títol',
-              fr: 'Título'
-            }),
-            value: title
-          },
-          {
-            label: t({
-              en: 'Edició',
-              fr: 'Edición'
-            }),
-            value: instrument.internal.edition
-          }
-        ]}
-        title={t({
-          en: 'Instrument',
-          fr: 'Instrumento'
-        })}
-      />
+      {!internalName.startsWith('ORION_') && (
+        <InstrumentSummaryGroup
+          items={[
+            {
+              label: t({
+                en: 'Títol',
+                fr: 'Título'
+              }),
+              value: title
+            },
+            {
+              label: t({
+                en: 'Edició',
+                fr: 'Edición'
+              }),
+              value: instrument.internal.edition
+            }
+          ]}
+          title={t({
+            en: 'Instrument',
+            fr: 'Instrumento'
+          })}
+        />
+      )}
       {results.length > 0 && (
         <InstrumentSummaryGroup
           items={results}

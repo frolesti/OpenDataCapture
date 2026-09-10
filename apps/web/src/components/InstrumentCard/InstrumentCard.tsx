@@ -24,6 +24,7 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
   const { t } = useTranslation();
 
   const license = licenses.get(instrument.details.license);
+  const isOrionInstrument = instrument.internal?.name?.startsWith('ORION_') ?? false;
 
   const content: CardItem[] = [
     {
@@ -42,14 +43,18 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
       }),
       text: instrument.details.description
     },
-    {
-      kind: 'text',
-      label: t({
-        en: 'Edició',
-        fr: 'Edición'
-      }),
-      text: instrument.internal?.edition.toString()
-    },
+    ...(isOrionInstrument
+      ? []
+      : [
+          {
+            kind: 'text' as const,
+            label: t({
+              en: 'Edició',
+              fr: 'Edición'
+            }),
+            text: instrument.internal?.edition.toString()
+          }
+        ]),
     {
       kind: 'text',
       label: t({
@@ -121,14 +126,18 @@ export const InstrumentCard = ({ instrument, onClick }: InstrumentCardProps) => 
         fr: 'Enlace al código fuente'
       })
     },
-    {
-      kind: 'text',
-      label: t({
-        en: 'Etiquetes',
-        fr: 'Etiquetas'
-      }),
-      text: instrument.tags.join(', ')
-    }
+    ...(isOrionInstrument
+      ? []
+      : [
+          {
+            kind: 'text' as const,
+            label: t({
+              en: 'Etiquetes',
+              fr: 'Etiquetas'
+            }),
+            text: instrument.tags.join(', ')
+          }
+        ])
   ];
 
   return (

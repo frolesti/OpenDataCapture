@@ -189,12 +189,14 @@ function sleepQualityFields(
   fieldPrefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_'
 ): Record<string, any> {
   const prefix = fieldPrefix;
-  const labelSuffix = '';
+  const isPast = timeframe === 'retrospective';
 
   return {
     [`${prefix}sleep_onset`]: requiresEligibility({
       kind: 'string',
-      label: `¿Tenía dificultad para quedarse dormido al acostarse?${labelSuffix} *`,
+      label: isPast
+        ? '¿Tenía dificultad para quedarse dormido al acostarse? *'
+        : '¿Tiene dificultad para quedarse dormido al acostarse? *',
       variant: 'radio',
       options: {
         '1': 'Nunca',
@@ -206,7 +208,9 @@ function sleepQualityFields(
     }),
     [`${prefix}sleep_maintenance`]: requiresEligibility({
       kind: 'string',
-      label: `¿Tenía dificultad para mantener el sueño durante la noche?${labelSuffix} *`,
+      label: isPast
+        ? '¿Tenía dificultad para mantener el sueño durante la noche? *'
+        : '¿Tiene dificultad para mantener el sueño durante la noche? *',
       variant: 'radio',
       options: {
         '1': 'Nunca',
@@ -218,7 +222,9 @@ function sleepQualityFields(
     }),
     [`${prefix}sleep_quality`]: requiresEligibility({
       kind: 'string',
-      label: `¿Cómo valoraría la calidad global de su sueño?${labelSuffix} *`,
+      label: isPast
+        ? '¿Cómo valoraba la calidad global de su sueño? *'
+        : '¿Cómo valora la calidad global de su sueño? *',
       variant: 'radio',
       options: {
         '1': 'Muy buena',
@@ -230,7 +236,7 @@ function sleepQualityFields(
     }),
     [`${prefix}sleep_daytime`]: requiresEligibility({
       kind: 'string',
-      label: `¿Tiene somnolencia diurna?${labelSuffix} *`,
+      label: isPast ? '¿Tenía somnolencia diurna? *' : '¿Tiene somnolencia diurna? *',
       variant: 'radio',
       options: {
         '1': 'Nunca',
@@ -308,8 +314,8 @@ function isTreatmentComplete(data: FormData, prefix: string, treatmentNumber: nu
   return baseComplete && Boolean(data[`${prefix}_treatment_end_${treatmentNumber}`]);
 }
 
-function treatmentCheckboxLabel(treatmentNumber: number): string {
-  return treatmentNumber === 1 ? 'Añadir otro tratamiento' : 'Añadir otro tratamiento más';
+function treatmentCheckboxLabel(_treatmentNumber: number): string {
+  return '¿Desea añadir otro tratamiento?';
 }
 
 function showAddTreatmentCheckbox(prefix: 'prev' | 'current' | 'concomitant', treatmentNumber: number): any {
@@ -377,7 +383,7 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
     fields[`${prefix}_treatment_name_${i}`] = requiresPreviousTreatment(
       {
         kind: 'string',
-        variant: i === 1 && prefix !== 'concomitant' ? 'select' : 'input',
+        variant: 'input',
         label:
           i === 1 && prefix === 'prev'
             ? 'Tratamiento con pregabalina IR *'
@@ -386,12 +392,7 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
               : prefix === 'concomitant'
                 ? 'Tratamiento *'
                 : `Tratamiento ${i} *`,
-        options:
-          i === 1 && prefix === 'prev'
-            ? { pregabalina_ir: 'Pregabalina IR' }
-            : i === 1 && prefix === 'current'
-              ? { pregabalina_pr: 'Pregabalina PR' }
-              : undefined
+        disabled: i === 1 && prefix !== 'concomitant'
       },
       prefix,
       i
@@ -535,11 +536,7 @@ function generateComorbidityFields(maxComorbidities = 4): Record<string, any> {
             ? {
                 kind: 'boolean',
                 variant: 'checkbox',
-                label: [
-                  'Añadir una segunda comorbilidad',
-                  'Añadir una tercera comorbilidad',
-                  'Añadir una cuarta comorbilidad'
-                ][i - 1]
+                label: '¿Desea añadir otra comorbilidad?'
               }
             : null;
         }
@@ -567,10 +564,10 @@ const PHARMACOVIGILANCE_INSTRUCTION =
 
 export default defineInstrument({
   kind: 'FORM',
-  language: 'en',
+  language: 'es',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 10,
+    edition: 11,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -692,7 +689,27 @@ export default defineInstrument({
             '6. Participación en otro estudio clínico o de investigación que pueda interferir con la interpretación de los datos *',
           variant: 'radio',
           options: YES_NO_OPTIONS
-        })
+        }),
+        _eligibilityDisclaimer: {
+          kind: 'dynamic' as const,
+          deps: ['informed_consent', ...INCLUSION_KEYS, ...EXCLUSION_KEYS] as const,
+          render(data: FormData): any {
+            if (data.informed_consent !== 'si' || isEligible(data)) {
+              return null;
+            }
+            const allAnswered = [...INCLUSION_KEYS, ...EXCLUSION_KEYS].every((key) => Boolean(data[key]));
+            if (!allAnswered) {
+              return null;
+            }
+            return {
+              kind: 'string',
+              variant: 'input',
+              label:
+                'El paciente no cumple los criterios de selección del estudio: para continuar, todos los criterios de inclusión deben marcarse como "Sí" y todos los criterios de exclusión como "No".',
+              disabled: true
+            };
+          }
+        } as any
       }
     },
     {
@@ -849,42 +866,43 @@ export default defineInstrument({
     },
     {
       title: 'EVALUACIÓN RETROSPECTIVA DE LAS ESCALAS - CALIDAD DE VIDA (CUESTIONARIO EQ-5D-5L)',
-      description: 'Referidas al periodo en el que el paciente se encontraba en tratamiento con PREGABALINA IR',
+      description:
+        'PREGABALINA IR — Referidas al periodo en el que el paciente se encontraba en tratamiento con PREGABALINA IR',
       fields: {
         ...eq5d5lFields('retrospective')
       }
     },
     {
-      title: 'CALIDAD DE SUEÑO',
-      description: 'Evaluación retrospectiva referida al periodo en tratamiento con pregabalina IR',
+      title: 'CALIDAD DE SUEÑO (RETROSPECTIVA)',
+      description: 'PREGABALINA IR — Evaluación retrospectiva referida al periodo en tratamiento con pregabalina IR',
       fields: {
         ...sleepQualityFields('retrospective')
       }
     },
     {
-      title: 'ADHERENCIA AL TRATAMIENTO (ESCALA MMAS-4)',
-      description: 'Evaluación retrospectiva referida al periodo en tratamiento con pregabalina IR',
+      title: 'ADHERENCIA AL TRATAMIENTO (ESCALA MMAS-4) (RETROSPECTIVA)',
+      description: 'PREGABALINA IR — Evaluación retrospectiva referida al periodo en tratamiento con pregabalina IR',
       fields: {
         ...adherenceFields('retrospective')
       }
     },
     {
       title: 'EVALUACIÓN PROSPECTIVA DE LAS ESCALAS - CALIDAD DE VIDA (CUESTIONARIO EQ-5D-5L)',
-      description: 'Referidas al MOMENTO ACTUAL, cuando están tratados con PREGABALINA PR',
+      description: 'PREGABALINA PR — Referidas al MOMENTO ACTUAL, cuando están tratados con PREGABALINA PR',
       fields: {
         ...eq5d5lFields('prospective')
       }
     },
     {
-      title: 'CALIDAD DE SUEÑO',
-      description: 'Evaluación del momento actual, durante el tratamiento con pregabalina PR',
+      title: 'CALIDAD DE SUEÑO (PROSPECTIVA)',
+      description: 'PREGABALINA PR — Evaluación del momento actual, durante el tratamiento con pregabalina PR',
       fields: {
         ...sleepQualityFields('prospective')
       }
     },
     {
-      title: 'ADHERENCIA AL TRATAMIENTO (ESCALA MMAS-4)',
-      description: 'Evaluación del momento actual, durante el tratamiento con pregabalina PR',
+      title: 'ADHERENCIA AL TRATAMIENTO (ESCALA MMAS-4) (PROSPECTIVA)',
+      description: 'PREGABALINA PR — Evaluación del momento actual, durante el tratamiento con pregabalina PR',
       fields: {
         ...adherenceFields('prospective')
       }
@@ -892,11 +910,11 @@ export default defineInstrument({
     {
       title: 'MEJORÍA CLÍNICA (ESCALA CGI-I)',
       description:
-        'Califique la mejoría global respecto al estado durante el tratamiento con pregabalina IR, independientemente de si, según su juicio clínico, se debe por completo al tratamiento farmacológico.',
+        'Califique el cambio global en el estado clínico del paciente tras el cambio de pregabalina IR a pregabalina PR, en comparación con su estado durante el tratamiento con pregabalina IR.',
       fields: {
         cgi_improvement: requiresEligibility({
           kind: 'string',
-          label: 'Mejoría clínica (Escala CGI-I) - Cambio respecto al estado durante pregabalina IR *',
+          label: 'Mejoría clínica (Escala CGI-I) – Cambio global tras el cambio de pregabalina IR a pregabalina PR *',
           variant: 'radio',
           options: {
             '1': 'No evaluado',
@@ -954,23 +972,29 @@ export default defineInstrument({
           kind: 'boolean',
           variant: 'checkbox',
           label:
-            'Confirmo que he revisado y validado la información clínica registrada en este formulario conforme a la historia clínica del paciente *'
+            'Confirmo que he revisado y validado la información registrada en este formulario conforme a la historia clínica y a la información obtenida directamente del paciente durante la visita. *'
         })
       }
     }
   ],
   clientDetails: {
-    estimatedDuration: 20,
+    estimatedDuration: 30,
     instructions: [
-      'Complete el instrumento utilizando los datos clínicos disponibles en la historia médica y registre un código de paciente seudonimizado. Antes de continuar, confirme el consentimiento informado y los criterios de inclusión y exclusión. Todos los campos marcados con * son obligatorios. Indique las evaluaciones retrospectivas respecto al periodo con pregabalina IR y las prospectivas respecto al tratamiento actual con pregabalina PR. Revise la información antes de enviar el formulario. Los datos se guardarán vinculados a la sesión de estudio actual.'
+      'Complete el formulario con la información disponible en la historia médica y las respuestas del paciente. Antes de continuar, confirme que el paciente ha firmado el consentimiento informado y que cumple los criterios de inclusión y exclusión.',
+      'Los campos marcados con * son obligatorios. Las evaluaciones retrospectivas se refieren al periodo con pregabalina IR y las prospectivas al tratamiento actual con pregabalina PR.',
+      'Si no puede completar el formulario en una sola sesión, puede guardarlo como borrador y continuar en otro momento. Revise la información antes de enviarlo.'
     ]
   },
   details: {
     title: 'ORION-PR-2026 - Visita de selección',
     description:
-      'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada.',
+      'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada. Promotor: Laboratorios Gebro Pharma S.A.',
     license: 'Apache-2.0',
     authors: ['Antonio Alcántara', 'Ana Navarro']
+  },
+  initialValues: {
+    prev_treatment_name_1: 'Pregabalina IR',
+    current_treatment_name_1: 'Pregabalina PR'
   },
   measures: {},
   validationSchema: z
@@ -1264,11 +1288,9 @@ export default defineInstrument({
         }
 
         for (const field of [
-          'prev_treatment_name_1',
           'prev_treatment_dose_mg_1',
           'prev_treatment_start_1',
           'prev_treatment_end_1',
-          'current_treatment_name_1',
           'current_treatment_dose_mg_1',
           'current_treatment_start_1'
         ]) {
@@ -1279,30 +1301,6 @@ export default defineInstrument({
             code: z.ZodIssueCode.custom,
             message: 'El paciente debe continuar con pregabalina PR para completar la selección.',
             path: ['current_treatment_end_1']
-          });
-        }
-
-        const previousTreatmentName = String(values.prev_treatment_name_1 ?? '').toLowerCase();
-        if (
-          previousTreatmentName &&
-          (!previousTreatmentName.includes('pregabalina') || !previousTreatmentName.includes('ir'))
-        ) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'El tratamiento previo obligatorio debe corresponder a pregabalina IR.',
-            path: ['prev_treatment_name_1']
-          });
-        }
-
-        const currentTreatmentName = String(values.current_treatment_name_1 ?? '').toLowerCase();
-        if (
-          currentTreatmentName &&
-          (!currentTreatmentName.includes('pregabalina') || !currentTreatmentName.includes('pr'))
-        ) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'El tratamiento actual obligatorio debe corresponder a pregabalina PR.',
-            path: ['current_treatment_name_1']
           });
         }
 
@@ -1422,6 +1420,14 @@ export default defineInstrument({
       }
       for (const key of [...INCLUSION_KEYS, ...EXCLUSION_KEYS]) {
         result[key] = undefined;
+      }
+
+      // The first previous/current treatment is always pregabalina IR/PR; not user-editable.
+      if (result.prev_treatment_start_1) {
+        result.prev_treatment_name_1 = 'Pregabalina IR';
+      }
+      if (result.current_treatment_start_1) {
+        result.current_treatment_name_1 = 'Pregabalina PR';
       }
 
       return result;

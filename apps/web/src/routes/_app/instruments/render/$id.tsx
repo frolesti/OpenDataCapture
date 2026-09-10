@@ -601,29 +601,51 @@ const RouteComponent = () => {
     }
 
     const styledElements: HTMLElement[] = [];
-    const styles = [
-      { background: 'rgba(142, 136, 255, 0.08)', border: 'rgba(142, 136, 255, 0.32)', markers: ['PREGABALINA IR'] },
-      { background: 'rgba(142, 136, 255, 0.10)', border: 'rgba(142, 136, 255, 0.38)', markers: ['PREGABALINA PR'] },
+    const coloredElements: HTMLElement[] = [];
+    // Groups are detected via keywords already present in the ORION instrument's section
+    // titles (pregabalina IR/retrospectiva vs. pregabalina PR/prospectiva), so this only
+    // ever matches sections belonging to this specific form.
+    const groups = [
       {
-        background: 'rgba(142, 136, 255, 0.06)',
-        border: 'rgba(142, 136, 255, 0.28)',
-        markers: ['RETROSPECTIVA', 'PROSPECTIVA', 'CALIDAD DE SUEÑO', 'ADHERENCIA AL TRATAMIENTO']
+        markers: ['PREGABALINA IR', 'RETROSPECTIVA'],
+        headingColor: '#6b21a8',
+        background: 'rgba(142, 136, 255, 0.08)',
+        border: 'rgba(107, 33, 168, 0.45)'
+      },
+      {
+        markers: ['PREGABALINA PR', 'PROSPECTIVA'],
+        headingColor: '#1d4ed8',
+        background: 'rgba(59, 130, 246, 0.08)',
+        border: 'rgba(29, 78, 216, 0.45)'
       }
     ];
 
     for (const heading of document.querySelectorAll<HTMLElement>('h4')) {
-      const sectionText = heading.textContent?.toUpperCase() ?? '';
-      const style = styles.find(({ markers }) => markers.some((marker) => sectionText.includes(marker)));
-      if (!style) {
+      const sectionText = (heading.textContent ?? '').toUpperCase();
+      const group = groups.find(({ markers }) => markers.some((marker) => sectionText.includes(marker)));
+      if (!group) {
         continue;
       }
+
+      heading.style.color = group.headingColor;
+      heading.style.fontWeight = '700';
+      coloredElements.push(heading);
+
       const section = heading.closest('.flex.flex-col.gap-6') as HTMLElement | null;
+      const description = section?.querySelector<HTMLElement>('p.italic');
+      const descriptionText = description?.textContent?.toUpperCase() ?? '';
+      if (group.markers.some((marker) => descriptionText.includes(marker))) {
+        description!.style.color = group.headingColor;
+        description!.style.fontWeight = '600';
+        coloredElements.push(description!);
+      }
+
       if (!section || section.dataset.orionTreatmentBand) {
         continue;
       }
       section.dataset.orionTreatmentBand = 'true';
-      section.style.backgroundColor = style.background;
-      section.style.borderInlineStart = `2px solid ${style.border}`;
+      section.style.backgroundColor = group.background;
+      section.style.borderInlineStart = `2px solid ${group.border}`;
       section.style.borderRadius = '8px';
       section.style.padding = '16px';
       styledElements.push(section);
@@ -633,6 +655,10 @@ const RouteComponent = () => {
       for (const section of styledElements) {
         section.removeAttribute('data-orion-treatment-band');
         section.removeAttribute('style');
+      }
+      for (const element of coloredElements) {
+        element.style.removeProperty('color');
+        element.style.removeProperty('font-weight');
       }
     };
   }, [currentStep, isOrionSelection, rendererKey]);
@@ -746,7 +772,7 @@ const RouteComponent = () => {
         inclusionKeys.every((key) => values[key] === 'si') && exclusionKeys.every((key) => values[key] === 'no');
       if (!eligible) {
         return rejectSubmit(
-          'No se puede continuar: revise los criterios de inclusión y exclusión (inclusión=SI y exclusión=NO).'
+          'No se puede continuar: el paciente no cumple los criterios de selección del estudio. Para continuar, todos los criterios de inclusión deben estar marcados como "Sí" y todos los criterios de exclusión como "No".'
         );
       }
 
