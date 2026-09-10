@@ -135,7 +135,7 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
           preventResetValuesOnReset
           content={contentForForm as any}
           data-testid="form-content"
-          initialValues={(initialValues ?? instrument.initialValues) as any}
+          initialValues={{ ...instrument.initialValues, ...initialValues } as any}
           subscribe={
             onDataChange
               ? {

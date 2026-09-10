@@ -376,29 +376,37 @@ function requiresPreviousTreatment<T extends Record<string, any>>(
   };
 }
 
+function requiresTreatment<T extends Record<string, any>>(
+  field: T,
+  prefix: 'prev' | 'current' | 'concomitant',
+  treatmentNumber: number
+): any {
+  if (prefix === 'concomitant' && treatmentNumber === 1) {
+    return requiresEligibilityAndValue('add_concomitant_treatment_1', 'si', field);
+  }
+
+  return requiresPreviousTreatment(field, prefix, treatmentNumber);
+}
+
 function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', maxTreatments = 4): Record<string, any> {
   const fields: Record<string, any> = {};
 
   for (let i = 1; i <= maxTreatments; i++) {
-    fields[`${prefix}_treatment_name_${i}`] = requiresPreviousTreatment(
-      {
-        kind: 'string',
-        variant: 'input',
-        label:
-          i === 1 && prefix === 'prev'
-            ? 'Tratamiento con pregabalina IR *'
-            : i === 1 && prefix === 'current'
-              ? 'Tratamiento con pregabalina PR *'
-              : prefix === 'concomitant'
-                ? 'Tratamiento *'
-                : `Tratamiento ${i} *`,
-        disabled: i === 1 && prefix !== 'concomitant'
-      },
-      prefix,
-      i
-    );
+    const treatmentNameField = {
+      kind: 'string',
+      variant: 'input',
+      label:
+        i === 1 && prefix !== 'concomitant'
+          ? 'Tratamiento *'
+          : prefix === 'concomitant'
+            ? 'Tratamiento *'
+            : `Tratamiento ${i} *`,
+      disabled: i === 1 && prefix !== 'concomitant'
+    };
 
-    fields[`${prefix}_treatment_dose_mg_${i}`] = requiresPreviousTreatment(
+    fields[`${prefix}_treatment_name_${i}`] = requiresTreatment(treatmentNameField, prefix, i);
+
+    fields[`${prefix}_treatment_dose_mg_${i}`] = requiresTreatment(
       {
         kind: 'number',
         variant: 'input',
@@ -413,7 +421,7 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
       i
     );
 
-    fields[`${prefix}_treatment_start_${i}`] = requiresPreviousTreatment(
+    fields[`${prefix}_treatment_start_${i}`] = requiresTreatment(
       dateField(
         i === 1 && prefix !== 'concomitant'
           ? 'Fecha de inicio *'
@@ -426,7 +434,7 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
     );
 
     if (prefix === 'current') {
-      fields[`${prefix}_treatment_end_${i}`] = requiresPreviousTreatment(
+      fields[`${prefix}_treatment_end_${i}`] = requiresTreatment(
         {
           kind: 'string',
           variant: 'radio',
@@ -437,7 +445,7 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
         i
       );
     } else {
-      fields[`${prefix}_treatment_end_${i}`] = requiresPreviousTreatment(
+      fields[`${prefix}_treatment_end_${i}`] = requiresTreatment(
         dateField(
           i === 1 && prefix === 'prev'
             ? 'Fecha de fin *'
@@ -572,7 +580,7 @@ export default defineInstrument({
   },
   content: [
     {
-      title: 'CÓDIGO DEL USUARIO',
+      title: 'CÓDIGO DEL PACIENTE',
       fields: {
         user_code: {
           kind: 'string',
@@ -855,6 +863,12 @@ export default defineInstrument({
     {
       title: 'OTROS TRATAMIENTOS CONCOMITANTES DE INTERÉS (ACTUALES)',
       fields: {
+        add_concomitant_treatment_1: requiresEligibility({
+          kind: 'string',
+          variant: 'radio',
+          label: '¿Desea añadir otro tratamiento concomitante de interés?',
+          options: YES_NO_OPTIONS
+        }),
         ...generateTreatmentFields('concomitant')
       }
     },
@@ -960,7 +974,21 @@ export default defineInstrument({
             },
             resolution_date: dateField('Fecha de resolución * si aplica'),
             actions_taken: { kind: 'string', label: 'Medidas adoptadas *', variant: 'textarea' },
-            seriousness: { kind: 'string', label: 'Gravedad *', variant: 'textarea' }
+            seriousness: {
+              kind: 'set',
+              label: 'Gravedad *',
+              variant: 'listbox',
+              options: {
+                fallecimiento: 'Fallecimiento',
+                riesgo_vida: 'Pone en peligro la vida del paciente',
+                hospitalizacion: 'Hospitalización o prolongación de la misma',
+                discapacidad: 'Incapacidad persistente o significativa',
+                anomalia_congenita: 'Anomalía congénita o defecto de nacimiento',
+                medicamente_importante: 'Reacción adversa médicamente importante',
+                riesgo_transmision: 'Riesgo de transmisión de agente infeccioso',
+                no_grave: 'No cumple criterios de gravedad'
+              }
+            }
           }
         })
       }
@@ -1040,6 +1068,7 @@ export default defineInstrument({
       change_reason_investigator_pref: z.boolean().optional(),
       change_reason_other_checked: z.boolean().optional(),
       change_reason_other: z.string().optional(),
+      add_concomitant_treatment_1: z.enum(['si', 'no']).optional(),
 
       ...comorbidityValidation(),
 
@@ -1109,7 +1138,20 @@ export default defineInstrument({
               .optional(),
             reaction: z.string().optional(),
             resolution_date: optionalManualDateSchema(),
-            seriousness: z.string().optional()
+            seriousness: z
+              .set(
+                z.enum([
+                  'fallecimiento',
+                  'riesgo_vida',
+                  'hospitalizacion',
+                  'discapacidad',
+                  'anomalia_congenita',
+                  'medicamente_importante',
+                  'riesgo_transmision',
+                  'no_grave'
+                ])
+              )
+              .optional()
           })
         )
         .optional(),
@@ -1304,6 +1346,17 @@ export default defineInstrument({
           });
         }
 
+        if (
+          typeof data.current_treatment_dose_mg_1 === 'number' &&
+          (data.current_treatment_dose_mg_1 < 165 || data.current_treatment_dose_mg_1 > 660)
+        ) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'La dosis de pregabalina PR debe estar entre 165 y 660 mg.',
+            path: ['current_treatment_dose_mg_1']
+          });
+        }
+
         const currentTreatmentStart = values.current_treatment_start_1;
         const currentTreatmentStartTime = getTime(currentTreatmentStart);
         if (
@@ -1332,19 +1385,6 @@ export default defineInstrument({
               message: 'Si el paciente no continúa con pregabalina PR, no puede continuar con el formulario.',
               path: [`current_treatment_end_${treatmentNumber}`]
             });
-          }
-        }
-
-        for (const prefix of ['prev', 'current', 'concomitant'] as const) {
-          for (let treatmentNumber = 1; treatmentNumber < 4; treatmentNumber++) {
-            const addTreatmentField = `add_${prefix}_treatment_${treatmentNumber + 1}`;
-            if (isTreatmentComplete(values, prefix, treatmentNumber) && values[addTreatmentField] === undefined) {
-              context.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Indique si desea añadir otro tratamiento.',
-                path: [addTreatmentField]
-              });
-            }
           }
         }
 
@@ -1400,6 +1440,53 @@ export default defineInstrument({
               code: z.ZodIssueCode.custom,
               message: 'La fecha de inicio no puede ser posterior a la fecha de fin',
               path: [endKey]
+            });
+          }
+        }
+      }
+
+      if (selectionVisitTime !== undefined) {
+        const diagnosisDate = getTime(values.diagnosis_date);
+        if (diagnosisDate !== undefined && diagnosisDate >= selectionVisitTime) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'La fecha de diagnóstico debe ser anterior a la visita de selección.',
+            path: ['diagnosis_date']
+          });
+        }
+
+        for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
+          for (const dateType of ['start', 'end'] as const) {
+            const field = `prev_treatment_${dateType}_${treatmentNumber}`;
+            const treatmentDate = getTime(values[field]);
+            if (treatmentDate !== undefined && treatmentDate >= selectionVisitTime) {
+              context.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Las fechas de tratamientos previos deben ser anteriores a la visita de selección.',
+                path: [field]
+              });
+            }
+          }
+        }
+      }
+
+      if (data.baseline_adverse_events === 'si') {
+        for (const [index, event] of (data.adverse_event_records ?? []).entries()) {
+          const onsetDate = getTime(event.onset_date);
+          const resolutionDate = getTime(event.resolution_date);
+
+          if (onsetDate !== undefined && (onsetDate < minTime || onsetDate > maxTime)) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'La fecha de inicio debe estar entre diciembre de 2026 y diciembre de 2027.',
+              path: ['adverse_event_records', index, 'onset_date']
+            });
+          }
+          if (onsetDate !== undefined && resolutionDate !== undefined && onsetDate > resolutionDate) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'La fecha de inicio no puede ser posterior a la fecha de resolución.',
+              path: ['adverse_event_records', index, 'resolution_date']
             });
           }
         }
