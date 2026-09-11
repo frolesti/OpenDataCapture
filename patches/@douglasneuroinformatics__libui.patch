@@ -12,3 +12,41 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
      } else {
        setInputValue("");
      }
+
+diff --git a/dist/components.js b/dist/components.js
+--- a/dist/components.js
++++ b/dist/components.js
+@@ -3675,6 +3675,7 @@ var Form = ({
+   initialValues,
+   onBeforeSubmit,
+   onError,
+   onSubmit,
+   preventResetValuesOnReset,
++  revalidateOnChange,
+   readOnly,
+@@ -3692,6 +3693,7 @@ var Form = ({
+   const [values, setValues] = useState9(
+     initialValues ? getInitialValues(initialValues) : {}
+   );
+   const [isSubmitting, setIsSubmitting] = useState9(false);
++  const [validationRunRef] = useState9({ current: 0 });
+@@ -3773,6 +3775,22 @@ var Form = ({
+       }
+     };
++  useEffect11(() => {
++    if (!revalidateOnChange) {
++      return;
++    }
++    const validationRun = ++validationRunRef.current;
++    validationSchema.safeParseAsync(values).then((result) => {
++      if (validationRun !== validationRunRef.current) {
++        return;
++      }
++      if (result.success) {
++        setErrors({});
++        setRootErrors([]);
++      } else {
++        handleError(result.error);
++      }
++    }).catch(console.error);
++  }, [revalidateOnChange, validationSchema, values]);

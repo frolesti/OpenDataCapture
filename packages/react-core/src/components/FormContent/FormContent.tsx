@@ -10,9 +10,16 @@ export type FormContentProps = {
   instrument: AnyUnilingualFormInstrument;
   onDataChange?: (data: Record<string, unknown>) => void;
   onSubmit: (data: FormInstrument.Data) => Promisable<void>;
+  revalidateOnChange?: boolean;
 };
 
-export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit }: FormContentProps) => {
+export const FormContent = ({
+  initialValues,
+  instrument,
+  onDataChange,
+  onSubmit,
+  revalidateOnChange
+}: FormContentProps) => {
   const { t } = useTranslation();
   const formRef = useRef<HTMLDivElement>(null);
   const isSubmittingRef = useRef(false);
@@ -136,6 +143,7 @@ export const FormContent = ({ initialValues, instrument, onDataChange, onSubmit 
           content={contentForForm as any}
           data-testid="form-content"
           initialValues={{ ...instrument.initialValues, ...initialValues } as any}
+          revalidateOnChange={revalidateOnChange}
           subscribe={
             onDataChange
               ? {

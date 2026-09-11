@@ -53,12 +53,26 @@ function isValidDate(val: string | undefined): boolean {
 }
 
 function optionalManualDateSchema() {
-  return z
-    .string()
-    .regex(/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/, DATE_FORMAT_ERROR)
-    .refine(isValidDate, 'Fecha inválida (el día no existe en el mes indicado)')
-    .or(z.literal(''))
-    .optional();
+  return z.any().transform((value, context) => {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    if (typeof value !== 'string' || !/^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/.test(value)) {
+      context.addIssue({ code: z.ZodIssueCode.custom, message: DATE_FORMAT_ERROR });
+      return z.NEVER;
+    }
+
+    if (!isValidDate(value)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Fecha inválida (el día no existe en el mes indicado)'
+      });
+      return z.NEVER;
+    }
+
+    return value;
+  });
 }
 
 function isEligible(data: FormData): boolean {
@@ -570,7 +584,7 @@ function comorbidityValidation(maxComorbidities = 4): Record<string, any> {
 const PHARMACOVIGILANCE_INSTRUCTION =
   'Si la reacción adversa cumple los criterios de registro sistemático del protocolo (grave o de especial interés), cumplimente el registro de reacciones adversas, rellene el formulario de notificación y envíelo a farmacovigilancia@gebro.es en menos de 24 horas. Para cualquier otra reacción adversa, notifíquela al Sistema Español de Farmacovigilancia siguiendo su práctica clínica habitual.';
 
-export default defineInstrument({
+const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
@@ -1347,8 +1361,8 @@ export default defineInstrument({
         }
 
         if (
-          typeof data.current_treatment_dose_mg_1 === 'number' &&
-          (data.current_treatment_dose_mg_1 < 165 || data.current_treatment_dose_mg_1 > 660)
+          typeof values.current_treatment_dose_mg_1 === 'number' &&
+          (values.current_treatment_dose_mg_1 < 165 || values.current_treatment_dose_mg_1 > 660)
         ) {
           context.addIssue({
             code: z.ZodIssueCode.custom,
@@ -1519,4 +1533,6 @@ export default defineInstrument({
 
       return result;
     })
-});
+};
+
+export default defineInstrument(instrumentDefinition);

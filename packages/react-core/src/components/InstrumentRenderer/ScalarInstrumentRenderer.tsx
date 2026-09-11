@@ -66,6 +66,7 @@ export const ScalarInstrumentRenderer = ({
   onStepChange,
   onSubmit,
   options,
+  revalidateOnChange,
   subject,
   target
 }: ScalarInstrumentRendererProps) => {
@@ -137,6 +138,7 @@ export const ScalarInstrumentRenderer = ({
                 instrument={instrument as AnyUnilingualFormInstrument}
                 onDataChange={onDataChange}
                 onSubmit={handleSubmit}
+                revalidateOnChange={revalidateOnChange}
               />
             ))
             .with({ index: 1, instrument: { kind: 'INTERACTIVE' } }, () => (
@@ -153,6 +155,7 @@ export const ScalarInstrumentRenderer = ({
                     instrument={instrument}
                     onDataChange={onDataChange}
                     onSubmit={handleSubmit}
+                    revalidateOnChange={revalidateOnChange}
                   />
                 );
               }
