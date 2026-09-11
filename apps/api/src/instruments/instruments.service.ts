@@ -99,6 +99,12 @@ export class InstrumentsService {
         throw new UnprocessableEntityException(result.message);
       }
     } else if (instance.internal.edition > 1) {
+      const previousInstrumentIds = await this.findPreviousScalarInstrumentIds(instance);
+      if (previousInstrumentIds.length === 0) {
+        await this.instrumentModel.create({ data: { bundle, id } });
+        return { ...instance, id };
+      }
+
       await this.groupModel.updateMany({
         data: {
           accessibleInstrumentIds: {
@@ -106,11 +112,9 @@ export class InstrumentsService {
           }
         },
         where: {
-          accessibleInstrumentIds: {
-            has: this.generateScalarInstrumentId({
-              internal: { edition: instance.internal.edition - 1, name: instance.internal.name }
-            })
-          }
+          OR: previousInstrumentIds.map((previousId) => ({
+            accessibleInstrumentIds: { has: previousId }
+          }))
         }
       });
     }
@@ -237,6 +241,24 @@ export class InstrumentsService {
 
   generateSeriesInstrumentId(instrument: SeriesInstrument) {
     return this.cryptoService.hash(instrument.content.map(({ edition, name }) => `${name}-${edition}`).join('--'));
+  }
+
+  private async findPreviousScalarInstrumentIds(instrument: AnyScalarInstrument): Promise<string[]> {
+    const storedInstruments = await this.instrumentModel.findMany({});
+    const previousIds: string[] = [];
+
+    for (const storedInstrument of storedInstruments) {
+      const candidate = await this.getInstrumentInstance(storedInstrument);
+      if (
+        isScalarInstrument(candidate) &&
+        candidate.internal.name === instrument.internal.name &&
+        candidate.internal.edition < instrument.internal.edition
+      ) {
+        previousIds.push(storedInstrument.id);
+      }
+    }
+
+    return previousIds;
   }
 
   async getInstrumentInstance(instrument: Pick<InstrumentBundleContainer, 'bundle' | 'id'>) {
