@@ -61,6 +61,7 @@ export const Viewer = () => {
           <ErrorBoundary FallbackComponent={RuntimeErrorFallback}>
             <ScalarInstrumentRenderer
               options={{ validate: true }}
+              revalidateOnChange
               target={{ bundle, id: null! }}
               onCompileError={(error) => setState({ error, status: 'error' })}
               onSubmit={({ data }) => {

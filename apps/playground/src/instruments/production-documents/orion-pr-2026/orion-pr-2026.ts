@@ -409,6 +409,12 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
     const treatmentNameField = {
       kind: 'string',
       variant: 'input',
+      placeholder:
+        i === 1 && prefix === 'prev'
+          ? 'Pregabalina IR'
+          : i === 1 && prefix === 'current'
+            ? 'Pregabalina PR'
+            : undefined,
       label:
         i === 1 && prefix !== 'concomitant'
           ? 'Tratamiento *'
@@ -1469,16 +1475,19 @@ const instrumentDefinition: any = {
           });
         }
 
-        for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
-          for (const dateType of ['start', 'end'] as const) {
-            const field = `prev_treatment_${dateType}_${treatmentNumber}`;
-            const treatmentDate = getTime(values[field]);
-            if (treatmentDate !== undefined && treatmentDate >= selectionVisitTime) {
-              context.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Las fechas de tratamientos previos deben ser anteriores a la visita de selección.',
-                path: [field]
-              });
+        for (const prefix of ['prev', 'current', 'concomitant'] as const) {
+          const dateTypes = prefix === 'current' ? (['start'] as const) : (['start', 'end'] as const);
+          for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
+            for (const dateType of dateTypes) {
+              const field = `${prefix}_treatment_${dateType}_${treatmentNumber}`;
+              const treatmentDate = getTime(values[field]);
+              if (treatmentDate !== undefined && treatmentDate >= selectionVisitTime) {
+                context.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: 'Las fechas de tratamientos deben ser anteriores a la visita de selección.',
+                  path: [field]
+                });
+              }
             }
           }
         }
