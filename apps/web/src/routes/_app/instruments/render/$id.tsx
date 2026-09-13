@@ -158,6 +158,15 @@ function normalizeOrionBundle(bundle: string, mode: 'followup' | 'selection'): s
 
   if (mode === 'selection') {
     patched = patched.replace(
+      /prev_treatment_name_1:requiresEligibility\(\{(?![^}]*placeholder:)([^}]*)\}\)/g,
+      'prev_treatment_name_1:requiresEligibility({$1,placeholder:"Pregabalina IR"})'
+    );
+    patched = patched.replace(
+      /current_treatment_name_1:requiresEligibility\(\{(?![^}]*placeholder:)([^}]*)\}\)/g,
+      'current_treatment_name_1:requiresEligibility({$1,placeholder:"Pregabalina PR"})'
+    );
+
+    patched = patched.replace(
       /user_code:\{kind:"string",label:"[^"]*",variant:"input"\}/,
       'user_code:{kind:"string",label:"Código del paciente",variant:"input",disabled:true}'
     );
