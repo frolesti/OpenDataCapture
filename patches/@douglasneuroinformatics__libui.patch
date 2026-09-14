@@ -24,24 +24,15 @@ diff --git a/dist/components.js b/dist/components.js
    preventResetValuesOnReset,
 +  revalidateOnChange,
    readOnly,
-@@ -3692,6 +3693,7 @@ var Form = ({
-   const [values, setValues] = useState9(
-     initialValues ? getInitialValues(initialValues) : {}
-   );
-   const [isSubmitting, setIsSubmitting] = useState9(false);
-+  const [validationRunRef] = useState9({ current: 0 });
-@@ -3773,6 +3775,22 @@ var Form = ({
+@@ -3771,8 +3771,19 @@ var Form = ({
+         }).catch(console.error);
        }
      };
 +  useEffect11(() => {
 +    if (!revalidateOnChange) {
 +      return;
 +    }
-+    const validationRun = ++validationRunRef.current;
 +    validationSchema.safeParseAsync(values).then((result) => {
-+      if (validationRun !== validationRunRef.current) {
-+        return;
-+      }
 +      if (result.success) {
 +        setErrors({});
 +        setRootErrors([]);
@@ -50,3 +41,4 @@ diff --git a/dist/components.js b/dist/components.js
 +      }
 +    }).catch(console.error);
 +  }, [revalidateOnChange, validationSchema, values]);
+     useEffect11(() => {
