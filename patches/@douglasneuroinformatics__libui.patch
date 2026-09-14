@@ -13,9 +13,6 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
        setInputValue("");
      }
 
-diff --git a/dist/components.js b/dist/components.js
---- a/dist/components.js
-+++ b/dist/components.js
 @@ -3675,6 +3675,7 @@ var Form = ({
    initialValues,
    onBeforeSubmit,
