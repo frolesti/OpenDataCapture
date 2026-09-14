@@ -273,16 +273,6 @@ export class InstrumentRecordsService {
       throw new NotFoundException(`Could not find record with ID '${id}'`);
     }
 
-    // Safety rule: admins can only delete records created by admin users.
-    if (user?.basePermissionLevel === 'ADMIN') {
-      const recordOwner = instrumentRecord.session.userId
-        ? await this.userModel.findFirst({ where: { id: instrumentRecord.session.userId } })
-        : null;
-      if (!recordOwner || recordOwner.basePermissionLevel !== 'ADMIN') {
-        throw new ForbiddenException('Admin users can only delete records created by admin users.');
-      }
-    }
-
     return this.instrumentRecordModel.delete({
       where: { AND: [accessibleQuery(ability, 'delete', 'InstrumentRecord')], id }
     });

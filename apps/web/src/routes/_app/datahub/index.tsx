@@ -363,7 +363,7 @@ const RouteComponent = () => {
 
                   const canEditRecord = removeSubjectIdScope(record.__subjectId__ as string) === currentUser?.username;
                   const canDeleteRecord =
-                    isAdminUser && removeSubjectIdScope(record.__subjectId__ as string) === currentUser?.username;
+                    isAdminUser || removeSubjectIdScope(record.__subjectId__ as string) === currentUser?.username;
 
                   return (
                     <div className="flex items-center gap-1">
@@ -392,7 +392,7 @@ const RouteComponent = () => {
                       </Button>
                       <Button
                         aria-label="Eliminar registro"
-                        disabled={isAdminUser || !canDeleteRecord}
+                        disabled={!canDeleteRecord}
                         size="icon"
                         variant="ghost"
                         onClick={() => {
