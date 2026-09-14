@@ -12,30 +12,3 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
      } else {
        setInputValue("");
      }
-
-@@ -3675,6 +3675,7 @@ var Form = ({
-   initialValues,
-   onBeforeSubmit,
-   onError,
-   onSubmit,
-   preventResetValuesOnReset,
-+  revalidateOnChange,
-   readOnly,
-@@ -3771,4 +3771,15 @@ var Form = ({
-         }).catch(console.error);
-       }
-     };
-+  useEffect11(() => {
-+    if (!revalidateOnChange) {
-+      return;
-+    }
-+    validationSchema.safeParseAsync(values).then((result) => {
-+      if (result.success) {
-+        setErrors({});
-+        setRootErrors([]);
-+      } else {
-+        handleError(result.error);
-+      }
-+    }).catch(console.error);
-+  }, [revalidateOnChange, validationSchema, values]);
-     useEffect11(() => {
