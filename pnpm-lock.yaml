@@ -100,7 +100,7 @@ overrides:
 
 patchedDependencies:
   '@douglasneuroinformatics/libui':
-    hash: 0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983
+    hash: 52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d
     path: patches/@douglasneuroinformatics__libui.patch
 
 importers:
@@ -326,7 +326,7 @@ importers:
         version: 0.0.4
       '@douglasneuroinformatics/libui':
         specifier: 'catalog:'
-        version: 4.8.1(patch_hash=0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)
+        version: 4.8.1(patch_hash=52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)
       '@opendatacapture/react-core':
         specifier: workspace:*
         version: link:../../packages/react-core
@@ -423,7 +423,7 @@ importers:
     dependencies:
       '@douglasneuroinformatics/libui':
         specifier: 'catalog:'
-        version: 4.8.1(patch_hash=0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@19.1.0))(zod@3.25.76)
+        version: 4.8.1(patch_hash=52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@19.1.0))(zod@3.25.76)
       '@opendatacapture/licenses':
         specifier: workspace:*
         version: link:../../packages/licenses
@@ -499,7 +499,7 @@ importers:
         version: 3.1.0(neverthrow@8.2.0)(zod@vendor+zod@3.x)
       '@douglasneuroinformatics/libui':
         specifier: 'catalog:'
-        version: 4.8.1(patch_hash=0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)
+        version: 4.8.1(patch_hash=52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.52.2)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)
@@ -608,7 +608,7 @@ importers:
         version: 0.0.3(typescript@5.6.3)
       '@douglasneuroinformatics/libui':
         specifier: 'catalog:'
-        version: 4.8.1(patch_hash=0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)
+        version: 4.8.1(patch_hash=52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@vendor+react@19.x)
@@ -877,7 +877,7 @@ importers:
         version: 3.1.0(neverthrow@8.2.0)(zod@vendor+zod@3.x)
       '@douglasneuroinformatics/libui':
         specifier: 'catalog:'
-        version: 4.8.1(patch_hash=0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)
+        version: 4.8.1(patch_hash=52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)
       '@opendatacapture/instrument-interpreter':
         specifier: workspace:*
         version: link:../instrument-interpreter
@@ -1032,7 +1032,7 @@ importers:
     devDependencies:
       '@douglasneuroinformatics/libui':
         specifier: 'catalog:'
-        version: 4.8.1(patch_hash=0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)
+        version: 4.8.1(patch_hash=52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)
       '@opendatacapture/instrument-bundler':
         specifier: 'workspace:'
         version: link:../instrument-bundler
@@ -1251,7 +1251,7 @@ importers:
     devDependencies:
       '@douglasneuroinformatics/libui':
         specifier: 'catalog:'
-        version: 4.8.1(patch_hash=0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@19.1.0))(zod@vendor+zod@3.x)
+        version: 4.8.1(patch_hash=52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@19.1.0))(zod@vendor+zod@3.x)
       '@opendatacapture/instrument-stubs':
         specifier: workspace:*
         version: link:../packages/instrument-stubs
@@ -14456,7 +14456,7 @@ snapshots:
     dependencies:
       type-fest: 4.41.0
 
-  '@douglasneuroinformatics/libui@4.8.1(patch_hash=0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@19.1.0))(zod@3.25.76)':
+  '@douglasneuroinformatics/libui@4.8.1(patch_hash=52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@19.1.0))(zod@3.25.76)':
     dependencies:
       '@douglasneuroinformatics/libjs': 3.1.0(neverthrow@8.2.0)(zod@3.25.76)
       '@douglasneuroinformatics/libui-form-types': 0.11.0
@@ -14511,7 +14511,7 @@ snapshots:
       - neverthrow
       - use-sync-external-store
 
-  '@douglasneuroinformatics/libui@4.8.1(patch_hash=0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@19.1.0))(zod@vendor+zod@3.x)':
+  '@douglasneuroinformatics/libui@4.8.1(patch_hash=52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@19.1.0))(zod@vendor+zod@3.x)':
     dependencies:
       '@douglasneuroinformatics/libjs': 3.1.0(neverthrow@8.2.0)(zod@vendor+zod@3.x)
       '@douglasneuroinformatics/libui-form-types': 0.11.0
@@ -14566,7 +14566,7 @@ snapshots:
       - neverthrow
       - use-sync-external-store
 
-  '@douglasneuroinformatics/libui@4.8.1(patch_hash=0c9ccb0e388301e80b835e4a5bc8ce3d591b770b634430b9bedd984fb5537983)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)':
+  '@douglasneuroinformatics/libui@4.8.1(patch_hash=52dd1bc153f135fbc5030917a8f3d4eea25e0f1aefdc96dfebc31aa9cb88c97d)(immer@10.1.1)(neverthrow@8.2.0)(react-dom@vendor+react-dom@19.x)(react@vendor+react@19.x)(tailwindcss@4.1.11)(use-sync-external-store@1.5.0(react@vendor+react@19.x))(zod@vendor+zod@3.x)':
     dependencies:
       '@douglasneuroinformatics/libjs': 3.1.0(neverthrow@8.2.0)(zod@vendor+zod@3.x)
       '@douglasneuroinformatics/libui-form-types': 0.11.0

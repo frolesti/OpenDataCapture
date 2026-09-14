@@ -24,7 +24,7 @@ diff --git a/dist/components.js b/dist/components.js
    preventResetValuesOnReset,
 +  revalidateOnChange,
    readOnly,
-@@ -3771,8 +3771,19 @@ var Form = ({
+@@ -3771,4 +3771,15 @@ var Form = ({
          }).catch(console.error);
        }
      };
