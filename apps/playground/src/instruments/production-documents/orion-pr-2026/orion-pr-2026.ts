@@ -605,7 +605,7 @@ const instrumentDefinition: any = {
         user_code: {
           kind: 'string',
           variant: 'input',
-          label: 'Código del paciente',
+          label: 'Código generado de manera automática',
           disabled: true
         }
       }
