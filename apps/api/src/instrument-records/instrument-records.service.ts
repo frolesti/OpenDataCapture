@@ -194,14 +194,16 @@ export class InstrumentRecordsService {
     }
 
     const parsedData = parseResult.data as Record<string, unknown>;
+    const rawPatientCode = parsedData.patient_code ?? parsedData.user_code;
     const userCode =
       instrument.internal.name === 'ORION_PR_2026_SELECTION'
         ? await this.createOrionPatientCode({ groupId: groupId!, user: options?.user })
-        : typeof parsedData.user_code === 'string'
-          ? parsedData.user_code
+        : typeof rawPatientCode === 'string'
+          ? rawPatientCode
           : '';
     if (instrument.internal.name === 'ORION_PR_2026_SELECTION') {
-      parsedData.user_code = userCode;
+      parsedData.patient_code = userCode;
+      parsedData.user_code = undefined;
     }
     const selectionRecordId = await this.orionFollowupService.validateFollowup({
       followupData: parsedData,

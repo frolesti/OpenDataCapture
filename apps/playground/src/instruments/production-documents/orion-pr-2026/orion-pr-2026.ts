@@ -595,14 +595,14 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 17,
+    edition: 18,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
     {
       title: 'CÓDIGO DEL PACIENTE',
       fields: {
-        user_code: {
+        patient_code: {
           kind: 'string',
           variant: 'input',
           label: 'Código generado de manera automática',
@@ -1047,7 +1047,7 @@ const instrumentDefinition: any = {
   measures: {},
   validationSchema: z
     .object({
-      user_code: z.string().min(1, 'El código del usuario es obligatorio'),
+      patient_code: z.string().min(1, 'El código del paciente es obligatorio'),
       site_hospital: z.string().optional(),
       informed_consent: z.enum(['si', 'no']),
       selection_visit_date: optionalManualDateSchema(),
@@ -1097,7 +1097,11 @@ const instrumentDefinition: any = {
       retro_eq5d_activities: z.enum(['1', '2', '3', '4', '5']).optional(),
       retro_eq5d_pain: z.enum(['1', '2', '3', '4', '5']).optional(),
       retro_eq5d_anxiety: z.enum(['1', '2', '3', '4', '5']).optional(),
-      retro_eq5d_vas: z.coerce.number().min(0).max(100).optional(),
+      retro_eq5d_vas: z.coerce
+        .number()
+        .min(0, 'El valor debe estar entre 0 y 100')
+        .max(100, 'El valor debe estar entre 0 y 100')
+        .optional(),
       retro_sleep_onset: z.enum(['1', '2', '3', '4', '5']).optional(),
       retro_sleep_maintenance: z.enum(['1', '2', '3', '4', '5']).optional(),
       retro_sleep_quality: z.enum(['1', '2', '3', '4', '5']).optional(),
@@ -1112,7 +1116,11 @@ const instrumentDefinition: any = {
       prosp_eq5d_activities: z.enum(['1', '2', '3', '4', '5']).optional(),
       prosp_eq5d_pain: z.enum(['1', '2', '3', '4', '5']).optional(),
       prosp_eq5d_anxiety: z.enum(['1', '2', '3', '4', '5']).optional(),
-      prosp_eq5d_vas: z.coerce.number().min(0).max(100).optional(),
+      prosp_eq5d_vas: z.coerce
+        .number()
+        .min(0, 'El valor debe estar entre 0 y 100')
+        .max(100, 'El valor debe estar entre 0 y 100')
+        .optional(),
       prosp_sleep_onset: z.enum(['1', '2', '3', '4', '5']).optional(),
       prosp_sleep_maintenance: z.enum(['1', '2', '3', '4', '5']).optional(),
       prosp_sleep_quality: z.enum(['1', '2', '3', '4', '5']).optional(),
@@ -1127,7 +1135,11 @@ const instrumentDefinition: any = {
       followup_eq5d_activities: z.enum(['1', '2', '3', '4', '5']).optional(),
       followup_eq5d_pain: z.enum(['1', '2', '3', '4', '5']).optional(),
       followup_eq5d_anxiety: z.enum(['1', '2', '3', '4', '5']).optional(),
-      followup_eq5d_vas: z.coerce.number().min(0).max(100).optional(),
+      followup_eq5d_vas: z.coerce
+        .number()
+        .min(0, 'El valor debe estar entre 0 y 100')
+        .max(100, 'El valor debe estar entre 0 y 100')
+        .optional(),
       followup_sleep_onset: z.enum(['1', '2', '3', '4', '5']).optional(),
       followup_sleep_maintenance: z.enum(['1', '2', '3', '4', '5']).optional(),
       followup_sleep_quality: z.enum(['1', '2', '3', '4', '5']).optional(),

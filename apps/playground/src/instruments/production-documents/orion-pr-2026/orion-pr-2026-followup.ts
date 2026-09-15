@@ -256,11 +256,11 @@ export default defineInstrument({
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 1, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 2, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
-      title: 'CÓDIGO DEL USUARIO',
-      fields: { user_code: { kind: 'string', label: 'Código del usuario *', variant: 'input' } }
+      title: 'CÓDIGO DEL PACIENTE',
+      fields: { patient_code: { kind: 'string', label: 'Código del paciente *', variant: 'input' } }
     },
     {
       title: 'CONTINUIDAD EN EL ESTUDIO',
@@ -422,7 +422,7 @@ export default defineInstrument({
   measures: {},
   validationSchema: z
     .object({
-      user_code: z.string().min(1, 'El código del usuario es obligatorio'),
+      patient_code: z.string().min(1, 'El código del paciente es obligatorio'),
       continues_study: z.enum(['si', 'no']),
       followup_date: optionalManualDateSchema(),
       eq5d_mobility: responseSchema.optional(),
@@ -430,7 +430,11 @@ export default defineInstrument({
       eq5d_activities: responseSchema.optional(),
       eq5d_pain: responseSchema.optional(),
       eq5d_anxiety: responseSchema.optional(),
-      eq5d_vas: z.coerce.number().min(0).max(100).optional(),
+      eq5d_vas: z.coerce
+        .number()
+        .min(0, 'El valor debe estar entre 0 y 100')
+        .max(100, 'El valor debe estar entre 0 y 100')
+        .optional(),
       sleep_onset: responseSchema.optional(),
       sleep_maintenance: responseSchema.optional(),
       sleep_quality: responseSchema.optional(),

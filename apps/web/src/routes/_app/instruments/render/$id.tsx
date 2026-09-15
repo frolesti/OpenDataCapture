@@ -167,8 +167,13 @@ function normalizeOrionBundle(bundle: string, mode: 'followup' | 'selection'): s
     );
 
     patched = patched.replace(
-      /user_code:\{kind:"string",label:"[^"]*",variant:"input"\}/,
-      'user_code:{kind:"string",label:"Código del paciente",variant:"input",disabled:true}'
+      /(user_code|patient_code):\{kind:"string",label:"[^"]*",variant:"input"\}/,
+      'patient_code:{kind:"string",label:"Código del paciente",variant:"input",disabled:true}'
+    );
+    patched = patched.replace(/user_code:z\.string\(\)\.min\(1,"[^"]*"\),?/g, '');
+    patched = patched.replace(
+      /patient_code:z\.string\(\)\.min\(1,"[^"]*"\),?/,
+      'patient_code:z.string().min(1,"El código del paciente es obligatorio"),'
     );
 
     // Add visit/consent dates near informed consent section.
@@ -344,6 +349,7 @@ const RouteComponent = () => {
       recordId ||
       reservedOrionPatientCode ||
       orionPatientCodeReservationFailed ||
+      effectiveInitialData?.patient_code ||
       effectiveInitialData?.user_code ||
       !currentGroup?.id
     ) {
@@ -375,6 +381,7 @@ const RouteComponent = () => {
     };
   }, [
     currentGroup?.id,
+    effectiveInitialData?.patient_code,
     effectiveInitialData?.user_code,
     isOrionSelection,
     notifications,
@@ -397,7 +404,8 @@ const RouteComponent = () => {
     }
     const codes = new Set<string>();
     for (const record of orionSelectionRecordsQuery.data ?? []) {
-      const value = (record.data as Record<string, unknown>)?.user_code;
+      const recordData = record.data as Record<string, unknown>;
+      const value = recordData?.patient_code ?? recordData?.user_code;
       if (typeof value === 'string' && value.trim().length > 0) {
         codes.add(value.trim());
       }
@@ -423,8 +431,8 @@ const RouteComponent = () => {
     if (isOrionFollowup) {
       bundle = normalizeOrionBundle(bundle, 'followup');
       bundle = bundle.replace(
-        /user_code:\{kind:"string",label:"[^"]*",variant:"input"\}/,
-        'user_code:{kind:"string",label:"Código del usuario *",variant:"select",options:globalThis.__ODC_ORION_USER_CODE_OPTIONS__}'
+        /(user_code|patient_code):\{kind:"string",label:"[^"]*",variant:"input"\}/,
+        'patient_code:{kind:"string",label:"Código del paciente *",variant:"select",options:globalThis.__ODC_ORION_USER_CODE_OPTIONS__}'
       );
     }
 
@@ -445,12 +453,15 @@ const RouteComponent = () => {
 
   const instrumentTarget = instrumentBundleWithOverrides;
   const formInitialData =
-    isOrionSelection && reservedOrionPatientCode && !effectiveInitialData?.user_code
+    isOrionSelection &&
+    reservedOrionPatientCode &&
+    !effectiveInitialData?.patient_code &&
+    !effectiveInitialData?.user_code
       ? {
           prev_treatment_name_1: 'Pregabalina IR',
           current_treatment_name_1: 'Pregabalina PR',
           ...effectiveInitialData,
-          user_code: reservedOrionPatientCode
+          patient_code: reservedOrionPatientCode
         }
       : effectiveInitialData;
 
@@ -460,6 +471,7 @@ const RouteComponent = () => {
   const isWaitingForOrionPatientCode =
     isOrionSelection &&
     !recordId &&
+    !effectiveInitialData?.patient_code &&
     !effectiveInitialData?.user_code &&
     !reservedOrionPatientCode &&
     !orionPatientCodeReservationFailed;

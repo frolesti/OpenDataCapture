@@ -18,6 +18,7 @@ type InstrumentVisualizationRecord = {
   __data__: Record<string, unknown>;
   __date__: Date;
   __id__: string;
+  __instrumentId__: string;
   __subjectId__: string;
   __time__: number;
 };
@@ -430,6 +431,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
           __data__: record.data as Record<string, unknown>,
           __date__: record.date,
           __id__: record.id,
+          __instrumentId__: record.instrumentId,
           __subjectId__: record.subjectId,
           __time__: record.date.getTime(),
           ...paddedProps,

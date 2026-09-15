@@ -160,12 +160,19 @@ const RouteComponent = () => {
     });
 
     Array.from(allKeys).forEach((subItem) => {
-      if (!subItem.startsWith('__')) {
-        fields.push({
-          field: subItem,
-          label: camelToSnakeCase(subItem).toUpperCase()
-        });
+      if (subItem.startsWith('__')) {
+        return;
       }
+      // The ORION instrument persists only the aggregate inclusion/exclusion outcome;
+      // the individual criterion answers are ghost keys padded with undefined and must
+      // not appear as columns in the final table.
+      if (/^(inclusion|exclusion)_[1-6]$/.test(subItem)) {
+        return;
+      }
+      fields.push({
+        field: subItem,
+        label: camelToSnakeCase(subItem).toUpperCase()
+      });
     });
   }
 
@@ -374,7 +381,7 @@ const RouteComponent = () => {
                           const initialData = rawData && Object.keys(rawData).length > 0 ? rawData : undefined;
 
                           void navigate({
-                            params: { id: instrumentId },
+                            params: { id: record.__instrumentId__ },
                             search: { recordId: id },
                             state: {
                               instrumentTitle: instrument?.clientDetails?.title ?? instrument?.details?.title,

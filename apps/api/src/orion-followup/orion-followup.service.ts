@@ -85,10 +85,11 @@ export class OrionFollowupService {
     });
     const selectionRecord = selectionRecords.find((record) => {
       const selectionData = record.data as Record<string, unknown> | null;
+      const recordPatientCode = selectionData?.patient_code ?? selectionData?.user_code;
       return (
-        typeof selectionData?.user_code === 'string' &&
-        /^OR-C\d{3}-I\d{3}-P\d+$/.test(selectionData.user_code) &&
-        selectionData.user_code === userCode.trim()
+        typeof recordPatientCode === 'string' &&
+        /^OR-C\d{3}-I\d{3}-P\d+$/.test(recordPatientCode) &&
+        recordPatientCode === userCode.trim()
       );
     });
     const selectionData = selectionRecord?.data as Record<string, unknown> | null;
