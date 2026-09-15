@@ -108,6 +108,7 @@ const RouteComponent = () => {
             <div data-testid="instrument-select-dropdown-container">
               <SelectInstrument
                 options={instrumentOptions}
+                value={instrumentId}
                 onSelect={(id) => {
                   setInstrumentId(id);
                   setSelectedMeasures([]);

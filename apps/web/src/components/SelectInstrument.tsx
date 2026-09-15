@@ -4,12 +4,14 @@ import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 type SelectInstrumentProps = {
   onSelect: (id: string) => void;
   options: { [key: string]: string };
+  value?: null | string;
 };
 
-export const SelectInstrument = ({ onSelect, options }: SelectInstrumentProps) => {
+export const SelectInstrument = ({ onSelect, options, value }: SelectInstrumentProps) => {
   const { t } = useTranslation();
   return (
     <Select
+      value={value ?? undefined}
       onValueChange={(id) => {
         onSelect(id);
       }}

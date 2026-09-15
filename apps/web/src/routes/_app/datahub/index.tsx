@@ -202,7 +202,7 @@ const RouteComponent = () => {
           />
           <React.Fragment>
             <div className="min-w-60">
-              <SelectInstrument options={instrumentOptions} onSelect={setInstrumentId} />
+              <SelectInstrument options={instrumentOptions} value={instrumentId} onSelect={setInstrumentId} />
             </div>
             <div className="flex min-w-60 gap-2 lg:shrink">
               {instrumentId && (
@@ -425,7 +425,6 @@ const RouteComponent = () => {
             data={visibleRecords}
             data-testid="instrument-table"
             entriesPerPage={entriesPerPage}
-            minRows={entriesPerPage}
           />
         ) : (
           <div className="flex grow flex-col items-center justify-center gap-2 text-slate-500">

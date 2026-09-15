@@ -43,7 +43,7 @@ const RouteComponent = () => {
       <div className="mb-2">
         <div className="flex flex-col gap-2 lg:flex-row lg:justify-between">
           <div className="flex">
-            <SelectInstrument options={instrumentOptions} onSelect={setInstrumentId} />
+            <SelectInstrument options={instrumentOptions} value={instrumentId} onSelect={setInstrumentId} />
           </div>
           <div className="flex flex-col gap-2 lg:flex-row">
             <Select value={String(entriesPerPage)} onValueChange={(value) => setEntriesPerPage(Number(value))}>
