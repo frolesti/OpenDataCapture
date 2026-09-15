@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { camelToSnakeCase, toBasicISOString } from '@douglasneuroinformatics/libjs';
 import {
@@ -6,21 +6,18 @@ import {
   ActionDropdown,
   Button,
   ClientTable,
-  Dialog,
   Heading,
   SearchBar,
   Select
 } from '@douglasneuroinformatics/libui/components';
 import { useDownload, useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { InstrumentRecordsExport } from '@opendatacapture/schemas/instrument-records';
-import type { Subject } from '@opendatacapture/schemas/subject';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { ClipboardList, Edit, Trash2 } from 'lucide-react';
 import { unparse } from 'papaparse';
 
-import { SubjectNameLookupForm } from '@/components/IdentificationForm/SubjectNameLookupForm';
 import { PageHeader } from '@/components/PageHeader';
 import { SelectInstrument } from '@/components/SelectInstrument';
 import { useDeleteInstrumentRecordMutation } from '@/hooks/useDeleteInstrumentRecordMutation';
@@ -28,9 +25,6 @@ import { useGlobalInstrumentVisualization } from '@/hooks/useGlobalInstrumentVis
 import { useSubjectsQuery } from '@/hooks/useSubjectsQuery';
 import { useAppStore } from '@/store';
 import { downloadExcel } from '@/utils/excel';
-
-const DialogTrigger = Dialog.Trigger as unknown as React.ComponentType<React.PropsWithChildren<{ className?: string }>>;
-const DialogTitle = Dialog.Title as unknown as React.ComponentType<React.PropsWithChildren<unknown>>;
 
 const SelectTrigger = Select.Trigger as unknown as React.ComponentType<React.PropsWithChildren<{ className?: string }>>;
 const SelectContent = Select.Content as unknown as React.ComponentType<React.PropsWithChildren<unknown>>;
@@ -42,8 +36,14 @@ const formatDisplayDate = (value: Date) => {
   return `${day}-${month}-${year}`;
 };
 
+const normalizeSearchText = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
 const RouteComponent = () => {
-  const [isLookupOpen, setIsLookupOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(15);
   const [selectedRecordId, setSelectedRecordId] = useState<null | string>(null);
@@ -70,6 +70,25 @@ const RouteComponent = () => {
     setMinDate
   } = useGlobalInstrumentVisualization();
   const { data: subjects } = useSubjectsQuery({ params: { groupId: currentGroup?.id } });
+
+  const subjectNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    (subjects ?? []).forEach((subject) => {
+      const fullName = `${subject.firstName ?? ''} ${subject.lastName ?? ''}`.trim();
+      map.set(subject.id, `${fullName} ${removeSubjectIdScope(subject.id)}`);
+    });
+    return map;
+  }, [subjects]);
+
+  const visibleRecords = useMemo(() => {
+    const normalizedQuery = normalizeSearchText(searchTerm.trim());
+    if (!normalizedQuery) {
+      return records;
+    }
+    return records.filter((record) =>
+      normalizeSearchText(subjectNameById.get(record.__subjectId__) ?? record.__subjectId__).includes(normalizedQuery)
+    );
+  }, [records, searchTerm, subjectNameById]);
 
   const isStandardUser = currentUser?.basePermissionLevel === 'STANDARD';
   const isAdminUser = currentUser?.basePermissionLevel === 'ADMIN';
@@ -124,19 +143,6 @@ const RouteComponent = () => {
       });
   };
 
-  const lookupSubject = async ({ id }: { id: string }) => {
-    const response = await axios.get<Subject>(`/v1/subjects/${id}`, {
-      validateStatus: (status) => status === 200 || status === 404
-    });
-    if (response.status === 404) {
-      addNotification({ message: t('core.notFound'), type: 'warning' });
-      setIsLookupOpen(false);
-    } else {
-      addNotification({ type: 'success' });
-      await navigate({ to: `./${response.data.id}/assignments` });
-    }
-  };
-
   const handleDeleteRecord = async () => {
     if (!selectedRecordId) {
       return;
@@ -183,26 +189,17 @@ const RouteComponent = () => {
       </PageHeader>
       <div className="flex grow flex-col">
         <div className="mb-3 flex flex-col justify-between gap-3 lg:flex-row">
-          <Dialog open={isLookupOpen} onOpenChange={setIsLookupOpen}>
-            <DialogTrigger className="grow">
-              <SearchBar
-                className="[&>input]:text-foreground [&>input]:placeholder-foreground"
-                data-testid="datahub-subject-lookup-search"
-                id="subject-lookup-search-bar"
-                placeholder={t({
-                  en: 'Feu clic per cercar',
-                  fr: 'Haga clic para buscar'
-                })}
-                readOnly={true}
-              />
-            </DialogTrigger>
-            <Dialog.Content data-spotlight-type="subject-lookup-modal" data-testid="datahub-subject-lookup-dialog">
-              <Dialog.Header>
-                <DialogTitle>{t('datahub.index.lookup.title')}</DialogTitle>
-              </Dialog.Header>
-              <SubjectNameLookupForm subjects={subjects} onSubmit={(data) => void lookupSubject(data)} />
-            </Dialog.Content>
-          </Dialog>
+          <SearchBar
+            className="[&>input]:text-foreground [&>input]:placeholder-muted-foreground grow"
+            data-testid="datahub-subject-search-bar"
+            id="subject-search-bar"
+            placeholder={t({
+              en: 'Cerca pacient per nom…',
+              fr: 'Buscar paciente por nombre…'
+            })}
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+          />
           <React.Fragment>
             <div className="min-w-60">
               <SelectInstrument options={instrumentOptions} onSelect={setInstrumentId} />
@@ -425,7 +422,7 @@ const RouteComponent = () => {
               },
               ...fields
             ]}
-            data={records}
+            data={visibleRecords}
             data-testid="instrument-table"
             entriesPerPage={entriesPerPage}
             minRows={entriesPerPage}
