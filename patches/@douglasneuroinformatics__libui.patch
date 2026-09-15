@@ -2,7 +2,7 @@ diff --git a/dist/components.js b/dist/components.js
 index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3bde25a81e 100755
 --- a/dist/components.js
 +++ b/dist/components.js
-@@ -3030,7 +3030,8 @@ var DateField = ({ disabled, error, label, name, readOnly, setValue, value }) =>
+@@ -3030,7 +3030,8 @@
      if (isSelecting) {
        return;
      } else if (isValidDateString(inputValue)) {
@@ -12,60 +12,65 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
      } else {
        setInputValue("");
      }
-+@@ -3765,6 +3765,45 @@ var Form = ({
-+   const revalidate = () => {
-+     const hasErrors = Object.keys(errors).length > 0 || rootErrors.length;
-+     if (hasErrors) {
-+       validationSchema.safeParseAsync(values).then((result) => {
-+         if (!result.success) {
-+           handleError(result.error);
-+         }
-+       }).catch(console.error);
-+     }
-+   };
-++  const touchedFields = useRef4(/* @__PURE__ */ new Set());
-++  const revalidateOnBlurHandler = (event) => {
-++    const fieldName = event?.target?.name;
-++    if (fieldName) {
-++      touchedFields.current.add(fieldName);
-++    }
-++    validationSchema.safeParseAsync(values).then((result) => {
-++      if (result.success) {
-++        if (Object.keys(errors).length > 0 || rootErrors.length) {
-++          setErrors({});
-++          setRootErrors([]);
-++        }
-++        return;
-++      }
-++      const fieldErrors = {};
-++      for (const issue of result.error.issues) {
-++        if (issue.path.length === 0) {
-++          continue;
-++        }
-++        const issueField = issue.path[0];
-++        const isTouched = touchedFields.current.has(issueField);
-++        const isRelatedToBlur =
-++          fieldName &&
-++          (issueField === fieldName ||
-++            issueField.startsWith(`${fieldName}_`) ||
-++            fieldName.startsWith(`${issueField}_`));
-++        if (!isTouched && !isRelatedToBlur) {
-++          continue;
-++        }
-++        const current = get(fieldErrors, issue.path);
-++        if (current) {
-++          current.push(issue.message);
-++        } else {
-++          set(fieldErrors, issue.path, [issue.message]);
-++        }
-++      }
-++      setErrors(fieldErrors);
-++    }).catch(console.error);
-++  };
-+   useEffect11(() => {
-+     setErrors({});
-+     setRootErrors([]);
-+   }, [resolvedLanguage]);
-+@@ -3786,1 +3786,1 @@ var Form = ({
-+-      onBlur: revalidateOnBlur ? revalidate : void 0,
-++      onBlur: revalidateOnBlur ? revalidateOnBlurHandler : void 0,
+@@ -3761,15 +3762,44 @@
+     }
+   };
+   const isGrouped = Array.isArray(content);
+-  const revalidate = () => {
+-    const hasErrors = Object.keys(errors).length > 0 || rootErrors.length;
+-    if (hasErrors) {
+-      validationSchema.safeParseAsync(values).then((result) => {
+-        if (!result.success) {
+-          handleError(result.error);
++  const touchedFields = useRef4(/* @__PURE__ */ new Set());
++  const revalidateOnBlurHandler = (event) => {
++    const fieldName = event?.target?.name;
++    if (fieldName) {
++      touchedFields.current.add(fieldName);
++    }
++    validationSchema.safeParseAsync(values).then((result) => {
++      if (result.success) {
++        if (Object.keys(errors).length > 0 || rootErrors.length) {
++          setErrors({});
++          setRootErrors([]);
+         }
+-      }).catch(console.error);
+-    }
++        return;
++      }
++      const fieldErrors = {};
++      for (const issue of result.error.issues) {
++        if (issue.path.length === 0) {
++          continue;
++        }
++        const issueField = issue.path[0];
++        const isTouched = touchedFields.current.has(issueField);
++        const isRelatedToBlur =
++          fieldName &&
++          (issueField === fieldName ||
++            issueField.startsWith(`${fieldName}_`) ||
++            fieldName.startsWith(`${issueField}_`));
++        if (!isTouched && !isRelatedToBlur) {
++          continue;
++        }
++        const current = get(fieldErrors, issue.path);
++        if (current) {
++          current.push(issue.message);
++        } else {
++          set(fieldErrors, issue.path, [issue.message]);
++        }
++      }
++      setErrors(fieldErrors);
++    }).catch(console.error);
+   };
+   useEffect11(() => {
+     setErrors({});
+@@ -3782,7 +3812,7 @@
+       autoComplete: "off",
+       className: twMerge("relative flex w-full flex-col", !isGrouped && "gap-6", className),
+       id,
+-      onBlur: revalidateOnBlur ? revalidate : void 0,
++      onBlur: revalidateOnBlur ? revalidateOnBlurHandler : void 0,
+       onSubmit: (event) => void handleSubmit(event),
+       ...props,
+       children: [
