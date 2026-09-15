@@ -53,24 +53,36 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     params: { kind: params?.kind }
   });
 
-  const orionSelectionInstrument = useMemo(
+  // Multiple editions of the same ORION instrument coexist in production (each publish
+  // creates a new instrument document with its own id). Records stay attached to the
+  // edition they were created with, so the unified view must match ALL of them.
+  const orionSelectionInstruments = useMemo(
     () =>
-      (instrumentInfoQuery.data ?? []).find(
+      (instrumentInfoQuery.data ?? []).filter(
         (instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME
       ),
     [instrumentInfoQuery.data]
   );
-  const orionFollowupInstrument = useMemo(
+  const orionFollowupInstruments = useMemo(
     () =>
-      (instrumentInfoQuery.data ?? []).find((instrument) => instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME),
+      (instrumentInfoQuery.data ?? []).filter(
+        (instrument) => instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME
+      ),
     [instrumentInfoQuery.data]
   );
+  const pickLatestEdition = (instruments: typeof orionSelectionInstruments) =>
+    [...instruments].sort((a, b) => Number(b.internal?.edition ?? 0) - Number(a.internal?.edition ?? 0))[0];
+  const orionSelectionInstrument = useMemo(
+    () => pickLatestEdition(orionSelectionInstruments),
+    [orionSelectionInstruments]
+  );
+  const orionFollowupInstrument = useMemo(
+    () => pickLatestEdition(orionFollowupInstruments),
+    [orionFollowupInstruments]
+  );
   const orionInstrumentIds = useMemo(
-    () =>
-      new Set(
-        [orionSelectionInstrument?.id, orionFollowupInstrument?.id].filter((id): id is string => typeof id === 'string')
-      ),
-    [orionFollowupInstrument?.id, orionSelectionInstrument?.id]
+    () => new Set([...orionSelectionInstruments, ...orionFollowupInstruments].map((instrument) => instrument.id)),
+    [orionFollowupInstruments, orionSelectionInstruments]
   );
   const isUnifiedOrionSelected = instrumentId === ORION_UNIFIED_OPTION_ID;
 
