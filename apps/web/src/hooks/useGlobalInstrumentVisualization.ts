@@ -406,6 +406,13 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
 
   useEffect(() => {
     if (recordsQuery.data) {
+      const sourceRecords = isUnifiedOrionSelected
+        ? recordsQuery.data.filter((record) => orionInstrumentIds.has(record.instrumentId))
+        : recordsQuery.data;
+
+      // Build the column keys from the instrument definition when available, but fall
+      // back to the keys present in the records themselves so the table still renders
+      // when a newer published edition fails to interpret in the browser.
       const allKeys = new Set<string>();
       if (instrument && instrument.kind === 'FORM') {
         if (Array.isArray(instrument.content)) {
@@ -424,12 +431,21 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
           }
         }
       }
+      for (const record of sourceRecords) {
+        const props = record.data && typeof record.data === 'object' ? record.data : {};
+        for (const key of Object.keys(props)) {
+          if (!key.startsWith('_warning')) {
+            allKeys.add(key);
+          }
+        }
+        for (const key of Object.keys(record.computedMeasures ?? {})) {
+          if (!key.startsWith('_warning')) {
+            allKeys.add(key);
+          }
+        }
+      }
 
       const records: InstrumentVisualizationRecord[] = [];
-      const sourceRecords = isUnifiedOrionSelected
-        ? recordsQuery.data.filter((record) => orionInstrumentIds.has(record.instrumentId))
-        : recordsQuery.data;
-
       for (const record of sourceRecords) {
         const props = record.data && typeof record.data === 'object' ? record.data : {};
         const cleanProps = Object.fromEntries(Object.entries(props).filter(([k]) => !k.startsWith('_warning')));
