@@ -20,7 +20,7 @@ import axios from 'axios';
 import { ClipboardList, Edit, Trash2 } from 'lucide-react';
 import { unparse } from 'papaparse';
 
-import { IdentificationForm } from '@/components/IdentificationForm';
+import { SubjectNameLookupForm } from '@/components/IdentificationForm/SubjectNameLookupForm';
 import { PageHeader } from '@/components/PageHeader';
 import { SelectInstrument } from '@/components/SelectInstrument';
 import { useDeleteInstrumentRecordMutation } from '@/hooks/useDeleteInstrumentRecordMutation';
@@ -200,7 +200,7 @@ const RouteComponent = () => {
               <Dialog.Header>
                 <DialogTitle>{t('datahub.index.lookup.title')}</DialogTitle>
               </Dialog.Header>
-              <IdentificationForm onSubmit={(data) => void lookupSubject(data)} />
+              <SubjectNameLookupForm subjects={subjects} onSubmit={(data) => void lookupSubject(data)} />
             </Dialog.Content>
           </Dialog>
           <React.Fragment>
