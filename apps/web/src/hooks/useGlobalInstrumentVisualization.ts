@@ -249,9 +249,9 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       return;
     }
 
-    const baseFilename = `${currentUser!.username}_${instrument.internal.name}_${
-      instrument.internal.edition
-    }_${new Date().toISOString()}`;
+    const instrumentName = instrument.internal?.name ?? 'instrument';
+    const instrumentEdition = instrument.internal?.edition ?? 'unknown';
+    const baseFilename = `${currentUser!.username}_${instrumentName}_${instrumentEdition}_${new Date().toISOString()}`;
 
     const exportRecords = filteredRecords.map((record) => omit(record, ['__time__', '__id__', '__data__']));
 
@@ -359,12 +359,12 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
         // Note: downloadSubjectTableExcel might expect specific format, but we are passing rows.
         // The original code passed removeSubjectIdScope(params.subjectId) as sheet name or similar.
         // Here we don't have a single subjectId. We can use instrument name.
-        downloadSubjectTableExcel(`${baseFilename}.xlsx`, rows, instrument.internal.name);
+        downloadSubjectTableExcel(`${baseFilename}.xlsx`, rows, instrumentName);
         break;
       }
       case 'Excel Long': {
         const rows = makeLongRows();
-        downloadSubjectTableExcel(`${baseFilename}.xlsx`, rows, instrument.internal.name);
+        downloadSubjectTableExcel(`${baseFilename}.xlsx`, rows, instrumentName);
         break;
       }
       case 'JSON': {
