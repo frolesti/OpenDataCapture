@@ -419,7 +419,29 @@ const RouteComponent = () => {
     );
   }, [isOrionFollowup, orionSelectionRecordsQuery.data]);
 
+  const orionSelectionVisitDateByCode = useMemo(() => {
+    const datesByCode: Record<string, string> = {};
+    if (!isOrionFollowup) {
+      return datesByCode;
+    }
+    for (const record of orionSelectionRecordsQuery.data ?? []) {
+      const recordData = record.data as Record<string, unknown>;
+      const value = recordData?.patient_code ?? recordData?.user_code;
+      const selectionVisitDate = recordData.selection_visit_date;
+      if (
+        typeof value === 'string' &&
+        /^OR-C\d{3}-I\d{3}-P\d+$/.test(value.trim()) &&
+        typeof selectionVisitDate === 'string' &&
+        parseOrionDate(selectionVisitDate)
+      ) {
+        datesByCode[value.trim()] = selectionVisitDate;
+      }
+    }
+    return datesByCode;
+  }, [isOrionFollowup, orionSelectionRecordsQuery.data]);
+
   const orionFollowupUserCodeOptionsJson = JSON.stringify(orionFollowupUserCodeOptions);
+  const orionSelectionVisitDateByCodeJson = JSON.stringify(orionSelectionVisitDateByCode);
 
   const instrumentBundleWithOverrides = useMemo(() => {
     if (!instrumentBundleQuery.data || instrumentBundleQuery.data.kind === 'SERIES') {
@@ -434,7 +456,7 @@ const RouteComponent = () => {
       bundle = normalizeOrionBundle(bundle, 'followup');
       bundle = bundle.replace(
         /(user_code|patient_code):\{kind:"string",label:"[^"]*",variant:"input"\}/,
-        'patient_code:{kind:"string",label:"Código del paciente *",variant:"select",options:globalThis.__ODC_ORION_USER_CODE_OPTIONS__}'
+        'patient_code:{kind:"string",label:"Código del paciente *",variant:"select",options:globalThis.__ODC_ORION_USER_CODE_OPTIONS__},selection_visit_date_info:{kind:"dynamic",deps:["patient_code"],render(data){const date=globalThis.__ODC_ORION_SELECTION_VISIT_DATE_BY_CODE__?.[data.patient_code];return date?{kind:"string",label:`Fecha de la visita de selección: ${date}`,variant:"input",disabled:true}:null}}'
       );
     }
 
@@ -443,13 +465,14 @@ const RouteComponent = () => {
       // IMPORTANT: `evaluateInstrument` wraps this string with `return ${bundle}`.
       // Any bare assignment prepended here becomes `return X = Y`, which returns Y
       // and skips the instrument IIFE. Wrap in an arrow so the IIFE is what gets returned.
-      bundle: `(()=>{const runtimeCacheBust = globalThis.__ODC_RUNTIME_CACHE_BUST__ ??= Date.now().toString(36); globalThis.__resolveImport = (specifier) => specifier.startsWith('/runtime/') ? specifier + (specifier.includes('?') ? '&' : '?') + 'v=' + runtimeCacheBust : specifier; globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions}; globalThis.__ODC_ORION_USER_CODE_OPTIONS__ = ${orionFollowupUserCodeOptionsJson}; return ${bundle}})()`
+      bundle: `(()=>{const runtimeCacheBust = globalThis.__ODC_RUNTIME_CACHE_BUST__ ??= Date.now().toString(36); globalThis.__resolveImport = (specifier) => specifier.startsWith('/runtime/') ? specifier + (specifier.includes('?') ? '&' : '?') + 'v=' + runtimeCacheBust : specifier; globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions}; globalThis.__ODC_ORION_USER_CODE_OPTIONS__ = ${orionFollowupUserCodeOptionsJson}; globalThis.__ODC_ORION_SELECTION_VISIT_DATE_BY_CODE__ = ${orionSelectionVisitDateByCodeJson}; return ${bundle}})()`
     };
   }, [
     groupHospitalOptions,
     instrumentBundleQuery.data,
     isOrionFollowup,
     isOrionSelection,
+    orionSelectionVisitDateByCodeJson,
     orionFollowupUserCodeOptionsJson
   ]);
 
@@ -657,6 +680,11 @@ const RouteComponent = () => {
     // payloads while preserving previously entered non-empty values.
     const mergedData = mergeFormSnapshots(latestDataRef.current, data as Record<string, unknown>);
 
+    const rejectSubmit = (message: string): never => {
+      notifications.addNotification({ message, type: 'error' });
+      throw new Error(message);
+    };
+
     if (isOrionSelection) {
       const values = mergedData;
       const inclusionKeys = ['inclusion_1', 'inclusion_2', 'inclusion_3', 'inclusion_4', 'inclusion_5', 'inclusion_6'];
@@ -665,11 +693,6 @@ const RouteComponent = () => {
       // NOTE: these guards must throw (not return) on failure. The renderer treats a
       // resolved onSubmit promise as a successful save and advances to the summary
       // step, so returning normally here would show "completed" without persisting data.
-      const rejectSubmit = (message: string): never => {
-        notifications.addNotification({ message, type: 'error' });
-        throw new Error(message);
-      };
-
       if (values.informed_consent !== 'si') {
         return rejectSubmit('No se puede continuar sin consentimiento informado firmado.');
       }
@@ -728,6 +751,30 @@ const RouteComponent = () => {
               `La fecha de inicio del tratamiento no puede ser posterior a la fecha de fin (tratamiento ${treatmentNumber}).`
             );
           }
+        }
+      }
+    }
+
+    if (isOrionFollowup) {
+      const values = mergedData;
+      const patientCode = typeof values.patient_code === 'string' ? values.patient_code.trim() : '';
+      const selectionVisitDate = parseOrionDate(orionSelectionVisitDateByCode[patientCode]);
+      const followupDate = parseOrionDate(values.followup_date);
+      if (!patientCode) {
+        return rejectSubmit('Debe seleccionar el código del paciente.');
+      }
+      if (!selectionVisitDate) {
+        return rejectSubmit('No se ha podido recuperar la fecha de la visita de selección para este paciente.');
+      }
+      if (values.continues_study === 'si') {
+        if (!followupDate) {
+          return rejectSubmit('Debe indicar la fecha de visita de seguimiento.');
+        }
+        const elapsedDays = (followupDate.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
+        if (elapsedDays < 76 || elapsedDays > 104) {
+          return rejectSubmit(
+            'La visita de seguimiento debe realizarse entre 76 y 104 días después de la visita de selección.'
+          );
         }
       }
     }
