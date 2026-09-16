@@ -333,11 +333,6 @@ const RouteComponent = () => {
   const groupHospitalOptions = buildGroupHospitalOptions(currentGroup?.hospitals ?? []);
 
   const instrumentInfo = (instrumentInfoQuery.data ?? []).find((instrument) => instrument.id === params.id);
-  // Multiple editions of the ORION selection instrument coexist; records stay attached to
-  // the edition they were created with, so the followup must look up codes across all of them.
-  const orionSelectionInstrumentIds = (instrumentInfoQuery.data ?? [])
-    .filter((instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME)
-    .map((instrument) => instrument.id);
   const scopedSubjectId =
     currentSession?.subject.id ??
     (currentUser && currentGroup
@@ -394,7 +389,7 @@ const RouteComponent = () => {
     reservedOrionPatientCode
   ]);
   const orionSelectionRecordsQuery = useInstrumentRecords({
-    enabled: Boolean(isOrionFollowup && orionSelectionInstrumentIds.length > 0 && scopedSubjectId),
+    enabled: Boolean(isOrionFollowup && scopedSubjectId),
     params: {
       groupId: currentGroup?.id,
       subjectId: scopedSubjectId
@@ -405,15 +400,15 @@ const RouteComponent = () => {
     if (!isOrionFollowup) {
       return {} as Record<string, string>;
     }
-    const selectionIds = new Set(orionSelectionInstrumentIds);
     const codes = new Set<string>();
     for (const record of orionSelectionRecordsQuery.data ?? []) {
-      if (!selectionIds.has(record.instrumentId)) {
-        continue;
-      }
       const recordData = record.data as Record<string, unknown>;
       const value = recordData?.patient_code ?? recordData?.user_code;
-      if (typeof value === 'string' && value.trim().length > 0) {
+      if (
+        typeof value === 'string' &&
+        /^OR-C\d{3}-I\d{3}-P\d+$/.test(value.trim()) &&
+        recordData.selection_visit_date
+      ) {
         codes.add(value.trim());
       }
     }
@@ -422,7 +417,7 @@ const RouteComponent = () => {
         .sort()
         .map((code) => [code, code])
     );
-  }, [isOrionFollowup, orionSelectionInstrumentIds, orionSelectionRecordsQuery.data]);
+  }, [isOrionFollowup, orionSelectionRecordsQuery.data]);
 
   const orionFollowupUserCodeOptionsJson = JSON.stringify(orionFollowupUserCodeOptions);
 
