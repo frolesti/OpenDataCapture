@@ -558,12 +558,29 @@ export class InstrumentRecordsService {
     // all records must be attached to scalar instruments
     const instrument = (await this.getInstrumentById(instrumentRecord.instrumentId)) as ScalarInstrument;
 
-    const updatedData = mergeWith(instrumentRecord.data, data, (updatedValue: unknown, sourceValue: unknown) => {
-      if (Array.isArray(sourceValue)) {
-        return sourceValue;
+    let normalizedData = data;
+    if (!Array.isArray(data) && instrument.internal.name.startsWith('ORION_')) {
+      normalizedData = { ...data };
+      const storedData = instrumentRecord.data as Record<string, unknown>;
+      if (typeof storedData.user_code === 'string' && typeof normalizedData.patient_code === 'string') {
+        normalizedData.user_code = normalizedData.patient_code;
+        delete normalizedData.patient_code;
+      } else if (typeof storedData.patient_code === 'string' && typeof normalizedData.user_code === 'string') {
+        normalizedData.patient_code = normalizedData.user_code;
+        delete normalizedData.user_code;
       }
-      return undefined;
-    });
+    }
+
+    const updatedData = mergeWith(
+      instrumentRecord.data,
+      normalizedData,
+      (updatedValue: unknown, sourceValue: unknown) => {
+        if (Array.isArray(sourceValue)) {
+          return sourceValue;
+        }
+        return undefined;
+      }
+    );
 
     const parseResult = await instrument.validationSchema.safeParseAsync(updatedData);
     if (!parseResult.success) {

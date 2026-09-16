@@ -449,6 +449,10 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       for (const record of sourceRecords) {
         const props = record.data && typeof record.data === 'object' ? record.data : {};
         const cleanProps = Object.fromEntries(Object.entries(props).filter(([k]) => !k.startsWith('_warning')));
+        if (typeof cleanProps.user_code === 'string' && cleanProps.patient_code === undefined) {
+          cleanProps.patient_code = cleanProps.user_code;
+          delete cleanProps.user_code;
+        }
 
         const paddedProps: { [key: string]: unknown } = {};
         allKeys.forEach((key) => {

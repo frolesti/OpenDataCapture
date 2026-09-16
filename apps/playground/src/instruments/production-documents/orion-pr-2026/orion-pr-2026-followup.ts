@@ -109,7 +109,21 @@ function conditionalField<T extends Record<string, any>>(dependency: string, val
 
 function whenStudyContinues<T extends Record<string, any>>(fields: Record<string, T>) {
   return Object.fromEntries(
-    Object.entries(fields).map(([key, field]) => [key, conditionalField('continues_study', 'si', field)])
+    Object.entries(fields).map(([key, field]) => {
+      if (field.kind === 'dynamic' && typeof field.render === 'function') {
+        return [
+          key,
+          {
+            kind: 'dynamic' as const,
+            deps: ['continues_study', ...(field.deps ?? [])] as const,
+            render(data: Record<string, unknown>) {
+              return data.continues_study === 'si' ? field.render(data) : null;
+            }
+          }
+        ];
+      }
+      return [key, conditionalField('continues_study', 'si', field)];
+    })
   );
 }
 
@@ -252,7 +266,7 @@ function adherenceFields() {
 
 const responseSchema = z.enum(['1', '2', '3', '4', '5']);
 
-export default defineInstrument({
+const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
@@ -515,9 +529,6 @@ export default defineInstrument({
           path: ['dose_change_date']
         });
       }
-      if (data.study_completed === 'no' && !data.reason_not_completed) {
-        context.addIssue({ code: z.ZodIssueCode.custom, message: 'Indique el motivo', path: ['reason_not_completed'] });
-      }
       if (data.reason_not_completed === 'other' && !data.reason_not_completed_other?.trim()) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
@@ -566,4 +577,6 @@ export default defineInstrument({
         }
       }
     })
-});
+};
+
+export default defineInstrument(instrumentDefinition);

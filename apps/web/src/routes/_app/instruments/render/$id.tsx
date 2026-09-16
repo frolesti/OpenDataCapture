@@ -457,18 +457,25 @@ const RouteComponent = () => {
   ]);
 
   const instrumentTarget = instrumentBundleWithOverrides;
+  const normalizedInitialData =
+    (isOrionSelection || isOrionFollowup) &&
+    effectiveInitialData &&
+    !effectiveInitialData.patient_code &&
+    typeof effectiveInitialData.user_code === 'string'
+      ? { ...effectiveInitialData, patient_code: effectiveInitialData.user_code }
+      : effectiveInitialData;
   const formInitialData =
     isOrionSelection &&
     reservedOrionPatientCode &&
-    !effectiveInitialData?.patient_code &&
-    !effectiveInitialData?.user_code
+    !normalizedInitialData?.patient_code &&
+    !normalizedInitialData?.user_code
       ? {
           prev_treatment_name_1: 'Pregabalina IR',
           current_treatment_name_1: 'Pregabalina PR',
-          ...effectiveInitialData,
+          ...normalizedInitialData,
           patient_code: reservedOrionPatientCode
         }
-      : effectiveInitialData;
+      : normalizedInitialData;
 
   const title = instrumentTitle;
 
