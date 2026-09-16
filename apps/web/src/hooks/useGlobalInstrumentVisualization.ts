@@ -400,12 +400,20 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
   useEffect(() => {
     if (recordsQuery.data) {
       const sourceRecords = isUnifiedOrionSelected
-        ? recordsQuery.data.filter((record) => orionInstrumentIds.has(record.instrumentId))
+        ? recordsQuery.data.filter((record) => {
+            if (orionInstrumentIds.has(record.instrumentId)) {
+              return true;
+            }
+            if (!record.data || typeof record.data !== 'object' || Array.isArray(record.data)) {
+              return false;
+            }
+            const recordData = record.data as Record<string, unknown>;
+            return typeof recordData.user_code === 'string' || typeof recordData.patient_code === 'string';
+          })
         : recordsQuery.data;
 
-      // Build the column keys from the instrument definition when available, but fall
-      // back to the keys present in the records themselves so the table still renders
-      // when a newer published edition fails to interpret in the browser.
+      // Include keys from record data so historical editions remain visible even when
+      // only the latest instrument definition is returned by the info endpoint.
       const allKeys = new Set<string>();
       if (instrument && instrument.kind === 'FORM') {
         if (Array.isArray(instrument.content)) {
