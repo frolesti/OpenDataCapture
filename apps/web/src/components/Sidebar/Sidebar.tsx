@@ -17,6 +17,7 @@ export const Sidebar = () => {
   const navItems = useNavItems();
   const currentSession = useAppStore((store) => store.currentSession);
   const endSession = useAppStore((store) => store.endSession);
+  const isCurrentSessionSubmitted = useAppStore((store) => store.isCurrentSessionSubmitted);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -30,6 +31,10 @@ export const Sidebar = () => {
     }
     endSession();
     void navigate({ to: '/instruments/accessible-instruments' });
+  };
+
+  const handleCloseCurrentSession = () => {
+    closeCurrentSession({ preserveDraft: false });
   };
 
   return (
@@ -53,7 +58,17 @@ export const Sidebar = () => {
                 {...props}
               />
             ))}
-            {i === navItems.length - 1 && (
+            {i === navItems.length - 1 && isCurrentSessionSubmitted && (
+              <NavButton
+                disabled={currentSession === null}
+                icon={StopCircle}
+                isActive={false}
+                label={t('layout.navLinks.endSession')}
+                url="#"
+                onClick={handleCloseCurrentSession}
+              />
+            )}
+            {i === navItems.length - 1 && !isCurrentSessionSubmitted && (
               <AlertDialog>
                 <AlertDialog.Trigger asChild>
                   <NavButton
@@ -81,7 +96,7 @@ export const Sidebar = () => {
                   </AlertDialog.Header>
                   <AlertDialog.Footer className="flex flex-wrap gap-2">
                     <AlertDialog.Action
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-24"
+                      className="min-w-24 bg-[#8f8df2] text-white hover:bg-[#7f7de4]"
                       onClick={() => {
                         closeCurrentSession({ preserveDraft: true });
                       }}

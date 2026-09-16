@@ -274,6 +274,7 @@ const RouteComponent = () => {
   const currentSession = useAppStore((store) => store.currentSession);
   const currentUser = useAppStore((store) => store.currentUser);
   const endSession = useAppStore((store) => store.endSession);
+  const setIsCurrentSessionSubmitted = useAppStore((store) => store.setIsCurrentSessionSubmitted);
 
   const params = Route.useParams();
   const search = Route.useSearch();
@@ -751,6 +752,7 @@ const RouteComponent = () => {
     // Clear draft on successful submit
     clearDraft(params.id);
     setFormSubmitted(true);
+    setIsCurrentSessionSubmitted(true);
     notifications.addNotification({
       message: t({
         en: 'Formulari desat correctament',

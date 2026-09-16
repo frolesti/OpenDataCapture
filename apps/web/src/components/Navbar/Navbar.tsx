@@ -16,6 +16,7 @@ import { UserIcon } from '../UserIcon';
 export const Navbar = () => {
   const currentSession = useAppStore((store) => store.currentSession);
   const endSession = useAppStore((store) => store.endSession);
+  const isCurrentSessionSubmitted = useAppStore((store) => store.isCurrentSessionSubmitted);
   const currentUser = useAppStore((store) => store.currentUser);
   const logout = useAppStore((store) => store.logout);
   const setIsWalkthroughOpen = useAppStore((store) => store.setIsWalkthroughOpen);
@@ -34,6 +35,10 @@ export const Navbar = () => {
     endSession();
     setIsOpen(false);
     void navigate({ to: '/instruments/accessible-instruments' });
+  };
+
+  const handleCloseCurrentSession = () => {
+    closeCurrentSession({ preserveDraft: false });
   };
 
   // This is to prevent ugly styling when resizing the viewport
@@ -93,7 +98,19 @@ export const Navbar = () => {
                   {...props}
                 />
               ))}
-              {i === navItems.length - 1 && (
+              {i === navItems.length - 1 && isCurrentSessionSubmitted && (
+                <NavButton
+                  activeClassName="bg-slate-200 text-slate-900"
+                  className="text-slate-700 hover:bg-slate-200 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 hover:dark:text-slate-100"
+                  disabled={currentSession === null}
+                  icon={StopCircle}
+                  isActive={false}
+                  label={t('navLinks.endSession')}
+                  url="#"
+                  onClick={handleCloseCurrentSession}
+                />
+              )}
+              {i === navItems.length - 1 && !isCurrentSessionSubmitted && (
                 <AlertDialog>
                   <AlertDialog.Trigger asChild>
                     <div>
@@ -125,7 +142,7 @@ export const Navbar = () => {
                     </AlertDialog.Header>
                     <AlertDialog.Footer className="flex flex-wrap gap-2">
                       <AlertDialog.Action
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-24"
+                        className="min-w-24 bg-[#8f8df2] text-white hover:bg-[#7f7de4]"
                         onClick={() => closeCurrentSession({ preserveDraft: true })}
                       >
                         {t({

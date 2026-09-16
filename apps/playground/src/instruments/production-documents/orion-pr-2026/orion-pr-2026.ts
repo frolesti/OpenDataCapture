@@ -595,7 +595,7 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 18,
+    edition: 20,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -960,7 +960,13 @@ const instrumentDefinition: any = {
             '7': 'Bastante peor',
             '8': 'Mucho peor'
           }
-        }),
+        })
+      }
+    },
+    {
+      title: 'ACONTECIMIENTOS ADVERSOS',
+      description: PHARMACOVIGILANCE_INSTRUCTION,
+      fields: {
         baseline_adverse_events: requiresEligibility({
           kind: 'string',
           label: '¿Ha presentado algún acontecimiento adverso durante el tratamiento con pregabalina PR? *',
@@ -969,10 +975,10 @@ const instrumentDefinition: any = {
         }),
         adverse_event_records: requiresEligibilityAndValue('baseline_adverse_events', 'si', {
           kind: 'record-array',
-          label: 'Registro de reacciones adversas *',
-          description: PHARMACOVIGILANCE_INSTRUCTION,
+          label: 'Reacción adversa',
+          description: 'Detalle de las reacciones adversas notificadas durante el tratamiento.',
           fieldset: {
-            reaction: { kind: 'string', label: 'Reacción adversa *', variant: 'input' },
+            reaction: { kind: 'string', label: 'Descripción de la reacción adversa *', variant: 'input' },
             onset_date: dateField('Fecha de inicio *'),
             intensity: {
               kind: 'string',
@@ -992,12 +998,12 @@ const instrumentDefinition: any = {
               },
               variant: 'select'
             },
-            resolution_date: dateField('Fecha de resolución * si aplica'),
+            resolution_date: dateField('Fecha de resolución (si aplica)'),
             actions_taken: { kind: 'string', label: 'Medidas adoptadas *', variant: 'textarea' },
             seriousness: {
-              kind: 'set',
+              kind: 'string',
               label: 'Gravedad *',
-              variant: 'listbox',
+              variant: 'select',
               options: {
                 fallecimiento: 'Fallecimiento',
                 riesgo_vida: 'Pone en peligro la vida del paciente',
@@ -1171,18 +1177,16 @@ const instrumentDefinition: any = {
             reaction: z.string().optional(),
             resolution_date: optionalManualDateSchema(),
             seriousness: z
-              .set(
-                z.enum([
-                  'fallecimiento',
-                  'riesgo_vida',
-                  'hospitalizacion',
-                  'discapacidad',
-                  'anomalia_congenita',
-                  'medicamente_importante',
-                  'riesgo_transmision',
-                  'no_grave'
-                ])
-              )
+              .enum([
+                'fallecimiento',
+                'riesgo_vida',
+                'hospitalizacion',
+                'discapacidad',
+                'anomalia_congenita',
+                'medicamente_importante',
+                'riesgo_transmision',
+                'no_grave'
+              ])
               .optional()
           })
         )
@@ -1348,16 +1352,6 @@ const instrumentDefinition: any = {
                 });
               }
             }
-            if (
-              (event.outcome === 'recuperado' || event.outcome === 'recuperado_con_secuelas') &&
-              !event.resolution_date
-            ) {
-              context.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Indique la fecha de resolución para este desenlace.',
-                path: ['adverse_event_records', index, 'resolution_date']
-              });
-            }
           }
         }
 
@@ -1517,10 +1511,24 @@ const instrumentDefinition: any = {
               path: ['adverse_event_records', index, 'onset_date']
             });
           }
-          if (onsetDate !== undefined && resolutionDate !== undefined && onsetDate > resolutionDate) {
+          if (onsetDate !== undefined && selectionVisitTime !== undefined && onsetDate > selectionVisitTime) {
             context.addIssue({
               code: z.ZodIssueCode.custom,
-              message: 'La fecha de inicio no puede ser posterior a la fecha de resolución.',
+              message: 'La fecha de inicio no puede ser posterior a la visita de selección.',
+              path: ['adverse_event_records', index, 'onset_date']
+            });
+          }
+          if (resolutionDate !== undefined && selectionVisitTime !== undefined && resolutionDate > selectionVisitTime) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'La fecha de resolución no puede ser posterior a la visita de selección.',
+              path: ['adverse_event_records', index, 'resolution_date']
+            });
+          }
+          if (onsetDate !== undefined && resolutionDate !== undefined && onsetDate >= resolutionDate) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'La fecha de inicio debe ser anterior a la fecha de resolución.',
               path: ['adverse_event_records', index, 'resolution_date']
             });
           }

@@ -34,7 +34,9 @@ export type DisclaimerSlice = {
 
 export type SessionSlice = {
   currentSession: null | Session;
+  isCurrentSessionSubmitted: boolean;
   endSession: () => void;
+  setIsCurrentSessionSubmitted: (isCurrentSessionSubmitted: boolean) => void;
   startSession: (session: Session) => void;
 };
 
