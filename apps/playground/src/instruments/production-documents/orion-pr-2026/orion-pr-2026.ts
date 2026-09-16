@@ -598,7 +598,7 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 20,
+    edition: 21,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [

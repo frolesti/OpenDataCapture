@@ -9,3 +9,7 @@ After modifying files:
 5. Do not report completion until the post-edit Problems check is clean or any remaining pre-existing errors are explicitly identified.
 
 Do not include unrelated user changes in commits or deployments.
+
+# Instrument Edition Workflow
+
+When modifying a published instrument definition, especially files under `apps/playground/src/instruments/production-documents/`, do not assume the next edition number. Before committing, ask the user for the latest published edition, then increment `internal.edition` if the instrument definition changed. Mention the edition bump explicitly in the final summary.
