@@ -15,7 +15,8 @@ build
 dist
 
 # ide
-.vscode
+.vscode/*
+!.vscode/settings.json
 .idea
 
 # misc

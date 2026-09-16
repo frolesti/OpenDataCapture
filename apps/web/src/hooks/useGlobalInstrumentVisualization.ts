@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { toBasicISOString } from '@douglasneuroinformatics/libjs';
 import { useDownload, useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
-import type { AnyUnilingualScalarInstrument, InstrumentKind } from '@opendatacapture/runtime-core';
+import type { InstrumentRecordQueryParams } from '@opendatacapture/schemas/instrument-records';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
 import { omit } from 'lodash-es';
 import { unparse } from 'papaparse';
@@ -25,7 +25,7 @@ type InstrumentVisualizationRecord = {
 
 type UseGlobalInstrumentVisualizationOptions = {
   params?: {
-    kind?: InstrumentKind;
+    kind?: InstrumentRecordQueryParams['kind'];
   };
 };
 
@@ -158,12 +158,12 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     isUnifiedOrionSelected
       ? (orionSelectionInstrument?.id ?? orionFollowupInstrument?.id ?? null)
       : selectedInstrumentId
-  ) as AnyUnilingualScalarInstrument;
+  );
 
   const recordsQuery = useInstrumentRecords({
     enabled: selectedInstrumentId !== null,
     params: {
-      groupId: currentGroup?.id,
+      groupId: isUnifiedOrionSelected ? undefined : currentGroup?.id,
       instrumentId: isUnifiedOrionSelected ? undefined : (selectedInstrumentId ?? undefined),
       kind: params?.kind,
       minDate: minDate ?? undefined
