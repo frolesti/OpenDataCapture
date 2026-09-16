@@ -232,14 +232,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
   }, [currentGroup?.hospitals, records]);
 
   const filteredRecords = useMemo(() => {
-    let currentRecords = records;
-    if (currentUser?.basePermissionLevel === 'STANDARD') {
-      currentRecords = currentRecords.filter((record) => {
-        return removeSubjectIdScope(record.__subjectId__) === currentUser.username;
-      });
-    }
-
-    return currentRecords.filter((record) => {
+    return records.filter((record) => {
       return Object.entries(filters).every(([key, value]) => {
         if (!value) return true;
         return record[key] === value;
