@@ -33,6 +33,15 @@ const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
 const ORION_FOLLOWUP_INTERNAL_NAME = 'ORION_PR_2026_FOLLOWUP';
 const ORION_UNIFIED_OPTION_ID = '__ORION_PR_2026__';
 
+function getOrionPatientCode(data: Record<string, unknown>) {
+  const patientCode = data.patient_code ?? data.user_code;
+  return typeof patientCode === 'string' && patientCode.trim().length > 0 ? patientCode.trim() : undefined;
+}
+
+function hasMeaningfulValue(value: unknown) {
+  return value !== undefined && value !== null && value !== '';
+}
+
 export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrumentVisualizationOptions = {}) {
   const currentGroup = useAppStore((store) => store.currentGroup);
   const currentUser = useAppStore((store) => store.currentUser);
@@ -446,7 +455,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
         }
       }
 
-      const records: InstrumentVisualizationRecord[] = [];
+      const expandedRecords: InstrumentVisualizationRecord[] = [];
       for (const record of sourceRecords) {
         const props = record.data && typeof record.data === 'object' ? record.data : {};
         const cleanProps = Object.fromEntries(Object.entries(props).filter(([k]) => !k.startsWith('_warning')));
@@ -460,7 +469,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
           paddedProps[key] = undefined;
         });
 
-        records.push({
+        expandedRecords.push({
           __data__: record.data as Record<string, unknown>,
           __date__: record.date,
           __id__: record.id,
@@ -472,7 +481,44 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
           ...cleanProps
         });
       }
-      setRecords(records);
+      if (!isUnifiedOrionSelected) {
+        setRecords(expandedRecords);
+        return;
+      }
+
+      const mergedRecords = new Map<string, InstrumentVisualizationRecord>();
+      for (const record of expandedRecords.sort((a, b) => a.__time__ - b.__time__)) {
+        const patientCode = getOrionPatientCode(record.__data__) ?? getOrionPatientCode(record);
+        const mergeKey = patientCode ? `${record.__subjectId__}:${patientCode}` : record.__id__;
+        const existing = mergedRecords.get(mergeKey);
+        if (!existing) {
+          mergedRecords.set(mergeKey, { ...record, __data__: { ...record.__data__ } });
+          continue;
+        }
+
+        for (const [key, value] of Object.entries(record)) {
+          if (key.startsWith('__')) {
+            continue;
+          }
+          if (!hasMeaningfulValue(value)) {
+            continue;
+          }
+          if (!hasMeaningfulValue(existing[key])) {
+            existing[key] = value;
+          } else if (existing[key] !== value) {
+            existing[`followup_${key}`] = value;
+          }
+        }
+
+        existing.__data__ = { ...existing.__data__, ...record.__data__ };
+        if (record.__time__ >= existing.__time__) {
+          existing.__date__ = record.__date__;
+          existing.__id__ = record.__id__;
+          existing.__instrumentId__ = record.__instrumentId__;
+          existing.__time__ = record.__time__;
+        }
+      }
+      setRecords(Array.from(mergedRecords.values()));
     }
   }, [instrument, isUnifiedOrionSelected, orionInstrumentIds, recordsQuery.data]);
 

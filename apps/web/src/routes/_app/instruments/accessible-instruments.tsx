@@ -54,20 +54,17 @@ const RouteComponent = () => {
     currentUser && selectedGroup
       ? encodeScopedSubjectId(currentUser.username, { groupName: selectedGroup.name })
       : undefined;
-  const orionSelectionInstrument = (instrumentInfoQuery.data ?? []).find(
-    (instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME
-  );
   const orionSelectionRecordsQuery = useInstrumentRecords({
-    enabled: Boolean(scopedSubjectId && orionSelectionInstrument?.id),
+    enabled: Boolean(scopedSubjectId),
     params: {
       groupId: selectedGroup?.id,
-      instrumentId: orionSelectionInstrument?.id,
       subjectId: scopedSubjectId
     }
   });
-  const hasOrionSelectionWithUserCode = (orionSelectionRecordsQuery.data ?? []).some((record) => {
+  const hasOrionSelectionWithPatientCode = (orionSelectionRecordsQuery.data ?? []).some((record) => {
     const data = record.data as Record<string, unknown>;
-    return typeof data.user_code === 'string' && data.user_code.trim().length > 0;
+    const patientCode = data.patient_code ?? data.user_code;
+    return typeof patientCode === 'string' && /^OR-C\d{3}-I\d{3}-P\d+$/.test(patientCode.trim());
   });
 
   useEffect(() => {
@@ -82,7 +79,10 @@ const RouteComponent = () => {
     }
 
     const instrument = instrumentInfoQuery.data.find((entry) => entry.id === lastInstrumentId);
-    if (!instrument || (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME && !hasOrionSelectionWithUserCode)) {
+    if (
+      !instrument ||
+      (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME && !hasOrionSelectionWithPatientCode)
+    ) {
       return;
     }
 
@@ -92,7 +92,7 @@ const RouteComponent = () => {
       state: { instrumentTitle: instrument.details.title },
       to: `/instruments/render/$id`
     });
-  }, [accessibleInstrumentIds, currentSession, hasOrionSelectionWithUserCode, instrumentInfoQuery.data, navigate]);
+  }, [accessibleInstrumentIds, currentSession, hasOrionSelectionWithPatientCode, instrumentInfoQuery.data, navigate]);
 
   return (
     <div data-testid="accessible-instruments-page">
@@ -109,7 +109,7 @@ const RouteComponent = () => {
               return false;
             }
             if (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME) {
-              return hasOrionSelectionWithUserCode;
+              return hasOrionSelectionWithPatientCode;
             }
             return true;
           }),

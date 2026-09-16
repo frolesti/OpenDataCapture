@@ -18,7 +18,7 @@ const ORION_SELECTION_INTERNAL = {
   name: 'ORION_PR_2026_SELECTION'
 } as const;
 const ORION_FOLLOWUP_INTERNAL = {
-  edition: 1,
+  edition: 3,
   name: 'ORION_PR_2026_FOLLOWUP'
 } as const;
 
@@ -89,7 +89,8 @@ export class OrionFollowupService {
       return (
         typeof recordPatientCode === 'string' &&
         /^OR-C\d{3}-I\d{3}-P\d+$/.test(recordPatientCode) &&
-        recordPatientCode === userCode.trim()
+        recordPatientCode === userCode.trim() &&
+        Boolean(selectionData?.selection_visit_date)
       );
     });
     const selectionData = selectionRecord?.data as Record<string, unknown> | null;
@@ -278,8 +279,8 @@ export class OrionFollowupService {
     const exclusionKeys = ['exclusion_1', 'exclusion_2', 'exclusion_3', 'exclusion_4', 'exclusion_5', 'exclusion_6'];
     return (
       data.informed_consent === 'si' &&
-      inclusionKeys.every((key) => data[key] === 'si') &&
-      exclusionKeys.every((key) => data[key] === 'no')
+      ((data.inclusion_all === 'si' && data.exclusion_all === 'no') ||
+        (inclusionKeys.every((key) => data[key] === 'si') && exclusionKeys.every((key) => data[key] === 'no')))
     );
   }
 

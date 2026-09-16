@@ -12,13 +12,8 @@ import { InstrumentsService } from '@/instruments/instruments.service';
 
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 
-const ORION_SELECTION_INTERNAL = {
-  edition: 1,
-  name: 'ORION_PR_2026_SELECTION'
-} as const;
-
 const ORION_FOLLOWUP_INTERNAL = {
-  edition: 1,
+  edition: 3,
   name: 'ORION_PR_2026_FOLLOWUP'
 } as const;
 
@@ -135,20 +130,26 @@ export class AssignmentsService {
       return;
     }
 
-    const selectionInstrumentId = this.instrumentsService.generateScalarInstrumentId({
-      internal: ORION_SELECTION_INTERNAL
-    });
-    const selectionRecord = await this.instrumentRecordModel.findFirst({
+    const records = await this.instrumentRecordModel.findMany({
       orderBy: { createdAt: 'desc' },
       where: {
         groupId: groupId ?? null,
-        instrumentId: selectionInstrumentId,
         subjectId
       }
     });
+    const selectionRecord = records.find((record) => {
+      const data = record.data as Record<string, unknown> | null;
+      const patientCode = data?.patient_code ?? data?.user_code;
+      return (
+        typeof patientCode === 'string' &&
+        /^OR-C\d{3}-I\d{3}-P\d+$/.test(patientCode.trim()) &&
+        Boolean(data?.selection_visit_date) &&
+        this.isEligibleSelection(data)
+      );
+    });
 
     const selectionData = selectionRecord?.data as Record<string, unknown> | null;
-    if (!selectionRecord || !selectionData || !this.isEligibleSelection(selectionData)) {
+    if (!selectionRecord || !selectionData) {
       throw new BadRequestException(
         'No se puede asignar la visita de 3 meses de ORION sin una visita de selección completada y apta.'
       );
@@ -160,8 +161,8 @@ export class AssignmentsService {
     const exclusionKeys = ['exclusion_1', 'exclusion_2', 'exclusion_3', 'exclusion_4', 'exclusion_5', 'exclusion_6'];
     return (
       data.informed_consent === 'si' &&
-      inclusionKeys.every((key) => data[key] === 'si') &&
-      exclusionKeys.every((key) => data[key] === 'no')
+      ((data.inclusion_all === 'si' && data.exclusion_all === 'no') ||
+        (inclusionKeys.every((key) => data[key] === 'si') && exclusionKeys.every((key) => data[key] === 'no')))
     );
   }
 }
