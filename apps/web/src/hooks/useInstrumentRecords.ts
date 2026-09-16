@@ -26,6 +26,6 @@ export const useInstrumentRecords = (
       });
       return $InstrumentRecord.array().parseAsync(response.data);
     },
-    queryKey: [INSTRUMENT_RECORDS_QUERY_KEY, ...Object.values(params)]
+    queryKey: [INSTRUMENT_RECORDS_QUERY_KEY, params]
   });
 };
