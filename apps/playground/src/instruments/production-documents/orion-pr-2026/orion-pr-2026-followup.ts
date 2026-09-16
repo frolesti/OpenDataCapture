@@ -270,7 +270,7 @@ const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 3, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 4, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
       title: 'CÓDIGO DEL PACIENTE',
@@ -513,6 +513,31 @@ const instrumentDefinition: any = {
         ]) {
           if (data[field as keyof typeof data] === undefined) {
             context.addIssue({ code: z.ZodIssueCode.custom, message: 'Este campo es obligatorio', path: [field] });
+          }
+        }
+
+        if (data.followup_date instanceof Date) {
+          const patientCode = typeof data.patient_code === 'string' ? data.patient_code.trim() : '';
+          const selectionVisitRaw = patientCode
+            ? (globalThis as any).__ODC_ORION_SELECTION_VISIT_DATE_BY_CODE__?.[patientCode]
+            : undefined;
+          const selectionVisitDate = parseManualDate(selectionVisitRaw);
+          if (!selectionVisitDate) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'No se ha podido recuperar la fecha de la visita de selección para este paciente.',
+              path: ['followup_date']
+            });
+          } else {
+            const elapsedDays = (data.followup_date.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
+            if (elapsedDays < 76 || elapsedDays > 104) {
+              context.addIssue({
+                code: z.ZodIssueCode.custom,
+                message:
+                  'La visita de seguimiento debe realizarse entre 76 y 104 días después de la visita de selección.',
+                path: ['followup_date']
+              });
+            }
           }
         }
       } else if (!data.end_date || !data.reason_not_completed) {
