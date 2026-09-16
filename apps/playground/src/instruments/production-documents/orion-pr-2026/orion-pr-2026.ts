@@ -315,8 +315,11 @@ function nonPersistentCheckboxSchema() {
 }
 
 function isTreatmentComplete(data: FormData, prefix: string, treatmentNumber: number): boolean {
+  const hasTreatmentName =
+    (treatmentNumber === 1 && (prefix === 'prev' || prefix === 'current')) ||
+    Boolean(data[`${prefix}_treatment_name_${treatmentNumber}`]);
   const baseComplete = Boolean(
-    data[`${prefix}_treatment_name_${treatmentNumber}`] &&
+    hasTreatmentName &&
       data[`${prefix}_treatment_dose_mg_${treatmentNumber}`] !== undefined &&
       data[`${prefix}_treatment_start_${treatmentNumber}`]
   );

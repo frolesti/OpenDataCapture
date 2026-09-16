@@ -302,6 +302,7 @@ const RouteComponent = () => {
   const [currentStep, setCurrentStep] = useState(0);
   // Hide draft button after successful submit
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const isDiscardingDraftRef = useRef(false);
   // Edit confirmation dialog state
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
   const pendingSubmitRef = useRef<{ data: unknown; instrumentId: string } | null>(null);
@@ -495,7 +496,7 @@ const RouteComponent = () => {
       const nextData = mergeFormSnapshots(latestDataRef.current, data);
       latestDataRef.current = nextData;
       // Only auto-save for new records, not when editing existing ones
-      if (!recordId) {
+      if (!recordId && !isDiscardingDraftRef.current) {
         saveDraft(params.id, nextData);
       }
     },
@@ -575,6 +576,7 @@ const RouteComponent = () => {
     clearDraft(params.id);
     setDraftData(null);
     setDraftDiscarded(true);
+    isDiscardingDraftRef.current = false;
     latestDataRef.current = null;
     setRendererKey((k) => k + 1);
     setCurrentStep(0);
@@ -622,12 +624,14 @@ const RouteComponent = () => {
 
   useEffect(() => {
     const handleSaveDraftBeforeClose = () => {
+      isDiscardingDraftRef.current = false;
       if (latestDataRef.current && !recordId) {
         saveDraft(params.id, latestDataRef.current);
       }
     };
 
     const handleDiscardDraftBeforeClose = () => {
+      isDiscardingDraftRef.current = true;
       if (!recordId) {
         clearDraft(params.id);
       }
