@@ -32,6 +32,86 @@ type UseGlobalInstrumentVisualizationOptions = {
 const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
 const ORION_FOLLOWUP_INTERNAL_NAME = 'ORION_PR_2026_FOLLOWUP';
 const ORION_UNIFIED_OPTION_ID = '__ORION_PR_2026__';
+const ORION_EQ5D_LABELS: Record<string, Record<string, string>> = {
+  eq5d_activities: {
+    '1': 'No tengo problemas para realizar mis actividades cotidianas',
+    '2': 'Tengo problemas leves para realizar mis actividades cotidianas',
+    '3': 'Tengo problemas moderados para realizar mis actividades cotidianas',
+    '4': 'Tengo problemas graves para realizar mis actividades cotidianas',
+    '5': 'No puedo realizar mis actividades cotidianas'
+  },
+  eq5d_anxiety: {
+    '1': 'No estoy ansioso ni deprimido',
+    '2': 'Estoy levemente ansioso o deprimido',
+    '3': 'Estoy moderadamente ansioso o deprimido',
+    '4': 'Estoy muy ansioso o deprimido',
+    '5': 'Estoy extremadamente ansioso o deprimido'
+  },
+  eq5d_mobility: {
+    '1': 'No tengo problemas para caminar',
+    '2': 'Tengo problemas leves para caminar',
+    '3': 'Tengo problemas moderados para caminar',
+    '4': 'Tengo problemas graves para caminar',
+    '5': 'No puedo caminar'
+  },
+  eq5d_pain: {
+    '1': 'No tengo dolor ni malestar',
+    '2': 'Tengo dolor o malestar leve',
+    '3': 'Tengo dolor o malestar moderado',
+    '4': 'Tengo dolor o malestar fuerte',
+    '5': 'Tengo dolor o malestar extremo'
+  },
+  eq5d_selfcare: {
+    '1': 'No tengo problemas para lavarme o vestirme',
+    '2': 'Tengo problemas leves para lavarme o vestirme',
+    '3': 'Tengo problemas moderados para lavarme o vestirme',
+    '4': 'Tengo problemas graves para lavarme o vestirme',
+    '5': 'No puedo lavarme o vestirme'
+  }
+};
+const ORION_FREQUENCY_LABELS: Record<string, string> = {
+  '1': 'Nunca',
+  '2': 'Pocas veces',
+  '3': 'Algunas veces',
+  '4': 'Con frecuencia',
+  '5': 'Siempre'
+};
+const ORION_SLEEP_QUALITY_LABELS: Record<string, string> = {
+  '1': 'Muy buena',
+  '2': 'Buena',
+  '3': 'Regular',
+  '4': 'Mala',
+  '5': 'Muy mala'
+};
+const ORION_CGI_LABELS: Record<string, string> = {
+  '1': 'No evaluado',
+  '2': 'Mucho mejor',
+  '3': 'Bastante mejor',
+  '4': 'Ligeramente mejor',
+  '5': 'Sin cambios',
+  '6': 'Ligeramente peor',
+  '7': 'Bastante peor',
+  '8': 'Mucho peor'
+};
+
+function formatOrionScaleValue(fieldName: string, value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const baseFieldName = fieldName.replace(/^followup_/, '').replace(/^(retro|prosp)_/, '');
+  const labels =
+    ORION_EQ5D_LABELS[baseFieldName] ??
+    (['sleep_onset', 'sleep_maintenance', 'sleep_daytime'].includes(baseFieldName)
+      ? ORION_FREQUENCY_LABELS
+      : baseFieldName === 'sleep_quality'
+        ? ORION_SLEEP_QUALITY_LABELS
+        : baseFieldName === 'cgi_improvement'
+          ? ORION_CGI_LABELS
+          : undefined);
+  const label = labels?.[value];
+  return label ? `${value} - ${label}` : value;
+}
 
 function getOrionPatientCode(data: Record<string, unknown>) {
   const patientCode = data.patient_code ?? data.user_code;
@@ -462,6 +542,11 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
         if (typeof cleanProps.user_code === 'string' && cleanProps.patient_code === undefined) {
           cleanProps.patient_code = cleanProps.user_code;
           delete cleanProps.user_code;
+        }
+        if (isUnifiedOrionSelected) {
+          for (const [key, value] of Object.entries(cleanProps)) {
+            cleanProps[key] = formatOrionScaleValue(key, value);
+          }
         }
 
         const paddedProps: { [key: string]: unknown } = {};
