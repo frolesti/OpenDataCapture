@@ -107,6 +107,12 @@ function parseOrionDate(value: unknown): Date | null {
   return null;
 }
 
+function formatOrionDateForApi(value: unknown): string | undefined {
+  const date = parseOrionDate(value);
+  if (!date) return undefined;
+  return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+}
+
 function hasMeaningfulValue(value: unknown): boolean {
   if (value === undefined || value === null) {
     return false;
@@ -785,7 +791,10 @@ const RouteComponent = () => {
       }
     }
 
-    const payloadData = mergedData as CreateInstrumentRecordData['data'];
+    const payloadData = {
+      ...mergedData,
+      ...(isOrionFollowup && values.followup_date ? { followup_date: formatOrionDateForApi(values.followup_date) } : {})
+    } as CreateInstrumentRecordData['data'];
 
     if (recordId) {
       // For edits, show confirmation dialog first

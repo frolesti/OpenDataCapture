@@ -18,7 +18,7 @@ const ORION_SELECTION_INTERNAL = {
   name: 'ORION_PR_2026_SELECTION'
 } as const;
 const ORION_FOLLOWUP_INTERNAL = {
-  edition: 7,
+  edition: 8,
   name: 'ORION_PR_2026_FOLLOWUP'
 } as const;
 
