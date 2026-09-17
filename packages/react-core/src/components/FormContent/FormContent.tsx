@@ -143,12 +143,21 @@ export const FormContent = ({
           content={contentForForm as any}
           data-testid="form-content"
           initialValues={{ ...instrument.initialValues, ...initialValues } as any}
-          revalidateOnChange={revalidateOnChange}
           revalidateOnBlur={revalidateOnChange}
           subscribe={
             onDataChange
               ? {
-                  onChange: (values) => onDataChange(values as Record<string, unknown>),
+                  onChange: (values) => {
+                    onDataChange(values as Record<string, unknown>);
+                    if (revalidateOnChange) {
+                      setTimeout(() => {
+                        const activeElement = document.activeElement;
+                        if (activeElement instanceof HTMLElement) {
+                          activeElement.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+                        }
+                      }, 0);
+                    }
+                  },
                   selector: (values) => JSON.stringify(values)
                 }
               : undefined
