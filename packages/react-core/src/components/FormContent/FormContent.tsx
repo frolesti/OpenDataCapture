@@ -149,14 +149,6 @@ export const FormContent = ({
               ? {
                   onChange: (values) => {
                     onDataChange(values as Record<string, unknown>);
-                    if (revalidateOnChange) {
-                      setTimeout(() => {
-                        const activeElement = document.activeElement;
-                        if (activeElement instanceof HTMLElement) {
-                          activeElement.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
-                        }
-                      }, 0);
-                    }
                   },
                   selector: (values) => JSON.stringify(values)
                 }
