@@ -345,8 +345,16 @@ const RouteComponent = () => {
       ? encodeScopedSubjectId(currentUser.username, { groupName: currentGroup.name })
       : undefined);
 
-  const isOrionFollowup = instrumentInfo?.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME;
-  const isOrionSelection = instrumentInfo?.internal?.name === ORION_SELECTION_INTERNAL_NAME;
+  // Fall back to the bundle's own internal name so revalidateOnBlur/scroll-to-error don't miss
+  // a render where instrumentInfoQuery hasn't resolved yet.
+  const bundleInternalName = (instrumentBundleQuery.data as { internal?: { name?: string } } | undefined)?.internal
+    ?.name;
+  const isOrionFollowup =
+    instrumentInfo?.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME ||
+    bundleInternalName === ORION_FOLLOWUP_INTERNAL_NAME;
+  const isOrionSelection =
+    instrumentInfo?.internal?.name === ORION_SELECTION_INTERNAL_NAME ||
+    bundleInternalName === ORION_SELECTION_INTERNAL_NAME;
 
   useEffect(() => {
     if (
@@ -793,7 +801,9 @@ const RouteComponent = () => {
 
     const payloadData = {
       ...mergedData,
-      ...(isOrionFollowup && values.followup_date ? { followup_date: formatOrionDateForApi(values.followup_date) } : {})
+      ...(isOrionFollowup && mergedData.followup_date
+        ? { followup_date: formatOrionDateForApi(mergedData.followup_date) }
+        : {})
     } as CreateInstrumentRecordData['data'];
 
     if (recordId) {

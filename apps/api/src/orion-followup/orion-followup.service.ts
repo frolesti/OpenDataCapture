@@ -1,12 +1,18 @@
 import { ConfigService, InjectModel, InjectPrismaClient } from '@douglasneuroinformatics/libnest';
 import type { ExtendedPrismaClient, Model } from '@douglasneuroinformatics/libnest';
 import { Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
-import type { AnyScalarInstrument } from '@opendatacapture/runtime-core';
 import type { User } from '@prisma/client';
 import nodemailer from 'nodemailer';
 
 import { InstrumentsService } from '@/instruments/instruments.service';
 import { AssignmentsService } from '@/assignments/assignments.service';
+
+type OrionInstrument = {
+  internal: {
+    edition: number;
+    name: string;
+  };
+};
 
 const FOLLOWUP_DELAY_MS = 10 * 7 * 24 * 60 * 60 * 1000;
 const FOLLOWUP_ASSIGNMENT_EXPIRY_MS = 14 * 7 * 24 * 60 * 60 * 1000;
@@ -71,7 +77,7 @@ export class OrionFollowupService {
   }: {
     followupData: Record<string, unknown>;
     groupId?: string;
-    instrument: AnyScalarInstrument;
+    instrument: OrionInstrument;
     subjectId: string;
     userCode: string;
   }): Promise<string | undefined> {
@@ -121,9 +127,16 @@ export class OrionFollowupService {
     return selectionRecord.id;
   }
 
-  private parseInstrumentDate(value: unknown) {
+  private parseInstrumentDate(value: unknown): Date | undefined {
     if (value instanceof Date && !Number.isNaN(value.getTime())) {
       return value;
+    }
+    if (typeof value === 'number') {
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+    }
+    if (value && typeof value === 'object' && '$date' in value) {
+      return this.parseInstrumentDate((value as { $date?: unknown }).$date);
     }
     if (typeof value !== 'string') {
       return undefined;
@@ -160,7 +173,7 @@ export class OrionFollowupService {
     userCode
   }: {
     groupId?: string;
-    instrument: AnyScalarInstrument;
+    instrument: OrionInstrument;
     investigator?: User;
     selectionData: Record<string, unknown>;
     selectionRecordId: string;
@@ -284,7 +297,7 @@ export class OrionFollowupService {
     }
   }
 
-  private isSelectionInstrument(instrument: AnyScalarInstrument) {
+  private isSelectionInstrument(instrument: OrionInstrument) {
     return instrument.internal.name === ORION_SELECTION_INTERNAL.name;
   }
 
@@ -309,7 +322,7 @@ export class OrionFollowupService {
     return (this.prismaClient as unknown as Record<string, any>).orionFollowupReminder;
   }
 
-  private isFollowupInstrument(instrument: AnyScalarInstrument) {
+  private isFollowupInstrument(instrument: OrionInstrument) {
     return instrument.internal.name === ORION_FOLLOWUP_INTERNAL.name;
   }
 
