@@ -110,17 +110,13 @@ export class OrionFollowupService {
     if (followupData.continues_study === 'si') {
       const selectionVisitDate = this.parseInstrumentDate(selectionData.selection_visit_date);
       const followupDate = this.parseInstrumentDate(followupData.followup_date);
-      if (!selectionVisitDate || !followupDate) {
-        throw new UnprocessableEntityException(
-          'No se puede verificar la ventana de seguimiento sin las fechas de selección y seguimiento.'
-        );
-      }
-
-      const elapsedDays = (followupDate.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
-      if (elapsedDays < FOLLOWUP_WINDOW_MIN_DAYS || elapsedDays > FOLLOWUP_WINDOW_MAX_DAYS) {
-        throw new UnprocessableEntityException(
-          `La fecha debe estar entre ${this.formatDate(new Date(selectionVisitDate.getTime() + FOLLOWUP_WINDOW_MIN_DAYS * 86400000))} y ${this.formatDate(new Date(selectionVisitDate.getTime() + FOLLOWUP_WINDOW_MAX_DAYS * 86400000))} para ser compatible con la visita de selección.`
-        );
+      if (selectionVisitDate && followupDate) {
+        const elapsedDays = (followupDate.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
+        if (elapsedDays < FOLLOWUP_WINDOW_MIN_DAYS || elapsedDays > FOLLOWUP_WINDOW_MAX_DAYS) {
+          throw new UnprocessableEntityException(
+            `La fecha debe estar entre ${this.formatDate(new Date(selectionVisitDate.getTime() + FOLLOWUP_WINDOW_MIN_DAYS * 86400000))} y ${this.formatDate(new Date(selectionVisitDate.getTime() + FOLLOWUP_WINDOW_MAX_DAYS * 86400000))} para ser compatible con la visita de selección.`
+          );
+        }
       }
     }
 

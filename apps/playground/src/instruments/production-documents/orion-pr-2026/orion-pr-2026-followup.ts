@@ -286,7 +286,7 @@ const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 8, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 10, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
       fields: { patient_code: { kind: 'string', label: 'Código del paciente *', variant: 'input' } }
@@ -531,21 +531,18 @@ const instrumentDefinition: any = {
           }
         }
 
-        if (data.followup_date instanceof Date) {
-          const patientCode = typeof data.patient_code === 'string' ? data.patient_code.trim() : '';
-          const selectionVisitRaw = patientCode
-            ? (globalThis as any).__ODC_ORION_SELECTION_VISIT_DATE_BY_CODE__?.[patientCode]
-            : undefined;
-          const selectionVisitDate = parseManualDate(selectionVisitRaw);
-          if (selectionVisitDate) {
-            const elapsedDays = (data.followup_date.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
-            if (elapsedDays < 76 || elapsedDays > 104) {
-              context.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: `La fecha debe estar entre ${formatManualDate(addDays(selectionVisitDate, 76))} y ${formatManualDate(addDays(selectionVisitDate, 104))} para ser compatible con la visita de selección.`,
-                path: ['followup_date']
-              });
-            }
+        const patientCode = typeof data.patient_code === 'string' ? data.patient_code.trim() : '';
+        const selectionVisitDate = parseManualDate(
+          patientCode ? (globalThis as any).__ODC_ORION_SELECTION_VISIT_DATE_BY_CODE__?.[patientCode] : undefined
+        );
+        if (data.followup_date && selectionVisitDate) {
+          const elapsedDays = (data.followup_date.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
+          if (elapsedDays < 76 || elapsedDays > 104) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `La fecha debe estar entre ${formatManualDate(addDays(selectionVisitDate, 76))} y ${formatManualDate(addDays(selectionVisitDate, 104))} para ser compatible con la visita de selección.`,
+              path: ['followup_date']
+            });
           }
         }
       } else if (!data.end_date || !data.reason_not_completed) {
