@@ -30,26 +30,42 @@ function parseManualDate(value: unknown): Date | undefined {
     return undefined;
   }
 
-  const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value.trim());
-  if (!match) {
-    return undefined;
+  const trimmed = value.trim();
+  const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(trimmed);
+  if (match) {
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const year = Number(match[3]);
+    const parsed = new Date(year, month - 1, day, 12);
+    if (
+      !Number.isNaN(parsed.getTime()) &&
+      parsed.getFullYear() === year &&
+      parsed.getMonth() === month - 1 &&
+      parsed.getDate() === day
+    ) {
+      return parsed;
+    }
   }
 
-  const day = Number(match[1]);
-  const month = Number(match[2]);
-  const year = Number(match[3]);
-  const parsed = new Date(year, month - 1, day, 12);
-
-  if (
-    Number.isNaN(parsed.getTime()) ||
-    parsed.getFullYear() !== year ||
-    parsed.getMonth() !== month - 1 ||
-    parsed.getDate() !== day
-  ) {
-    return undefined;
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/.exec(trimmed);
+  if (isoMatch) {
+    const parsed = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]), 12);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
   }
 
-  return parsed;
+  return undefined;
+}
+
+function formatManualDate(date: Date): string {
+  return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+}
+
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
 }
 
 function requiredManualDateSchema() {
@@ -270,7 +286,7 @@ const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 6, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 7, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
       fields: { patient_code: { kind: 'string', label: 'Código del paciente *', variant: 'input' } }
@@ -526,8 +542,7 @@ const instrumentDefinition: any = {
             if (elapsedDays < 76 || elapsedDays > 104) {
               context.addIssue({
                 code: z.ZodIssueCode.custom,
-                message:
-                  'La visita de seguimiento debe realizarse entre 76 y 104 días después de la visita de selección.',
+                message: `La fecha debe estar entre ${formatManualDate(addDays(selectionVisitDate, 76))} y ${formatManualDate(addDays(selectionVisitDate, 104))} para ser compatible con la visita de selección.`,
                 path: ['followup_date']
               });
             }

@@ -772,8 +772,14 @@ const RouteComponent = () => {
         }
         const elapsedDays = (followupDate.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
         if (elapsedDays < 76 || elapsedDays > 104) {
+          const formatDate = (date: Date) =>
+            `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+          const earliestDate = new Date(selectionVisitDate);
+          earliestDate.setDate(earliestDate.getDate() + 76);
+          const latestDate = new Date(selectionVisitDate);
+          latestDate.setDate(latestDate.getDate() + 104);
           return rejectSubmit(
-            'La visita de seguimiento debe realizarse entre 76 y 104 días después de la visita de selección.'
+            `La fecha debe estar entre ${formatDate(earliestDate)} y ${formatDate(latestDate)} para ser compatible con la visita de selección.`
           );
         }
       }

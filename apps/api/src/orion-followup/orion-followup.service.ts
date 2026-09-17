@@ -18,7 +18,7 @@ const ORION_SELECTION_INTERNAL = {
   name: 'ORION_PR_2026_SELECTION'
 } as const;
 const ORION_FOLLOWUP_INTERNAL = {
-  edition: 6,
+  edition: 7,
   name: 'ORION_PR_2026_FOLLOWUP'
 } as const;
 
@@ -113,7 +113,7 @@ export class OrionFollowupService {
       const elapsedDays = (followupDate.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
       if (elapsedDays < FOLLOWUP_WINDOW_MIN_DAYS || elapsedDays > FOLLOWUP_WINDOW_MAX_DAYS) {
         throw new UnprocessableEntityException(
-          'La visita de seguimiento debe realizarse entre 76 y 104 días después de la visita de selección.'
+          `La fecha debe estar entre ${this.formatDate(new Date(selectionVisitDate.getTime() + FOLLOWUP_WINDOW_MIN_DAYS * 86400000))} y ${this.formatDate(new Date(selectionVisitDate.getTime() + FOLLOWUP_WINDOW_MAX_DAYS * 86400000))} para ser compatible con la visita de selección.`
         );
       }
     }
@@ -128,12 +128,26 @@ export class OrionFollowupService {
     if (typeof value !== 'string') {
       return undefined;
     }
-    const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value.trim());
-    if (!match) {
-      return undefined;
+    const trimmed = value.trim();
+    const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(trimmed);
+    if (match) {
+      const parsed = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]), 12);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
     }
-    const parsed = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]), 12);
-    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/.exec(trimmed);
+    if (isoMatch) {
+      const parsed = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]), 12);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return undefined;
+  }
+
+  private formatDate(date: Date) {
+    return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
   }
 
   async scheduleReminder({
