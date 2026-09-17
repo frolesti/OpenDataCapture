@@ -456,7 +456,7 @@ const RouteComponent = () => {
       bundle = normalizeOrionBundle(bundle, 'followup');
       bundle = bundle.replace(
         /(user_code|patient_code):\{kind:"string",label:"[^"]*",variant:"input"\}/,
-        'patient_code:{kind:"string",label:"Código del paciente *",variant:"select",options:globalThis.__ODC_ORION_USER_CODE_OPTIONS__}'
+        'patient_code:{kind:"string",label:"Código del paciente *",variant:"select",options:globalThis.__ODC_ORION_USER_CODE_OPTIONS__},selection_visit_date_info:{kind:"dynamic",deps:["patient_code"],render(data){const date=globalThis.__ODC_ORION_SELECTION_VISIT_DATE_BY_CODE__?.[data.patient_code];return date?{kind:"string",label:`Fecha de la primera visita: ${date}`,variant:"input",disabled:true}:null}}'
       );
     }
 
@@ -787,14 +787,28 @@ const RouteComponent = () => {
       setShowEditConfirmation(true);
       return;
     }
-    await axios.post('/v1/instrument-records', {
-      data: payloadData,
-      date: new Date(),
-      groupId: currentGroup?.id,
-      instrumentId,
-      sessionId: currentSession!.id,
-      subjectId: currentSession!.subject.id
-    } satisfies CreateInstrumentRecordData);
+    try {
+      await axios.post('/v1/instrument-records', {
+        data: payloadData,
+        date: new Date(),
+        groupId: currentGroup?.id,
+        instrumentId,
+        sessionId: currentSession!.id,
+        subjectId: currentSession!.subject.id
+      } satisfies CreateInstrumentRecordData);
+    } catch (error) {
+      const responseData = axios.isAxiosError(error) ? error.response?.data : undefined;
+      const issue = responseData?.issues?.[0];
+      const message = issue?.message ?? responseData?.message ?? 'No se ha podido guardar el formulario.';
+      const field = issue?.path?.[0];
+      if (typeof field === 'string') {
+        const fieldElement = document.querySelector<HTMLElement>(`[name="${field}"]`);
+        fieldElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        fieldElement?.focus();
+      }
+      notifications.addNotification({ message, type: 'error' });
+      throw error;
+    }
     // Clear draft on successful submit
     clearDraft(params.id);
     setFormSubmitted(true);

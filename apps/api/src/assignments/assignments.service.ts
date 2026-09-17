@@ -13,7 +13,7 @@ import { InstrumentsService } from '@/instruments/instruments.service';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 
 const ORION_FOLLOWUP_INTERNAL = {
-  edition: 5,
+  edition: 6,
   name: 'ORION_PR_2026_FOLLOWUP'
 } as const;
 
