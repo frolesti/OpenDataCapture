@@ -456,7 +456,7 @@ const RouteComponent = () => {
       bundle = normalizeOrionBundle(bundle, 'followup');
       bundle = bundle.replace(
         /(user_code|patient_code):\{kind:"string",label:"[^"]*",variant:"input"\}/,
-        'patient_code:{kind:"string",label:"Código del paciente *",variant:"select",options:globalThis.__ODC_ORION_USER_CODE_OPTIONS__},selection_visit_date_info:{kind:"dynamic",deps:["patient_code"],render(data){const date=globalThis.__ODC_ORION_SELECTION_VISIT_DATE_BY_CODE__?.[data.patient_code];return date?{kind:"string",label:`Fecha de la visita de selección: ${date}`,variant:"input",disabled:true}:null}}'
+        'patient_code:{kind:"string",label:"Código del paciente *",variant:"select",options:globalThis.__ODC_ORION_USER_CODE_OPTIONS__}'
       );
     }
 

@@ -143,6 +143,7 @@ export const FormContent = ({
           content={contentForForm as any}
           data-testid="form-content"
           initialValues={{ ...instrument.initialValues, ...initialValues } as any}
+          revalidateOnChange={revalidateOnChange}
           revalidateOnBlur={revalidateOnChange}
           subscribe={
             onDataChange

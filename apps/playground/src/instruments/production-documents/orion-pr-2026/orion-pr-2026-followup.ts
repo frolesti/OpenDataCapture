@@ -270,10 +270,9 @@ const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 4, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 5, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
-      title: 'CÓDIGO DEL PACIENTE',
       fields: { patient_code: { kind: 'string', label: 'Código del paciente *', variant: 'input' } }
     },
     {
