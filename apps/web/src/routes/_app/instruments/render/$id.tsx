@@ -420,7 +420,7 @@ const RouteComponent = () => {
       const value = recordData?.patient_code ?? recordData?.user_code;
       if (
         typeof value === 'string' &&
-        /^OR-C\d{3}-I\d{3}-P\d+$/.test(value.trim()) &&
+        /^OR-C\d{2,3}-I\d{2,3}-P\d+$/.test(value.trim()) &&
         recordData.selection_visit_date
       ) {
         codes.add(value.trim());
@@ -444,7 +444,7 @@ const RouteComponent = () => {
       const selectionVisitDate = recordData.selection_visit_date;
       if (
         typeof value === 'string' &&
-        /^OR-C\d{3}-I\d{3}-P\d+$/.test(value.trim()) &&
+        /^OR-C\d{2,3}-I\d{2,3}-P\d+$/.test(value.trim()) &&
         typeof selectionVisitDate === 'string' &&
         parseOrionDate(selectionVisitDate)
       ) {

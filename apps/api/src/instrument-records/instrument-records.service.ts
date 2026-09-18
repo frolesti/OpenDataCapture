@@ -143,7 +143,7 @@ export class InstrumentRecordsService {
       [...group.hospitals]
         .sort((first, second) => first.localeCompare(second))
         .findIndex((entry) => entry === hospital) + 1
-    ).padStart(3, '0');
+    ).padStart(2, '0');
     const groupInvestigators = await this.userModel.findMany({
       orderBy: { id: 'asc' },
       select: { id: true },
@@ -151,8 +151,8 @@ export class InstrumentRecordsService {
     });
     const investigatorCode = String(
       groupInvestigators.findIndex((investigator) => investigator.id === user.id) + 1
-    ).padStart(3, '0');
-    if (investigatorCode === '000') {
+    ).padStart(2, '0');
+    if (investigatorCode === '00') {
       throw new ForbiddenException('The investigator is not assigned to this ORION group');
     }
     const codeClient = (this.prismaClient as unknown as Record<string, any>).orionPatientCode;
@@ -164,7 +164,7 @@ export class InstrumentRecordsService {
   }
 
   private formatOrionPatientCode(context: { centerCode: string; investigatorCode: string }, sequence: number) {
-    return `OR-C${context.centerCode}-I${context.investigatorCode}-P${String(sequence).padStart(3, '0')}`;
+    return `OR-C${context.centerCode}-I${context.investigatorCode}-P${String(sequence).padStart(2, '0')}`;
   }
 
   async create(

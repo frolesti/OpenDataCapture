@@ -142,7 +142,7 @@ export class AssignmentsService {
       const patientCode = data?.patient_code ?? data?.user_code;
       return (
         typeof patientCode === 'string' &&
-        /^OR-C\d{3}-I\d{3}-P\d+$/.test(patientCode.trim()) &&
+        /^OR-C\d{2,3}-I\d{2,3}-P\d+$/.test(patientCode.trim()) &&
         Boolean(data?.selection_visit_date) &&
         this.isEligibleSelection(data)
       );

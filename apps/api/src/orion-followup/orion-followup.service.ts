@@ -94,7 +94,7 @@ export class OrionFollowupService {
       const recordPatientCode = selectionData?.patient_code ?? selectionData?.user_code;
       return (
         typeof recordPatientCode === 'string' &&
-        /^OR-C\d{3}-I\d{3}-P\d+$/.test(recordPatientCode) &&
+        /^OR-C\d{2,3}-I\d{2,3}-P\d+$/.test(recordPatientCode) &&
         recordPatientCode === userCode.trim() &&
         Boolean(selectionData?.selection_visit_date)
       );
