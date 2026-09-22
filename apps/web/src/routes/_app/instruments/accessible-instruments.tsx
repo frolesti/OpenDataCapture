@@ -64,7 +64,7 @@ const RouteComponent = () => {
   const hasOrionSelectionWithPatientCode = (orionSelectionRecordsQuery.data ?? []).some((record) => {
     const data = record.data as Record<string, unknown>;
     const patientCode = data.patient_code ?? data.user_code;
-    return typeof patientCode === 'string' && /^OR-C\d{2,3}-I\d{2,3}-P\d+$/.test(patientCode.trim());
+    return typeof patientCode === 'string' && /^OR-\d{2,3}-\d+$/.test(patientCode.trim());
   });
 
   useEffect(() => {

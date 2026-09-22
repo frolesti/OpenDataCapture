@@ -164,7 +164,7 @@ export class InstrumentRecordsService {
   }
 
   private formatOrionPatientCode(context: { centerCode: string; investigatorCode: string }, sequence: number) {
-    return `OR-C${context.centerCode}-I${context.investigatorCode}-P${String(sequence).padStart(2, '0')}`;
+    return `OR-${context.centerCode}-${String(sequence).padStart(2, '0')}`;
   }
 
   async create(
@@ -183,7 +183,9 @@ export class InstrumentRecordsService {
     await this.subjectsService.findById(subjectId);
     await this.sessionsService.findById(sessionId);
 
-    const parseResult = instrument.validationSchema.safeParse(this.parseJson(rawData));
+    const normalizedRawData =
+      instrument.internal.name === 'ORION_PR_2026_FOLLOWUP' ? this.normalizeOrionFollowupDates(rawData) : rawData;
+    const parseResult = instrument.validationSchema.safeParse(this.parseJson(normalizedRawData));
     if (!parseResult.success) {
       throw new UnprocessableEntityException({
         error: 'Unprocessable Entity',
@@ -221,7 +223,7 @@ export class InstrumentRecordsService {
     const record = await this.instrumentRecordModel.create({
       data: {
         computedMeasures: instrument.measures
-          ? this.instrumentMeasuresService.computeMeasures(instrument.measures, parsedData)
+          ? this.instrumentMeasuresService.computeMeasures(instrument.measures, parsedData as Json)
           : null,
         data: this.serializeData(parsedData),
         date,
@@ -582,7 +584,11 @@ export class InstrumentRecordsService {
       }
     );
 
-    const parseResult = await instrument.validationSchema.safeParseAsync(updatedData);
+    const normalizedUpdatedData =
+      instrument.internal.name === 'ORION_PR_2026_FOLLOWUP'
+        ? this.normalizeOrionFollowupDates(updatedData)
+        : updatedData;
+    const parseResult = await instrument.validationSchema.safeParseAsync(this.parseJson(normalizedUpdatedData));
     if (!parseResult.success) {
       throw new BadRequestException({
         issues: parseResult.error.issues,
@@ -656,7 +662,9 @@ export class InstrumentRecordsService {
           const { data: rawData, date, subjectId } = record;
 
           // Validate data
-          const parseResult = instrument.validationSchema.safeParse(this.parseJson(rawData));
+          const normalizedRawData =
+            instrument.internal.name === 'ORION_PR_2026_FOLLOWUP' ? this.normalizeOrionFollowupDates(rawData) : rawData;
+          const parseResult = instrument.validationSchema.safeParse(this.parseJson(normalizedRawData));
           if (!parseResult.success) {
             console.error(parseResult.error.issues);
             throw new UnprocessableEntityException(
@@ -752,13 +760,59 @@ export class InstrumentRecordsService {
     }
 
     return {
-      basePermissionLevel: user.basePermissionLevel,
+      basePermissionLevel: user.basePermissionLevel ?? 'STANDARD',
       id: user.id
     };
   }
 
   private parseJson(data: unknown) {
     return JSON.parse(JSON.stringify(data), reviver) as unknown;
+  }
+
+  private normalizeOrionFollowupDates(data: unknown) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return data;
+    }
+
+    const normalized = { ...(data as Record<string, unknown>) };
+    for (const field of ['followup_date', 'dose_change_date', 'end_date']) {
+      normalized[field] = this.normalizeOrionDateValue(normalized[field]);
+    }
+    if (Array.isArray(normalized.adverse_event_records)) {
+      normalized.adverse_event_records = normalized.adverse_event_records.map((record) => {
+        if (!record || typeof record !== 'object' || Array.isArray(record)) {
+          return record;
+        }
+        const normalizedRecord = { ...(record as Record<string, unknown>) };
+        normalizedRecord.onset_date = this.normalizeOrionDateValue(normalizedRecord.onset_date);
+        normalizedRecord.resolution_date = this.normalizeOrionDateValue(normalizedRecord.resolution_date);
+        return normalizedRecord;
+      });
+    }
+    return normalized;
+  }
+
+  private normalizeOrionDateValue(value: unknown) {
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return this.formatOrionDate(value);
+    }
+    if (typeof value !== 'string') {
+      return value;
+    }
+    const trimmed = value.trim();
+    if (/^\d{2}-\d{2}-\d{4}$/.test(trimmed)) {
+      return trimmed;
+    }
+    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/.exec(trimmed);
+    if (!isoMatch) {
+      return value;
+    }
+    const date = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]), 12);
+    return Number.isNaN(date.getTime()) ? value : this.formatOrionDate(date);
+  }
+
+  private formatOrionDate(date: Date) {
+    return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
   }
 
   private serializeData(data: unknown) {

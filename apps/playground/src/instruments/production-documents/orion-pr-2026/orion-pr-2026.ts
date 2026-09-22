@@ -307,13 +307,6 @@ function dateField(label: string): Record<string, any> {
   };
 }
 
-function nonPersistentCheckboxSchema() {
-  return z
-    .boolean()
-    .optional()
-    .transform(() => undefined);
-}
-
 function isTreatmentComplete(data: FormData, prefix: string, treatmentNumber: number): boolean {
   const hasTreatmentName =
     (treatmentNumber === 1 && (prefix === 'prev' || prefix === 'current')) ||
@@ -326,6 +319,10 @@ function isTreatmentComplete(data: FormData, prefix: string, treatmentNumber: nu
 
   if (prefix === 'current') {
     return baseComplete && data[`${prefix}_treatment_end_${treatmentNumber}`] === 'si';
+  }
+
+  if (prefix === 'concomitant') {
+    return baseComplete;
   }
 
   return baseComplete && Boolean(data[`${prefix}_treatment_end_${treatmentNumber}`]);
@@ -435,7 +432,9 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
         variant: 'input',
         label:
           i === 1 && prefix !== 'concomitant'
-            ? 'Dosis actual (mg) *'
+            ? prefix === 'prev'
+              ? 'Dosis (mg) *'
+              : 'Dosis actual (mg) *'
             : prefix === 'concomitant'
               ? 'Dosis (mg) *'
               : `Dosis (mg) - Tratamiento ${i} *`
@@ -467,15 +466,9 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
         prefix,
         i
       );
-    } else {
+    } else if (prefix === 'prev') {
       fields[`${prefix}_treatment_end_${i}`] = requiresTreatment(
-        dateField(
-          i === 1 && prefix === 'prev'
-            ? 'Fecha de fin *'
-            : prefix === 'concomitant'
-              ? 'Fecha de fin *'
-              : `Fecha de fin - Tratamiento ${i} *`
-        ),
+        dateField(i === 1 ? 'Fecha de fin *' : `Fecha de fin - Tratamiento ${i} *`),
         prefix,
         i
       );
@@ -496,8 +489,10 @@ function treatmentValidation(prefix: 'prev' | 'current' | 'concomitant', maxTrea
     schema[`${prefix}_treatment_name_${i}`] = z.string().optional();
     schema[`${prefix}_treatment_dose_mg_${i}`] = z.number().optional();
     schema[`${prefix}_treatment_start_${i}`] = optionalManualDateSchema();
-    schema[`${prefix}_treatment_end_${i}`] =
-      prefix === 'current' ? z.enum(['si', 'no']).optional() : optionalManualDateSchema();
+    if (prefix !== 'concomitant') {
+      schema[`${prefix}_treatment_end_${i}`] =
+        prefix === 'current' ? z.enum(['si', 'no']).optional() : optionalManualDateSchema();
+    }
     if (i < maxTreatments) {
       schema[`add_${prefix}_treatment_${i + 1}`] = z.enum(['si', 'no']).optional();
     }
@@ -542,7 +537,7 @@ function generateComorbidityFields(maxComorbidities = 4): Record<string, any> {
           `add_comorbidity_${i}`
         ] as const,
         render(data: FormData): any {
-          return isEligible(data) && isComorbidityComplete(data, previous) && data[`add_comorbidity_${i}`] === true
+          return isEligible(data) && isComorbidityComplete(data, previous) && data[`add_comorbidity_${i}`] === 'si'
             ? field
             : null;
         }
@@ -565,9 +560,10 @@ function generateComorbidityFields(maxComorbidities = 4): Record<string, any> {
         render(data: FormData): any {
           return isEligible(data) && isComorbidityComplete(data, i)
             ? {
-                kind: 'boolean',
-                variant: 'checkbox',
-                label: '¿Desea añadir otra comorbilidad?'
+                kind: 'string',
+                variant: 'radio',
+                label: '¿Desea añadir otra comorbilidad?',
+                options: YES_NO_OPTIONS
               }
             : null;
         }
@@ -584,7 +580,7 @@ function comorbidityValidation(maxComorbidities = 4): Record<string, any> {
     schema[`comorbidity_${i}`] = z.string().optional();
     schema[`comorbidity_${i}_diagnosis_date`] = optionalManualDateSchema();
     if (i < maxComorbidities) {
-      schema[`add_comorbidity_${i + 1}`] = nonPersistentCheckboxSchema();
+      schema[`add_comorbidity_${i + 1}`] = z.enum(['si', 'no']).optional();
     }
   }
   return schema;
@@ -598,7 +594,7 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 21,
+    edition: 22,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -938,13 +934,6 @@ const instrumentDefinition: any = {
       }
     },
     {
-      title: 'ADHERENCIA AL TRATAMIENTO (ESCALA MMAS-4) (PROSPECTIVA)',
-      description: 'PREGABALINA PR — Evaluación del momento actual, durante el tratamiento con pregabalina PR',
-      fields: {
-        ...adherenceFields('prospective')
-      }
-    },
-    {
       title: 'MEJORÍA CLÍNICA (ESCALA CGI-I)',
       description:
         'Califique el cambio global en el estado clínico del paciente tras el cambio de pregabalina IR a pregabalina PR, en comparación con su estado durante el tratamiento con pregabalina IR.',
@@ -968,8 +957,14 @@ const instrumentDefinition: any = {
     },
     {
       title: 'ACONTECIMIENTOS ADVERSOS',
-      description: PHARMACOVIGILANCE_INSTRUCTION,
       fields: {
+        pharmacovigilance_disclaimer: requiresEligibility({
+          kind: 'string',
+          variant: 'input',
+          label: PHARMACOVIGILANCE_INSTRUCTION,
+          disabled: true,
+          className: 'orion-pharmacovigilance-disclaimer'
+        }),
         baseline_adverse_events: requiresEligibility({
           kind: 'string',
           label: '¿Ha presentado algún acontecimiento adverso durante el tratamiento con pregabalina PR? *',
@@ -979,7 +974,6 @@ const instrumentDefinition: any = {
         adverse_event_records: requiresEligibilityAndValue('baseline_adverse_events', 'si', {
           kind: 'record-array',
           label: 'Reacción adversa',
-          description: 'Detalle de las reacciones adversas notificadas durante el tratamiento.',
           fieldset: {
             reaction: { kind: 'string', label: 'Descripción de la reacción adversa *', variant: 'input' },
             onset_date: dateField('Fecha de inicio *'),
@@ -1017,6 +1011,11 @@ const instrumentDefinition: any = {
                 riesgo_transmision: 'Riesgo de transmisión de agente infeccioso',
                 no_grave: 'No cumple criterios de gravedad'
               }
+            },
+            additional_comments: {
+              kind: 'string',
+              label: '¿Desea añadir algún comentario adicional?',
+              variant: 'textarea'
             }
           }
         })
@@ -1047,7 +1046,7 @@ const instrumentDefinition: any = {
     description:
       'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada.',
     license: 'Apache-2.0',
-    authors: ['Antonio Alcántara', 'Ana Navarro']
+    authors: ['Investigadores coordinadores']
   },
   initialValues: {
     prev_treatment_name_1: 'Pregabalina IR',
@@ -1134,10 +1133,6 @@ const instrumentDefinition: any = {
       prosp_sleep_maintenance: z.enum(['1', '2', '3', '4', '5']).optional(),
       prosp_sleep_quality: z.enum(['1', '2', '3', '4', '5']).optional(),
       prosp_sleep_daytime: z.enum(['1', '2', '3', '4', '5']).optional(),
-      prosp_mmas_forget: z.enum(['si', 'no']).optional(),
-      prosp_mmas_remember: z.enum(['si', 'no']).optional(),
-      prosp_mmas_better: z.enum(['si', 'no']).optional(),
-      prosp_mmas_worse: z.enum(['si', 'no']).optional(),
 
       followup_eq5d_mobility: z.enum(['1', '2', '3', '4', '5']).optional(),
       followup_eq5d_selfcare: z.enum(['1', '2', '3', '4', '5']).optional(),
@@ -1168,6 +1163,7 @@ const instrumentDefinition: any = {
       new_dose: z.number().optional(),
 
       baseline_adverse_events: z.enum(['si', 'no']).optional(),
+      pharmacovigilance_disclaimer: z.string().optional(),
       adverse_event_records: z
         .array(
           z.object({
@@ -1190,7 +1186,8 @@ const instrumentDefinition: any = {
                 'riesgo_transmision',
                 'no_grave'
               ])
-              .optional()
+              .optional(),
+            additional_comments: z.string().optional()
           })
         )
         .optional(),
@@ -1300,10 +1297,6 @@ const instrumentDefinition: any = {
           'prosp_sleep_maintenance',
           'prosp_sleep_quality',
           'prosp_sleep_daytime',
-          'prosp_mmas_forget',
-          'prosp_mmas_remember',
-          'prosp_mmas_better',
-          'prosp_mmas_worse',
           'cgi_improvement',
           'baseline_adverse_events'
         ]) {

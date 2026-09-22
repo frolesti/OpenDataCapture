@@ -12,9 +12,6 @@ const SCALE_OPTIONS = {
   '7': 'Bastante peor',
   '8': 'Mucho peor'
 } as const;
-const PHARMACOVIGILANCE_INSTRUCTION =
-  'Si la reacción adversa cumple los criterios de registro sistemático del protocolo (grave o de especial interés), cumplimente el registro de reacciones adversas, rellene el formulario de notificación y envíelo a farmacovigilancia@gebro.es en menos de 24 horas. Para cualquier otra reacción adversa, notifíquela al Sistema Español de Farmacovigilancia siguiendo su práctica clínica habitual.';
-
 const DATE_FORMAT_ERROR = 'Formato de fecha inválido. Use DD-MM-AAAA';
 
 function parseManualDate(value: unknown): Date | undefined {
@@ -286,7 +283,7 @@ const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 10, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 11, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
       fields: { patient_code: { kind: 'string', label: 'Código del paciente *', variant: 'input' } }
@@ -303,7 +300,8 @@ const instrumentDefinition: any = {
       }
     },
     {
-      title: 'VISITA DE SEGUIMIENTO (A LOS TRES MESES ± 2 SEMANAS)',
+      title: 'VISITA DE SEGUIMIENTO A LOS 3 MESES',
+      description: 'La visita debe realizarse a los 3 meses ± 2 semanas de la visita de selección.',
       fields: whenStudyContinues({ followup_date: dateField('Fecha de visita *') })
     },
     {
@@ -385,7 +383,6 @@ const instrumentDefinition: any = {
         adverse_event_records: conditionalField('adverse_events', 'si', {
           kind: 'record-array',
           label: 'Registro de reacciones adversas *',
-          description: PHARMACOVIGILANCE_INSTRUCTION,
           fieldset: {
             reaction: { kind: 'string', label: 'Reacción adversa *', variant: 'input' },
             onset_date: dateField('Fecha de inicio *'),
@@ -407,9 +404,28 @@ const instrumentDefinition: any = {
               },
               variant: 'select'
             },
-            resolution_date: dateField('Fecha de resolución * si aplica'),
+            resolution_date: dateField('Fecha de resolución (si aplica)'),
             actions_taken: { kind: 'string', label: 'Medidas adoptadas *', variant: 'textarea' },
-            seriousness: { kind: 'string', label: 'Gravedad *', variant: 'textarea' }
+            seriousness: {
+              kind: 'string',
+              label: 'Gravedad *',
+              options: {
+                fallecimiento: 'Fallecimiento',
+                riesgo_vida: 'Riesgo para la vida',
+                hospitalizacion: 'Hospitalización',
+                discapacidad: 'Discapacidad',
+                anomalia_congenita: 'Anomalía congénita',
+                medicamente_importante: 'Médicamente importante',
+                riesgo_transmision: 'Riesgo de transmisión',
+                no_grave: 'No grave'
+              },
+              variant: 'select'
+            },
+            additional_comments: {
+              kind: 'string',
+              label: '¿Desea añadir algún comentario adicional?',
+              variant: 'textarea'
+            }
           }
         })
       })
@@ -444,9 +460,10 @@ const instrumentDefinition: any = {
   },
   details: {
     title: 'ORION-PR-2026 - Visita de seguimiento a 3 meses',
-    description: 'Visita de seguimiento del estudio ORION-PR-2026.',
+    description:
+      'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada.',
     license: 'Apache-2.0',
-    authors: ['Antonio Alcántara', 'Ana Navarro']
+    authors: ['Investigadores coordinadores']
   },
   measures: {},
   validationSchema: z
@@ -491,7 +508,19 @@ const instrumentDefinition: any = {
               .optional(),
             reaction: z.string().optional(),
             resolution_date: optionalManualDateSchema(),
-            seriousness: z.string().optional()
+            seriousness: z
+              .enum([
+                'fallecimiento',
+                'riesgo_vida',
+                'hospitalizacion',
+                'discapacidad',
+                'anomalia_congenita',
+                'medicamente_importante',
+                'riesgo_transmision',
+                'no_grave'
+              ])
+              .optional(),
+            additional_comments: z.string().optional()
           })
         )
         .optional(),
@@ -597,13 +626,6 @@ const instrumentDefinition: any = {
               path: ['adverse_event_records', index, field]
             });
           }
-        }
-        if ((event.outcome === 'recuperado' || event.outcome === 'recuperado_con_secuelas') && !event.resolution_date) {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Indique la fecha de resolución para este desenlace.',
-            path: ['adverse_event_records', index, 'resolution_date']
-          });
         }
       }
     })
