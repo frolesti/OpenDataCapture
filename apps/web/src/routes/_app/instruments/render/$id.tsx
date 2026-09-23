@@ -163,6 +163,10 @@ function normalizeOrionBundle(bundle: string, mode: 'followup' | 'selection'): s
   patched = patched.replace(/,"professional_initials"/g, '');
 
   if (mode === 'selection') {
+    patched = patched.replace(/label:"Peso \(kg\)"/g, 'label:"Peso (kg) *"');
+    patched = patched.replace(/label:"Altura \(cm\)"/g, 'label:"Altura (cm) *"');
+    patched = patched.replace(/(['"]sex['"]),(['"]neuropathy_etiology['"])/g, '$1,"weight","height",$2');
+
     patched = patched.replace(
       /prev_treatment_name_1:requiresEligibility\(\{(?![^}]*placeholder:)([^}]*)\}\)/g,
       'prev_treatment_name_1:requiresEligibility({$1,placeholder:"Pregabalina IR"})'
@@ -418,7 +422,7 @@ const RouteComponent = () => {
     for (const record of orionSelectionRecordsQuery.data ?? []) {
       const recordData = record.data as Record<string, unknown>;
       const value = recordData?.patient_code ?? recordData?.user_code;
-      if (typeof value === 'string' && /^OR-\d{2,3}-\d+$/.test(value.trim()) && recordData.selection_visit_date) {
+      if (typeof value === 'string' && /^OR-\d{2,3}-\d+$/.test(value.trim())) {
         codes.add(value.trim());
       }
     }
@@ -437,13 +441,8 @@ const RouteComponent = () => {
     for (const record of orionSelectionRecordsQuery.data ?? []) {
       const recordData = record.data as Record<string, unknown>;
       const value = recordData?.patient_code ?? recordData?.user_code;
-      const selectionVisitDate = recordData.selection_visit_date;
-      if (
-        typeof value === 'string' &&
-        /^OR-\d{2,3}-\d+$/.test(value.trim()) &&
-        typeof selectionVisitDate === 'string' &&
-        parseOrionDate(selectionVisitDate)
-      ) {
+      const selectionVisitDate = formatOrionDateForApi(recordData.selection_visit_date);
+      if (typeof value === 'string' && /^OR-\d{2,3}-\d+$/.test(value.trim()) && selectionVisitDate) {
         datesByCode[value.trim()] = selectionVisitDate;
       }
     }

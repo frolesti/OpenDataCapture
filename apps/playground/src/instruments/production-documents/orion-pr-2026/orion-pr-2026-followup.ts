@@ -283,7 +283,7 @@ const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 11, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 12, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
       fields: { patient_code: { kind: 'string', label: 'Código del paciente *', variant: 'input' } }
@@ -463,7 +463,7 @@ const instrumentDefinition: any = {
     description:
       'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada.',
     license: 'Apache-2.0',
-    authors: ['Investigadores coordinadores']
+    authors: ['Antonio Alcántara y Ana Navarro']
   },
   measures: {},
   validationSchema: z

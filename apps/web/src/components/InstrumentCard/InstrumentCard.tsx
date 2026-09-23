@@ -31,8 +31,8 @@ export const InstrumentCard = ({ instrument, isAdmin, onClick }: InstrumentCardP
     {
       kind: 'text',
       label: t({
-        en: 'Autors',
-        fr: 'Autores'
+        en: 'Investigadors coordinadors',
+        fr: 'Investigadores coordinadores'
       }),
       text: instrument.details.authors?.join(', ')
     },

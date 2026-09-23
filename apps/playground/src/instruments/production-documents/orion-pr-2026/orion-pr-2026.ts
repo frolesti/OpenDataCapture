@@ -594,7 +594,7 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 22,
+    edition: 23,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -771,13 +771,13 @@ const instrumentDefinition: any = {
         weight: requiresEligibility({
           kind: 'number',
           variant: 'input',
-          label: 'Peso (kg)',
+          label: 'Peso (kg) *',
           description: `Rango razonable esperado: ${ORION_WEIGHT_MIN}-${ORION_WEIGHT_MAX} kg.`
         }),
         height: requiresEligibility({
           kind: 'number',
           variant: 'input',
-          label: 'Altura (cm)',
+          label: 'Altura (cm) *',
           description: `Rango razonable esperado: ${ORION_HEIGHT_MIN}-${ORION_HEIGHT_MAX} cm.`
         })
       }
@@ -1046,7 +1046,7 @@ const instrumentDefinition: any = {
     description:
       'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada.',
     license: 'Apache-2.0',
-    authors: ['Investigadores coordinadores']
+    authors: ['Antonio Alcántara y Ana Navarro']
   },
   initialValues: {
     prev_treatment_name_1: 'Pregabalina IR',
@@ -1270,6 +1270,8 @@ const instrumentDefinition: any = {
           'site_hospital',
           'age',
           'sex',
+          'weight',
+          'height',
           'neuropathy_etiology',
           'neuropathy_location',
           'diagnosis_date',
