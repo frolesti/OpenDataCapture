@@ -50,21 +50,29 @@ const RouteComponent = () => {
   const hasRestoredLastInstrument = useRef(false);
   const selectedGroup = currentGroup ?? currentUser?.groups[0] ?? null;
   const accessibleInstrumentIds = new Set(currentUser?.groups.flatMap((group) => group.accessibleInstrumentIds) ?? []);
+  const orionSelectionInstrumentId = (instrumentInfoQuery.data ?? [])
+    .filter((instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME)
+    .sort((first, second) => (second.internal?.edition ?? 0) - (first.internal?.edition ?? 0))[0]?.id;
   const scopedSubjectId =
     currentUser && selectedGroup
       ? encodeScopedSubjectId(currentUser.username, { groupName: selectedGroup.name })
       : undefined;
   const orionSelectionRecordsQuery = useInstrumentRecords({
-    enabled: Boolean(scopedSubjectId),
+    enabled: Boolean(orionSelectionInstrumentId && scopedSubjectId),
     params: {
       groupId: selectedGroup?.id,
+      instrumentId: orionSelectionInstrumentId,
       subjectId: scopedSubjectId
     }
   });
   const hasOrionSelectionWithPatientCode = (orionSelectionRecordsQuery.data ?? []).some((record) => {
     const data = record.data as Record<string, unknown>;
     const patientCode = data.patient_code ?? data.user_code;
-    return typeof patientCode === 'string' && /^OR-\d{2,3}-\d+$/.test(patientCode.trim());
+    return (
+      typeof patientCode === 'string' &&
+      /^OR-\d{2,3}-\d+$/.test(patientCode.trim()) &&
+      Boolean(data.selection_visit_date)
+    );
   });
 
   useEffect(() => {

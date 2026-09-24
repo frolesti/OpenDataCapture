@@ -9,11 +9,6 @@
   --ring: 241 100% 80%;
 }
 
-.orion-pharmacovigilance-disclaimer {
-  color: #b91c1c !important;
-  font-weight: 700 !important;
-}
-
 /* Ensure primary buttons use purple background in light mode */
 button[type='submit']:not([data-variant]),
 button[data-variant='primary'],

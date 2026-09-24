@@ -343,6 +343,9 @@ const RouteComponent = () => {
   const groupHospitalOptions = buildGroupHospitalOptions(currentGroup?.hospitals ?? []);
 
   const instrumentInfo = (instrumentInfoQuery.data ?? []).find((instrument) => instrument.id === params.id);
+  const orionSelectionInstrumentId = (instrumentInfoQuery.data ?? [])
+    .filter((instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME)
+    .sort((first, second) => (second.internal?.edition ?? 0) - (first.internal?.edition ?? 0))[0]?.id;
   const scopedSubjectId =
     currentSession?.subject.id ??
     (currentUser && currentGroup
@@ -407,9 +410,10 @@ const RouteComponent = () => {
     reservedOrionPatientCode
   ]);
   const orionSelectionRecordsQuery = useInstrumentRecords({
-    enabled: Boolean(isOrionFollowup && scopedSubjectId),
+    enabled: Boolean(isOrionFollowup && orionSelectionInstrumentId && scopedSubjectId),
     params: {
       groupId: currentGroup?.id,
+      instrumentId: orionSelectionInstrumentId,
       subjectId: scopedSubjectId
     }
   });
@@ -422,7 +426,11 @@ const RouteComponent = () => {
     for (const record of orionSelectionRecordsQuery.data ?? []) {
       const recordData = record.data as Record<string, unknown>;
       const value = recordData?.patient_code ?? recordData?.user_code;
-      if (typeof value === 'string' && /^OR-\d{2,3}-\d+$/.test(value.trim())) {
+      if (
+        typeof value === 'string' &&
+        /^OR-\d{2,3}-\d+$/.test(value.trim()) &&
+        formatOrionDateForApi(recordData.selection_visit_date)
+      ) {
         codes.add(value.trim());
       }
     }

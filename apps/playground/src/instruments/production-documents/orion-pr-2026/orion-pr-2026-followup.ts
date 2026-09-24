@@ -407,7 +407,7 @@ const instrumentDefinition: any = {
             resolution_date: dateField('Fecha de resolución (si aplica)'),
             actions_taken: { kind: 'string', label: 'Medidas adoptadas *', variant: 'textarea' },
             seriousness: {
-              kind: 'string',
+              kind: 'set',
               label: 'Gravedad *',
               options: {
                 fallecimiento: 'Fallecimiento',
@@ -419,7 +419,7 @@ const instrumentDefinition: any = {
                 riesgo_transmision: 'Riesgo de transmisión',
                 no_grave: 'No grave'
               },
-              variant: 'select'
+              variant: 'listbox'
             },
             additional_comments: {
               kind: 'string',
@@ -459,7 +459,7 @@ const instrumentDefinition: any = {
     instructions: ['Complete todas las respuestas antes de guardar la visita de seguimiento.']
   },
   details: {
-    title: 'ORION-PR-2026 - Visita de seguimiento a 3 meses',
+    title: 'ORION-PR-2026 - Visita de seguimiento a los 3 meses',
     description:
       'Estudio longitudinal, observacional, ambispectivo y multicéntrico para evaluar los cambios en la calidad de vida de pacientes con dolor neuropático tratados con pregabalina de liberación prolongada.',
     license: 'Apache-2.0',
@@ -509,16 +509,19 @@ const instrumentDefinition: any = {
             reaction: z.string().optional(),
             resolution_date: optionalManualDateSchema(),
             seriousness: z
-              .enum([
-                'fallecimiento',
-                'riesgo_vida',
-                'hospitalizacion',
-                'discapacidad',
-                'anomalia_congenita',
-                'medicamente_importante',
-                'riesgo_transmision',
-                'no_grave'
-              ])
+              .set(
+                z.enum([
+                  'fallecimiento',
+                  'riesgo_vida',
+                  'hospitalizacion',
+                  'discapacidad',
+                  'anomalia_congenita',
+                  'medicamente_importante',
+                  'riesgo_transmision',
+                  'no_grave'
+                ])
+              )
+              .min(1, 'Este campo es obligatorio')
               .optional(),
             additional_comments: z.string().optional()
           })

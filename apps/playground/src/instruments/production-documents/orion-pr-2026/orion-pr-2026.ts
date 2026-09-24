@@ -75,6 +75,13 @@ function optionalManualDateSchema() {
   });
 }
 
+function criterionSchema(expected: 'no' | 'si', message: string) {
+  return z
+    .enum(['si', 'no'])
+    .optional()
+    .refine((value) => value === undefined || value === expected, { message });
+}
+
 function isEligible(data: FormData): boolean {
   if (data.informed_consent !== 'si') {
     return false;
@@ -716,27 +723,7 @@ const instrumentDefinition: any = {
             '6. Participación en otro estudio clínico o de investigación que pueda interferir con la interpretación de los datos *',
           variant: 'radio',
           options: YES_NO_OPTIONS
-        }),
-        _eligibilityDisclaimer: {
-          kind: 'dynamic' as const,
-          deps: ['informed_consent', ...INCLUSION_KEYS, ...EXCLUSION_KEYS] as const,
-          render(data: FormData): any {
-            if (data.informed_consent !== 'si' || isEligible(data)) {
-              return null;
-            }
-            const allAnswered = [...INCLUSION_KEYS, ...EXCLUSION_KEYS].every((key) => Boolean(data[key]));
-            if (!allAnswered) {
-              return null;
-            }
-            return {
-              kind: 'string',
-              variant: 'input',
-              label:
-                'El paciente no cumple los criterios de selección del estudio: para continuar, todos los criterios de inclusión deben marcarse como "Sí" y todos los criterios de exclusión como "No".',
-              disabled: true
-            };
-          }
-        } as any
+        })
       }
     },
     {
@@ -962,8 +949,7 @@ const instrumentDefinition: any = {
           kind: 'string',
           variant: 'input',
           label: PHARMACOVIGILANCE_INSTRUCTION,
-          disabled: true,
-          className: 'orion-pharmacovigilance-disclaimer'
+          disabled: true
         }),
         baseline_adverse_events: requiresEligibility({
           kind: 'string',
@@ -998,9 +984,9 @@ const instrumentDefinition: any = {
             resolution_date: dateField('Fecha de resolución (si aplica)'),
             actions_taken: { kind: 'string', label: 'Medidas adoptadas *', variant: 'textarea' },
             seriousness: {
-              kind: 'string',
+              kind: 'set',
               label: 'Gravedad *',
-              variant: 'select',
+              variant: 'listbox',
               options: {
                 fallecimiento: 'Fallecimiento',
                 riesgo_vida: 'Pone en peligro la vida del paciente',
@@ -1061,19 +1047,19 @@ const instrumentDefinition: any = {
       selection_visit_date: optionalManualDateSchema(),
       consent_signed_date: optionalManualDateSchema(),
 
-      inclusion_1: z.enum(['si', 'no']).optional(),
-      inclusion_2: z.enum(['si', 'no']).optional(),
-      inclusion_3: z.enum(['si', 'no']).optional(),
-      inclusion_4: z.enum(['si', 'no']).optional(),
-      inclusion_5: z.enum(['si', 'no']).optional(),
-      inclusion_6: z.enum(['si', 'no']).optional(),
+      inclusion_1: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
+      inclusion_2: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
+      inclusion_3: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
+      inclusion_4: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
+      inclusion_5: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
+      inclusion_6: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
 
-      exclusion_1: z.enum(['si', 'no']).optional(),
-      exclusion_2: z.enum(['si', 'no']).optional(),
-      exclusion_3: z.enum(['si', 'no']).optional(),
-      exclusion_4: z.enum(['si', 'no']).optional(),
-      exclusion_5: z.enum(['si', 'no']).optional(),
-      exclusion_6: z.enum(['si', 'no']).optional(),
+      exclusion_1: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
+      exclusion_2: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
+      exclusion_3: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
+      exclusion_4: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
+      exclusion_5: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
+      exclusion_6: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
 
       age: z.number().optional(),
       sex: z.enum(['femenino', 'masculino']).optional(),
@@ -1176,16 +1162,19 @@ const instrumentDefinition: any = {
             reaction: z.string().optional(),
             resolution_date: optionalManualDateSchema(),
             seriousness: z
-              .enum([
-                'fallecimiento',
-                'riesgo_vida',
-                'hospitalizacion',
-                'discapacidad',
-                'anomalia_congenita',
-                'medicamente_importante',
-                'riesgo_transmision',
-                'no_grave'
-              ])
+              .set(
+                z.enum([
+                  'fallecimiento',
+                  'riesgo_vida',
+                  'hospitalizacion',
+                  'discapacidad',
+                  'anomalia_congenita',
+                  'medicamente_importante',
+                  'riesgo_transmision',
+                  'no_grave'
+                ])
+              )
+              .min(1, 'Este campo es obligatorio')
               .optional(),
             additional_comments: z.string().optional()
           })
@@ -1220,15 +1209,6 @@ const instrumentDefinition: any = {
           code: z.ZodIssueCode.custom,
           message: 'No se puede continuar sin consentimiento informado firmado.',
           path: ['informed_consent']
-        });
-      }
-
-      if (data.informed_consent === 'si' && !isEligible(values)) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            'No se puede continuar: revise los criterios de inclusión y exclusión (todos los criterios de inclusión deben ser SI y los de exclusión NO).',
-          path: ['inclusion_1']
         });
       }
 
