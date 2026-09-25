@@ -1194,7 +1194,7 @@ const instrumentDefinition: any = {
       if (data.informed_consent === 'si') {
         for (const field of INCLUSION_KEYS) {
           addRequiredIssue(field);
-          if (values[field] !== undefined && values[field] !== 'si') {
+          if (values[field] === 'no') {
             context.addIssue({
               code: z.ZodIssueCode.custom,
               message: 'Este criterio de inclusión debe marcarse como "Sí".',
@@ -1204,7 +1204,7 @@ const instrumentDefinition: any = {
         }
         for (const field of EXCLUSION_KEYS) {
           addRequiredIssue(field);
-          if (values[field] !== undefined && values[field] !== 'no') {
+          if (values[field] === 'si') {
             context.addIssue({
               code: z.ZodIssueCode.custom,
               message: 'Este criterio de exclusión debe marcarse como "No".',
@@ -1469,19 +1469,30 @@ const instrumentDefinition: any = {
           });
         }
 
-        for (const prefix of ['prev', 'current', 'concomitant'] as const) {
-          const dateTypes = prefix === 'current' ? (['start'] as const) : (['start', 'end'] as const);
-          for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
-            for (const dateType of dateTypes) {
-              const field = `${prefix}_treatment_${dateType}_${treatmentNumber}`;
-              const treatmentDate = getTime(values[field]);
-              if (treatmentDate !== undefined && treatmentDate >= selectionVisitTime) {
-                context.addIssue({
-                  code: z.ZodIssueCode.custom,
-                  message: 'Las fechas de tratamientos deben ser anteriores a la visita de selección.',
-                  path: [field]
-                });
-              }
+        for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
+          for (const dateType of ['start', 'end'] as const) {
+            const field = `prev_treatment_${dateType}_${treatmentNumber}`;
+            const treatmentDate = getTime(values[field]);
+            if (treatmentDate !== undefined && treatmentDate >= selectionVisitTime) {
+              context.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Las fechas del tratamiento previo deben ser anteriores a la visita de selección.',
+                path: [field]
+              });
+            }
+          }
+        }
+
+        for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
+          for (const dateType of ['start', 'end'] as const) {
+            const field = `concomitant_treatment_${dateType}_${treatmentNumber}`;
+            const treatmentDate = getTime(values[field]);
+            if (treatmentDate !== undefined && treatmentDate >= selectionVisitTime) {
+              context.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Las fechas del tratamiento concomitante deben ser anteriores a la visita de selección.',
+                path: [field]
+              });
             }
           }
         }
