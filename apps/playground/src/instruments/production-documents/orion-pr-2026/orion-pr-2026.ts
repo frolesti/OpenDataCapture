@@ -75,13 +75,6 @@ function optionalManualDateSchema() {
   });
 }
 
-function criterionSchema(expected: 'no' | 'si', message: string) {
-  return z
-    .enum(['si', 'no'])
-    .optional()
-    .refine((value) => value === undefined || value === expected, { message });
-}
-
 function isEligible(data: FormData): boolean {
   if (data.informed_consent !== 'si') {
     return false;
@@ -601,7 +594,7 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 23,
+    edition: 25,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -1047,19 +1040,19 @@ const instrumentDefinition: any = {
       selection_visit_date: optionalManualDateSchema(),
       consent_signed_date: optionalManualDateSchema(),
 
-      inclusion_1: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
-      inclusion_2: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
-      inclusion_3: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
-      inclusion_4: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
-      inclusion_5: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
-      inclusion_6: criterionSchema('si', 'Este criterio de inclusión debe marcarse como "Sí".'),
+      inclusion_1: z.enum(['si', 'no']).optional(),
+      inclusion_2: z.enum(['si', 'no']).optional(),
+      inclusion_3: z.enum(['si', 'no']).optional(),
+      inclusion_4: z.enum(['si', 'no']).optional(),
+      inclusion_5: z.enum(['si', 'no']).optional(),
+      inclusion_6: z.enum(['si', 'no']).optional(),
 
-      exclusion_1: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
-      exclusion_2: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
-      exclusion_3: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
-      exclusion_4: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
-      exclusion_5: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
-      exclusion_6: criterionSchema('no', 'Este criterio de exclusión debe marcarse como "No".'),
+      exclusion_1: z.enum(['si', 'no']).optional(),
+      exclusion_2: z.enum(['si', 'no']).optional(),
+      exclusion_3: z.enum(['si', 'no']).optional(),
+      exclusion_4: z.enum(['si', 'no']).optional(),
+      exclusion_5: z.enum(['si', 'no']).optional(),
+      exclusion_6: z.enum(['si', 'no']).optional(),
 
       age: z.number().optional(),
       sex: z.enum(['femenino', 'masculino']).optional(),
@@ -1199,8 +1192,25 @@ const instrumentDefinition: any = {
       };
 
       if (data.informed_consent === 'si') {
-        for (const field of [...INCLUSION_KEYS, ...EXCLUSION_KEYS]) {
+        for (const field of INCLUSION_KEYS) {
           addRequiredIssue(field);
+          if (values[field] !== undefined && values[field] !== 'si') {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Este criterio de inclusión debe marcarse como "Sí".',
+              path: [field]
+            });
+          }
+        }
+        for (const field of EXCLUSION_KEYS) {
+          addRequiredIssue(field);
+          if (values[field] !== undefined && values[field] !== 'no') {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Este criterio de exclusión debe marcarse como "No".',
+              path: [field]
+            });
+          }
         }
         addRequiredIssue('selection_visit_date');
         addRequiredIssue('consent_signed_date');

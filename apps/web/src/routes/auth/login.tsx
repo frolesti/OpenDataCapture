@@ -49,13 +49,10 @@ const RouteComponent = () => {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-white sm:bg-transparent" data-testid="login-page">
+    <div className="bg-muted flex min-h-screen w-full flex-col" data-testid="login-page">
       {setupStateQuery.data.isDemo && <DemoBanner onLogin={(credentials) => void handleLogin(credentials)} />}
       <div className="flex w-full grow flex-col items-center justify-center">
-        <Card
-          className="sm:bg-card w-full max-w-sm border-none bg-white px-2.5 py-1.5 sm:border-solid"
-          data-testid="login-card"
-        >
+        <Card className="bg-card border-border w-full max-w-sm border px-2.5 py-1.5 shadow-sm" data-testid="login-card">
           <Card.Header className="flex items-center justify-center">
             <Logo className="m-1.5 h-auto w-40" variant="auto" />
             {!isResetMode && <Heading variant="h2">{t('login')}</Heading>}
