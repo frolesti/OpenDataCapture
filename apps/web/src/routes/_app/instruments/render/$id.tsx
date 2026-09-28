@@ -836,7 +836,8 @@ const RouteComponent = () => {
       ...mergedData,
       ...(isOrionFollowup && mergedData.followup_date
         ? { followup_date: formatOrionDateForApi(mergedData.followup_date) }
-        : {})
+        : {}),
+      ...(isOrionFollowup && mergedData.end_date ? { end_date: formatOrionDateForApi(mergedData.end_date) } : {})
     } as CreateInstrumentRecordData['data'];
 
     if (recordId) {
