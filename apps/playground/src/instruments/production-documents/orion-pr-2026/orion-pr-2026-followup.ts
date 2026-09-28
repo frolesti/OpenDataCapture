@@ -283,7 +283,7 @@ const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 12, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 15, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
       fields: { patient_code: { kind: 'string', label: 'Código del paciente *', variant: 'input' } }
@@ -465,77 +465,19 @@ const instrumentDefinition: any = {
     license: 'Apache-2.0',
     authors: ['Antonio Alcántara y Ana Navarro']
   },
+  initialValues: { reason_not_completed: '' },
   measures: {},
-  validationSchema: z
-    .object({
-      patient_code: z.string().min(1, 'El código del paciente es obligatorio'),
-      continues_study: z.enum(['si', 'no']),
-      followup_date: optionalManualDateSchema(),
-      eq5d_mobility: responseSchema.optional(),
-      eq5d_selfcare: responseSchema.optional(),
-      eq5d_activities: responseSchema.optional(),
-      eq5d_pain: responseSchema.optional(),
-      eq5d_anxiety: responseSchema.optional(),
-      eq5d_vas: z.coerce
-        .number()
-        .min(0, 'El valor debe estar entre 0 y 100')
-        .max(100, 'El valor debe estar entre 0 y 100')
-        .optional(),
-      sleep_onset: responseSchema.optional(),
-      sleep_maintenance: responseSchema.optional(),
-      sleep_quality: responseSchema.optional(),
-      sleep_daytime: responseSchema.optional(),
-      mmas_forget: z.enum(['si', 'no']).optional(),
-      mmas_remember: z.enum(['si', 'no']).optional(),
-      mmas_better: z.enum(['si', 'no']).optional(),
-      mmas_worse: z.enum(['si', 'no']).optional(),
-      cgi_improvement: z.enum(['1', '2', '3', '4', '5', '6', '7', '8']).optional(),
-      objective_achieved: z.enum(['si', 'no']).optional(),
-      dose_change: z.enum(['si', 'no']).optional(),
-      dose_change_date: optionalManualDateSchema(),
-      new_dose: z.number().optional(),
-      concomitant_treatment_changes: z.enum(['si', 'no']).optional(),
-      concomitant_treatment_changes_detail: z.string().optional(),
-      adverse_events: z.enum(['si', 'no']).optional(),
-      adverse_event_records: z
-        .array(
-          z.object({
-            actions_taken: z.string().optional(),
-            intensity: z.enum(['leve', 'moderada', 'intensa']).optional(),
-            onset_date: optionalManualDateSchema(),
-            outcome: z
-              .enum(['recuperado', 'recuperado_con_secuelas', 'en_recuperacion', 'continua', 'desconocido'])
-              .optional(),
-            reaction: z.string().optional(),
-            resolution_date: optionalManualDateSchema(),
-            seriousness: z
-              .set(
-                z.enum([
-                  'fallecimiento',
-                  'riesgo_vida',
-                  'hospitalizacion',
-                  'discapacidad',
-                  'anomalia_congenita',
-                  'medicamente_importante',
-                  'riesgo_transmision',
-                  'no_grave'
-                ])
-              )
-              .min(1, 'Este campo es obligatorio')
-              .optional(),
-            additional_comments: z.string().optional()
-          })
-        )
-        .optional(),
-      end_date: optionalManualDateSchema(),
-      reason_not_completed: z.enum(['investigator', 'patient', 'other']).optional(),
-      reason_not_completed_other: z.string().optional(),
-      professional_attestation: z.boolean().refine((value) => value === true, {
-        message: 'Debe confirmar la validación del formulario'
-      })
-    })
-    .superRefine((data, context) => {
-      if (data.continues_study === 'si') {
+  validationSchema: z.preprocess(
+    (value) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return value;
+      }
+
+      const data = { ...(value as Record<string, unknown>) };
+      if (data.reason_not_completed === '') {
+        data.reason_not_completed = undefined;
+      }
+      if (data.continues_study === 'no') {
         for (const field of [
           'followup_date',
           'eq5d_mobility',
@@ -555,83 +497,217 @@ const instrumentDefinition: any = {
           'cgi_improvement',
           'objective_achieved',
           'dose_change',
+          'dose_change_date',
+          'new_dose',
           'concomitant_treatment_changes',
-          'adverse_events'
+          'concomitant_treatment_changes_detail',
+          'adverse_events',
+          'adverse_event_records'
         ]) {
-          if (data[field as keyof typeof data] === undefined) {
-            context.addIssue({ code: z.ZodIssueCode.custom, message: 'Este campo es obligatorio', path: [field] });
-          }
+          data[field] = undefined;
+        }
+      }
+      return data;
+    },
+    z
+      .object({
+        patient_code: z.string().min(1, 'El código del paciente es obligatorio'),
+        continues_study: z.enum(['si', 'no']),
+        followup_date: optionalManualDateSchema(),
+        eq5d_mobility: responseSchema.optional(),
+        eq5d_selfcare: responseSchema.optional(),
+        eq5d_activities: responseSchema.optional(),
+        eq5d_pain: responseSchema.optional(),
+        eq5d_anxiety: responseSchema.optional(),
+        eq5d_vas: z.coerce
+          .number()
+          .min(0, 'El valor debe estar entre 0 y 100')
+          .max(100, 'El valor debe estar entre 0 y 100')
+          .optional(),
+        sleep_onset: responseSchema.optional(),
+        sleep_maintenance: responseSchema.optional(),
+        sleep_quality: responseSchema.optional(),
+        sleep_daytime: responseSchema.optional(),
+        mmas_forget: z.enum(['si', 'no']).optional(),
+        mmas_remember: z.enum(['si', 'no']).optional(),
+        mmas_better: z.enum(['si', 'no']).optional(),
+        mmas_worse: z.enum(['si', 'no']).optional(),
+        cgi_improvement: z.enum(['1', '2', '3', '4', '5', '6', '7', '8']).optional(),
+        objective_achieved: z.enum(['si', 'no']).optional(),
+        dose_change: z.enum(['si', 'no']).optional(),
+        dose_change_date: optionalManualDateSchema(),
+        new_dose: z.number().optional(),
+        concomitant_treatment_changes: z.enum(['si', 'no']).optional(),
+        concomitant_treatment_changes_detail: z.string().optional(),
+        adverse_events: z.enum(['si', 'no']).optional(),
+        adverse_event_records: z
+          .array(
+            z.object({
+              actions_taken: z.string().optional(),
+              intensity: z.enum(['leve', 'moderada', 'intensa']).optional(),
+              onset_date: optionalManualDateSchema(),
+              outcome: z
+                .enum(['recuperado', 'recuperado_con_secuelas', 'en_recuperacion', 'continua', 'desconocido'])
+                .optional(),
+              reaction: z.string().optional(),
+              resolution_date: optionalManualDateSchema(),
+              seriousness: z
+                .set(
+                  z.enum([
+                    'fallecimiento',
+                    'riesgo_vida',
+                    'hospitalizacion',
+                    'discapacidad',
+                    'anomalia_congenita',
+                    'medicamente_importante',
+                    'riesgo_transmision',
+                    'no_grave'
+                  ])
+                )
+                .min(1, 'Este campo es obligatorio')
+                .optional(),
+              additional_comments: z.string().optional()
+            })
+          )
+          .optional(),
+        end_date: optionalManualDateSchema(),
+        reason_not_completed: z.enum(['investigator', 'patient', 'other']).optional(),
+        reason_not_completed_other: z.string().optional(),
+        professional_attestation: z.boolean().optional()
+      })
+      .superRefine((data, context) => {
+        if (data.professional_attestation !== true) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Debe confirmar la validación del formulario',
+            path: ['professional_attestation']
+          });
         }
 
         const patientCode = typeof data.patient_code === 'string' ? data.patient_code.trim() : '';
         const selectionVisitDate = parseManualDate(
           patientCode ? (globalThis as any).__ODC_ORION_SELECTION_VISIT_DATE_BY_CODE__?.[patientCode] : undefined
         );
-        if (data.followup_date && selectionVisitDate) {
-          const elapsedDays = (data.followup_date.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
-          if (elapsedDays < 76 || elapsedDays > 104) {
-            context.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `La fecha debe estar entre ${formatManualDate(addDays(selectionVisitDate, 76))} y ${formatManualDate(addDays(selectionVisitDate, 104))} para ser compatible con la visita de selección.`,
-              path: ['followup_date']
-            });
+
+        if (data.continues_study === 'si') {
+          for (const field of [
+            'followup_date',
+            'eq5d_mobility',
+            'eq5d_selfcare',
+            'eq5d_activities',
+            'eq5d_pain',
+            'eq5d_anxiety',
+            'eq5d_vas',
+            'sleep_onset',
+            'sleep_maintenance',
+            'sleep_quality',
+            'sleep_daytime',
+            'mmas_forget',
+            'mmas_remember',
+            'mmas_better',
+            'mmas_worse',
+            'cgi_improvement',
+            'objective_achieved',
+            'dose_change',
+            'concomitant_treatment_changes',
+            'adverse_events'
+          ]) {
+            if (data[field as keyof typeof data] === undefined) {
+              context.addIssue({ code: z.ZodIssueCode.custom, message: 'Este campo es obligatorio', path: [field] });
+            }
+          }
+
+          const followupDate = parseManualDate(data.followup_date);
+          if (followupDate && selectionVisitDate) {
+            const elapsedDays = (followupDate.getTime() - selectionVisitDate.getTime()) / (24 * 60 * 60 * 1000);
+            if (elapsedDays < 76 || elapsedDays > 104) {
+              context.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `La fecha debe estar entre ${formatManualDate(addDays(selectionVisitDate, 76))} y ${formatManualDate(addDays(selectionVisitDate, 104))} para ser compatible con la visita de selección.`,
+                path: ['followup_date']
+              });
+            }
+          }
+        } else if (!data.end_date || !data.reason_not_completed) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Indique la fecha y el motivo de finalización',
+            path: ['end_date']
+          });
+        }
+        const endDate = parseManualDate(data.end_date);
+        if (
+          data.continues_study === 'no' &&
+          endDate &&
+          selectionVisitDate &&
+          endDate.getTime() <= selectionVisitDate.getTime()
+        ) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `La fecha de finalización debe ser posterior a la fecha de la primera visita (${formatManualDate(selectionVisitDate)}).`,
+            path: ['end_date']
+          });
+        }
+        if (
+          data.continues_study === 'si' &&
+          data.dose_change === 'si' &&
+          (!data.dose_change_date || data.new_dose === undefined)
+        ) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Complete la fecha y la nueva dosis',
+            path: ['dose_change_date']
+          });
+        }
+        if (data.reason_not_completed === 'other' && !data.reason_not_completed_other?.trim()) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Especifique el motivo',
+            path: ['reason_not_completed_other']
+          });
+        }
+        if (
+          data.continues_study === 'si' &&
+          data.concomitant_treatment_changes === 'si' &&
+          !data.concomitant_treatment_changes_detail?.trim()
+        ) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Indique los cambios realizados',
+            path: ['concomitant_treatment_changes_detail']
+          });
+        }
+        if (data.continues_study === 'si' && data.adverse_events === 'si' && !data.adverse_event_records?.length) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              'Debe registrar al menos una reacción adversa y completar la notificación de farmacovigilancia cuando corresponda.',
+            path: ['adverse_event_records']
+          });
+        }
+        for (const [index, event] of (data.continues_study === 'si'
+          ? (data.adverse_event_records ?? [])
+          : []
+        ).entries()) {
+          for (const field of [
+            'reaction',
+            'onset_date',
+            'intensity',
+            'outcome',
+            'actions_taken',
+            'seriousness'
+          ] as const) {
+            if (!event[field]) {
+              context.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Este campo es obligatorio',
+                path: ['adverse_event_records', index, field]
+              });
+            }
           }
         }
-      } else if (!data.end_date || !data.reason_not_completed) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Indique la fecha y el motivo de finalización',
-          path: ['end_date']
-        });
-      }
-      if (data.dose_change === 'si' && (!data.dose_change_date || data.new_dose === undefined)) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Complete la fecha y la nueva dosis',
-          path: ['dose_change_date']
-        });
-      }
-      if (data.reason_not_completed === 'other' && !data.reason_not_completed_other?.trim()) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Especifique el motivo',
-          path: ['reason_not_completed_other']
-        });
-      }
-      if (data.concomitant_treatment_changes === 'si' && !data.concomitant_treatment_changes_detail?.trim()) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Indique los cambios realizados',
-          path: ['concomitant_treatment_changes_detail']
-        });
-      }
-      if (data.adverse_events === 'si' && !data.adverse_event_records?.length) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            'Debe registrar al menos una reacción adversa y completar la notificación de farmacovigilancia cuando corresponda.',
-          path: ['adverse_event_records']
-        });
-      }
-      for (const [index, event] of (data.adverse_event_records ?? []).entries()) {
-        for (const field of [
-          'reaction',
-          'onset_date',
-          'intensity',
-          'outcome',
-          'actions_taken',
-          'seriousness'
-        ] as const) {
-          if (!event[field]) {
-            context.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: 'Este campo es obligatorio',
-              path: ['adverse_event_records', index, field]
-            });
-          }
-        }
-      }
-    })
+      })
+  )
 };
 
 export default defineInstrument(instrumentDefinition);

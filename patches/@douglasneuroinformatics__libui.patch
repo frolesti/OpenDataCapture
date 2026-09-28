@@ -12,7 +12,7 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
      } else {
        setInputValue("");
      }
-@@ -3761,15 +3762,62 @@
+@@ -3761,15 +3762,47 @@
      }
    };
    const isGrouped = Array.isArray(content);
@@ -23,7 +23,6 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
 -        if (!result.success) {
 -          handleError(result.error);
 +  const touchedFields = useRef4(/* @__PURE__ */ new Set());
-+  const previousValues = useRef4(values);
 +  const validationRevision = useRef4(0);
 +  const revalidateOnBlurHandler = (event) => {
 +    const fieldName = event?.target?.name || event?.target?.closest?.("[data-field-group]")?.getAttribute("data-field-group");
@@ -67,23 +66,9 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
 +      setErrors(fieldErrors);
 +    }).catch(console.error);
    };
-+  useEffect11(() => {
-+    const changedFields = Object.keys(values).filter((name) => values[name] !== previousValues.current[name]);
-+    previousValues.current = values;
-+    if (!revalidateOnBlur) return;
-+    let shouldValidate = false;
-+    for (const name of changedFields) {
-+      if (values[name] !== undefined && values[name] !== null && values[name] !== "") {
-+        touchedFields.current.add(name);
-+      }
-+      if (touchedFields.current.has(name)) shouldValidate = true;
-+    }
-+    if (shouldValidate) revalidateOnBlurHandler();
-+    return () => { validationRevision.current++; };
-+  }, [values, revalidateOnBlur]);
    useEffect11(() => {
      setErrors({});
-@@ -3782,7 +3830,7 @@
+@@ -3782,7 +3810,7 @@
        autoComplete: "off",
        className: twMerge("relative flex w-full flex-col", !isGrouped && "gap-6", className),
        id,

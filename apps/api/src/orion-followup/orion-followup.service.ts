@@ -118,6 +118,14 @@ export class OrionFollowupService {
           );
         }
       }
+    } else if (followupData.continues_study === 'no') {
+      const selectionVisitDate = this.parseInstrumentDate(selectionData.selection_visit_date);
+      const endDate = this.parseInstrumentDate(followupData.end_date);
+      if (selectionVisitDate && endDate && endDate.getTime() <= selectionVisitDate.getTime()) {
+        throw new UnprocessableEntityException(
+          'La fecha de finalización debe ser posterior a la fecha de la primera visita.'
+        );
+      }
     }
 
     return selectionRecord.id;

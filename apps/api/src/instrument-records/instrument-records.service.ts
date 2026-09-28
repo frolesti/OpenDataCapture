@@ -775,6 +775,36 @@ export class InstrumentRecordsService {
     }
 
     const normalized = { ...(data as Record<string, unknown>) };
+    if (normalized.continues_study === 'no') {
+      for (const field of [
+        'followup_date',
+        'eq5d_mobility',
+        'eq5d_selfcare',
+        'eq5d_activities',
+        'eq5d_pain',
+        'eq5d_anxiety',
+        'eq5d_vas',
+        'sleep_onset',
+        'sleep_maintenance',
+        'sleep_quality',
+        'sleep_daytime',
+        'mmas_forget',
+        'mmas_remember',
+        'mmas_better',
+        'mmas_worse',
+        'cgi_improvement',
+        'objective_achieved',
+        'dose_change',
+        'dose_change_date',
+        'new_dose',
+        'concomitant_treatment_changes',
+        'concomitant_treatment_changes_detail',
+        'adverse_events',
+        'adverse_event_records'
+      ]) {
+        normalized[field] = undefined;
+      }
+    }
     for (const field of ['followup_date', 'dose_change_date', 'end_date']) {
       normalized[field] = this.normalizeOrionDateValue(normalized[field]);
     }

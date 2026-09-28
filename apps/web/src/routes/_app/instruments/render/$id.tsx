@@ -696,6 +696,36 @@ const RouteComponent = () => {
     // latestDataRef tracks cumulative snapshots seen via onDataChange, so we merge both
     // payloads while preserving previously entered non-empty values.
     const mergedData = mergeFormSnapshots(latestDataRef.current, data as Record<string, unknown>);
+    if (isOrionFollowup && mergedData.continues_study === 'no') {
+      for (const field of [
+        'followup_date',
+        'eq5d_mobility',
+        'eq5d_selfcare',
+        'eq5d_activities',
+        'eq5d_pain',
+        'eq5d_anxiety',
+        'eq5d_vas',
+        'sleep_onset',
+        'sleep_maintenance',
+        'sleep_quality',
+        'sleep_daytime',
+        'mmas_forget',
+        'mmas_remember',
+        'mmas_better',
+        'mmas_worse',
+        'cgi_improvement',
+        'objective_achieved',
+        'dose_change',
+        'dose_change_date',
+        'new_dose',
+        'concomitant_treatment_changes',
+        'concomitant_treatment_changes_detail',
+        'adverse_events',
+        'adverse_event_records'
+      ]) {
+        delete mergedData[field];
+      }
+    }
 
     const rejectSubmit = (message: string): never => {
       notifications.addNotification({ message, type: 'error' });
