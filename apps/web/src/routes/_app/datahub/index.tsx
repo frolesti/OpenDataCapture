@@ -61,6 +61,7 @@ const RouteComponent = () => {
     dl,
     filterOptions,
     filters,
+    formatFieldLabel,
     instrument,
     instrumentId,
     instrumentOptions,
@@ -171,7 +172,7 @@ const RouteComponent = () => {
       }
       fields.push({
         field: subItem,
-        label: camelToSnakeCase(subItem).toUpperCase()
+        label: formatFieldLabel?.(subItem) ?? camelToSnakeCase(subItem).toUpperCase()
       });
     });
   }
@@ -417,15 +418,17 @@ const RouteComponent = () => {
               {
                 field: '__date__',
                 formatter: formatDisplayDate,
-                label: 'DATE_COLLECTED'
+                label: formatFieldLabel ? 'FECHA DE REGISTRO' : 'DATE_COLLECTED'
               },
               {
                 field: '__subjectId__',
                 formatter: (value: string) => removeSubjectIdScope(value),
-                label: t({
-                  en: 'INVESTIGATOR',
-                  fr: 'INVESTIGADOR'
-                })
+                label: formatFieldLabel
+                  ? 'INVESTIGADOR'
+                  : t({
+                      en: 'INVESTIGATOR',
+                      fr: 'INVESTIGADOR'
+                    })
               },
               ...fields
             ]}

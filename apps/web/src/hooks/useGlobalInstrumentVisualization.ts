@@ -93,6 +93,212 @@ const ORION_CGI_LABELS: Record<string, string> = {
   '7': 'Bastante peor',
   '8': 'Mucho peor'
 };
+const ORION_FIELD_LABELS: Record<string, string> = {
+  adverse_event_records: 'Reacciones adversas',
+  adverse_events: 'Acontecimientos adversos',
+  age: 'Edad',
+  actions_taken: 'Medidas adoptadas',
+  additional_comments: 'Comentarios adicionales',
+  baseline_adverse_events: 'Acontecimientos adversos',
+  cgi_improvement: 'Mejoría clínica',
+  change_reason_adherence: 'Motivo del cambio: adherencia',
+  change_reason_efficacy: 'Motivo del cambio: eficacia',
+  change_reason_investigator_pref: 'Motivo del cambio: preferencia médica',
+  change_reason_other: 'Otro motivo del cambio',
+  change_reason_other_checked: 'Motivo del cambio: otro',
+  change_reason_patient_pref: 'Motivo del cambio: preferencia del paciente',
+  change_reason_tolerability: 'Motivo del cambio: tolerancia',
+  concomitant_treatment_changes: 'Cambios en otros tratamientos',
+  concomitant_treatment_changes_detail: 'Detalle de otros tratamientos',
+  continues_study: '¿Continúa en el estudio?',
+  consent_signed_date: 'Fecha de firma del consentimiento',
+  diagnosis_date: 'Fecha del diagnóstico',
+  dose_change: '¿Cambió la dosis?',
+  dose_change_date: 'Fecha del cambio de dosis',
+  end_date: 'Fecha de finalización del estudio',
+  eq5d_activities: 'Calidad de vida: actividades cotidianas',
+  eq5d_anxiety: 'Calidad de vida: ansiedad o depresión',
+  eq5d_mobility: 'Calidad de vida: movilidad',
+  eq5d_pain: 'Calidad de vida: dolor o malestar',
+  eq5d_selfcare: 'Calidad de vida: autocuidado',
+  eq5d_vas: 'Estado de salud (0-100)',
+  exclusion_all: 'Criterios de exclusión',
+  followup_date: 'Fecha de seguimiento',
+  height: 'Altura (cm)',
+  intensity: 'Intensidad de la reacción',
+  inclusion_all: 'Criterios de inclusión',
+  informed_consent: 'Consentimiento informado',
+  followup_cgi_improvement: 'Mejoría clínica',
+  followup_adverse_event_records: 'Reacciones adversas',
+  retro_eq5d_mobility: 'Calidad de vida: movilidad (antes del cambio)',
+  retro_eq5d_selfcare: 'Calidad de vida: autocuidado (antes del cambio)',
+  prosp_eq5d_mobility: 'Calidad de vida: movilidad (actual)',
+  prosp_eq5d_selfcare: 'Calidad de vida: autocuidado (actual)',
+  mmas_better: 'Adherencia: deja la medicación al sentirse mejor',
+  mmas_forget: 'Adherencia: olvida tomar la medicación',
+  mmas_remember: 'Adherencia: dificultad para recordar la medicación',
+  mmas_worse: 'Adherencia: deja la medicación al sentirse peor',
+  neuropathy_etiology: 'Causa del dolor neuropático',
+  neuropathy_etiology_other: 'Otra causa del dolor neuropático',
+  neuropathy_location: 'Localización del dolor',
+  onset_date: 'Fecha de inicio de la reacción',
+  objective_achieved: '¿Se alcanzó el objetivo del tratamiento?',
+  outcome: 'Desenlace de la reacción',
+  patient_code: 'Código del paciente',
+  professional_attestation: 'Validación del profesional sanitario',
+  reaction: 'Descripción de la reacción',
+  reason_not_completed: 'Motivo de finalización',
+  reason_not_completed_other: 'Detalle del motivo de finalización',
+  resolution_date: 'Fecha de resolución de la reacción',
+  selection_visit_date: 'Fecha de la primera visita',
+  seriousness: 'Gravedad de la reacción',
+  sex: 'Sexo',
+  sleep_daytime: 'Sueño: somnolencia durante el día',
+  sleep_maintenance: 'Sueño: dificultad para mantenerlo',
+  sleep_onset: 'Sueño: dificultad para conciliarlo',
+  sleep_quality: 'Calidad del sueño',
+  site_hospital: 'Centro de atención primaria',
+  new_dose: 'Nueva dosis (mg)',
+  weight: 'Peso (kg)'
+};
+const ORION_VALUE_LABELS: Record<string, string> = {
+  femenino: 'Femenino',
+  masculino: 'Masculino',
+  si: 'Sí',
+  no: 'No',
+  investigator: 'Decisión del investigador',
+  patient: 'Decisión del paciente',
+  other: 'Otro',
+  leve: 'Leve',
+  moderada: 'Moderada',
+  intensa: 'Intensa',
+  recuperado: 'Recuperado',
+  recuperado_con_secuelas: 'Recuperado con secuelas',
+  en_recuperacion: 'En recuperación',
+  continua: 'Continúa',
+  desconocido: 'Desconocido',
+  fallecimiento: 'Fallecimiento',
+  riesgo_vida: 'Pone en peligro la vida',
+  hospitalizacion: 'Hospitalización o prolongación',
+  discapacidad: 'Incapacidad persistente o significativa',
+  anomalia_congenita: 'Anomalía congénita o defecto de nacimiento',
+  medicamente_importante: 'Reacción médicamente importante',
+  riesgo_transmision: 'Riesgo de transmisión de agente infeccioso',
+  no_grave: 'No cumple criterios de gravedad',
+  central: 'Central',
+  peripheral: 'Periférico',
+  spinal_injury: 'Lesión medular',
+  post_stroke: 'Dolor central postictus',
+  ms_associated: 'Asociado a esclerosis múltiple',
+  trigeminal_neuralgia: 'Neuralgia del trigémino',
+  postherpetic: 'Neuralgia postherpética',
+  diabetic: 'Neuropatía diabética',
+  nerve_injury: 'Lesión de nervio periférico',
+  post_amputation: 'Dolor postamputación',
+  polyneuropathy: 'Polineuropatía',
+  radiculopathy: 'Radiculopatía',
+  hiv_associated: 'Asociado a VIH',
+  frax: 'Escala FRAX',
+  dxa: 'Densitometría DXA',
+  clinico: 'Diagnóstico clínico',
+  hallazgo: 'Hallazgo clínico',
+  presuntivo: 'Diagnóstico presuntivo'
+};
+
+export function formatOrionFieldLabel(fieldName: string): string {
+  const normalizedName = fieldName.toLowerCase();
+  const baseName = normalizedName.replace(/^followup_/, '').replace(/^(retro|prosp)_/, '');
+  const knownLabel = ORION_FIELD_LABELS[normalizedName] ?? ORION_FIELD_LABELS[baseName];
+  if (knownLabel) {
+    return knownLabel;
+  }
+
+  const ordinalMatch = /^(prev|current|concomitant)_treatment_(.+)_(\d+)$/.exec(baseName);
+  if (ordinalMatch) {
+    const treatmentDetail = ordinalMatch[2] ?? '';
+    const prefix =
+      ordinalMatch[1] === 'prev'
+        ? 'Tratamiento previo'
+        : ordinalMatch[1] === 'current'
+          ? 'Tratamiento actual'
+          : 'Tratamiento concomitante';
+    const detail =
+      treatmentDetail === 'name'
+        ? 'medicamento'
+        : treatmentDetail === 'dose_mg'
+          ? 'dosis (mg)'
+          : treatmentDetail === 'start'
+            ? 'fecha de inicio'
+            : treatmentDetail === 'end'
+              ? 'fecha de fin'
+              : treatmentDetail.replaceAll('_', ' ');
+    return `${prefix} ${ordinalMatch[3]}: ${detail}`;
+  }
+
+  return baseName.replaceAll('_', ' ').replace(/^./, (character) => character.toUpperCase());
+}
+
+function formatOrionAdverseEvents(value: unknown): string {
+  let events = value;
+  if (typeof events === 'string' && events.trim().startsWith('[')) {
+    try {
+      events = JSON.parse(events) as unknown;
+    } catch {
+      return typeof events === 'string' ? events : String(events ?? '');
+    }
+  }
+  if (!Array.isArray(events)) {
+    return String(events ?? '');
+  }
+  if (events.length === 0) {
+    return 'Ninguna';
+  }
+
+  return events
+    .map((entry, index) => {
+      if (!entry || typeof entry !== 'object') {
+        return `Reacción ${index + 1}`;
+      }
+      const event = entry as Record<string, unknown>;
+      const reaction =
+        typeof event.reaction === 'string' && event.reaction.trim() ? event.reaction.trim() : 'Sin descripción';
+      const seriousness =
+        Array.isArray(event.seriousness) || event.seriousness instanceof Set
+          ? Array.from(event.seriousness as Set<unknown> | unknown[])
+              .map((item) => ORION_VALUE_LABELS[String(item)] ?? String(item))
+              .join(', ')
+          : event.seriousness
+            ? (ORION_VALUE_LABELS[String(event.seriousness)] ?? String(event.seriousness))
+            : undefined;
+      const details = [
+        event.intensity ? (ORION_VALUE_LABELS[String(event.intensity)] ?? String(event.intensity)) : undefined,
+        event.onset_date ? `inicio ${String(event.onset_date)}` : undefined,
+        event.resolution_date ? `resolución ${String(event.resolution_date)}` : undefined,
+        event.outcome ? (ORION_VALUE_LABELS[String(event.outcome)] ?? String(event.outcome)) : undefined,
+        event.actions_taken ? `medidas: ${String(event.actions_taken)}` : undefined,
+        seriousness ? `gravedad ${seriousness}` : undefined
+      ].filter(Boolean);
+      return `${index + 1}. ${reaction}${details.length ? ` (${details.join('; ')})` : ''}`;
+    })
+    .join(' · ');
+}
+
+function formatOrionDisplayValue(fieldName: string, value: unknown): unknown {
+  if (fieldName.toLowerCase().replace(/^followup_/, '') === 'adverse_event_records') {
+    return formatOrionAdverseEvents(value);
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'Sí' : 'No';
+  }
+  if (typeof value === 'string') {
+    const scaleValue = formatOrionScaleValue(fieldName, value);
+    return typeof scaleValue === 'string' ? (ORION_VALUE_LABELS[scaleValue] ?? scaleValue) : scaleValue;
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => ORION_VALUE_LABELS[String(entry)] ?? String(entry)).join(', ');
+  }
+  return value;
+}
 
 function formatOrionScaleValue(fieldName: string, value: unknown): unknown {
   if (typeof value !== 'string') {
@@ -110,7 +316,7 @@ function formatOrionScaleValue(fieldName: string, value: unknown): unknown {
           ? ORION_CGI_LABELS
           : undefined);
   const label = labels?.[value];
-  return label ? `${value} - ${label}` : value;
+  return label ?? value;
 }
 
 function getOrionPatientCode(data: Record<string, unknown>) {
@@ -545,7 +751,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
         }
         if (isUnifiedOrionSelected) {
           for (const [key, value] of Object.entries(cleanProps)) {
-            cleanProps[key] = formatOrionScaleValue(key, value);
+            cleanProps[key] = formatOrionDisplayValue(key, value);
           }
         }
 
@@ -626,6 +832,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
 
   return {
     dl,
+    formatFieldLabel: isUnifiedOrionSelected ? formatOrionFieldLabel : undefined,
     filterOptions,
     filters,
     instrument,
