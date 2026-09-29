@@ -65,9 +65,13 @@ export class InstrumentRecordsController {
     minDate?: Date,
     @Query('groupId') groupId?: string,
     @Query('instrumentId') instrumentId?: string,
+    @Query('instrumentName') instrumentName?: string,
     @Query('subjectId') subjectId?: string
   ) {
-    return this.instrumentRecordsService.find({ groupId, instrumentId, kind, minDate, subjectId }, { ability, user });
+    return this.instrumentRecordsService.find(
+      { groupId, instrumentId, instrumentName, kind, minDate, subjectId },
+      { ability, user }
+    );
   }
 
   @ApiOperation({ summary: 'Delete Record' })

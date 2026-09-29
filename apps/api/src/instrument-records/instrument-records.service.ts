@@ -429,7 +429,7 @@ export class InstrumentRecordsService {
   async find(query: InstrumentRecordQueryParams, options: EntityOperationOptions = {}): Promise<InstrumentRecord[]> {
     const { ability } = options;
     const currentUser = this.buildCurrentUserContext(options.user);
-    const { groupId, instrumentId, kind, minDate, subjectId } = query;
+    const { groupId, instrumentId, instrumentName, kind, minDate, subjectId } = query;
 
     if (groupId) {
       await this.groupsService.findById(groupId, options);
@@ -443,6 +443,15 @@ export class InstrumentRecordsService {
       }
     );
     const instrumentKindIds = allowedInstruments.map((instrument) => instrument.id);
+    const matchingInstrumentIds = instrumentName
+      ? allowedInstruments
+          .filter((instrument) => instrument.internal?.name === instrumentName)
+          .map((instrument) => instrument.id)
+      : undefined;
+
+    if (instrumentName && matchingInstrumentIds?.length === 0) {
+      return [];
+    }
 
     if (instrumentId) {
       // If the specific instrument is no longer accessible, return an empty list instead of throwing.
@@ -469,7 +478,7 @@ export class InstrumentRecordsService {
           { date: { gte: minDate } },
           { groupId },
           { instrumentId },
-          { instrumentId: { in: instrumentKindIds } },
+          { instrumentId: { in: matchingInstrumentIds ?? instrumentKindIds } },
           accessibleQuery(ability, 'read', 'InstrumentRecord'),
           { subjectId }
         ]

@@ -417,6 +417,29 @@ const RouteComponent = () => {
       subjectId: scopedSubjectId
     }
   });
+  const orionFollowupRecordsQuery = useInstrumentRecords({
+    enabled: Boolean(isOrionFollowup && scopedSubjectId),
+    params: {
+      groupId: currentGroup?.id,
+      instrumentName: ORION_FOLLOWUP_INTERNAL_NAME,
+      subjectId: scopedSubjectId
+    }
+  });
+  const completedOrionFollowupCodes = useMemo(() => {
+    const codes = new Set<string>();
+    for (const record of orionFollowupRecordsQuery.data ?? []) {
+      const recordData = record.data as Record<string, unknown>;
+      const value = recordData.patient_code ?? recordData.user_code;
+      if (typeof value === 'string' && /^OR-\d{2,3}-\d+$/.test(value.trim())) {
+        const code = value.trim();
+        const editingCode = effectiveInitialData?.patient_code ?? effectiveInitialData?.user_code;
+        if (!(recordId && typeof editingCode === 'string' && editingCode.trim() === code)) {
+          codes.add(code);
+        }
+      }
+    }
+    return codes;
+  }, [effectiveInitialData?.patient_code, effectiveInitialData?.user_code, orionFollowupRecordsQuery.data, recordId]);
 
   const orionFollowupUserCodeOptions = useMemo(() => {
     if (!isOrionFollowup) {
@@ -429,6 +452,7 @@ const RouteComponent = () => {
       if (
         typeof value === 'string' &&
         /^OR-\d{2,3}-\d+$/.test(value.trim()) &&
+        !completedOrionFollowupCodes.has(value.trim()) &&
         formatOrionDateForApi(recordData.selection_visit_date)
       ) {
         codes.add(value.trim());
@@ -439,7 +463,7 @@ const RouteComponent = () => {
         .sort()
         .map((code) => [code, code])
     );
-  }, [isOrionFollowup, orionSelectionRecordsQuery.data]);
+  }, [completedOrionFollowupCodes, isOrionFollowup, orionSelectionRecordsQuery.data]);
 
   const orionSelectionVisitDateByCode = useMemo(() => {
     const datesByCode: Record<string, string> = {};
@@ -450,12 +474,17 @@ const RouteComponent = () => {
       const recordData = record.data as Record<string, unknown>;
       const value = recordData?.patient_code ?? recordData?.user_code;
       const selectionVisitDate = formatOrionDateForApi(recordData.selection_visit_date);
-      if (typeof value === 'string' && /^OR-\d{2,3}-\d+$/.test(value.trim()) && selectionVisitDate) {
+      if (
+        typeof value === 'string' &&
+        /^OR-\d{2,3}-\d+$/.test(value.trim()) &&
+        !completedOrionFollowupCodes.has(value.trim()) &&
+        selectionVisitDate
+      ) {
         datesByCode[value.trim()] = selectionVisitDate;
       }
     }
     return datesByCode;
-  }, [isOrionFollowup, orionSelectionRecordsQuery.data]);
+  }, [completedOrionFollowupCodes, isOrionFollowup, orionSelectionRecordsQuery.data]);
 
   const orionFollowupUserCodeOptionsJson = JSON.stringify(orionFollowupUserCodeOptions);
   const orionSelectionVisitDateByCodeJson = JSON.stringify(orionSelectionVisitDateByCode);

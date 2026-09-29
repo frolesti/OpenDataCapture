@@ -65,15 +65,37 @@ const RouteComponent = () => {
       subjectId: scopedSubjectId
     }
   });
-  const hasOrionSelectionWithPatientCode = (orionSelectionRecordsQuery.data ?? []).some((record) => {
-    const data = record.data as Record<string, unknown>;
-    const patientCode = data.patient_code ?? data.user_code;
-    return (
-      typeof patientCode === 'string' &&
-      /^OR-\d{2,3}-\d+$/.test(patientCode.trim()) &&
-      Boolean(data.selection_visit_date)
-    );
+  const orionFollowupRecordsQuery = useInstrumentRecords({
+    enabled: Boolean(selectedGroup?.id && scopedSubjectId),
+    params: {
+      groupId: selectedGroup?.id,
+      instrumentName: ORION_FOLLOWUP_INTERNAL_NAME,
+      subjectId: scopedSubjectId
+    }
   });
+  const completedOrionFollowupCodes = new Set(
+    (orionFollowupRecordsQuery.data ?? [])
+      .map((record) => {
+        const data = record.data as Record<string, unknown>;
+        const patientCode = data.patient_code ?? data.user_code;
+        return typeof patientCode === 'string' && /^OR-\d{2,3}-\d+$/.test(patientCode.trim())
+          ? patientCode.trim()
+          : undefined;
+      })
+      .filter((patientCode): patientCode is string => Boolean(patientCode))
+  );
+  const hasPendingOrionFollowup =
+    Boolean(orionSelectionRecordsQuery.data && orionFollowupRecordsQuery.data) &&
+    (orionSelectionRecordsQuery.data ?? []).some((record) => {
+      const data = record.data as Record<string, unknown>;
+      const patientCode = data.patient_code ?? data.user_code;
+      return (
+        typeof patientCode === 'string' &&
+        /^OR-\d{2,3}-\d+$/.test(patientCode.trim()) &&
+        Boolean(data.selection_visit_date) &&
+        !completedOrionFollowupCodes.has(patientCode.trim())
+      );
+    });
 
   useEffect(() => {
     if (hasRestoredLastInstrument.current || !currentSession || !instrumentInfoQuery.data) {
@@ -87,10 +109,7 @@ const RouteComponent = () => {
     }
 
     const instrument = instrumentInfoQuery.data.find((entry) => entry.id === lastInstrumentId);
-    if (
-      !instrument ||
-      (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME && !hasOrionSelectionWithPatientCode)
-    ) {
+    if (!instrument || (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME && !hasPendingOrionFollowup)) {
       return;
     }
 
@@ -100,7 +119,7 @@ const RouteComponent = () => {
       state: { instrumentTitle: instrument.details.title },
       to: `/instruments/render/$id`
     });
-  }, [accessibleInstrumentIds, currentSession, hasOrionSelectionWithPatientCode, instrumentInfoQuery.data, navigate]);
+  }, [accessibleInstrumentIds, currentSession, hasPendingOrionFollowup, instrumentInfoQuery.data, navigate]);
 
   return (
     <div data-testid="accessible-instruments-page">
@@ -117,7 +136,7 @@ const RouteComponent = () => {
               return false;
             }
             if (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME) {
-              return hasOrionSelectionWithPatientCode;
+              return hasPendingOrionFollowup;
             }
             return true;
           }),

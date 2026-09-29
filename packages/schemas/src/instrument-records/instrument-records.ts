@@ -73,6 +73,7 @@ export type LinearRegressionResults = z.infer<typeof $LinearRegressionResults>;
 export type InstrumentRecordQueryParams = {
   groupId?: string;
   instrumentId?: string;
+  instrumentName?: string;
   kind?: InstrumentKind;
   minDate?: Date;
   subjectId?: string;
