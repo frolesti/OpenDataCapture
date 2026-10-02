@@ -13,6 +13,8 @@ const SCALE_OPTIONS = {
   '8': 'Mucho peor'
 } as const;
 const DATE_FORMAT_ERROR = 'Formato de fecha inválido. Use DD-MM-AAAA';
+const PHARMACOVIGILANCE_INSTRUCTION =
+  'Si la reacción adversa cumple los criterios de registro sistemático especificados en el protocolo (reacción adversa grave o de especial interés), cumplimente la página correspondiente de reacciones adversas, rellene el formulario de notificación de reacciones adversas y envíelo al departamento de farmacovigilancia de Laboratorios Gebro Pharma (farmacovigilancia@gebro.es) en menos de 24 horas. Si se trata de cualquier otro tipo de reacción adversa, recuerde notificar al Sistema Español de Farmacovigilancia siguiendo su práctica clínica habitual.';
 
 function parseManualDate(value: unknown): Date | undefined {
   if (value === undefined || value === null || value === '') {
@@ -283,7 +285,7 @@ const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 16, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 17, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
       fields: { patient_code: { kind: 'string', label: 'Código del paciente *', variant: 'input' } }
@@ -374,6 +376,12 @@ const instrumentDefinition: any = {
     {
       title: 'ACONTECIMIENTOS ADVERSOS',
       fields: whenStudyContinues({
+        pharmacovigilance_disclaimer: {
+          kind: 'string',
+          variant: 'input',
+          label: PHARMACOVIGILANCE_INSTRUCTION,
+          disabled: true
+        },
         adverse_events: {
           kind: 'string',
           label: '¿Ha presentado algún acontecimiento adverso durante el periodo de estudio? *',
@@ -540,6 +548,7 @@ const instrumentDefinition: any = {
         concomitant_treatment_changes: z.enum(['si', 'no']).optional(),
         concomitant_treatment_changes_detail: z.string().optional(),
         adverse_events: z.enum(['si', 'no']).optional(),
+        pharmacovigilance_disclaimer: z.string().optional(),
         adverse_event_records: z
           .array(
             z.object({

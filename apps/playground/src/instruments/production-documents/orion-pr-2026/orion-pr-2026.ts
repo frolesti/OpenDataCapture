@@ -318,7 +318,7 @@ function isTreatmentComplete(data: FormData, prefix: string, treatmentNumber: nu
   );
 
   if (prefix === 'current') {
-    return baseComplete && data[`${prefix}_treatment_end_${treatmentNumber}`] === 'si';
+    return baseComplete;
   }
 
   if (prefix === 'concomitant') {
@@ -455,18 +455,7 @@ function generateTreatmentFields(prefix: 'prev' | 'current' | 'concomitant', max
       i
     );
 
-    if (prefix === 'current') {
-      fields[`${prefix}_treatment_end_${i}`] = requiresTreatment(
-        {
-          kind: 'string',
-          variant: 'radio',
-          label: `¿Continúa con el tratamiento? *`,
-          options: YES_NO_OPTIONS
-        },
-        prefix,
-        i
-      );
-    } else if (prefix === 'prev') {
+    if (prefix === 'prev') {
       fields[`${prefix}_treatment_end_${i}`] = requiresTreatment(
         dateField(i === 1 ? 'Fecha de fin *' : `Fecha de fin - Tratamiento ${i} *`),
         prefix,
@@ -489,9 +478,8 @@ function treatmentValidation(prefix: 'prev' | 'current' | 'concomitant', maxTrea
     schema[`${prefix}_treatment_name_${i}`] = z.string().optional();
     schema[`${prefix}_treatment_dose_mg_${i}`] = z.number().optional();
     schema[`${prefix}_treatment_start_${i}`] = optionalManualDateSchema();
-    if (prefix !== 'concomitant') {
-      schema[`${prefix}_treatment_end_${i}`] =
-        prefix === 'current' ? z.enum(['si', 'no']).optional() : optionalManualDateSchema();
+    if (prefix === 'prev') {
+      schema[`${prefix}_treatment_end_${i}`] = optionalManualDateSchema();
     }
     if (i < maxTreatments) {
       schema[`add_${prefix}_treatment_${i + 1}`] = z.enum(['si', 'no']).optional();
@@ -610,6 +598,12 @@ const instrumentDefinition: any = {
       }
     },
     {
+      title: 'FECHA DE LA VISITA DE SELECCIÓN',
+      fields: {
+        selection_visit_date: dateField('Fecha de la visita de selección *')
+      }
+    },
+    {
       title: 'CONSENTIMIENTO INFORMADO',
       fields: {
         informed_consent: {
@@ -618,9 +612,6 @@ const instrumentDefinition: any = {
           variant: 'radio',
           options: YES_NO_OPTIONS
         },
-        selection_visit_date: requiresConsent({
-          ...dateField('Fecha de la visita de selección *')
-        }),
         consent_signed_date: requiresConsent({
           ...dateField('Fecha de firma del consentimiento informado *')
         })
@@ -685,7 +676,7 @@ const instrumentDefinition: any = {
         exclusion_2: requiresConsent({
           kind: 'string',
           label:
-            '2. Uso de pregabalina PR fuera de la ficha técnica aprobada localmente, incluyendo indicación de administración *',
+            '2. Uso de pregabalina PR fuera de la ficha técnica aprobada localmente, incluyendo indicación o pauta de administración *',
           variant: 'radio',
           options: YES_NO_OPTIONS
         }),
@@ -1352,13 +1343,6 @@ const instrumentDefinition: any = {
         ]) {
           addRequiredIssue(field);
         }
-        if (values.current_treatment_end_1 !== 'si') {
-          context.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'El paciente debe continuar con pregabalina PR para completar la selección.',
-            path: ['current_treatment_end_1']
-          });
-        }
 
         if (
           typeof values.current_treatment_dose_mg_1 === 'number' &&
@@ -1383,23 +1367,6 @@ const instrumentDefinition: any = {
             message: 'La fecha de inicio de pregabalina PR no puede ser posterior a la visita de selección.',
             path: ['current_treatment_start_1']
           });
-        }
-
-        for (let treatmentNumber = 1; treatmentNumber <= 4; treatmentNumber++) {
-          const hasCurrentTreatmentData = Boolean(
-            values[`current_treatment_name_${treatmentNumber}`] ||
-              values[`current_treatment_dose_mg_${treatmentNumber}`] !== undefined ||
-              values[`current_treatment_start_${treatmentNumber}`] ||
-              values[`current_treatment_end_${treatmentNumber}`] !== undefined
-          );
-
-          if (hasCurrentTreatmentData && values[`current_treatment_end_${treatmentNumber}`] !== 'si') {
-            context.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: 'Si el paciente no continúa con pregabalina PR, no puede continuar con el formulario.',
-              path: [`current_treatment_end_${treatmentNumber}`]
-            });
-          }
         }
 
         if (typeof data.age === 'number' && (data.age < ORION_AGE_MIN || data.age > ORION_AGE_MAX)) {

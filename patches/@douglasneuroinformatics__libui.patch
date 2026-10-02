@@ -12,7 +12,7 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
      } else {
        setInputValue("");
      }
-@@ -3761,15 +3762,47 @@
+@@ -3761,15 +3762,45 @@
      }
    };
    const isGrouped = Array.isArray(content);
@@ -25,7 +25,10 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
 +  const touchedFields = useRef4(/* @__PURE__ */ new Set());
 +  const validationRevision = useRef4(0);
 +  const revalidateOnBlurHandler = (event) => {
-+    const fieldName = event?.target?.name || event?.target?.closest?.("[data-field-group]")?.getAttribute("data-field-group");
++    const fieldGroup = event?.target?.closest?.("[data-field-group]");
++    const relatedFieldGroup = event?.relatedTarget?.closest?.("[data-field-group]");
++    if (fieldGroup && relatedFieldGroup === fieldGroup) return;
++    const fieldName = event?.target?.name || fieldGroup?.getAttribute("data-field-group");
 +    if (fieldName) {
 +      touchedFields.current.add(fieldName);
 +    }
@@ -48,12 +51,7 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
 +        }
 +        const issueField = issue.path[0];
 +        const isTouched = touchedFields.current.has(issueField);
-+        const isRelatedToBlur =
-+          fieldName &&
-+          (issueField === fieldName ||
-+            issueField.startsWith(`${fieldName}_`) ||
-+            fieldName.startsWith(`${issueField}_`));
-+        if (!isTouched && !isRelatedToBlur) {
++        if (!isTouched && issueField !== fieldName) {
 +          continue;
 +        }
 +        const current = get(fieldErrors, issue.path);
@@ -68,7 +66,7 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
    };
    useEffect11(() => {
      setErrors({});
-@@ -3782,7 +3810,7 @@
+@@ -3782,7 +3811,7 @@
        autoComplete: "off",
        className: twMerge("relative flex w-full flex-col", !isGrouped && "gap-6", className),
        id,

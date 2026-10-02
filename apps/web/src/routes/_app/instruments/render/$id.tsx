@@ -568,7 +568,7 @@ const RouteComponent = () => {
   );
 
   useEffect(() => {
-    if (!isOrionSelection || currentStep !== 1) {
+    if ((!isOrionSelection && !isOrionFollowup) || currentStep !== 1) {
       return;
     }
 
@@ -623,6 +623,15 @@ const RouteComponent = () => {
       styledElements.push(section);
     }
 
+    const pharmacovigilanceDisclaimer = document.querySelector<HTMLElement>(
+      '[data-field-group="pharmacovigilance_disclaimer"]'
+    );
+    const pharmacovigilanceLabel = pharmacovigilanceDisclaimer?.querySelector<HTMLElement>('label');
+    if (pharmacovigilanceLabel) {
+      pharmacovigilanceLabel.style.color = '#dc2626';
+      coloredElements.push(pharmacovigilanceLabel);
+    }
+
     return () => {
       for (const section of styledElements) {
         section.removeAttribute('data-orion-treatment-band');
@@ -633,7 +642,7 @@ const RouteComponent = () => {
         element.style.removeProperty('font-weight');
       }
     };
-  }, [currentStep, isOrionSelection, rendererKey]);
+  }, [currentStep, isOrionFollowup, isOrionSelection, rendererKey]);
 
   // Discard draft and restart form
   const handleDiscardDraft = useCallback(() => {
