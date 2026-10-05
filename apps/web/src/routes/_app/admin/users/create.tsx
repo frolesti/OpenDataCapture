@@ -529,6 +529,13 @@ const RouteComponent = () => {
   );
   const isUserPasswordStrong = passwordStrength.success;
 
+  const createdUserGroupMembershipChanged =
+    selectedCreatedUser !== null &&
+    (createdUserDialogForm.groupIds.length !== selectedCreatedUser.groupIds.length ||
+      createdUserDialogForm.groupIds.some((groupId) => !selectedCreatedUser.groupIds.includes(groupId)));
+  const createdUserHospitalChanged =
+    selectedCreatedUser !== null && createdUserDialogForm.hospital !== (selectedCreatedUser.hospital ?? '');
+
   const canCreateUser =
     userForm.firstName.trim().length > 0 &&
     userForm.lastName.trim().length > 0 &&
@@ -558,7 +565,9 @@ const RouteComponent = () => {
     createdUserDialogForm.lastName.trim().length > 0 &&
     createdUserDialogForm.username.trim().length > 0 &&
     (selectedCreatedUser?.basePermissionLevel !== 'STANDARD' ||
-      (createdUserDialogForm.groupIds.length > 0 && createdUserDialogForm.hospital.trim().length > 0)) &&
+      !(createdUserGroupMembershipChanged || createdUserHospitalChanged) ||
+      (createdUserDialogForm.hospital.trim().length > 0 &&
+        createdUserDialogHospitalOptions.includes(createdUserDialogForm.hospital))) &&
     (createdUserDialogForm.password.trim().length === 0 || isCreatedUserPasswordStrong);
 
   const isBusy =
@@ -803,7 +812,11 @@ const RouteComponent = () => {
         data: {
           firstName: createdUserDialogForm.firstName.trim(),
           groupIds: createdUserDialogForm.groupIds,
-          hospital: selectedCreatedUser.basePermissionLevel === 'STANDARD' ? createdUserDialogForm.hospital : undefined,
+          hospital:
+            selectedCreatedUser.basePermissionLevel === 'STANDARD' &&
+            (createdUserGroupMembershipChanged || createdUserHospitalChanged)
+              ? createdUserDialogForm.hospital
+              : undefined,
           lastName: createdUserDialogForm.lastName.trim(),
           password: createdUserDialogForm.password.trim() || undefined,
           username: createdUserDialogForm.username.trim()
