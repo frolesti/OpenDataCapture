@@ -285,7 +285,7 @@ const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 17, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 18, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
       fields: { patient_code: { kind: 'string', label: 'Código del paciente *', variant: 'input' } }
@@ -375,13 +375,8 @@ const instrumentDefinition: any = {
     },
     {
       title: 'ACONTECIMIENTOS ADVERSOS',
+      description: PHARMACOVIGILANCE_INSTRUCTION,
       fields: whenStudyContinues({
-        pharmacovigilance_disclaimer: {
-          kind: 'string',
-          variant: 'input',
-          label: PHARMACOVIGILANCE_INSTRUCTION,
-          disabled: true
-        },
         adverse_events: {
           kind: 'string',
           label: '¿Ha presentado algún acontecimiento adverso durante el periodo de estudio? *',
@@ -548,7 +543,6 @@ const instrumentDefinition: any = {
         concomitant_treatment_changes: z.enum(['si', 'no']).optional(),
         concomitant_treatment_changes_detail: z.string().optional(),
         adverse_events: z.enum(['si', 'no']).optional(),
-        pharmacovigilance_disclaimer: z.string().optional(),
         adverse_event_records: z
           .array(
             z.object({
@@ -657,15 +651,18 @@ const instrumentDefinition: any = {
             path: ['end_date']
           });
         }
-        if (
-          data.continues_study === 'si' &&
-          data.dose_change === 'si' &&
-          (!data.dose_change_date || data.new_dose === undefined)
-        ) {
+        if (data.continues_study === 'si' && data.dose_change === 'si' && !data.dose_change_date) {
           context.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'Complete la fecha y la nueva dosis',
+            message: 'Indique la fecha del cambio de dosis',
             path: ['dose_change_date']
+          });
+        }
+        if (data.continues_study === 'si' && data.dose_change === 'si' && data.new_dose === undefined) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Indique la nueva dosis',
+            path: ['new_dose']
           });
         }
         if (data.reason_not_completed === 'other' && !data.reason_not_completed_other?.trim()) {

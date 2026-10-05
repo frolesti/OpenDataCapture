@@ -582,7 +582,7 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 30,
+    edition: 31,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -928,13 +928,8 @@ const instrumentDefinition: any = {
     },
     {
       title: 'ACONTECIMIENTOS ADVERSOS',
+      description: PHARMACOVIGILANCE_INSTRUCTION,
       fields: {
-        pharmacovigilance_disclaimer: requiresEligibility({
-          kind: 'string',
-          variant: 'input',
-          label: PHARMACOVIGILANCE_INSTRUCTION,
-          disabled: true
-        }),
         baseline_adverse_events: requiresEligibility({
           kind: 'string',
           label: '¿Ha presentado algún acontecimiento adverso durante el tratamiento con pregabalina PR? *',
@@ -1133,7 +1128,6 @@ const instrumentDefinition: any = {
       new_dose: z.number().optional(),
 
       baseline_adverse_events: z.enum(['si', 'no']).optional(),
-      pharmacovigilance_disclaimer: z.string().optional(),
       adverse_event_records: z
         .array(
           z.object({

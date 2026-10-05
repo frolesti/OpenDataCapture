@@ -113,6 +113,47 @@ function formatOrionDateForApi(value: unknown): string | undefined {
   return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
 }
 
+function serializeOrionDate(value: unknown): unknown {
+  if (!hasMeaningfulValue(value)) return value;
+  return formatOrionDateForApi(value) ?? value;
+}
+
+function serializeOrionRecordDates(
+  data: Record<string, unknown>,
+  instrumentName: 'followup' | 'selection'
+): Record<string, unknown> {
+  const dateFields = ['followup_date', 'dose_change_date', 'end_date'];
+  if (instrumentName === 'selection') {
+    dateFields.push('selection_visit_date', 'consent_signed_date', 'diagnosis_date');
+    for (let index = 1; index <= 4; index++) {
+      dateFields.push(`prev_treatment_start_${index}`, `prev_treatment_end_${index}`);
+      dateFields.push(`current_treatment_start_${index}`, `concomitant_treatment_start_${index}`);
+      dateFields.push(`comorbidity_${index}_diagnosis_date`);
+    }
+  }
+
+  const serialized = { ...data };
+  for (const field of dateFields) {
+    if (field in serialized) {
+      serialized[field] = serializeOrionDate(serialized[field]);
+    }
+  }
+  if (Array.isArray(serialized.adverse_event_records)) {
+    serialized.adverse_event_records = serialized.adverse_event_records.map((record) => {
+      if (!record || typeof record !== 'object' || Array.isArray(record)) {
+        return record;
+      }
+      const adverseEvent = record as Record<string, unknown>;
+      return {
+        ...adverseEvent,
+        onset_date: serializeOrionDate(adverseEvent.onset_date),
+        resolution_date: serializeOrionDate(adverseEvent.resolution_date)
+      };
+    });
+  }
+  return serialized;
+}
+
 function hasMeaningfulValue(value: unknown): boolean {
   if (value === undefined || value === null) {
     return false;
@@ -184,16 +225,6 @@ function normalizeOrionBundle(bundle: string, mode: 'followup' | 'selection'): s
     patched = patched.replace(
       /patient_code:z\.string\(\)\.min\(1,"[^"]*"\),?/,
       'patient_code:z.string().min(1,"El código del paciente es obligatorio"),'
-    );
-
-    // Add visit/consent dates near informed consent section.
-    patched = patched.replace(
-      /informed_consent:\{kind:"string",label:"[^"]*",variant:"radio",options:YES_NO_OPTIONS\}/,
-      'informed_consent:{kind:"string",label:"¿El paciente ha firmado el consentimiento informado? *",variant:"radio",options:YES_NO_OPTIONS},selection_visit_date:requiresConsent({...dateField("Fecha de la visita de selección *")}),consent_signed_date:requiresConsent({...dateField("Fecha de firma del consentimiento informado *")})'
-    );
-    patched = patched.replace(
-      'informed_consent:z.enum(["si","no"]),',
-      'informed_consent:z.enum(["si","no"]),selection_visit_date:optionalManualDateSchema(),consent_signed_date:optionalManualDateSchema(),'
     );
 
     // Singular phrasing for inclusion criteria.
@@ -574,6 +605,7 @@ const RouteComponent = () => {
 
     const styledElements: HTMLElement[] = [];
     const coloredElements: HTMLElement[] = [];
+    const linkedDescriptions: { element: HTMLElement; originalNodes: Node[] }[] = [];
     // Groups are detected via keywords already present in the ORION instrument's section
     // titles (pregabalina IR/retrospectiva vs. pregabalina PR/prospectiva), so this only
     // ever matches sections belonging to this specific form.
@@ -623,13 +655,34 @@ const RouteComponent = () => {
       styledElements.push(section);
     }
 
-    const pharmacovigilanceDisclaimer = document.querySelector<HTMLElement>(
-      '[data-field-group="pharmacovigilance_disclaimer"]'
+    const adverseEventsHeading = Array.from(document.querySelectorAll<HTMLElement>('h4')).find((heading) =>
+      (heading.textContent ?? '').toUpperCase().includes('ACONTECIMIENTOS ADVERSOS')
     );
-    const pharmacovigilanceLabel = pharmacovigilanceDisclaimer?.querySelector<HTMLElement>('label');
-    if (pharmacovigilanceLabel) {
-      pharmacovigilanceLabel.style.color = '#dc2626';
-      coloredElements.push(pharmacovigilanceLabel);
+    const adverseEventsSection = adverseEventsHeading?.closest('.flex.flex-col.gap-6');
+    const pharmacovigilanceDescription = adverseEventsSection?.querySelector<HTMLElement>('p.italic');
+    const pharmacovigilanceText = pharmacovigilanceDescription?.textContent ?? '';
+    const email = 'farmacovigilancia@gebro.es';
+    const emailIndex = pharmacovigilanceText.indexOf(email);
+    if (pharmacovigilanceDescription && emailIndex >= 0) {
+      const originalNodes = Array.from(pharmacovigilanceDescription.childNodes).map((node) => node.cloneNode(true));
+      const emailLink = document.createElement('a');
+      const subject = encodeURIComponent('Notificación de reacción adversa');
+      const body = encodeURIComponent(
+        'Estimado departamento de farmacovigilancia,\n\nNotificación de reacción adversa:\n\nCódigo del paciente:\nReacción adversa:\nFecha de inicio:\nDescripción:\n\nAtentamente,'
+      );
+      emailLink.href = `mailto:${email}?subject=${subject}&body=${body}`;
+      emailLink.textContent = email;
+      emailLink.style.textDecoration = 'underline';
+
+      linkedDescriptions.push({ element: pharmacovigilanceDescription, originalNodes });
+      pharmacovigilanceDescription.replaceChildren(
+        document.createTextNode(pharmacovigilanceText.slice(0, emailIndex)),
+        emailLink,
+        document.createTextNode(pharmacovigilanceText.slice(emailIndex + email.length))
+      );
+      pharmacovigilanceDescription.style.color = '#b91c1c';
+      pharmacovigilanceDescription.style.fontWeight = '600';
+      coloredElements.push(pharmacovigilanceDescription);
     }
 
     return () => {
@@ -640,6 +693,9 @@ const RouteComponent = () => {
       for (const element of coloredElements) {
         element.style.removeProperty('color');
         element.style.removeProperty('font-weight');
+      }
+      for (const { element, originalNodes } of linkedDescriptions) {
+        element.replaceChildren(...originalNodes);
       }
     };
   }, [currentStep, isOrionFollowup, isOrionSelection, rendererKey]);
@@ -870,13 +926,11 @@ const RouteComponent = () => {
       }
     }
 
-    const payloadData = {
-      ...mergedData,
-      ...(isOrionFollowup && mergedData.followup_date
-        ? { followup_date: formatOrionDateForApi(mergedData.followup_date) }
-        : {}),
-      ...(isOrionFollowup && mergedData.end_date ? { end_date: formatOrionDateForApi(mergedData.end_date) } : {})
-    } as CreateInstrumentRecordData['data'];
+    const payloadData = (
+      isOrionSelection || isOrionFollowup
+        ? serializeOrionRecordDates(mergedData, isOrionFollowup ? 'followup' : 'selection')
+        : mergedData
+    ) as CreateInstrumentRecordData['data'];
 
     if (recordId) {
       // For edits, show confirmation dialog first
