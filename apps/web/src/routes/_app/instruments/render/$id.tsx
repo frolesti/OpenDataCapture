@@ -16,6 +16,7 @@ import { useInstrumentBundle } from '@/hooks/useInstrumentBundle';
 import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
 import { useAppStore } from '@/store';
+import { deserializeInstrumentDraft, serializeInstrumentDraft } from '@/utils/instrument-draft';
 
 const HOSPITAL_META_SEPARATOR = '|||';
 const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
@@ -286,7 +287,7 @@ function loadDraft(instrumentId: string): Record<string, unknown> | null {
   try {
     const raw = localStorage.getItem(getDraftKey(instrumentId));
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { data: Record<string, unknown>; timestamp: number };
+    const parsed = deserializeInstrumentDraft(raw);
     // Discard drafts older than 7 days
     if (Date.now() - parsed.timestamp > 7 * 24 * 60 * 60 * 1000) {
       localStorage.removeItem(getDraftKey(instrumentId));
@@ -300,7 +301,7 @@ function loadDraft(instrumentId: string): Record<string, unknown> | null {
 
 function saveDraft(instrumentId: string, data: Record<string, unknown>): void {
   try {
-    localStorage.setItem(getDraftKey(instrumentId), JSON.stringify({ data, timestamp: Date.now() }));
+    localStorage.setItem(getDraftKey(instrumentId), serializeInstrumentDraft(data));
   } catch {
     // localStorage full or unavailable — silently ignore
   }

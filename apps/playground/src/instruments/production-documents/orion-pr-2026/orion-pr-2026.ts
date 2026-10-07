@@ -582,7 +582,7 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 31,
+    edition: 32,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -1351,6 +1351,19 @@ const instrumentDefinition: any = {
 
         const currentTreatmentStart = values.current_treatment_start_1;
         const currentTreatmentStartTime = getTime(currentTreatmentStart);
+        const previousTreatmentEndTime = getTime(values.prev_treatment_end_1);
+        if (
+          currentTreatmentStartTime !== undefined &&
+          previousTreatmentEndTime !== undefined &&
+          currentTreatmentStartTime < previousTreatmentEndTime
+        ) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              'La fecha de inicio de pregabalina PR debe ser igual o posterior a la fecha de finalización de pregabalina IR.',
+            path: ['current_treatment_start_1']
+          });
+        }
         if (
           currentTreatmentStartTime !== undefined &&
           selectionVisitTime !== undefined &&
@@ -1464,25 +1477,11 @@ const instrumentDefinition: any = {
           const onsetDate = getTime(event.onset_date);
           const resolutionDate = getTime(event.resolution_date);
 
-          if (onsetDate !== undefined && (onsetDate < minTime || onsetDate > maxTime)) {
-            context.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: 'La fecha de inicio debe estar entre diciembre de 2026 y diciembre de 2027.',
-              path: ['adverse_event_records', index, 'onset_date']
-            });
-          }
           if (onsetDate !== undefined && selectionVisitTime !== undefined && onsetDate > selectionVisitTime) {
             context.addIssue({
               code: z.ZodIssueCode.custom,
               message: 'La fecha de inicio no puede ser posterior a la visita de selección.',
               path: ['adverse_event_records', index, 'onset_date']
-            });
-          }
-          if (resolutionDate !== undefined && selectionVisitTime !== undefined && resolutionDate > selectionVisitTime) {
-            context.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: 'La fecha de resolución no puede ser posterior a la visita de selección.',
-              path: ['adverse_event_records', index, 'resolution_date']
             });
           }
           if (onsetDate !== undefined && resolutionDate !== undefined && onsetDate >= resolutionDate) {
