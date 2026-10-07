@@ -66,4 +66,19 @@ i18n.init({
   }
 });
 
+const LANGUAGE_STORAGE_KEY = 'odc-language';
+
+try {
+  const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  if (savedLanguage === 'en' || savedLanguage === 'fr') {
+    i18n.changeLanguage(savedLanguage);
+  }
+} catch {}
+
+i18n.addEventListener('languageChange', (language) => {
+  try {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  } catch {}
+});
+
 export default i18n;
