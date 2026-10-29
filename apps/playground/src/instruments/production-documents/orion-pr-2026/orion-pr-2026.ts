@@ -26,7 +26,7 @@ const EXCLUSION_KEYS = [
 type FormData = Record<string, any>;
 
 const DATE_FORMAT_ERROR = 'Formato de fecha inválido. Use DD-MM-AAAA';
-const ORION_SELECTION_DATE_MIN = new Date(2026, 11, 1, 0, 0, 0, 0);
+const ORION_SELECTION_DATE_MIN = new Date(2026, 10, 1, 0, 0, 0, 0);
 const ORION_SELECTION_DATE_MAX = new Date(2027, 11, 31, 23, 59, 59, 999);
 const ORION_AGE_MIN = 18;
 const ORION_AGE_MAX = 120;
@@ -36,9 +36,9 @@ const ORION_HEIGHT_MIN = 120;
 const ORION_HEIGHT_MAX = 230;
 
 const SELECTION_VISIT_DATE_ERROR =
-  'La fecha de la visita de selección debe estar entre diciembre de 2026 y diciembre de 2027.';
+  'La fecha de la visita de selección debe estar entre noviembre de 2026 y diciembre de 2027.';
 const CONSENT_SIGNED_DATE_ERROR =
-  'La fecha de firma del consentimiento debe estar entre diciembre de 2026 y diciembre de 2027.';
+  'La fecha de firma del consentimiento debe estar entre noviembre de 2026 y diciembre de 2027.';
 const CONSENT_DATE_ORDER_ERROR =
   'La fecha de firma del consentimiento no puede ser posterior a la visita de selección.';
 
@@ -582,7 +582,7 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 32,
+    edition: 33,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [

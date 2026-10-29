@@ -1,8 +1,9 @@
 import { StrictMode } from 'react';
 import type { PropsWithChildren } from 'react';
 
+import type { InstrumentSubmitHandler } from '@opendatacapture/react-core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import axios from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,6 +12,7 @@ import { serializeInstrumentDraft } from '../../utils/instrument-draft';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   notification: vi.fn(),
+  submit: undefined as InstrumentSubmitHandler | undefined,
   search: {} as { recordId?: string },
   state: {} as { initialData?: Record<string, unknown> },
   bundle: {
@@ -20,6 +22,7 @@ const mocks = vi.hoisted(() => ({
     bundle: '({})'
   },
   store: {
+    setIsCurrentSessionSubmitted: vi.fn(),
     currentGroup: { id: 'group', name: 'ORION', hospitals: [] },
     currentSession: { id: 'session', subject: { id: 'subject' } },
     currentUser: { id: 'investigator', username: 'investigator', basePermissionLevel: 'STANDARD' }
@@ -43,9 +46,16 @@ vi.mock('@douglasneuroinformatics/libui/components', () => ({
   Dialog: Object.assign(() => null, { Content: () => null })
 }));
 vi.mock('@opendatacapture/react-core', () => ({
-  InstrumentRenderer: ({ initialData }: { initialData?: Record<string, unknown> }) => (
-    <div data-testid="renderer">{String(initialData?.patient_code ?? '')}</div>
-  )
+  InstrumentRenderer: ({
+    initialData,
+    onSubmit
+  }: {
+    initialData?: Record<string, unknown>;
+    onSubmit: InstrumentSubmitHandler;
+  }) => {
+    mocks.submit = onSubmit;
+    return <div data-testid="renderer">{String(initialData?.patient_code ?? '')}</div>;
+  }
 }));
 vi.mock('@tanstack/react-router', () => ({
   createFileRoute: () => (options: { component: unknown }) => ({
@@ -93,8 +103,73 @@ function renderForm() {
 beforeEach(() => {
   mocks.search = {};
   mocks.state = {};
+  mocks.submit = undefined;
   localStorage.clear();
   vi.resetAllMocks();
+});
+
+describe('ORION selection submission date window', () => {
+  function prepareSubmission(selectionDate: string, consentDate: string) {
+    const data: Parameters<InstrumentSubmitHandler>[0]['data'] = {
+      patient_code: 'OR-01-01',
+      informed_consent: 'si',
+      selection_visit_date: selectionDate,
+      consent_signed_date: consentDate,
+      age: 50
+    };
+    for (let criterion = 1; criterion <= 6; criterion++) {
+      data[`inclusion_${criterion}`] = 'si';
+      data[`exclusion_${criterion}`] = 'no';
+    }
+    localStorage.setItem('instrument-draft:selection:investigator', serializeInstrumentDraft(data));
+    vi.mocked(axios.post).mockResolvedValue({ data: {} });
+    renderForm();
+    const submit = mocks.submit;
+    if (!submit) {
+      throw new Error('The instrument submit handler was not rendered');
+    }
+    return () => submit({ data, instrumentId: 'selection' });
+  }
+
+  it.each(['01-11-2026', '30-11-2026', '15-12-2026', '31-12-2027'])(
+    'saves a selection with visit and consent on %s',
+    async (date) => {
+      const submit = prepareSubmission(date, date);
+      await act(async () => {
+        await submit();
+      });
+      expect(axios.post).toHaveBeenCalledWith(
+        '/v1/instrument-records',
+        expect.objectContaining({
+          data: expect.objectContaining({ selection_visit_date: date, consent_signed_date: date })
+        })
+      );
+      expect(mocks.notification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+      expect(mocks.store.setIsCurrentSessionSubmitted).toHaveBeenCalledWith(true);
+    }
+  );
+
+  it.each([
+    ['31-10-2026', '31-10-2026'],
+    ['01-11-2026', '31-10-2026'],
+    ['01-01-2028', '31-12-2027'],
+    ['31-12-2027', '01-01-2028']
+  ])('rejects dates outside the window before saving: visit %s, consent %s', async (visit, consent) => {
+    const submit = prepareSubmission(visit, consent);
+    await expect(submit()).rejects.toThrow('entre noviembre de 2026 y diciembre de 2027');
+    expect(axios.post).not.toHaveBeenCalled();
+    expect(mocks.notification).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', message: expect.stringContaining('entre noviembre de 2026') })
+    );
+    expect(localStorage.getItem('instrument-draft:selection:investigator')).not.toBeNull();
+  });
+
+  it('still rejects consent after the November visit without clearing the draft', async () => {
+    const submit = prepareSubmission('01-11-2026', '02-11-2026');
+    await expect(submit()).rejects.toThrow('La firma del consentimiento no puede ser posterior');
+    expect(axios.post).not.toHaveBeenCalled();
+    expect(localStorage.getItem('instrument-draft:selection:investigator')).not.toBeNull();
+  });
 });
 
 afterEach(() => {

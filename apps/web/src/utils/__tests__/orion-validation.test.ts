@@ -85,6 +85,54 @@ function selectionData(): Record<string, unknown> {
 }
 
 describe('ORION client date and draft regressions', () => {
+  it.each(['01-11-2026', '30-11-2026', '15-12-2026', '31-12-2027'])(
+    'accepts selection and consent dates within the expanded study window: %s',
+    (date) => {
+      expect(
+        selectionSchema.safeParse({ ...selectionData(), selection_visit_date: date, consent_signed_date: date }).success
+      ).toBe(true);
+    }
+  );
+
+  it.each([
+    ['selection_visit_date', '31-10-2026'],
+    ['consent_signed_date', '31-10-2026'],
+    ['selection_visit_date', '01-01-2028'],
+    ['consent_signed_date', '01-01-2028']
+  ])('rejects %s outside the study window: %s', (field, date) => {
+    const result = selectionSchema.safeParse({ ...selectionData(), [field]: date });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: [field],
+            message: expect.stringContaining('entre noviembre de 2026 y diciembre de 2027')
+          })
+        ])
+      );
+    }
+  });
+
+  it('still rejects consent signed after a November selection visit', () => {
+    const result = selectionSchema.safeParse({
+      ...selectionData(),
+      selection_visit_date: '01-11-2026',
+      consent_signed_date: '02-11-2026'
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: ['consent_signed_date'],
+            message: 'La fecha de firma del consentimiento no puede ser posterior a la visita de selección.'
+          })
+        ])
+      );
+    }
+  });
+
   it('accepts an adverse event before December and resolution after selection', () => {
     expect(selectionSchema.safeParse(selectionData()).success).toBe(true);
   });

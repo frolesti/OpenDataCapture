@@ -22,7 +22,7 @@ import { deserializeInstrumentDraft, serializeInstrumentDraft } from '@/utils/in
 const HOSPITAL_META_SEPARATOR = '|||';
 const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
 const ORION_FOLLOWUP_INTERNAL_NAME = 'ORION_PR_2026_FOLLOWUP';
-const ORION_DATE_MIN = new Date(2026, 11, 1, 0, 0, 0, 0);
+const ORION_DATE_MIN = new Date(2026, 10, 1, 0, 0, 0, 0);
 const ORION_DATE_MAX = new Date(2027, 11, 31, 23, 59, 59, 999);
 const ORION_AGE_MIN = 18;
 const ORION_AGE_MAX = 120;
@@ -835,7 +835,7 @@ const RouteComponent = () => {
         consentSignedDate.getTime() < ORION_DATE_MIN.getTime() ||
         consentSignedDate.getTime() > ORION_DATE_MAX.getTime()
       ) {
-        return rejectSubmit('Las fechas deben estar entre diciembre de 2026 y diciembre de 2027.');
+        return rejectSubmit('Las fechas deben estar entre noviembre de 2026 y diciembre de 2027.');
       }
 
       if (consentSignedDate.getTime() > selectionVisitDate.getTime()) {
