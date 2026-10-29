@@ -329,7 +329,7 @@ export class UsersService {
         groupIds,
         mailError: null,
         mailSentAt: null,
-        notes: null,
+        notes: data.notes ?? null,
         promotedAt: null,
         promotedUserId: null,
         status: 'PENDING',

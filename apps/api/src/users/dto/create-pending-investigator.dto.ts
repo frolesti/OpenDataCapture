@@ -29,8 +29,8 @@ export class CreatePendingInvestigatorDto implements CreatePendingInvestigatorDa
   @ApiProperty()
   lastName: string;
 
-  @ApiProperty({ required: false })
-  notes?: string;
+  @ApiProperty({ nullable: true, required: false })
+  notes?: string | null;
 
   @ApiProperty({ enum: ['Dr', 'Dra'], nullable: true, required: false })
   professionalTitle?: ProfessionalTitle | null;

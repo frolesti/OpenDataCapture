@@ -353,6 +353,13 @@ const RouteComponent = () => {
   };
 
   const userDirectoryRows = useMemo<UserDirectoryRow[]>(() => {
+    const notesByUserId = new Map<string, string>();
+    for (const investigator of pendingInvestigatorsQuery.data ?? []) {
+      if (investigator.promotedUserId && investigator.notes) {
+        notesByUserId.set(investigator.promotedUserId, investigator.notes);
+      }
+    }
+
     const userRows: UserDirectoryRow[] = createdUsers.map((entry) => {
       const basePermissionLevel = entry.basePermissionLevel ?? 'GROUP_MANAGER';
       const profileLabel =
@@ -375,7 +382,7 @@ const RouteComponent = () => {
         lastConnectionValue:
           basePermissionLevel === 'STANDARD' ? toTimestamp((sessionsByUserId.get(entry.id) ?? [])[0]?.createdAt) : 0,
         lastName: entry.lastName,
-        notes: '-',
+        notes: notesByUserId.get(entry.id)?.trim() || '-',
         profileLabel,
         searchText: buildUserSearchText(entry),
         username: entry.username
@@ -401,7 +408,7 @@ const RouteComponent = () => {
     }));
 
     return [...userRows, ...pendingDirectoryRows];
-  }, [createdUsers, currentUser?.username, pendingRows, sessionsByUserId, t]);
+  }, [createdUsers, currentUser?.username, pendingInvestigatorsQuery.data, pendingRows, sessionsByUserId, t]);
 
   const filteredUserDirectoryRows = useMemo(() => {
     const profileFiltered = userDirectoryRows.filter((entry) => {
@@ -653,7 +660,7 @@ const RouteComponent = () => {
     groupIds: form.groupIds,
     hospital: form.hospital,
     lastName: form.lastName.trim(),
-    notes: form.notes.trim() || undefined,
+    notes: form.notes.trim() || null,
     professionalTitle: form.professionalTitle || null,
     signed
   });
