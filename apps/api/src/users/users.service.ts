@@ -390,6 +390,12 @@ export class UsersService {
       throw new ConflictException('This pending investigator was already promoted');
     }
 
+    if (pending.professionalTitle !== 'Dr' && pending.professionalTitle !== 'Dra') {
+      throw new BadRequestException(
+        'Seleccione el tratamiento Dr. o Dra. antes de crear la cuenta y enviar el correo.'
+      );
+    }
+
     const normalizedPendingEmail = this.normalizeEmail(pending.email);
     if (normalizedPendingEmail && (await this.userModel.exists({ email: normalizedPendingEmail }))) {
       throw new ConflictException(`User with email '${normalizedPendingEmail}' already exists`);
@@ -422,7 +428,9 @@ export class UsersService {
       await this.onboardingMailService.sendWelcomeEmail({
         email: pending.email,
         firstName: pending.firstName,
+        lastName: pending.lastName,
         password,
+        professionalTitle: pending.professionalTitle,
         username
       });
 

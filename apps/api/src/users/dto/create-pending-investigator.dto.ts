@@ -1,6 +1,10 @@
 import { ValidationSchema } from '@douglasneuroinformatics/libnest';
 import { ApiProperty } from '@nestjs/swagger';
-import type { BasePermissionLevel, CreatePendingInvestigatorData } from '@opendatacapture/schemas/user';
+import type {
+  BasePermissionLevel,
+  CreatePendingInvestigatorData,
+  ProfessionalTitle
+} from '@opendatacapture/schemas/user';
 import { $CreatePendingInvestigatorData } from '@opendatacapture/schemas/user';
 
 @ValidationSchema($CreatePendingInvestigatorData)
@@ -27,6 +31,9 @@ export class CreatePendingInvestigatorDto implements CreatePendingInvestigatorDa
 
   @ApiProperty({ required: false })
   notes?: string;
+
+  @ApiProperty({ enum: ['Dr', 'Dra'], nullable: true, required: false })
+  professionalTitle?: ProfessionalTitle | null;
 
   @ApiProperty()
   signed: boolean;

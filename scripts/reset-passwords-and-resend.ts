@@ -32,6 +32,7 @@ import { google } from 'googleapis';
 import nodemailer from 'nodemailer';
 import path from 'path';
 import removeAccents from 'remove-accents';
+import { generateDoctorWelcomeEmail, validateDoctorWelcomeRecipient } from './welcome-email';
 import { appendSentCopyIfConfigured } from './mail-imap-archive';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -40,8 +41,11 @@ const API_BASE = (process.env.API_BASE_URL || 'http://localhost:5500').replace(/
 const API_CANDIDATES = Array.from(new Set([`${API_BASE}/v1`, `${API_BASE}/api/v1`]));
 let API_URL = API_CANDIDATES[0];
 
-const ADMIN_USERNAME = process.env.SCRIPT_ADMIN_USERNAME || 'frolesti';
-const ADMIN_PASSWORD = process.env.SCRIPT_ADMIN_PASSWORD || 'FRoy116699';
+const ADMIN_USERNAME = process.env.SCRIPT_ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.SCRIPT_ADMIN_PASSWORD;
+if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
+  throw new Error('SCRIPT_ADMIN_USERNAME and SCRIPT_ADMIN_PASSWORD are required');
+}
 const MAIL_AUDIT_LOG_PATH = process.env.MAIL_AUDIT_LOG_PATH || path.join(process.cwd(), 'logs', 'mail-audit.csv');
 const MAIL_AUDIT_BCC = process.env.MAIL_AUDIT_BCC;
 const MAIL_IMAP_APPEND_TO_SENT = process.env.MAIL_IMAP_APPEND_TO_SENT;
@@ -58,7 +62,7 @@ const sheets = google.sheets({ version: 'v4', auth });
 
 const spreadsheetId = '1RO4R4oGhdG9DMlUoNkut7X7ZZSgmk_u0sNE-OwkPWhQ';
 const sheetName = 'Hoja 1';
-const range = `${sheetName}!A2:M`;
+const range = `${sheetName}!A2:N`;
 
 interface DoctorRow {
   Nom: string;
@@ -74,6 +78,7 @@ interface DoctorRow {
   Updates: string;
   Signat: string;
   Tipus: string;
+  Tractament?: string;
   rowIndex: number;
 }
 
@@ -133,6 +138,7 @@ async function getDoctors(): Promise<DoctorRow[]> {
       Updates: row[10] || '',
       Signat: row[11] || '',
       Tipus: row[12] || '',
+      Tractament: row[13] || '',
       rowIndex: idx + 2
     })) || []
   );
@@ -253,15 +259,7 @@ function appendMailAudit(entry: {
   }
 }
 
-function generateMailHtml(doctor: DoctorRow, user: { username: string; password: string }) {
-  const templatePath = path.join(process.cwd(), 'scripts', 'mail-template.html');
-  let htmlTemplate = fs.readFileSync(templatePath, 'utf8');
-  htmlTemplate = htmlTemplate
-    .replace('{{Nom}}', doctor.Nom)
-    .replace('{{username}}', user.username)
-    .replace('{{password}}', user.password);
-  return htmlTemplate;
-}
+const generateMailHtml = generateDoctorWelcomeEmail;
 
 async function sendMail(doctor: DoctorRow, user: { username: string; password: string }, mailHtml: string) {
   const transporter = buildTransporter();
@@ -272,7 +270,7 @@ async function sendMail(doctor: DoctorRow, user: { username: string; password: s
     from: fromAddress,
     to: doctor.Email,
     bcc: MAIL_AUDIT_BCC,
-    subject: 'Tu acceso a Alta Medical Services',
+    subject: 'Credenciales de acceso a Alta Medical Services',
     html: mailHtml,
     attachments: [
       {
@@ -302,7 +300,7 @@ async function sendMail(doctor: DoctorRow, user: { username: string; password: s
     const sentCopy = await appendSentCopyIfConfigured({
       from: fromAddress,
       to: doctor.Email,
-      subject: 'Tu acceso a Alta Medical Services',
+      subject: 'Credenciales de acceso a Alta Medical Services',
       messageId: info.messageId,
       bodyText: `Copia archivada automaticamente del envio de bienvenida (reset).\nUsuario: ${user?.username || ''}\nDestinatario: ${doctor.Email}\nMessage-ID SMTP: ${info.messageId || ''}`
     });
@@ -415,6 +413,7 @@ async function updateSheetUpdates(rowIndex: number, msg: string) {
       const newPassword = generatePassword();
 
       try {
+        validateDoctorWelcomeRecipient(doc);
         await setPassword(userId, newPassword, token);
       } catch (err) {
         const msg = `Error resetejant contrasenya de ${username}: ${axios.isAxiosError(err) ? err.response?.status + ' ' + JSON.stringify(err.response?.data) : String(err)}`;

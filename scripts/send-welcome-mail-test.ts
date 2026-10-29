@@ -4,6 +4,7 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { generateDoctorWelcomeEmail } from './welcome-email';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -18,6 +19,8 @@ if (!toEmail) {
 }
 
 const testName = process.env.TEST_WELCOME_NAME || 'Usuari de prova';
+const testLastName = process.env.TEST_WELCOME_LAST_NAME || 'Exemple';
+const testTitle = process.env.TEST_WELCOME_TITLE;
 const testUsername = process.env.TEST_WELCOME_USERNAME || 'usuari.prova';
 const testPassword = process.env.TEST_WELCOME_PASSWORD || 'Demo-Password-2026';
 
@@ -56,13 +59,10 @@ function buildTransporter() {
 }
 
 function generateMailHtml(name: string, username: string, password: string) {
-  const templatePath = path.join(process.cwd(), 'scripts', 'mail-template.html');
-  let htmlTemplate = fs.readFileSync(templatePath, 'utf8');
-  htmlTemplate = htmlTemplate
-    .replace('{{Nom}}', name)
-    .replace('{{username}}', username)
-    .replace('{{password}}', password);
-  return htmlTemplate;
+  return generateDoctorWelcomeEmail(
+    { Nom: name, Cognoms: testLastName, Tractament: testTitle },
+    { username, password }
+  );
 }
 
 function csvEscape(value: string): string {
@@ -145,7 +145,7 @@ function appendMailAudit(entry: {
       from: fromAddress,
       to: toEmail,
       bcc: MAIL_ARCHIVE_BCC,
-      subject: 'Tu acceso a Alta Medical Services',
+      subject: 'Credenciales de acceso a Alta Medical Services',
       html,
       attachments: [
         {

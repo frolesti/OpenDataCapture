@@ -49,6 +49,9 @@ export type PendingInvestigatorStatus = z.infer<typeof $PendingInvestigatorStatu
 export const $PendingInvestigatorUserType = z.enum(['INVESTIGATOR', 'TEST_USER']);
 export type PendingInvestigatorUserType = z.infer<typeof $PendingInvestigatorUserType>;
 
+export const $ProfessionalTitle = z.enum(['Dr', 'Dra']);
+export type ProfessionalTitle = z.infer<typeof $ProfessionalTitle>;
+
 export type PendingInvestigator = z.infer<typeof $PendingInvestigator>;
 export const $PendingInvestigator = $BaseModel.extend({
   basePermissionLevel: $BasePermissionLevel,
@@ -61,6 +64,7 @@ export const $PendingInvestigator = $BaseModel.extend({
   mailError: z.string().nullish(),
   mailSentAt: z.coerce.date().nullish(),
   notes: z.string().nullish(),
+  professionalTitle: $ProfessionalTitle.nullish(),
   promotedAt: z.coerce.date().nullish(),
   promotedUserId: z.string().nullish(),
   sex: $Sex.nullish(),
@@ -78,6 +82,7 @@ export const $CreatePendingInvestigatorData = $PendingInvestigator.pick({
   hospital: true,
   lastName: true,
   notes: true,
+  professionalTitle: true,
   signed: true
 });
 

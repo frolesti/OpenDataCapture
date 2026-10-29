@@ -273,6 +273,11 @@ enum PendingInvestigatorUserType {
   TEST_USER
 }
 
+enum ProfessionalTitle {
+  Dr
+  Dra
+}
+
 model PendingInvestigator {
   createdAt           DateTime                    @default(now()) @db.Date
   updatedAt           DateTime                    @updatedAt @db.Date
@@ -293,6 +298,7 @@ model PendingInvestigator {
   promotedAt          DateTime?                   @db.Date
   mailSentAt          DateTime?                   @db.Date
   mailError           String?
+  professionalTitle   ProfessionalTitle?
 
   @@map("PendingInvestigatorModel")
 }

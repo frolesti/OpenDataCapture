@@ -60,6 +60,19 @@ Assuming that Docker and Docker Compose are already installed on your system, yo
 
 By default, the application will run on port 5500. So, navigate to `http://localhost:5500` in your browser and you should be greeted with the setup screen. After getting started, we highly recommend reading our [deployment guide](http://opendatacapture.org/en/docs/tutorials/deployment/) for additional information on how to configure Open Data Capture to best meet the needs of your organization.
 
+## Investigator credential emails
+
+The production template is `apps/api/public/mail-template.html`. Both the API and
+the administrative mail scripts use the same renderer. Select an explicit
+professional title (`Dr.` or `Dra.`) in the pending-investigator form before
+creating an account and sending credentials. Existing records without a title
+remain readable, but cannot be promoted until a title is confirmed.
+
+The spreadsheet scripts read the explicit title from column N (`Tractament`);
+they must not infer it from names or sex. The test-mail script requires
+`TEST_WELCOME_TITLE` and supports `TEST_WELCOME_NAME` and
+`TEST_WELCOME_LAST_NAME`. Never use real credentials in email previews.
+
 ## Contribution
 
 We welcome contributions! If you're interested in improving the platform or adding new features, please refer to our Contribution Guide.

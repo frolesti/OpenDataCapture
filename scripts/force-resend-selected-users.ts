@@ -7,6 +7,7 @@ import { google } from 'googleapis';
 import nodemailer from 'nodemailer';
 import path from 'path';
 import removeAccents from 'remove-accents';
+import { generateDoctorWelcomeEmail, validateDoctorWelcomeRecipient } from './welcome-email';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -14,15 +15,18 @@ const API_BASE = (process.env.API_BASE_URL || 'http://localhost:5500').replace(/
 const API_CANDIDATES = Array.from(new Set([`${API_BASE}/v1`, `${API_BASE}/api/v1`]));
 let API_URL = API_CANDIDATES[0];
 
-const ADMIN_USERNAME = process.env.SCRIPT_ADMIN_USERNAME || 'frolesti';
-const ADMIN_PASSWORD = process.env.SCRIPT_ADMIN_PASSWORD || 'FRoy116699';
+const ADMIN_USERNAME = process.env.SCRIPT_ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.SCRIPT_ADMIN_PASSWORD;
+if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
+  throw new Error('SCRIPT_ADMIN_USERNAME and SCRIPT_ADMIN_PASSWORD are required');
+}
 const MAIL_AUDIT_LOG_PATH = process.env.MAIL_AUDIT_LOG_PATH || path.join(process.cwd(), 'logs', 'mail-audit.csv');
 const MAIL_ARCHIVE_BCC = (process.env.MAIL_AUDIT_BCC || process.env.MAIL_USER || '').trim() || undefined;
 const DRY_RUN = process.env.DRY_RUN === 'true';
 
 const spreadsheetId = '1RO4R4oGhdG9DMlUoNkut7X7ZZSgmk_u0sNE-OwkPWhQ';
 const sheetName = 'Hoja 1';
-const range = `${sheetName}!A2:M`;
+const range = `${sheetName}!A2:N`;
 
 type TargetDoctor = {
   Nom: string;
@@ -90,6 +94,7 @@ interface DoctorRow {
   Updates: string;
   Signat: string;
   Tipus: string;
+  Tractament?: string;
   rowIndex: number;
 }
 
@@ -159,6 +164,7 @@ async function getDoctors(): Promise<DoctorRow[]> {
       Updates: row[10] || '',
       Signat: row[11] || '',
       Tipus: row[12] || '',
+      Tractament: row[13] || '',
       rowIndex: idx + 2
     })) || []
   );
@@ -233,15 +239,7 @@ function buildTransporter() {
   });
 }
 
-function generateMailHtml(doctor: DoctorRow, user: { username: string; password: string }) {
-  const templatePath = path.join(process.cwd(), 'scripts', 'mail-template.html');
-  let htmlTemplate = fs.readFileSync(templatePath, 'utf8');
-  htmlTemplate = htmlTemplate
-    .replace('{{Nom}}', doctor.Nom)
-    .replace('{{username}}', user.username)
-    .replace('{{password}}', user.password);
-  return htmlTemplate;
-}
+const generateMailHtml = generateDoctorWelcomeEmail;
 
 function csvEscape(value: string): string {
   const v = value ?? '';
@@ -297,7 +295,7 @@ async function sendMail(doctor: DoctorRow, user: { username: string; password: s
     from: fromAddress,
     to: doctor.Email,
     bcc: MAIL_ARCHIVE_BCC,
-    subject: 'Tu acceso a Alta Medical Services',
+    subject: 'Credenciales de acceso a Alta Medical Services',
     html: mailHtml,
     attachments: [
       {
@@ -435,6 +433,7 @@ async function updateSheetUpdates(rowIndex: number, msg: string) {
           continue;
         }
 
+        validateDoctorWelcomeRecipient(mergedDoctor);
         await updateSheetIdentity(row.rowIndex, target);
         await setPassword(userId, newPassword, token);
 

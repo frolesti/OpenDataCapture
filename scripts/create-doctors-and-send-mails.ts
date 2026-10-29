@@ -7,6 +7,7 @@ import path from 'path';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import removeAccents from 'remove-accents';
+import { generateDoctorWelcomeEmail, validateDoctorWelcomeRecipient } from './welcome-email';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -36,8 +37,8 @@ const sheets = google.sheets({ version: 'v4', auth });
 
 const spreadsheetId = '1RO4R4oGhdG9DMlUoNkut7X7ZZSgmk_u0sNE-OwkPWhQ';
 const sheetName = 'Hoja 1';
-// Capçalera a la fila 1. Llegim fins a la columna M (Tipus).
-const range = `${sheetName}!A2:M`;
+// Columna N: Tractament explícit (Dr. o Dra.).
+const range = `${sheetName}!A2:N`;
 
 interface DoctorRow {
   Nom: string;
@@ -53,6 +54,7 @@ interface DoctorRow {
   Updates: string;
   Signat: string;
   Tipus: string;
+  Tractament?: string;
   rowIndex: number;
 }
 
@@ -95,6 +97,7 @@ async function getDoctors(): Promise<DoctorRow[]> {
       Updates: row[10] || '',
       Signat: row[11] || '',
       Tipus: row[12] || '',
+      Tractament: row[13] || '',
       rowIndex: idx + 2
     })) || []
   );
@@ -247,15 +250,7 @@ async function createUserInApp(doctor: any, password: string, token: string, gro
   }
 }
 
-function generateMailHtml(doctor: any, user: any) {
-  const templatePath = path.join(process.cwd(), 'scripts', 'mail-template.html');
-  let htmlTemplate = fs.readFileSync(templatePath, 'utf8');
-  htmlTemplate = htmlTemplate
-    .replace('{{Nom}}', doctor.Nom)
-    .replace('{{username}}', user.username)
-    .replace('{{password}}', user.password);
-  return htmlTemplate;
-}
+const generateMailHtml = generateDoctorWelcomeEmail;
 
 // Si tenim MAIL_HOST configurat, usem SMTP directe (Alta acens). Si no, caiem al servei gmail per
 // retrocompatibilitat amb el setup antic de proves.
@@ -352,7 +347,7 @@ async function sendMail(doctor: any, user: any, mailHtml: string) {
     from: fromAddress,
     to: doctor.Email,
     bcc: MAIL_ARCHIVE_BCC,
-    subject: 'Tu acceso a Alta Medical Services',
+    subject: 'Credenciales de acceso a Alta Medical Services',
     html: mailHtml,
     attachments: [
       {
@@ -498,6 +493,7 @@ async function updateSheetUpdates(rowIndex: number, updatesMsg: string) {
       let updatesMsg = '';
 
       try {
+        validateDoctorWelcomeRecipient(doc);
         user = await createUserInApp(doc, password, token, groupsMap);
         if (user.exists) {
           updatesMsg = `Usuari ja existeix: ${user.username}`;

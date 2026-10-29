@@ -16,10 +16,11 @@ import {
 } from '@douglasneuroinformatics/libui/components';
 import { ArrowsUpDownIcon, ChevronDownIcon, ClockIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
-import type { BasePermissionLevel, PendingInvestigator, User } from '@opendatacapture/schemas/user';
+import type { BasePermissionLevel, PendingInvestigator, ProfessionalTitle, User } from '@opendatacapture/schemas/user';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { PageHeader } from '@/components/PageHeader';
+import { ProfessionalTitleField } from '@/components/admin/ProfessionalTitleField';
 import { HospitalSelect } from '@/components/admin/groups/HospitalSelect';
 import { formatHospitalLabel, serializeHospital, type HospitalMetadata } from '@/components/admin/groups/hospitals';
 import { useCreatePendingInvestigatorMutation } from '@/hooks/useCreatePendingInvestigatorMutation';
@@ -66,7 +67,7 @@ function ellipsize(value: string, maxLength = 48) {
   return `${value.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
 }
 
-function buildPendingForm(entry?: PendingInvestigator) {
+function buildPendingForm(entry?: PendingInvestigator): InvestigatorFormState {
   return {
     email: entry?.email ?? '',
     firstName: entry?.firstName ?? '',
@@ -74,6 +75,7 @@ function buildPendingForm(entry?: PendingInvestigator) {
     hospital: entry?.hospital ?? '',
     lastName: entry?.lastName ?? '',
     notes: entry?.notes ?? '',
+    professionalTitle: entry?.professionalTitle ?? '',
     signed: entry?.signed ?? false
   };
 }
@@ -119,6 +121,7 @@ type InvestigatorFormState = {
   hospital: string;
   lastName: string;
   notes: string;
+  professionalTitle: ProfessionalTitle | '';
   signed: boolean;
 };
 
@@ -174,6 +177,7 @@ const DEFAULT_INVESTIGATOR_FORM: InvestigatorFormState = {
   hospital: '',
   lastName: '',
   notes: '',
+  professionalTitle: '',
   signed: false
 };
 
@@ -503,6 +507,7 @@ const RouteComponent = () => {
   const visiblePendingIds = useMemo(() => paginatedPendingRows.map((entry) => entry.id), [paginatedPendingRows]);
   const areAllVisiblePendingSelected =
     visiblePendingIds.length > 0 && visiblePendingIds.every((id) => selectedPendingIds.includes(id));
+  const selectedPendingMissingTitle = selectedPendingIds.some((id) => !pendingById.get(id)?.professionalTitle);
 
   const selectedCreatedUser = useMemo(
     () => createdUsers.find((entry) => entry.id === selectedUserId) ?? null,
@@ -551,6 +556,7 @@ const RouteComponent = () => {
     investigatorForm.lastName.trim().length > 0 &&
     investigatorForm.email.trim().length > 0 &&
     investigatorForm.groupIds.length > 0 &&
+    (!investigatorForm.signed || investigatorForm.professionalTitle !== '') &&
     investigatorForm.hospital.trim().length > 0;
 
   const canOpenCreateHospitalDialog = (groupIds: string[]) => groupIds.length > 0;
@@ -560,6 +566,7 @@ const RouteComponent = () => {
     pendingDialogForm.lastName.trim().length > 0 &&
     pendingDialogForm.email.trim().length > 0 &&
     pendingDialogForm.groupIds.length > 0 &&
+    (!pendingDialogForm.signed || pendingDialogForm.professionalTitle !== '') &&
     pendingDialogForm.hospital.trim().length > 0;
 
   const canSaveCreatedUserDialog =
@@ -647,6 +654,7 @@ const RouteComponent = () => {
     hospital: form.hospital,
     lastName: form.lastName.trim(),
     notes: form.notes.trim() || undefined,
+    professionalTitle: form.professionalTitle || null,
     signed
   });
 
@@ -686,6 +694,7 @@ const RouteComponent = () => {
           hospital: investigatorForm.hospital,
           lastName: investigatorForm.lastName.trim(),
           notes: investigatorForm.notes.trim() || undefined,
+          professionalTitle: investigatorForm.professionalTitle || null,
           signed: investigatorForm.signed
         },
         suppressSuccessNotification: investigatorForm.signed
@@ -773,7 +782,7 @@ const RouteComponent = () => {
   };
 
   const handleMarkSelectedPendingAsSigned = async () => {
-    if (!selectedPendingIds.length) {
+    if (!selectedPendingIds.length || selectedPendingMissingTitle) {
       return;
     }
 
@@ -966,6 +975,14 @@ const RouteComponent = () => {
               <ClockIcon className="h-4 w-4" />
             </Button>
           </div>
+          {selectedPendingMissingTitle ? (
+            <p className="text-destructive mt-2 text-sm" role="alert">
+              {t({
+                en: 'Edita els investigadors seleccionats i confirma Dr. o Dra. abans de crear els comptes.',
+                fr: 'Edita los investigadores seleccionados y confirma Dr. o Dra. antes de crear las cuentas.'
+              })}
+            </p>
+          ) : null}
         </div>
 
         <SearchBar
@@ -994,7 +1011,7 @@ const RouteComponent = () => {
                   <span>{t({ en: 'Seleccionar todos', fr: 'Seleccionar todos' })}</span>
                 </label>
                 <Button
-                  disabled={!selectedPendingIds.length || isPendingDialogBusy}
+                  disabled={!selectedPendingIds.length || selectedPendingMissingTitle || isPendingDialogBusy}
                   size="sm"
                   type="button"
                   variant="outline"
@@ -1699,6 +1716,13 @@ const RouteComponent = () => {
                   onChange={(event) => setInvestigatorForm((current) => ({ ...current, lastName: event.target.value }))}
                 />
               </div>
+              <ProfessionalTitleField
+                id="investigator-professional-title"
+                value={investigatorForm.professionalTitle}
+                onValueChange={(professionalTitle) =>
+                  setInvestigatorForm((current) => ({ ...current, professionalTitle }))
+                }
+              />
               <div className="grid gap-2">
                 <Label htmlFor="investigator-email">{t({ en: 'Correu', fr: 'Correo' })}</Label>
                 <Input
@@ -1872,6 +1896,13 @@ const RouteComponent = () => {
                   }
                 />
               </div>
+              <ProfessionalTitleField
+                id="pending-professional-title"
+                value={pendingDialogForm.professionalTitle}
+                onValueChange={(professionalTitle) =>
+                  setPendingDialogForm((current) => ({ ...current, professionalTitle }))
+                }
+              />
               <div className="grid gap-2">
                 <Label htmlFor="pending-email">{t({ en: 'Correu', fr: 'Correo' })}</Label>
                 <Input

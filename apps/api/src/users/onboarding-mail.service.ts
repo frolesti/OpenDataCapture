@@ -4,6 +4,8 @@ import path from 'node:path';
 import { Injectable, InternalServerErrorException, Logger, ServiceUnavailableException } from '@nestjs/common';
 import nodemailer from 'nodemailer';
 
+import { renderWelcomeEmail, type WelcomeEmailData } from './welcome-email';
+
 @Injectable()
 export class OnboardingMailService {
   private readonly logger = new Logger(OnboardingMailService.name);
@@ -45,25 +47,15 @@ export class OnboardingMailService {
     });
   }
 
-  async sendWelcomeEmail({
-    email,
-    firstName,
-    password,
-    username
-  }: {
-    email: string;
-    firstName: string;
-    password: string;
-    username: string;
-  }) {
-    const html = this.renderTemplate({ firstName, password, username });
+  async sendWelcomeEmail({ email, ...data }: WelcomeEmailData & { email: string }) {
+    const html = this.renderTemplate(data);
 
     const mailOptions: nodemailer.SendMailOptions = {
       bcc: (process.env.MAIL_AUDIT_BCC ?? process.env.MAIL_USER ?? '').trim() || undefined,
       from: process.env.MAIL_FROM ?? '"Alta Medical Services" <info@altamedicalservices.com>',
       to: email,
       html,
-      subject: 'Bienvenido a Alta Medical Services'
+      subject: 'Credenciales de acceso a Alta Medical Services'
     };
 
     const logoPath = this.resolveLogoPath();
@@ -111,23 +103,14 @@ export class OnboardingMailService {
     }
   }
 
-  private renderTemplate({ firstName, password, username }: { firstName: string; password: string; username: string }) {
+  private renderTemplate(data: WelcomeEmailData) {
     const templatePath = this.resolveTemplatePath();
     if (!templatePath) {
-      return `
-        <p>Hola ${firstName},</p>
-        <p>Tu cuenta para <strong>Alta Medical Services</strong> ha sido creada.</p>
-        <p><strong>Usuario:</strong> ${username}</p>
-        <p><strong>Contraseña:</strong> ${password}</p>
-        <p><a href="https://altahealthdata.com/auth/login">Accede a la plataforma</a></p>
-      `;
+      this.logger.error('Onboarding email template is missing');
+      throw new InternalServerErrorException('Onboarding email template is missing');
     }
 
-    return fs
-      .readFileSync(templatePath, 'utf8')
-      .replaceAll('{{Nom}}', firstName)
-      .replaceAll('{{username}}', username)
-      .replaceAll('{{password}}', password);
+    return renderWelcomeEmail(fs.readFileSync(templatePath, 'utf8'), data);
   }
 
   private resolveLogoPath() {
@@ -145,9 +128,7 @@ export class OnboardingMailService {
     const candidates = [
       path.resolve(process.cwd(), 'public/mail-template.html'),
       path.resolve(process.cwd(), '../public/mail-template.html'),
-      path.resolve(process.cwd(), '../../scripts/mail-template.html'),
-      path.resolve(process.cwd(), '../scripts/mail-template.html'),
-      path.resolve(process.cwd(), 'scripts/mail-template.html')
+      path.resolve(process.cwd(), 'apps/api/public/mail-template.html')
     ];
     return candidates.find((candidate) => fs.existsSync(candidate));
   }
