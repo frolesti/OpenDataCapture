@@ -34,6 +34,7 @@ import { useUpdateGroupByIdMutation } from '@/hooks/useUpdateGroupByIdMutation';
 import { useUpdatePendingInvestigatorMutation } from '@/hooks/useUpdatePendingInvestigatorMutation';
 import { useUpdateUserMutation } from '@/hooks/useUpdateUserMutation';
 import { useAppStore } from '@/store';
+import { normalizeSearchText } from '@/utils/search';
 
 function formatDate(value?: Date | null | string) {
   if (!value) {
@@ -77,7 +78,7 @@ function buildPendingForm(entry?: PendingInvestigator) {
 }
 
 function buildUserSearchText(user: User) {
-  return `${user.firstName} ${user.lastName} ${user.username} ${user.email ?? ''}`.toLowerCase();
+  return normalizeSearchText(`${user.firstName} ${user.lastName} ${user.username} ${user.email ?? ''}`);
 }
 
 function toggleGroups(groupIds: string[], groupId: string) {
@@ -97,7 +98,7 @@ function buildUserEditForm(user?: User) {
 }
 
 function buildPendingSearchText(entry: PendingInvestigator) {
-  return `${entry.firstName} ${entry.lastName} ${entry.email}`.toLowerCase();
+  return normalizeSearchText(`${entry.firstName} ${entry.lastName} ${entry.email}`);
 }
 
 type UserFormState = {
@@ -285,7 +286,7 @@ const RouteComponent = () => {
     return `${names[0]}, ${names[1]} +${names.length - 2}`;
   };
 
-  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const normalizedSearchTerm = normalizeSearchText(searchTerm);
 
   const filteredPendingRows = useMemo(() => {
     const filtered = pendingRows.filter((entry) => {
