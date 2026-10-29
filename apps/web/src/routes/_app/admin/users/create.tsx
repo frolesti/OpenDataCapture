@@ -20,6 +20,7 @@ import type { BasePermissionLevel, PendingInvestigator, User } from '@opendataca
 import { createFileRoute } from '@tanstack/react-router';
 
 import { PageHeader } from '@/components/PageHeader';
+import { HospitalSelect } from '@/components/admin/groups/HospitalSelect';
 import { formatHospitalLabel, serializeHospital, type HospitalMetadata } from '@/components/admin/groups/hospitals';
 import { useCreatePendingInvestigatorMutation } from '@/hooks/useCreatePendingInvestigatorMutation';
 import { useCreateUserMutation } from '@/hooks/useCreateUserMutation';
@@ -1453,25 +1454,11 @@ const RouteComponent = () => {
                       fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
                     })}
                   </p>
-                  <Select
+                  <HospitalSelect
+                    options={createdUserDialogHospitalOptions}
                     value={createdUserDialogForm.hospital}
                     onValueChange={(value) => setCreatedUserDialogForm((current) => ({ ...current, hospital: value }))}
-                  >
-                    <Select.Trigger disabled={createdUserDialogHospitalOptions.length === 0}>
-                      {createdUserDialogForm.hospital ? (
-                        formatHospitalLabel(createdUserDialogForm.hospital)
-                      ) : (
-                        <Select.Value placeholder={t({ en: 'Selecciona un hospital', fr: 'Selecciona un hospital' })} />
-                      )}
-                    </Select.Trigger>
-                    <Select.Content>
-                      {createdUserDialogHospitalOptions.map((hospital) => (
-                        <Select.Item key={hospital} value={hospital}>
-                          {formatHospitalLabel(hospital)}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select>
+                  />
                   <Button
                     disabled={!canOpenCreateHospitalDialog(createdUserDialogForm.groupIds) || isCreatedUserDialogBusy}
                     type="button"
@@ -1764,25 +1751,11 @@ const RouteComponent = () => {
                     fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
                   })}
                 </p>
-                <Select
+                <HospitalSelect
+                  options={investigatorHospitalOptions}
                   value={investigatorForm.hospital}
                   onValueChange={(value) => setInvestigatorForm((current) => ({ ...current, hospital: value }))}
-                >
-                  <Select.Trigger disabled={investigatorHospitalOptions.length === 0}>
-                    {investigatorForm.hospital ? (
-                      formatHospitalLabel(investigatorForm.hospital)
-                    ) : (
-                      <Select.Value placeholder={t({ en: 'Selecciona un hospital', fr: 'Selecciona un hospital' })} />
-                    )}
-                  </Select.Trigger>
-                  <Select.Content>
-                    {investigatorHospitalOptions.map((hospital) => (
-                      <Select.Item key={hospital} value={hospital}>
-                        {formatHospitalLabel(hospital)}
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select>
+                />
                 <Button
                   disabled={!canOpenCreateHospitalDialog(investigatorForm.groupIds) || isBusy}
                   type="button"
@@ -1943,25 +1916,11 @@ const RouteComponent = () => {
                     fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
                   })}
                 </p>
-                <Select
+                <HospitalSelect
+                  options={pendingDialogHospitalOptions}
                   value={pendingDialogForm.hospital}
                   onValueChange={(value) => setPendingDialogForm((current) => ({ ...current, hospital: value }))}
-                >
-                  <Select.Trigger disabled={pendingDialogHospitalOptions.length === 0}>
-                    {pendingDialogForm.hospital ? (
-                      formatHospitalLabel(pendingDialogForm.hospital)
-                    ) : (
-                      <Select.Value placeholder={t({ en: 'Selecciona un hospital', fr: 'Selecciona un hospital' })} />
-                    )}
-                  </Select.Trigger>
-                  <Select.Content>
-                    {pendingDialogHospitalOptions.map((hospital) => (
-                      <Select.Item key={hospital} value={hospital}>
-                        {formatHospitalLabel(hospital)}
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select>
+                />
                 <Button
                   disabled={!canOpenCreateHospitalDialog(pendingDialogForm.groupIds) || isBusy}
                   type="button"
