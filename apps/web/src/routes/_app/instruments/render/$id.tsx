@@ -15,6 +15,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { useInstrumentBundle } from '@/hooks/useInstrumentBundle';
 import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
+import { useOrionPatientCode } from '@/hooks/useOrionPatientCode';
 import { useAppStore } from '@/store';
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '@/utils/instrument-draft';
 
@@ -348,8 +349,6 @@ const RouteComponent = () => {
   // Edit confirmation dialog state
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
   const pendingSubmitRef = useRef<{ data: unknown; instrumentId: string } | null>(null);
-  const [reservedOrionPatientCode, setReservedOrionPatientCode] = useState<string | null>(null);
-  const [orionPatientCodeReservationFailed, setOrionPatientCodeReservationFailed] = useState(false);
 
   const recordsQuery = useInstrumentRecords({
     // Enable fetching if we have a recordId but no valid initial data
@@ -395,52 +394,17 @@ const RouteComponent = () => {
     instrumentInfo?.internal?.name === ORION_SELECTION_INTERNAL_NAME ||
     bundleInternalName === ORION_SELECTION_INTERNAL_NAME;
 
-  useEffect(() => {
-    if (
-      !isOrionSelection ||
-      recordId ||
-      reservedOrionPatientCode ||
-      orionPatientCodeReservationFailed ||
-      effectiveInitialData?.patient_code ||
-      effectiveInitialData?.user_code ||
-      !currentGroup?.id
-    ) {
-      return;
-    }
-
-    let cancelled = false;
-    void axios
-      .post<{ code: string }>('/v1/instrument-records/orion-patient-code', { groupId: currentGroup.id })
-      .then(({ data }) => {
-        if (!cancelled) {
-          setReservedOrionPatientCode(data.code);
-          setRendererKey((current) => current + 1);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setOrionPatientCodeReservationFailed(true);
-          notifications.addNotification({
-            message:
-              'No se ha podido generar el código del paciente ORION. Revise la asignación de hospital del investigador.',
-            type: 'error'
-          });
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    currentGroup?.id,
-    effectiveInitialData?.patient_code,
-    effectiveInitialData?.user_code,
-    isOrionSelection,
-    notifications,
-    orionPatientCodeReservationFailed,
-    recordId,
-    reservedOrionPatientCode
-  ]);
+  const needsOrionPatientCode = Boolean(
+    isOrionSelection && !recordId && !effectiveInitialData?.patient_code && !effectiveInitialData?.user_code
+  );
+  const orionPatientCodeQuery = useOrionPatientCode({
+    enabled: needsOrionPatientCode,
+    groupId: currentGroup?.id,
+    instrumentId: params.id,
+    sessionId: currentSession?.id,
+    userId: currentUser?.id
+  });
+  const reservedOrionPatientCode = orionPatientCodeQuery.data;
   const orionSelectionRecordsQuery = useInstrumentRecords({
     enabled: Boolean(isOrionFollowup && orionSelectionInstrumentId && scopedSubjectId),
     params: {
@@ -578,13 +542,7 @@ const RouteComponent = () => {
   const title = instrumentTitle;
 
   const isLoadingData = Boolean(recordId) && !effectiveInitialData && recordsQuery.isLoading;
-  const isWaitingForOrionPatientCode =
-    isOrionSelection &&
-    !recordId &&
-    !effectiveInitialData?.patient_code &&
-    !effectiveInitialData?.user_code &&
-    !reservedOrionPatientCode &&
-    !orionPatientCodeReservationFailed;
+  const isWaitingForOrionPatientCode = needsOrionPatientCode && !reservedOrionPatientCode;
 
   // Auto-save form data to localStorage as draft
   const handleDataChange = useCallback(
@@ -1000,6 +958,48 @@ const RouteComponent = () => {
       pendingSubmitRef.current = null;
     }
   };
+
+  if (isWaitingForOrionPatientCode && (orionPatientCodeQuery.isError || !currentGroup?.id || !currentUser?.id)) {
+    const missingHospital =
+      axios.isAxiosError(orionPatientCodeQuery.error) &&
+      orionPatientCodeQuery.error.response?.status === 400 &&
+      String(orionPatientCodeQuery.error.response.data?.message).includes('Assign a hospital');
+    return (
+      <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6" role="alert">
+        <Heading variant="h2">
+          {t({ en: "No s'ha pogut preparar el formulari", fr: 'No se ha podido preparar el formulario' })}
+        </Heading>
+        <p>
+          {missingHospital
+            ? t({
+                en: "Cal que un administrador assigni un hospital vàlid al teu compte dins del grup de l'estudi. Després, torna-ho a provar.",
+                fr: 'Un administrador debe asignar un hospital válido a tu cuenta dentro del grupo del estudio. Después, vuelve a intentarlo.'
+              })
+            : t({
+                en: "No s'ha pogut obtenir el codi del pacient. Comprova el grup de treball i la connexió. Si el problema continua, contacta amb l'administrador.",
+                fr: 'No se ha podido obtener el código del paciente. Comprueba el grupo de trabajo y la conexión. Si el problema continúa, contacta con el administrador.'
+              })}
+        </p>
+        <p>
+          {t({
+            en: "L'esborrany desat en aquest navegador es conserva. No es faran més intents automàtics.",
+            fr: 'El borrador guardado en este navegador se conserva. No se harán más intentos automáticos.'
+          })}
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            disabled={!currentGroup?.id || !currentUser?.id || orionPatientCodeQuery.isFetching}
+            onClick={() => void orionPatientCodeQuery.refetch()}
+          >
+            {t({ en: 'Torna-ho a provar', fr: 'Volver a intentar' })}
+          </Button>
+          <Button variant="outline" onClick={() => void navigate({ to: '/instruments/accessible-instruments' })}>
+            {t({ en: 'Torna als formularis', fr: 'Volver a los formularios' })}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!instrumentTarget || isLoadingData || isWaitingForOrionPatientCode) {
     if (instrumentBundleQuery.isError) {
