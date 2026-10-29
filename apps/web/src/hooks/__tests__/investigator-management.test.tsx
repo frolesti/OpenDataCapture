@@ -163,3 +163,20 @@ describe('investigator comments in the actual user-management route', () => {
     expect(screen.getByText('Comentari inicial')).toBeDefined();
   });
 });
+
+describe('selected account creation confirmation', () => {
+  it.each([1, 2])('names the operation clearly for %i selected investigator(s) without creating accounts', (count) => {
+    mocks.pending = Array.from({ length: count }, (_, index) =>
+      pendingInvestigator({ id: `pending-${index}`, email: `doctor${index}@example.test` })
+    );
+    renderDirectory();
+    fireEvent.click(screen.getByRole('button', { name: 'Investigadors pendents' }));
+    fireEvent.click(screen.getByLabelText('Seleccionar todos'));
+    fireEvent.click(screen.getByRole('button', { name: count === 1 ? 'Crear usuario' : 'Crear usuarios' }));
+    const confirmation = within(screen.getByRole('alertdialog'));
+    expect(confirmation.getByText("Confirmar l'alta dels usuaris seleccionats")).toBeDefined();
+    expect(confirmation.getByRole('button', { name: 'Crear comptes i enviar credencials' })).toBeDefined();
+    expect(axios.post).not.toHaveBeenCalled();
+    expect(axios.patch).not.toHaveBeenCalled();
+  });
+});

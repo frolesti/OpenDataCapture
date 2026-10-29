@@ -2141,11 +2141,16 @@ const RouteComponent = () => {
       <AlertDialog open={isBulkSignedPromotionConfirmOpen} onOpenChange={setIsBulkSignedPromotionConfirmOpen}>
         <AlertDialog.Content>
           <AlertDialog.Header>
-            <AlertDialog.Title>{t({ en: 'Confirmar acció massiva', fr: 'Confirmar acción masiva' })}</AlertDialog.Title>
+            <AlertDialog.Title>
+              {t({
+                en: "Confirmar l'alta dels usuaris seleccionats",
+                fr: 'Confirmar el alta de los usuarios seleccionados'
+              })}
+            </AlertDialog.Title>
             <AlertDialog.Description>
               {t({
-                en: `Aquesta acció marcarà ${selectedPendingIds.length} investigadors com signats, crearà els seus usuaris i enviarà el mail de benvinguda. Vols continuar?`,
-                fr: `Esta acción marcará ${selectedPendingIds.length} investigadores como firmados, creará sus usuarios y enviará el correo de bienvenida. ¿Deseas continuar?`
+                en: `Investigadors seleccionats: ${selectedPendingIds.length}. Es marcaran com a signats, es crearan els seus comptes i s'enviaran les credencials per correu electrònic. Vols continuar?`,
+                fr: `Investigadores seleccionados: ${selectedPendingIds.length}. Se marcarán como firmados, se crearán sus cuentas y se enviarán las credenciales por correo electrónico. ¿Deseas continuar?`
               })}
             </AlertDialog.Description>
           </AlertDialog.Header>
@@ -2155,7 +2160,7 @@ const RouteComponent = () => {
               className="bg-violet-600 text-white hover:bg-violet-700"
               onClick={() => void handleConfirmBulkSignedPromotion()}
             >
-              {t({ en: 'Confirmar i executar', fr: 'Confirmar y ejecutar' })}
+              {t({ en: 'Crear comptes i enviar credencials', fr: 'Crear cuentas y enviar credenciales' })}
             </AlertDialog.Action>
           </AlertDialog.Footer>
         </AlertDialog.Content>
