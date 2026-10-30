@@ -25,4 +25,6 @@ RUN turbo build --filter=@opendatacapture/web
 FROM base AS runner
 RUN pnpm install -g @import-meta-env/cli@0.6.8 http-server@14.1.1
 COPY --from=installer /app/apps/web/.env.public /app/apps/web/dist/ ./
+# import-meta-env restores this backup at startup; never inherit it from an older build.
+RUN rm -f /app/index.html.bak
 CMD [ "sh", "-c", "import-meta-env -x .env.public -p index.html && http-server -s -c-1 -p 80 -P http://localhost:80? --gzip ." ]
