@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import type { PropsWithChildren } from 'react';
 
+import { replacer, reviver } from '@douglasneuroinformatics/libjs';
 import type { InstrumentSubmitHandler } from '@opendatacapture/react-core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -8,10 +9,12 @@ import axios from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { serializeInstrumentDraft } from '../../utils/instrument-draft';
+import { loadSchema, selectionData } from '../../utils/__tests__/orion-test-utils';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   notification: vi.fn(),
+  change: undefined as ((data: Record<string, unknown>) => void) | undefined,
   submit: undefined as InstrumentSubmitHandler | undefined,
   search: {} as { recordId?: string },
   state: {} as { initialData?: Record<string, unknown> },
@@ -32,6 +35,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('axios', () => ({
   default: {
     post: vi.fn(),
+    patch: vi.fn(),
     isAxiosError: (error: unknown) => Boolean(error && typeof error === 'object' && 'isAxiosError' in error)
   }
 }));
@@ -39,20 +43,30 @@ vi.mock('@douglasneuroinformatics/libui/hooks', () => ({
   useNotificationsStore: () => ({ addNotification: mocks.notification }),
   useTranslation: () => ({ t: (value: { en: string }) => value.en })
 }));
-vi.mock('@douglasneuroinformatics/libui/components', () => ({
-  Button: ({ children, ...props }: PropsWithChildren) => <button {...props}>{children}</button>,
-  Heading: ({ children }: PropsWithChildren) => <h2>{children}</h2>,
-  Spinner: () => <div data-testid="spinner" />,
-  Dialog: Object.assign(() => null, { Content: () => null })
-}));
+vi.mock('@douglasneuroinformatics/libui/components', () => {
+  const Container = ({ children }: PropsWithChildren) => <div>{children}</div>;
+  return {
+    Button: ({ children, ...props }: PropsWithChildren) => <button {...props}>{children}</button>,
+    Heading: ({ children }: PropsWithChildren) => <h2>{children}</h2>,
+    Spinner: () => <div data-testid="spinner" />,
+    Dialog: Object.assign(
+      ({ children, open }: PropsWithChildren<{ open?: boolean }>) =>
+        open ? <div role="dialog">{children}</div> : null,
+      { Content: Container, Header: Container, Title: Container, Description: Container }
+    )
+  };
+});
 vi.mock('@opendatacapture/react-core', () => ({
   InstrumentRenderer: ({
     initialData,
+    onDataChange,
     onSubmit
   }: {
     initialData?: Record<string, unknown>;
+    onDataChange?: (data: Record<string, unknown>) => void;
     onSubmit: InstrumentSubmitHandler;
   }) => {
+    mocks.change = onDataChange;
     mocks.submit = onSubmit;
     return <div data-testid="renderer">{String(initialData?.patient_code ?? '')}</div>;
   }
@@ -87,6 +101,7 @@ vi.mock('@/store', () => ({
 import { Route } from '../../routes/_app/instruments/render/$id';
 
 const Component = Route.component;
+const selectionSchema = loadSchema('orion-pr-2026.ts');
 let client: QueryClient;
 
 function renderForm() {
@@ -104,6 +119,7 @@ beforeEach(() => {
   mocks.search = {};
   mocks.state = {};
   mocks.submit = undefined;
+  mocks.change = undefined;
   localStorage.clear();
   vi.resetAllMocks();
 });
@@ -169,6 +185,111 @@ describe('ORION selection submission date window', () => {
     await expect(submit()).rejects.toThrow('La firma del consentimiento no puede ser posterior');
     expect(axios.post).not.toHaveBeenCalled();
     expect(localStorage.getItem('instrument-draft:selection:investigator')).not.toBeNull();
+  });
+
+  it('preserves multi-select values recovered from earlier form pages on the JSON wire', async () => {
+    const submit = prepareSubmission('15-12-2026', '15-12-2026');
+    const change = mocks.change;
+    if (!change) {
+      throw new Error('The instrument data change handler was not rendered');
+    }
+    act(() => {
+      change(selectionData());
+    });
+
+    await act(async () => {
+      await submit();
+    });
+
+    const request = vi.mocked(axios.post).mock.calls.find(([url]) => url === '/v1/instrument-records');
+    if (!request) {
+      throw new Error('The instrument record was not submitted');
+    }
+    const wireJson = JSON.stringify(request[1]);
+    const body = JSON.parse(wireJson) as {
+      data: { adverse_event_records: { seriousness: unknown }[] };
+    };
+    expect(body.data.adverse_event_records[0]?.seriousness).toEqual({
+      __deserializedType: 'Set',
+      __isSerializedType: true,
+      value: ['no_grave']
+    });
+    const received = JSON.parse(wireJson, reviver) as { data: unknown };
+    expect(selectionSchema.safeParse(received.data).success).toBe(true);
+  });
+
+  it('does not alter multi-select values already serialized by the renderer', async () => {
+    prepareSubmission('15-12-2026', '15-12-2026');
+    const data = JSON.parse(
+      JSON.stringify(selectionData(), replacer)
+    ) as Parameters<InstrumentSubmitHandler>[0]['data'];
+    const submit = mocks.submit;
+    if (!submit) {
+      throw new Error('The instrument submit handler was not rendered');
+    }
+
+    await act(async () => {
+      await submit({ data, instrumentId: 'selection' });
+    });
+
+    const request = vi.mocked(axios.post).mock.calls.find(([url]) => url === '/v1/instrument-records');
+    if (!request) {
+      throw new Error('The instrument record was not submitted');
+    }
+    expect(request[1]).toEqual(expect.objectContaining({ data }));
+    const received = JSON.parse(JSON.stringify(request[1]), reviver) as { data: unknown };
+    expect(selectionSchema.safeParse(received.data).success).toBe(true);
+  });
+
+  it('keeps the draft and never marks a rejected record as submitted', async () => {
+    const submit = prepareSubmission('15-12-2026', '15-12-2026');
+    const failure = {
+      isAxiosError: true,
+      response: {
+        status: 422,
+        data: {
+          issues: [{ path: ['adverse_event_records', 0, 'seriousness'], message: 'Expected set, received object' }]
+        }
+      }
+    };
+    vi.mocked(axios.post).mockRejectedValue(failure);
+    await expect(submit()).rejects.toBe(failure);
+    expect(localStorage.getItem('instrument-draft:selection:investigator')).not.toBeNull();
+    expect(mocks.store.setIsCurrentSessionSubmitted).not.toHaveBeenCalled();
+    expect(mocks.notification).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', message: 'Expected set, received object' })
+    );
+    expect(mocks.notification).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+  });
+
+  it('preserves earlier-page multi-select answers when confirming an edit', async () => {
+    mocks.search = { recordId: 'existing-record' };
+    mocks.state = { initialData: selectionData() };
+    vi.mocked(axios.patch).mockResolvedValue({ data: {} });
+    renderForm();
+    const change = mocks.change;
+    const submit = mocks.submit;
+    if (!change || !submit) {
+      throw new Error('The instrument handlers were not rendered');
+    }
+    act(() => {
+      change(selectionData());
+    });
+    const incompleteData = selectionData();
+    delete incompleteData.adverse_event_records;
+    const serialized = JSON.parse(
+      JSON.stringify(incompleteData, replacer)
+    ) as Parameters<InstrumentSubmitHandler>[0]['data'];
+    await act(async () => {
+      await submit({ data: serialized, instrumentId: 'selection' });
+    });
+    expect(axios.patch).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('Confirmar i desar'));
+    await waitFor(() => expect(axios.patch).toHaveBeenCalledTimes(1));
+    const [url, payload] = vi.mocked(axios.patch).mock.calls[0]!;
+    expect(url).toBe('/v1/instrument-records/existing-record');
+    const received = JSON.parse(JSON.stringify(payload), reviver) as { data: unknown };
+    expect(selectionSchema.safeParse(received.data).success).toBe(true);
   });
 });
 

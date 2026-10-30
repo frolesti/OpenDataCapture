@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type React from 'react';
 
+import { replacer } from '@douglasneuroinformatics/libjs';
 import { Button, Dialog, Heading, Spinner } from '@douglasneuroinformatics/libui/components';
 import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { InstrumentRenderer } from '@opendatacapture/react-core';
@@ -885,11 +886,12 @@ const RouteComponent = () => {
       }
     }
 
-    const payloadData = (
+    const recordData =
       isOrionSelection || isOrionFollowup
         ? serializeOrionRecordDates(mergedData, isOrionFollowup ? 'followup' : 'selection')
-        : mergedData
-    ) as CreateInstrumentRecordData['data'];
+        : mergedData;
+    // Earlier-page snapshots can reintroduce native Sets after the renderer serialized its payload.
+    const payloadData = JSON.parse(JSON.stringify(recordData, replacer)) as CreateInstrumentRecordData['data'];
 
     if (recordId) {
       // For edits, show confirmation dialog first
