@@ -68,7 +68,7 @@ type GroupSettings {
   defaultIdentificationMethod   SubjectIdentificationMethod
   idValidationRegex             String?
   idValidationRegexErrorMessage ErrorMessage?
-  subjectIdDisplayLength        Int?  
+  subjectIdDisplayLength        Int?
 }
 
 model Group {
@@ -79,12 +79,15 @@ model Group {
   accessibleInstruments   Instrument[]       @relation(fields: [accessibleInstrumentIds], references: [id])
   assignments             Assignment[]
   hospitals               String[]
+  hospitalIds             String[]           @db.ObjectId
+  studyCode               String?
+  dataResetAt             DateTime?          @db.Date
   instrumentRecords       InstrumentRecord[]
   name                    String             @unique
   settings                GroupSettings
   sessions                Session[]
   subjects                Subject[]          @relation(fields: [subjectIds], references: [id])
-  subjectIds              String[]           
+  subjectIds              String[]
   type                    GroupType
   userIds                 String[]           @db.ObjectId
   users                   User[]             @relation(fields: [userIds], references: [id])
@@ -124,35 +127,65 @@ enum OrionFollowupReminderStatus {
 }
 
 model OrionFollowupReminder {
-  createdAt          DateTime                  @default(now()) @db.Date
-  updatedAt          DateTime                  @updatedAt @db.Date
-  id                 String                    @id @default(auto()) @map("_id") @db.ObjectId
-  dueAt              DateTime                  @db.Date
-  error              String?
-  followupRecordId   String?                   @unique @db.ObjectId
-  investigatorEmail  String?
-  investigatorName   String
-  completedAt        DateTime?                 @db.Date
-  selectionRecordId  String                    @unique @db.ObjectId
-  status             OrionFollowupReminderStatus @default(PENDING)
-  subjectId          String
-  userCode           String
+  createdAt         DateTime                    @default(now()) @db.Date
+  updatedAt         DateTime                    @updatedAt @db.Date
+  id                String                      @id @default(auto()) @map("_id") @db.ObjectId
+  dueAt             DateTime                    @db.Date
+  error             String?
+  followupRecordId  String?                     @unique @db.ObjectId
+  investigatorEmail String?
+  investigatorName  String
+  completedAt       DateTime?                   @db.Date
+  selectionRecordId String                      @unique @db.ObjectId
+  status            OrionFollowupReminderStatus @default(PENDING)
+  subjectId         String
+  userCode          String
 
   @@map("OrionFollowupReminderModel")
 }
 
 model OrionPatientCode {
-  createdAt      DateTime @default(now()) @db.Date
-  updatedAt      DateTime @updatedAt @db.Date
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  code           String   @unique
-  groupId        String   @db.ObjectId
-  hospital       String
-  investigatorId String   @db.ObjectId
-  sequence       Int
+  createdAt          DateTime @default(now()) @db.Date
+  updatedAt          DateTime @updatedAt @db.Date
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  code               String   @unique
+  groupId            String   @db.ObjectId
+  hospital           String
+  investigatorId     String   @db.ObjectId
+  investigatorNumber Int      @default(0)
+  isTest             Boolean  @default(false)
+  sequence           Int
 
-  @@unique([groupId, hospital, investigatorId, sequence])
+  @@unique([groupId, investigatorId, sequence])
   @@map("OrionPatientCodeModel")
+}
+
+model Hospital {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  key        String   @unique
+  aliasKeys  String[]
+  isInternal Boolean  @default(false)
+
+  @@map("HospitalModel")
+}
+
+type StudyHospital {
+  groupId    String @db.ObjectId
+  hospitalId String @db.ObjectId
+}
+
+model OrionInvestigator {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt      DateTime @default(now()) @db.Date
+  groupId        String   @db.ObjectId
+  investigatorId String   @db.ObjectId
+  number         Int
+  isTest         Boolean  @default(false)
+
+  @@unique([groupId, investigatorId])
+  @@unique([groupId, isTest, number])
+  @@map("OrionInvestigatorModel")
 }
 
 // Instruments 
@@ -236,21 +269,23 @@ type AuthRule {
 }
 
 model User {
-  createdAt             DateTime             @default(now()) @db.Date
-  updatedAt             DateTime             @updatedAt @db.Date
-  id                    String               @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt             DateTime                    @default(now()) @db.Date
+  updatedAt             DateTime                    @updatedAt @db.Date
+  id                    String                      @id @default(auto()) @map("_id") @db.ObjectId
   basePermissionLevel   BasePermissionLevel?
   additionalPermissions AuthRule[]
   firstName             String
   sessions              Session[]
-  groupIds              String[]             @db.ObjectId
-  groups                Group[]              @relation(fields: [groupIds], references: [id])
+  groupIds              String[]                    @db.ObjectId
+  groups                Group[]                     @relation(fields: [groupIds], references: [id])
   lastName              String
-  email                 String?              @unique
-  hashedPassword        String               @map("password")
+  email                 String?                     @unique
+  hashedPassword        String                      @map("password")
   username              String
+  userType              PendingInvestigatorUserType @default(INVESTIGATOR)
+  studyHospitals        StudyHospital[]
   sex                   Sex?
-  dateOfBirth           DateTime?            @db.Date
+  dateOfBirth           DateTime?                   @db.Date
 
   @@map("UserModel")
 }
@@ -286,6 +321,7 @@ model PendingInvestigator {
   lastName            String
   email               String
   hospital            String
+  studyHospitals      StudyHospital[]
   basePermissionLevel BasePermissionLevel
   groupIds            String[]                    @db.ObjectId
   sex                 Sex?
@@ -313,7 +349,7 @@ model Session {
   instrumentRecords InstrumentRecord[]
   subject           Subject?           @relation(fields: [subjectId], references: [id])
   subjectId         String
-  user              User?              @relation(fields: [userId], references: [id])         
+  user              User?              @relation(fields: [userId], references: [id])
   userId            String?
   type              SessionType
 

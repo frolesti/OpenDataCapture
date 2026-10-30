@@ -2,13 +2,15 @@ import type { TokenPayload } from '@opendatacapture/schemas/auth';
 import type { BaseAppAbility } from '@opendatacapture/schemas/core';
 import type { Group } from '@opendatacapture/schemas/group';
 import type { Session } from '@opendatacapture/schemas/session';
+import type { User } from '@opendatacapture/schemas/user';
 import type { Simplify } from 'type-fest';
 import type { StateCreator } from 'zustand';
 
-export type CurrentUser = Omit<TokenPayload, 'permissions'> & {
-  ability: BaseAppAbility;
-  id: string;
-};
+export type CurrentUser = Omit<TokenPayload, 'permissions'> &
+  Pick<User, 'studyHospitals' | 'studyNumbers' | 'userType'> & {
+    ability: BaseAppAbility;
+    id: string;
+  };
 
 export type AuthSlice = {
   accessToken: null | string;
@@ -17,14 +19,16 @@ export type AuthSlice = {
   currentUser: CurrentUser | null;
   login: (accessToken: string) => void;
   logout: () => void;
-  syncCurrentUserFromProfile: (profile: {
-    basePermissionLevel: CurrentUser['basePermissionLevel'];
-    firstName: string;
-    groups: Group[];
-    id: string;
-    lastName: string;
-    username: string;
-  }) => void;
+  syncCurrentUserFromProfile: (
+    profile: Pick<User, 'studyHospitals' | 'studyNumbers' | 'userType'> & {
+      basePermissionLevel: CurrentUser['basePermissionLevel'];
+      firstName: string;
+      groups: Group[];
+      id: string;
+      lastName: string;
+      username: string;
+    }
+  ) => void;
 };
 
 export type DisclaimerSlice = {

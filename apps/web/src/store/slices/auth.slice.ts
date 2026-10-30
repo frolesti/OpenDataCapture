@@ -25,6 +25,7 @@ export const createAuthSlice: SliceCreator<AuthSlice> = (set) => ({
     const ability = createMongoAbility<PureAbility<[AppAction, AppSubjectName], any>>(permissions);
     set({
       accessToken,
+      currentSession: null,
       currentGroup: groups[0],
       currentUser: { ability, groups, id: id || sub, ...rest }
     });
@@ -44,6 +45,9 @@ export const createAuthSlice: SliceCreator<AuthSlice> = (set) => ({
       const hasCurrentGroup = state.currentGroup
         ? nextGroups.some((group) => group.id === state.currentGroup?.id)
         : false;
+      const previousResetAt = state.currentGroup?.dataResetAt
+        ? new Date(state.currentGroup.dataResetAt).getTime()
+        : null;
 
       state.currentUser = {
         ...state.currentUser,
@@ -52,13 +56,19 @@ export const createAuthSlice: SliceCreator<AuthSlice> = (set) => ({
         groups: nextGroups,
         id: profile.id,
         lastName: profile.lastName,
-        username: profile.username
+        username: profile.username,
+        studyHospitals: profile.studyHospitals,
+        studyNumbers: profile.studyNumbers,
+        userType: profile.userType
       };
 
       // If membership changed, keep a valid selected group or fallback to the first one.
-      state.currentGroup = hasCurrentGroup ? state.currentGroup : (nextGroups[0] ?? null);
+      state.currentGroup = hasCurrentGroup
+        ? (nextGroups.find((group) => group.id === state.currentGroup?.id) ?? null)
+        : (nextGroups[0] ?? null);
+      const nextResetAt = state.currentGroup?.dataResetAt ? new Date(state.currentGroup.dataResetAt).getTime() : null;
 
-      if (!state.currentGroup) {
+      if (!hasCurrentGroup || previousResetAt !== nextResetAt) {
         state.currentSession = null;
       }
     });

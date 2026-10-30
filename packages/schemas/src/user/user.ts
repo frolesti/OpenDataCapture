@@ -8,6 +8,12 @@ export const $BasePermissionLevel = z.enum(['ADMIN', 'GROUP_MANAGER', 'STANDARD'
 export type BasePermissionLevel = z.infer<typeof $BasePermissionLevel>;
 
 export type User = z.infer<typeof $User>;
+export const $StudyHospital = z.object({
+  groupId: z.string().min(1),
+  hospitalId: z.string().min(1)
+});
+export type StudyHospital = z.infer<typeof $StudyHospital>;
+
 export const $User = $BaseModel.extend({
   additionalPermissions: $Permissions,
   basePermissionLevel: $BasePermissionLevel.nullable(),
@@ -16,6 +22,11 @@ export const $User = $BaseModel.extend({
   firstName: z.string().min(1),
   groupIds: z.array(z.string()),
   hospital: z.string().nullish(),
+  studyHospitals: z.array($StudyHospital).optional(),
+  studyNumbers: z
+    .array(z.object({ groupId: z.string(), number: z.number().int().positive(), isTest: z.boolean() }))
+    .optional(),
+  userType: z.enum(['INVESTIGATOR', 'TEST_USER']).optional(),
   lastName: z.string().min(1),
   sex: $Sex.nullish(),
   username: z.string().min(1)
@@ -32,6 +43,8 @@ export const $CreateUserData = $User
     username: true
   })
   .extend({
+    studyHospitals: z.array($StudyHospital).optional(),
+    userType: z.enum(['INVESTIGATOR', 'TEST_USER']).optional(),
     dateOfBirth: z.coerce.date().optional(),
     password: z.string().min(1),
     sex: $Sex.optional()
@@ -60,6 +73,7 @@ export const $PendingInvestigator = $BaseModel.extend({
   firstName: z.string().min(1),
   groupIds: z.array(z.string()),
   hospital: z.string().min(1),
+  studyHospitals: z.array($StudyHospital).optional(),
   lastName: z.string().min(1),
   mailError: z.string().nullish(),
   mailSentAt: z.coerce.date().nullish(),
@@ -74,17 +88,21 @@ export const $PendingInvestigator = $BaseModel.extend({
 });
 
 export type CreatePendingInvestigatorData = z.infer<typeof $CreatePendingInvestigatorData>;
-export const $CreatePendingInvestigatorData = $PendingInvestigator.pick({
-  basePermissionLevel: true,
-  email: true,
-  firstName: true,
-  groupIds: true,
-  hospital: true,
-  lastName: true,
-  notes: true,
-  professionalTitle: true,
-  signed: true
-});
+export const $CreatePendingInvestigatorData = $PendingInvestigator
+  .pick({
+    basePermissionLevel: true,
+    email: true,
+    firstName: true,
+    groupIds: true,
+    hospital: true,
+    studyHospitals: true,
+    userType: true,
+    lastName: true,
+    notes: true,
+    professionalTitle: true,
+    signed: true
+  })
+  .extend({ userType: $PendingInvestigatorUserType.optional() });
 
 export type UpdatePendingInvestigatorData = z.infer<typeof $UpdatePendingInvestigatorData>;
 export const $UpdatePendingInvestigatorData = $CreatePendingInvestigatorData.partial();

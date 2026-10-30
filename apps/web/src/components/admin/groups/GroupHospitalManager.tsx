@@ -10,7 +10,8 @@ import {
   Label,
   Separator
 } from '@douglasneuroinformatics/libui/components';
-import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
+import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
+import axios from 'axios';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
 import {
@@ -25,6 +26,7 @@ type GroupHospitalManagerProps = {
   hospitals: string[];
   knownHospitals?: string[];
   onHospitalsChange: (hospitals: string[]) => void;
+  onRenameHospital?: (original: string, name: string) => Promise<void>;
 };
 
 type FormDialogState = { mode: 'closed' } | { mode: 'create' } | { mode: 'edit'; original: string };
@@ -39,9 +41,12 @@ const EMPTY_DRAFT: HospitalMetadata = {
 export const GroupHospitalManager = ({
   hospitals,
   knownHospitals = [],
-  onHospitalsChange
+  onHospitalsChange,
+  onRenameHospital
 }: GroupHospitalManagerProps) => {
   const { t } = useTranslation();
+  const addNotification = useNotificationsStore((store) => store.addNotification);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formDialog, setFormDialog] = useState<FormDialogState>({ mode: 'closed' });
   const [draft, setDraft] = useState<HospitalMetadata>(EMPTY_DRAFT);
@@ -101,16 +106,30 @@ export const GroupHospitalManager = ({
 
   const closeFormDialog = () => setFormDialog({ mode: 'closed' });
 
-  const handleSaveFormDialog = () => {
+  const handleSaveFormDialog = async () => {
     const serialized = serializeHospital(draft);
     if (!serialized) return;
-    if (formDialog.mode === 'edit') {
-      const next = hospitals.map((value) => (value === formDialog.original ? serialized : value));
-      onHospitalsChange(normalizeHospitals(next));
-    } else if (formDialog.mode === 'create') {
-      onHospitalsChange(normalizeHospitals([...hospitals, serialized]));
+    setIsSaving(true);
+    try {
+      if (formDialog.mode === 'edit') {
+        await onRenameHospital?.(formDialog.original, serialized);
+        const next = hospitals.map((value) => (value === formDialog.original ? serialized : value));
+        onHospitalsChange(normalizeHospitals(next));
+      } else if (formDialog.mode === 'create') {
+        onHospitalsChange(normalizeHospitals([...hospitals, serialized]));
+      }
+      closeFormDialog();
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        message:
+          axios.isAxiosError(error) && typeof error.response?.data?.message === 'string'
+            ? error.response.data.message
+            : t({ en: 'No s’ha pogut canviar el nom del centre.', fr: 'No se ha podido cambiar el nombre del centro.' })
+      });
+    } finally {
+      setIsSaving(false);
     }
-    closeFormDialog();
   };
 
   const toggleExisting = (value: string) => {
@@ -255,7 +274,7 @@ export const GroupHospitalManager = ({
       <Dialog
         open={formDialog.mode !== 'closed'}
         onOpenChange={(open) => {
-          if (!open) closeFormDialog();
+          if (!open && !isSaving) closeFormDialog();
         }}
       >
         <Dialog.Content>
@@ -268,8 +287,12 @@ export const GroupHospitalManager = ({
             <Dialog.Description>
               {formDialog.mode === 'edit'
                 ? t({
-                    en: 'Modifica les dades i desa els canvis.',
-                    fr: 'Modifica los datos y guarda los cambios.'
+                    en: onRenameHospital
+                      ? 'El canvi es desa immediatament al catàleg compartit i s’aplica a tots els estudis que utilitzen aquest centre. No modifica la numeració ni les respostes històriques.'
+                      : 'Modifica les dades i desa els canvis.',
+                    fr: onRenameHospital
+                      ? 'El cambio se guarda inmediatamente en el catálogo compartido y se aplica a todos los estudios que utilizan este centro. No modifica la numeración ni las respuestas históricas.'
+                      : 'Modifica los datos y guarda los cambios.'
                   })
                 : t({
                     en: 'Omple les dades del centre sanitari.',
@@ -320,10 +343,16 @@ export const GroupHospitalManager = ({
           </div>
 
           <Dialog.Footer>
-            <Button className="min-w-24" type="button" variant="outline" onClick={closeFormDialog}>
+            <Button className="min-w-24" disabled={isSaving} type="button" variant="outline" onClick={closeFormDialog}>
               {t('core.cancel')}
             </Button>
-            <Button className="min-w-24" type="button" variant="primary" onClick={handleSaveFormDialog}>
+            <Button
+              className="min-w-24"
+              disabled={isSaving || !draft.name.trim()}
+              type="button"
+              variant="primary"
+              onClick={handleSaveFormDialog}
+            >
               {t('core.save')}
             </Button>
           </Dialog.Footer>

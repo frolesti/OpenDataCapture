@@ -3,7 +3,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import type {
   BasePermissionLevel,
   CreatePendingInvestigatorData,
-  ProfessionalTitle
+  ProfessionalTitle,
+  StudyHospital
 } from '@opendatacapture/schemas/user';
 import { $CreatePendingInvestigatorData } from '@opendatacapture/schemas/user';
 
@@ -25,6 +26,12 @@ export class CreatePendingInvestigatorDto implements CreatePendingInvestigatorDa
 
   @ApiProperty()
   hospital: string;
+
+  @ApiProperty({ required: false })
+  studyHospitals?: StudyHospital[];
+
+  @ApiProperty({ required: false, enum: ['INVESTIGATOR', 'TEST_USER'] })
+  userType?: 'INVESTIGATOR' | 'TEST_USER';
 
   @ApiProperty()
   lastName: string;

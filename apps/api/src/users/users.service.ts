@@ -5,10 +5,13 @@ import type { User } from '@opendatacapture/schemas/user';
 
 import type { EntityOperationOptions } from '@/core/types';
 import { GroupsService } from '@/groups/groups.service';
+import { OrionCodesService } from '@/orion-codes/orion-codes.service';
+import type { OrionTransactionClient } from '@/orion-codes/orion-codes.service';
 import type {
   CreatePendingInvestigatorData,
   PendingInvestigator,
-  UpdatePendingInvestigatorData
+  UpdatePendingInvestigatorData,
+  StudyHospital
 } from '@opendatacapture/schemas/user';
 
 import { CreateUserDto } from './dto/create-user.dto';
@@ -23,7 +26,8 @@ export class UsersService {
     @InjectModel('PendingInvestigator') private readonly pendingInvestigatorModel: Model<'PendingInvestigator'>,
     private readonly cryptoService: CryptoService,
     private readonly groupsService: GroupsService,
-    private readonly onboardingMailService: OnboardingMailService
+    private readonly onboardingMailService: OnboardingMailService,
+    private readonly orionCodesService: OrionCodesService
   ) {}
 
   async checkUsernameExists(username: string, { ability }: EntityOperationOptions = {}): Promise<{ success: boolean }> {
@@ -51,7 +55,19 @@ export class UsersService {
 
   /** Adds a new user to the database with default permissions, verifying the provided groups exist */
   async create(
-    { basePermissionLevel, dateOfBirth, email, firstName, groupIds, lastName, password, sex, username }: CreateUserDto,
+    {
+      basePermissionLevel,
+      dateOfBirth,
+      email,
+      firstName,
+      groupIds,
+      lastName,
+      password,
+      sex,
+      username,
+      studyHospitals,
+      userType = 'INVESTIGATOR'
+    }: CreateUserDto,
     options?: EntityOperationOptions & { skipPendingEmailConflict?: boolean }
   ) {
     if (await this.userModel.exists({ username })) {
@@ -80,25 +96,35 @@ export class UsersService {
     }
 
     const hashedPassword = await this.cryptoService.hashPassword(password);
+    const assignments =
+      basePermissionLevel === 'STANDARD' || studyHospitals
+        ? await this.resolveStudyHospitals(groupIds, studyHospitals, undefined, userType === 'TEST_USER', options)
+        : [];
 
-    return this.userModel.create({
-      data: {
-        additionalPermissions: [],
-        basePermissionLevel,
-        dateOfBirth,
-        email: normalizedEmail,
-        firstName,
-        groups: {
-          connect: groupIds.map((id) => ({ id }))
+    return this.orionCodesService.transaction(async (transaction) => {
+      const created = await transaction.user.create({
+        data: {
+          additionalPermissions: [],
+          basePermissionLevel,
+          dateOfBirth,
+          email: normalizedEmail,
+          firstName,
+          studyHospitals: assignments,
+          userType,
+          groups: {
+            connect: groupIds.map((id) => ({ id }))
+          },
+          hashedPassword,
+          lastName,
+          sex,
+          username: username
         },
-        hashedPassword,
-        lastName,
-        sex,
-        username: username
-      },
-      omit: {
-        hashedPassword: true
-      }
+        omit: {
+          hashedPassword: true
+        }
+      });
+      await this.assignStudyNumbers(created.id, groupIds, userType === 'TEST_USER', options, transaction);
+      return created;
     });
   }
 
@@ -174,6 +200,11 @@ export class UsersService {
 
     return {
       ...user,
+      studyNumbers: (await this.orionCodesService.findForUsers([id])).map(({ groupId, number, isTest }) => ({
+        groupId,
+        number,
+        isTest
+      })),
       hospital: promotedPending?.hospital ?? null
     };
   }
@@ -194,7 +225,7 @@ export class UsersService {
 
   async updateById(
     id: string,
-    { groupIds, hospital, password, ...data }: UpdateUserDto,
+    { groupIds, hospital, password, studyHospitals, ...data }: UpdateUserDto,
     { ability }: EntityOperationOptions = {}
   ) {
     const currentUser = await this.userModel.findUnique({ where: { id } });
@@ -226,52 +257,115 @@ export class UsersService {
             set: groupIds.map((id) => ({ id }))
           };
 
-    if (hospital !== undefined && currentUser.basePermissionLevel === 'STANDARD') {
+    let assignments: StudyHospital[] | undefined;
+    if (
+      studyHospitals !== undefined ||
+      groupIds !== undefined ||
+      hospital !== undefined ||
+      data.userType !== undefined
+    ) {
       const nextGroupIds = groupIds ?? currentUser.groupIds;
-      await this.validateHospitalForGroups(hospital, nextGroupIds, { ability });
-      await this.updatePromotedInvestigatorHospital(id, hospital);
+      const source =
+        studyHospitals ?? currentUser.studyHospitals?.filter((entry) => nextGroupIds.includes(entry.groupId));
+      assignments = await this.resolveStudyHospitals(
+        nextGroupIds,
+        studyHospitals !== undefined ? studyHospitals : source?.length ? source : undefined,
+        hospital,
+        (data.userType ?? currentUser.userType) === 'TEST_USER',
+        { ability }
+      );
     }
 
-    return this.userModel.update({
-      data: {
-        ...data,
-        email: normalizedEmail,
-        ...(groupsUpdate ? { groups: groupsUpdate } : {}),
-        hashedPassword
-      },
-      omit: {
-        hashedPassword: true
-      },
-      where: { AND: [accessibleQuery(ability, 'update', 'User')], id }
+    return this.orionCodesService.transaction(async (transaction) => {
+      const updated = await transaction.user.update({
+        data: {
+          ...data,
+          ...(assignments ? { studyHospitals: assignments } : {}),
+          email: normalizedEmail,
+          ...(groupsUpdate ? { groups: groupsUpdate } : {}),
+          hashedPassword
+        },
+        omit: {
+          hashedPassword: true
+        },
+        where: { AND: [accessibleQuery(ability, 'update', 'User')], id }
+      });
+      if (groupIds !== undefined || data.userType !== undefined) {
+        await this.assignStudyNumbers(
+          id,
+          groupIds ?? currentUser.groupIds,
+          (data.userType ?? currentUser.userType) === 'TEST_USER',
+          { ability },
+          transaction
+        );
+      }
+      if (hospital !== undefined || assignments !== undefined || groupIds !== undefined) {
+        await transaction.pendingInvestigator.updateMany({
+          where: { promotedUserId: id },
+          data: {
+            ...(hospital !== undefined ? { hospital } : {}),
+            ...(assignments !== undefined ? { studyHospitals: assignments } : {}),
+            ...(groupIds !== undefined ? { groupIds } : {}),
+            ...(data.userType !== undefined ? { userType: data.userType } : {})
+          }
+        });
+      }
+      return updated;
     });
   }
 
-  private async validateHospitalForGroups(hospital: string, groupIds: string[], options?: EntityOperationOptions) {
-    if (!hospital.trim()) {
-      throw new BadRequestException('Hospital is required for investigators');
+  private async resolveStudyHospitals(
+    groupIds: string[],
+    assignments: StudyHospital[] | undefined,
+    legacyHospital: string | undefined,
+    isTest: boolean,
+    options?: EntityOperationOptions
+  ): Promise<StudyHospital[]> {
+    if (
+      assignments &&
+      (new Set(assignments.map((entry) => entry.groupId)).size !== assignments.length ||
+        assignments.some((entry) => !groupIds.includes(entry.groupId)))
+    ) {
+      throw new BadRequestException('Cada centre ha de correspondre a un únic estudi assignat.');
     }
-
-    const groups = [];
+    const result: StudyHospital[] = [];
     for (const id of groupIds) {
       const group = await this.groupsService.findById(id, options);
-      if (!group) {
-        throw new NotFoundException(`Failed to resolve group with ID: ${id}`);
+      const catalog = group.hospitalCatalog;
+      if (!catalog?.length) {
+        if (group.hospitals.length === 0 && !assignments?.some((entry) => entry.groupId === id)) continue;
+        if (!legacyHospital || !group.hospitals.includes(legacyHospital)) {
+          throw new BadRequestException(`Cal assignar un centre sanitari vàlid per a l'estudi '${group.name}'.`);
+        }
+        continue;
       }
-      groups.push(group);
+      const assignment = assignments?.find((entry) => entry.groupId === id);
+      const hospital = assignment
+        ? catalog.find((entry) => entry.id === assignment.hospitalId)
+        : assignments === undefined
+          ? catalog.find((entry) => entry.name === legacyHospital)
+          : undefined;
+      if (!hospital || (hospital.isInternal && !isTest)) {
+        throw new BadRequestException(`Cal assignar un centre sanitari vàlid per a l'estudi '${group.name}'.`);
+      }
+      result.push({ groupId: id, hospitalId: hospital.id });
     }
-
-    const availableHospitals = new Set(groups.flatMap(({ hospitals }) => hospitals));
-    if (!availableHospitals.has(hospital)) {
-      throw new BadRequestException(`Hospital '${hospital}' is not configured in the selected groups`);
-    }
+    return result;
   }
 
-  private async updatePromotedInvestigatorHospital(userId: string, hospital: string) {
-    const pending = await this.pendingInvestigatorModel.findFirst({ where: { promotedUserId: userId } });
-    if (!pending) {
-      throw new NotFoundException(`Failed to find promoted investigator metadata for user ID: ${userId}`);
+  private async assignStudyNumbers(
+    userId: string,
+    groupIds: string[],
+    isTest: boolean,
+    options?: EntityOperationOptions,
+    transaction?: OrionTransactionClient
+  ) {
+    for (const id of groupIds) {
+      const group = await this.groupsService.findById(id, options);
+      if (group.studyCode === 'OR') {
+        await this.orionCodesService.assignInvestigator(id, userId, isTest, transaction);
+      }
     }
-    await this.pendingInvestigatorModel.update({ data: { hospital }, where: { id: pending.id } });
   }
 
   private async withPromotedInvestigatorHospitals<T extends { id: string }>(users: T[]) {
@@ -280,7 +374,14 @@ export class UsersService {
       where: { promotedUserId: { in: users.map((user) => user.id) } }
     });
     const hospitalByUserId = new Map(promoted.map((entry) => [entry.promotedUserId, entry.hospital]));
-    return users.map((user) => ({ ...user, hospital: hospitalByUserId.get(user.id) ?? null }));
+    const numbers = await this.orionCodesService.findForUsers(users.map((user) => user.id));
+    return users.map((user) => ({
+      ...user,
+      hospital: hospitalByUserId.get(user.id) ?? null,
+      studyNumbers: numbers
+        .filter((entry) => entry.investigatorId === user.id)
+        .map(({ groupId, number, isTest }) => ({ groupId, number, isTest }))
+    }));
   }
 
   async createPending(
@@ -304,10 +405,13 @@ export class UsersService {
       groups.push(group);
     }
 
-    const availableHospitals = new Set(groups.flatMap(({ hospitals }) => hospitals));
-    if (!availableHospitals.has(data.hospital)) {
-      throw new BadRequestException(`Hospital '${data.hospital}' is not configured in the selected groups`);
-    }
+    const studyHospitals = await this.resolveStudyHospitals(
+      groupIds,
+      data.studyHospitals,
+      data.hospital,
+      data.userType === 'TEST_USER',
+      options
+    );
 
     const normalizedEmail = this.normalizeEmail(data.email);
     if (!normalizedEmail) {
@@ -325,6 +429,8 @@ export class UsersService {
     return this.pendingInvestigatorModel.create({
       data: {
         ...data,
+        userType: data.userType ?? 'INVESTIGATOR',
+        studyHospitals,
         email: normalizedEmail,
         groupIds,
         mailError: null,
@@ -332,8 +438,7 @@ export class UsersService {
         notes: data.notes ?? null,
         promotedAt: null,
         promotedUserId: null,
-        status: 'PENDING',
-        userType: 'INVESTIGATOR'
+        status: 'PENDING'
       }
     });
   }
@@ -363,9 +468,23 @@ export class UsersService {
         throw new ConflictException(`Pending investigator with email '${normalizedEmail}' already exists`);
       }
     }
+    const studyHospitals =
+      update.studyHospitals !== undefined ||
+      update.groupIds !== undefined ||
+      update.hospital !== undefined ||
+      update.userType !== undefined
+        ? await this.resolveStudyHospitals(
+            update.groupIds ?? pending.groupIds,
+            update.studyHospitals ??
+              pending.studyHospitals?.filter((entry) => (update.groupIds ?? pending.groupIds).includes(entry.groupId)),
+            update.hospital ?? pending.hospital,
+            (update.userType ?? pending.userType) === 'TEST_USER'
+          )
+        : undefined;
     return this.pendingInvestigatorModel.update({
       data: {
         ...update,
+        ...(studyHospitals ? { studyHospitals } : {}),
         email: normalizedEmail
       },
       where: { id }
@@ -401,6 +520,13 @@ export class UsersService {
       throw new ConflictException(`User with email '${normalizedPendingEmail}' already exists`);
     }
 
+    const studyHospitals = await this.resolveStudyHospitals(
+      pending.groupIds,
+      pending.studyHospitals?.length ? pending.studyHospitals : undefined,
+      pending.hospital,
+      pending.userType === 'TEST_USER',
+      options
+    );
     await this.onboardingMailService.verifyConnection();
 
     const usernameBase = this.buildUsername(pending.firstName, pending.lastName);
@@ -417,6 +543,8 @@ export class UsersService {
           email: normalizedPendingEmail,
           firstName: pending.firstName,
           groupIds: pending.groupIds,
+          studyHospitals,
+          userType: pending.userType,
           lastName: pending.lastName,
           password,
           sex: pending.sex ?? undefined,
@@ -448,7 +576,11 @@ export class UsersService {
       return { pending: updatedPending, user: createdUser };
     } catch (error) {
       if (createdUser) {
-        await this.userModel.delete({ where: { id: createdUser.id } });
+        const userId = createdUser.id;
+        await this.orionCodesService.transaction(async (transaction) => {
+          await transaction.orionInvestigator.deleteMany({ where: { investigatorId: userId } });
+          await transaction.user.delete({ where: { id: userId } });
+        });
       }
       await this.pendingInvestigatorModel.update({
         data: {

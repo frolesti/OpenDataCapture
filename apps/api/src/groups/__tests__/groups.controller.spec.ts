@@ -25,7 +25,7 @@ describe('GroupsController', () => {
 
   describe('create', () => {
     it('should pass the provided object to the groups service', async () => {
-      await groupsController.create({ name: 'Test Group', type: 'CLINICAL' });
+      await groupsController.create({ name: 'Test Group', type: 'CLINICAL', hospitals: [] });
       expect(groupsService.create.mock.lastCall?.[0]).toMatchObject({ name: 'Test Group' });
     });
   });

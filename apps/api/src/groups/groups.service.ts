@@ -5,6 +5,7 @@ import type { Prisma } from '@prisma/client';
 
 import type { EntityOperationOptions } from '@/core/types';
 import { InstrumentsService } from '@/instruments/instruments.service';
+import { HospitalsService } from '@/hospitals/hospitals.service';
 
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
@@ -13,7 +14,10 @@ import { UpdateGroupDto } from './dto/update-group.dto';
 export class GroupsService {
   constructor(
     @InjectModel('Group') private readonly groupModel: Model<'Group'>,
-    private readonly instrumentsService: InstrumentsService
+    @InjectModel('User') private readonly userModel: Model<'User'>,
+    @InjectModel('PendingInvestigator') private readonly pendingModel: Model<'PendingInvestigator'>,
+    private readonly instrumentsService: InstrumentsService,
+    private readonly hospitalsService: HospitalsService
   ) {}
 
   async create({ hospitals = [], name, settings, type, ...data }: CreateGroupDto) {
@@ -21,12 +25,14 @@ export class GroupsService {
     if (exists) {
       throw new ConflictException(`Group with name '${name}' already exists!`);
     }
+    const catalog = await this.hospitalsService.resolveNames(hospitals);
     const created = await this.groupModel.create({
       data: {
         accessibleInstruments: {
           connect: (await this.instrumentsService.find()).map(({ id }) => ({ id }))
         },
-        hospitals: this.normalizeHospitals(hospitals),
+        hospitals: catalog.map((hospital) => hospital.name),
+        hospitalIds: catalog.map((hospital) => hospital.id),
         name,
         settings: {
           defaultIdentificationMethod: type === 'CLINICAL' ? 'PERSONAL_INFO' : 'CUSTOM_ID',
@@ -46,22 +52,22 @@ export class GroupsService {
     });
   }
 
-  async findAll({ ability }: EntityOperationOptions = {}) {
+  async findAll({ ability, user }: EntityOperationOptions = {}) {
     const groups = await this.groupModel.findMany({
       where: accessibleQuery(ability, 'read', 'Group')
     });
 
-    return groups.map((group) => this.sanitizeGroupHospitals(group));
+    return Promise.all(groups.map((group) => this.sanitizeGroupHospitals(group, user)));
   }
 
-  async findById(id: string, { ability }: EntityOperationOptions = {}) {
+  async findById(id: string, { ability, user }: EntityOperationOptions = {}) {
     const group = await this.groupModel.findFirst({
       where: { AND: [accessibleQuery(ability, 'read', 'Group')], id }
     });
     if (!group) {
       throw new NotFoundException(`Failed to find group with ID: ${id}`);
     }
-    return this.sanitizeGroupHospitals(group);
+    return this.sanitizeGroupHospitals(group, user);
   }
 
   async updateById(
@@ -88,7 +94,20 @@ export class GroupsService {
       };
     }
     if (hospitals !== undefined) {
-      updateData.hospitals = { set: this.normalizeHospitals(hospitals) };
+      const catalog = await this.hospitalsService.resolveNames(hospitals);
+      const removedIds = group.hospitalIds.filter((hospitalId) => !catalog.some((entry) => entry.id === hospitalId));
+      if (removedIds.length) {
+        const filter = { studyHospitals: { some: { groupId: id, hospitalId: { in: removedIds } } } };
+        const [active, pending] = await Promise.all([
+          this.userModel.count({ where: filter }),
+          this.pendingModel.count({ where: { ...filter, promotedAt: null } })
+        ]);
+        if (active || pending) {
+          throw new ConflictException('No es pot retirar un centre d’un estudi mentre tingui investigadors assignats.');
+        }
+      }
+      updateData.hospitals = { set: catalog.map((hospital) => hospital.name) };
+      updateData.hospitalIds = { set: catalog.map((hospital) => hospital.id) };
     }
     if (typeof name === 'string') {
       updateData.name = name;
@@ -112,12 +131,18 @@ export class GroupsService {
     return Array.from(new Set(hospitals.map((hospital) => hospital.trim()).filter(Boolean)));
   }
 
-  private sanitizeGroupHospitals<T extends { hospitals?: unknown }>(
-    group: T
-  ): Omit<T, 'hospitals'> & { hospitals: string[] } {
+  private async sanitizeGroupHospitals<T extends { hospitals?: unknown; hospitalIds?: string[] }>(
+    group: T,
+    user?: EntityOperationOptions['user']
+  ) {
+    const catalog = group.hospitalIds?.length ? await this.hospitalsService.findByIds(group.hospitalIds) : undefined;
+    const canSeeInternal = !user || user.basePermissionLevel === 'ADMIN' || user.userType === 'TEST_USER';
+    const visibleCatalog = catalog?.filter((hospital) => canSeeInternal || !hospital.isInternal);
     return {
       ...group,
-      hospitals: this.sanitizeHospitals(group.hospitals)
+      hospitalCatalog: visibleCatalog,
+      hospitalIds: visibleCatalog?.map((hospital) => hospital.id) ?? group.hospitalIds,
+      hospitals: visibleCatalog?.map((hospital) => hospital.name) ?? this.sanitizeHospitals(group.hospitals)
     };
   }
 

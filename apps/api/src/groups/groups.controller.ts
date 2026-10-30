@@ -1,5 +1,6 @@
 import { CurrentUser, RouteAccess } from '@douglasneuroinformatics/libnest';
 import type { AppAbility } from '@douglasneuroinformatics/libnest';
+import type { User } from '@prisma/client';
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -29,15 +30,15 @@ export class GroupsController {
   @ApiOperation({ summary: 'Get All Groups' })
   @Get()
   @RouteAccess({ action: 'read', subject: 'Group' })
-  findAll(@CurrentUser('ability') ability?: AppAbility) {
-    return this.groupsService.findAll({ ability });
+  findAll(@CurrentUser('ability') ability?: AppAbility, @CurrentUser() user?: User) {
+    return this.groupsService.findAll({ ability, user });
   }
 
   @ApiOperation({ summary: 'Get Group' })
   @Get(':id')
   @RouteAccess({ action: 'read', subject: 'Group' })
-  findById(@Param('id') id: string, @CurrentUser('ability') ability?: AppAbility) {
-    return this.groupsService.findById(id, { ability });
+  findById(@Param('id') id: string, @CurrentUser('ability') ability?: AppAbility, @CurrentUser() user?: User) {
+    return this.groupsService.findById(id, { ability, user });
   }
 
   @ApiOperation({ summary: 'Update Group' })

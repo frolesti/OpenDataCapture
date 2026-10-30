@@ -5,6 +5,8 @@ import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { GroupsService } from '../../groups/groups.service';
+import { OrionCodesService } from '../../orion-codes/orion-codes.service';
+import type { OrionTransactionClient } from '../../orion-codes/orion-codes.service';
 import { OnboardingMailService } from '../onboarding-mail.service';
 import { UsersService } from '../users.service';
 
@@ -22,13 +24,18 @@ describe('investigator promotion', () => {
         MockFactory.createForModelToken(getModelToken('PendingInvestigator')),
         MockFactory.createForService(CryptoService),
         MockFactory.createForService(GroupsService),
-        MockFactory.createForService(OnboardingMailService)
+        MockFactory.createForService(OnboardingMailService),
+        MockFactory.createForService(OrionCodesService)
       ]
     }).compile();
     service = moduleRef.get(UsersService);
     userModel = moduleRef.get(getModelToken('User'));
     pendingModel = moduleRef.get(getModelToken('PendingInvestigator'));
     mail = moduleRef.get(OnboardingMailService);
+    const codes = moduleRef.get<MockedInstance<OrionCodesService>>(OrionCodesService);
+    const transaction = {} as OrionTransactionClient;
+    Object.assign(transaction, { user: userModel, pendingInvestigator: pendingModel });
+    codes.transaction.mockImplementation((operation) => operation(transaction));
   });
 
   it.each([null, undefined])(

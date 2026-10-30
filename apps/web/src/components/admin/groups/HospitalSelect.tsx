@@ -5,17 +5,23 @@ import { formatHospitalLabel } from './hospitals';
 
 export function HospitalSelect({
   onValueChange,
+  ariaLabel,
   options,
   value
 }: {
   onValueChange: (value: string) => void;
+  ariaLabel?: string;
   options: string[];
   value: string;
 }) {
   const { t } = useTranslation();
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <Select.Trigger className="w-full min-w-0 [&>span]:truncate" disabled={options.length === 0}>
+      <Select.Trigger
+        aria-label={ariaLabel}
+        className="w-full min-w-0 [&>span]:truncate"
+        disabled={options.length === 0}
+      >
         <span className="min-w-0 truncate">
           {value ? (
             formatHospitalLabel(value)

@@ -1,6 +1,6 @@
 import { replacer, reviver, yearsPassed } from '@douglasneuroinformatics/libjs';
-import { accessibleQuery, InjectModel, InjectPrismaClient } from '@douglasneuroinformatics/libnest';
-import type { ExtendedPrismaClient, Model } from '@douglasneuroinformatics/libnest';
+import { accessibleQuery, InjectModel } from '@douglasneuroinformatics/libnest';
+import type { Model } from '@douglasneuroinformatics/libnest';
 import { linearRegression } from '@douglasneuroinformatics/libstats';
 import {
   BadRequestException,
@@ -29,6 +29,8 @@ import type { EntityOperationOptions } from '@/core/types';
 import { GroupsService } from '@/groups/groups.service';
 import { InstrumentsService } from '@/instruments/instruments.service';
 import { OrionFollowupService } from '@/orion-followup/orion-followup.service';
+import { OrionCodesService } from '@/orion-codes/orion-codes.service';
+import type { OrionTransactionClient } from '@/orion-codes/orion-codes.service';
 import { SessionsService } from '@/sessions/sessions.service';
 import { CreateSubjectDto } from '@/subjects/dto/create-subject.dto';
 import { SubjectsService } from '@/subjects/subjects.service';
@@ -55,16 +57,15 @@ type CurrentUserContext = {
 export class InstrumentRecordsService {
   constructor(
     @InjectModel('InstrumentRecord') private readonly instrumentRecordModel: Model<'InstrumentRecord'>,
-    @InjectModel('PendingInvestigator') private readonly pendingInvestigatorModel: Model<'PendingInvestigator'>,
     @InjectModel('User') private readonly userModel: Model<'User'>,
-    @InjectPrismaClient() private readonly prismaClient: ExtendedPrismaClient,
     private readonly auditLogService: AuditLogService,
     private readonly groupsService: GroupsService,
     private readonly instrumentMeasuresService: InstrumentMeasuresService,
     private readonly instrumentsService: InstrumentsService,
     private readonly orionFollowupService: OrionFollowupService,
     private readonly sessionsService: SessionsService,
-    private readonly subjectsService: SubjectsService
+    private readonly subjectsService: SubjectsService,
+    private readonly orionCodesService: OrionCodesService
   ) {}
 
   async count(
@@ -78,40 +79,7 @@ export class InstrumentRecordsService {
 
   async reserveOrionPatientCode({ groupId, user }: { groupId: string; user: EntityOperationOptions['user'] }) {
     const context = await this.getOrionPatientCodeContext({ groupId, user });
-    const latestCode = await context.codeClient.findFirst({
-      orderBy: { sequence: 'desc' },
-      where: {
-        groupId: context.group.id,
-        hospital: context.hospital,
-        investigatorId: context.user.id
-      }
-    });
-    return { code: this.formatOrionPatientCode(context, (latestCode?.sequence ?? 0) + 1) };
-  }
-
-  private async createOrionPatientCode({ groupId, user }: { groupId: string; user: EntityOperationOptions['user'] }) {
-    const context = await this.getOrionPatientCodeContext({ groupId, user });
-    for (let sequence = 1; sequence <= 100000; sequence++) {
-      const code = this.formatOrionPatientCode(context, sequence);
-      try {
-        await context.codeClient.create({
-          data: {
-            code,
-            groupId: context.group.id,
-            hospital: context.hospital,
-            investigatorId: context.user.id,
-            sequence
-          }
-        });
-        return code;
-      } catch (error) {
-        if ((error as { code?: string }).code !== 'P2002') {
-          throw error;
-        }
-      }
-    }
-
-    throw new UnprocessableEntityException('Unable to create an ORION patient code');
+    return { code: await this.orionCodesService.preview(groupId, context.user.id, context.isTest) };
   }
 
   private async getOrionPatientCodeContext({
@@ -129,42 +97,28 @@ export class InstrumentRecordsService {
     if (!group) {
       throw new NotFoundException(`Failed to resolve group with ID: ${groupId}`);
     }
+    if (group.studyCode !== 'OR') {
+      throw new BadRequestException('El grup seleccionat no correspon a l’estudi ORION.');
+    }
 
-    const investigator = await this.pendingInvestigatorModel.findFirst({
-      select: { hospital: true },
-      where: { promotedUserId: user.id }
+    const account = await this.userModel.findUniqueOrThrow({
+      where: { id: user.id }
     });
-    const hospital = investigator?.hospital ?? (group.hospitals.length === 1 ? group.hospitals[0] : undefined);
+    if (!account.groupIds.includes(groupId)) {
+      throw new ForbiddenException('The investigator is not assigned to this ORION group');
+    }
+    const assignment = account.studyHospitals.find((entry) => entry.groupId === groupId);
+    const assignedHospital = group.hospitalCatalog?.find((entry) => entry.id === assignment?.hospitalId);
+    const isTest = account.userType === 'TEST_USER';
+    const hospital = assignedHospital?.name;
+    if (assignedHospital?.isInternal && !isTest) {
+      throw new ForbiddenException('El centre intern només està disponible per als comptes de proves.');
+    }
     if (!hospital || !group.hospitals.includes(hospital)) {
       throw new BadRequestException('Assign a hospital to the investigator before creating an ORION patient code');
     }
 
-    const centerCode = String(
-      [...group.hospitals]
-        .sort((first, second) => first.localeCompare(second))
-        .findIndex((entry) => entry === hospital) + 1
-    ).padStart(2, '0');
-    const groupInvestigators = await this.userModel.findMany({
-      orderBy: { id: 'asc' },
-      select: { id: true },
-      where: { groupIds: { has: group.id } }
-    });
-    const investigatorCode = String(
-      groupInvestigators.findIndex((investigator) => investigator.id === user.id) + 1
-    ).padStart(2, '0');
-    if (investigatorCode === '00') {
-      throw new ForbiddenException('The investigator is not assigned to this ORION group');
-    }
-    const codeClient = (this.prismaClient as unknown as Record<string, any>).orionPatientCode;
-    if (!codeClient) {
-      throw new UnprocessableEntityException('ORION patient-code storage is unavailable');
-    }
-
-    return { centerCode, codeClient, group, hospital, investigatorCode, user };
-  }
-
-  private formatOrionPatientCode(context: { centerCode: string; investigatorCode: string }, sequence: number) {
-    return `OR-${context.centerCode}-${String(sequence).padStart(2, '0')}`;
+    return { group, hospital, isTest, user: account };
   }
 
   async create(
@@ -181,7 +135,10 @@ export class InstrumentRecordsService {
     }
 
     await this.subjectsService.findById(subjectId);
-    await this.sessionsService.findById(sessionId);
+    const session = await this.sessionsService.findById(sessionId, options);
+    if (session.subjectId !== subjectId || session.groupId !== (groupId ?? null)) {
+      throw new BadRequestException('La sessió ha de correspondre al participant i al grup seleccionats.');
+    }
 
     const normalizedRawData =
       instrument.internal.name === 'ORION_PR_2026_FOLLOWUP' ? this.normalizeOrionFollowupDates(rawData) : rawData;
@@ -196,17 +153,36 @@ export class InstrumentRecordsService {
     }
 
     const parsedData = parseResult.data as Record<string, unknown>;
-    const rawPatientCode = parsedData.patient_code ?? parsedData.user_code;
-    const userCode =
-      instrument.internal.name === 'ORION_PR_2026_SELECTION'
-        ? await this.createOrionPatientCode({ groupId: groupId!, user: options?.user })
-        : typeof rawPatientCode === 'string'
-          ? rawPatientCode
-          : '';
-    if (instrument.internal.name === 'ORION_PR_2026_SELECTION') {
-      parsedData.patient_code = userCode;
-      parsedData.user_code = undefined;
+    if (group && options?.user) {
+      if (!group.accessibleInstrumentIds.includes(instrumentId)) {
+        throw new ForbiddenException('El formulari no està habilitat per al grup seleccionat.');
+      }
+      const account = await this.userModel.findUniqueOrThrow({ where: { id: options.user.id } });
+      if (!account.groupIds.includes(group.id)) {
+        throw new ForbiddenException('L’investigador no pertany al grup seleccionat.');
+      }
+      const assignment = account.studyHospitals.find((entry) => entry.groupId === group.id);
+      const hospital = group.hospitalCatalog?.find((entry) => entry.id === assignment?.hospitalId);
+      if (group.hospitals.length > 0) {
+        if (!hospital || (hospital.isInternal && account.userType !== 'TEST_USER')) {
+          throw new BadRequestException('Cal assignar un centre sanitari vàlid per a aquest estudi.');
+        }
+        this.validateHospitalSelection(parsedData, [hospital.name]);
+      }
     }
+
+    const isSelection = instrument.internal.name === 'ORION_PR_2026_SELECTION';
+    if (isSelection && !groupId) {
+      throw new BadRequestException('Cal seleccionar el grup ORION abans de crear un pacient.');
+    }
+    if (isSelection && session.userId !== options?.user?.id) {
+      throw new ForbiddenException('El codi de pacient s’ha de generar dins la sessió del mateix investigador.');
+    }
+    const orionContext = isSelection
+      ? await this.getOrionPatientCodeContext({ groupId: groupId!, user: options?.user })
+      : undefined;
+    const rawPatientCode = parsedData.patient_code ?? parsedData.user_code;
+    let userCode = typeof rawPatientCode === 'string' ? rawPatientCode : '';
     const selectionRecordId = await this.orionFollowupService.validateFollowup({
       followupData: parsedData,
       groupId,
@@ -214,41 +190,52 @@ export class InstrumentRecordsService {
       subjectId,
       userCode
     });
-
-    // Only validate hospital selection for ORION instruments (OMEGA and others don't use group hospitals)
-    if (instrument.internal.name.startsWith('ORION_')) {
-      this.validateHospitalSelection(parsedData, group?.hospitals ?? []);
-    }
-
-    const record = await this.instrumentRecordModel.create({
-      data: {
-        computedMeasures: instrument.measures
-          ? this.instrumentMeasuresService.computeMeasures(instrument.measures, parsedData as Json)
-          : null,
-        data: this.serializeData(parsedData),
-        date,
-        group: groupId
-          ? {
-              connect: { id: groupId }
+    const createRecord = async (transaction?: OrionTransactionClient) => {
+      if (orionContext) {
+        userCode = await this.orionCodesService.create(
+          orionContext.group.id,
+          orionContext.user.id,
+          orionContext.isTest,
+          orionContext.hospital,
+          transaction
+        );
+        parsedData.patient_code = userCode;
+        parsedData.user_code = undefined;
+      }
+      const model = transaction?.instrumentRecord ?? this.instrumentRecordModel;
+      return model.create({
+        data: {
+          computedMeasures: instrument.measures
+            ? this.instrumentMeasuresService.computeMeasures(instrument.measures, parsedData as Json)
+            : null,
+          data: this.serializeData(parsedData),
+          date,
+          group: groupId
+            ? {
+                connect: { id: groupId }
+              }
+            : undefined,
+          instrument: {
+            connect: {
+              id: instrumentId
             }
-          : undefined,
-        instrument: {
-          connect: {
-            id: instrumentId
-          }
-        },
-        session: {
-          connect: {
-            id: sessionId
-          }
-        },
-        subject: {
-          connect: {
-            id: subjectId
+          },
+          session: {
+            connect: {
+              id: sessionId
+            }
+          },
+          subject: {
+            connect: {
+              id: subjectId
+            }
           }
         }
-      }
-    });
+      });
+    };
+    const record = isSelection
+      ? await this.orionCodesService.transaction((transaction) => createRecord(transaction))
+      : await createRecord();
 
     await this.orionFollowupService.scheduleReminder({
       groupId,
@@ -557,6 +544,9 @@ export class InstrumentRecordsService {
       if (!isPrivileged && instrumentRecord.session.userId !== user.id) {
         throw new ForbiddenException('Only the owner of the record can edit it.');
       }
+      if (!isPrivileged && instrumentRecord.groupId && !user.groupIds.includes(instrumentRecord.groupId)) {
+        throw new ForbiddenException('L’investigador ja no està assignat a aquest estudi.');
+      }
     }
 
     if (Array.isArray(instrumentRecord.data) && !Array.isArray(data)) {
@@ -614,6 +604,25 @@ export class InstrumentRecordsService {
       typeof parseResult.data === 'object' && parseResult.data !== null && !Array.isArray(parseResult.data)
         ? (parseResult.data as { [key: string]: unknown })
         : {};
+    if (
+      instrument.internal.name.startsWith('ORION_') &&
+      (oldDataObj.patient_code ?? oldDataObj.user_code) !== (newDataObj.patient_code ?? newDataObj.user_code)
+    ) {
+      throw new BadRequestException('El codi de pacient assignat no es pot modificar.');
+    }
+    if (instrumentRecord.groupId && this.getHospitalSelection(oldDataObj) !== this.getHospitalSelection(newDataObj)) {
+      if (!instrumentRecord.session.userId) {
+        throw new BadRequestException('La sessió ha de tenir un investigador assignat per poder canviar-ne el centre.');
+      }
+      const owner = await this.userModel.findUniqueOrThrow({ where: { id: instrumentRecord.session.userId } });
+      const group = await this.groupsService.findById(instrumentRecord.groupId);
+      const assignment = owner.studyHospitals.find((entry) => entry.groupId === group.id);
+      const hospital = group.hospitalCatalog?.find((entry) => entry.id === assignment?.hospitalId);
+      if (!hospital || (hospital.isInternal && owner.userType !== 'TEST_USER')) {
+        throw new BadRequestException('Cal assignar un centre sanitari vàlid per a aquest estudi.');
+      }
+      this.validateHospitalSelection(newDataObj, [hospital.name]);
+    }
     const changes = this.auditLogService.computeChanges(oldDataObj, newDataObj);
 
     if (changes.length > 0 && user) {
@@ -653,6 +662,28 @@ export class InstrumentRecordsService {
       throw new UnprocessableEntityException(
         `Cannot create instrument record for series instrument '${instrument.id}'`
       );
+    }
+
+    if (group && options?.user) {
+      if (!group.accessibleInstrumentIds.includes(instrumentId)) {
+        throw new ForbiddenException('El formulari no està habilitat per al grup seleccionat.');
+      }
+      const account = await this.userModel.findUniqueOrThrow({ where: { id: options.user.id } });
+      if (!account.groupIds.includes(group.id)) {
+        throw new ForbiddenException('L’investigador no pertany al grup seleccionat.');
+      }
+      let hospitals = group.hospitals;
+      if (account.basePermissionLevel === 'STANDARD' && hospitals.length > 0) {
+        const assignment = account.studyHospitals.find((entry) => entry.groupId === group.id);
+        const hospital = group.hospitalCatalog?.find((entry) => entry.id === assignment?.hospitalId);
+        if (!hospital || (hospital.isInternal && account.userType !== 'TEST_USER')) {
+          throw new BadRequestException('Cal assignar un centre sanitari vàlid per a aquest estudi.');
+        }
+        hospitals = [hospital.name];
+      }
+      for (const record of records) {
+        this.validateHospitalSelection(this.parseJson(record.data), hospitals);
+      }
     }
 
     const createdSessionsArray: Session[] = [];
@@ -858,22 +889,20 @@ export class InstrumentRecordsService {
     return JSON.parse(JSON.stringify(data, replacer)) as unknown;
   }
 
+  private getHospitalSelection(data: unknown) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return undefined;
+    const objectData = data as Record<string, unknown>;
+    const value =
+      objectData.site_hospital ?? objectData.CAP ?? objectData.centro_sanitario ?? objectData.centroAtencionPrimaria;
+    return typeof value === 'string' ? value.trim() : undefined;
+  }
+
   private validateHospitalSelection(data: unknown, groupHospitals: string[]) {
     if (groupHospitals.length === 0) {
       return;
     }
 
-    if (!data || typeof data !== 'object' || Array.isArray(data)) {
-      return;
-    }
-
-    const objectData = data as Record<string, unknown>;
-    const rawHospital = objectData.CAP ?? objectData.centro_sanitario ?? objectData.centroAtencionPrimaria;
-    if (typeof rawHospital !== 'string') {
-      return;
-    }
-
-    const normalized = rawHospital.trim();
+    const normalized = this.getHospitalSelection(data);
     if (!normalized) {
       return;
     }

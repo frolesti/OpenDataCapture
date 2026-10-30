@@ -6,13 +6,15 @@ import { Button, Dialog, Heading, Spinner } from '@douglasneuroinformatics/libui
 import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { InstrumentRenderer } from '@opendatacapture/react-core';
 import type { InstrumentSubmitHandler } from '@opendatacapture/react-core';
-import type { CreateInstrumentRecordData } from '@opendatacapture/schemas/instrument-records';
+import type { CreateInstrumentRecordData, InstrumentRecord } from '@opendatacapture/schemas/instrument-records';
+import { isOrionPatientCode } from '@opendatacapture/schemas/instrument-records';
 import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { Save } from 'lucide-react';
 
 import { PageHeader } from '@/components/PageHeader';
+import { getHospitalCatalog } from '@/components/admin/groups/StudyHospitalFields';
 import { useInstrumentBundle } from '@/hooks/useInstrumentBundle';
 import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
@@ -280,14 +282,28 @@ function buildGroupHospitalOptions(hospitals: string[]): string {
 
 const DRAFT_PREFIX = 'instrument-draft:';
 
-function getDraftKey(instrumentId: string): string {
-  const username = useAppStore.getState().currentUser?.username ?? 'anonymous';
-  return `${DRAFT_PREFIX}${instrumentId}:${username}`;
+function getDraftKey(instrumentId: string, includeReset = true): string {
+  const { currentGroup, currentUser } = useAppStore.getState();
+  const username = currentUser?.username ?? 'anonymous';
+  const reset =
+    includeReset && currentGroup?.studyCode === 'OR' && currentGroup.dataResetAt
+      ? `:reset:${new Date(currentGroup.dataResetAt).getTime()}`
+      : '';
+  return `${DRAFT_PREFIX}${instrumentId}:${username}${reset}`;
 }
 
 function loadDraft(instrumentId: string): Record<string, unknown> | null {
   try {
-    const raw = localStorage.getItem(getDraftKey(instrumentId));
+    const key = getDraftKey(instrumentId);
+    const legacyKey = getDraftKey(instrumentId, false);
+    if (key !== legacyKey) {
+      for (const oldKey of Object.keys(localStorage)) {
+        if (oldKey === legacyKey || (oldKey.startsWith(`${legacyKey}:reset:`) && oldKey !== key)) {
+          localStorage.removeItem(oldKey);
+        }
+      }
+    }
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed = deserializeInstrumentDraft(raw);
     // Discard drafts older than 7 days
@@ -346,6 +362,7 @@ const RouteComponent = () => {
   const [currentStep, setCurrentStep] = useState(0);
   // Hide draft button after successful submit
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [submittedPatientCode, setSubmittedPatientCode] = useState<string>();
   const isDiscardingDraftRef = useRef(false);
   // Edit confirmation dialog state
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
@@ -372,7 +389,23 @@ const RouteComponent = () => {
 
   const instrumentBundleQuery = useInstrumentBundle(params.id);
   const instrumentInfoQuery = useInstrumentInfoQuery();
-  const groupHospitalOptions = buildGroupHospitalOptions(currentGroup?.hospitals ?? []);
+  const studyAssignment = currentUser?.studyHospitals?.find((entry) => entry.groupId === currentGroup?.id);
+  const assignedHospital = currentGroup
+    ? getHospitalCatalog(currentGroup).find(
+        (entry) =>
+          entry.id === studyAssignment?.hospitalId && (!entry.isInternal || currentUser?.userType === 'TEST_USER')
+      )
+    : undefined;
+  const availableHospitals = assignedHospital
+    ? [assignedHospital.name]
+    : !currentGroup?.hospitalIds?.length
+      ? (currentGroup?.hospitals ?? [])
+      : [];
+  const storedHospital = recordId ? (effectiveInitialData?.site_hospital ?? effectiveInitialData?.CAP) : undefined;
+  const groupHospitalOptions = buildGroupHospitalOptions([
+    ...availableHospitals,
+    ...(typeof storedHospital === 'string' ? [storedHospital] : [])
+  ]);
 
   const instrumentInfo = (instrumentInfoQuery.data ?? []).find((instrument) => instrument.id === params.id);
   const orionSelectionInstrumentId = (instrumentInfoQuery.data ?? [])
@@ -427,7 +460,7 @@ const RouteComponent = () => {
     for (const record of orionFollowupRecordsQuery.data ?? []) {
       const recordData = record.data as Record<string, unknown>;
       const value = recordData.patient_code ?? recordData.user_code;
-      if (typeof value === 'string' && /^OR-\d{2,3}-\d+$/.test(value.trim())) {
+      if (isOrionPatientCode(value)) {
         const code = value.trim();
         const editingCode = effectiveInitialData?.patient_code ?? effectiveInitialData?.user_code;
         if (!(recordId && typeof editingCode === 'string' && editingCode.trim() === code)) {
@@ -448,7 +481,7 @@ const RouteComponent = () => {
       const value = recordData?.patient_code ?? recordData?.user_code;
       if (
         typeof value === 'string' &&
-        /^OR-\d{2,3}-\d+$/.test(value.trim()) &&
+        isOrionPatientCode(value) &&
         !completedOrionFollowupCodes.has(value.trim()) &&
         formatOrionDateForApi(recordData.selection_visit_date)
       ) {
@@ -473,7 +506,7 @@ const RouteComponent = () => {
       const selectionVisitDate = formatOrionDateForApi(recordData.selection_visit_date);
       if (
         typeof value === 'string' &&
-        /^OR-\d{2,3}-\d+$/.test(value.trim()) &&
+        isOrionPatientCode(value) &&
         !completedOrionFollowupCodes.has(value.trim()) &&
         selectionVisitDate
       ) {
@@ -527,6 +560,13 @@ const RouteComponent = () => {
     typeof effectiveInitialData.user_code === 'string'
       ? { ...effectiveInitialData, patient_code: effectiveInitialData.user_code }
       : effectiveInitialData;
+  const assignedInitialData =
+    assignedHospital && !recordId
+      ? {
+          ...normalizedInitialData,
+          [isOrionSelection || isOrionFollowup ? 'site_hospital' : 'CAP']: assignedHospital.name
+        }
+      : normalizedInitialData;
   const formInitialData =
     isOrionSelection &&
     reservedOrionPatientCode &&
@@ -535,10 +575,10 @@ const RouteComponent = () => {
       ? {
           prev_treatment_name_1: 'Pregabalina IR',
           current_treatment_name_1: 'Pregabalina PR',
-          ...normalizedInitialData,
+          ...assignedInitialData,
           patient_code: reservedOrionPatientCode
         }
-      : normalizedInitialData;
+      : assignedInitialData;
 
   const title = instrumentTitle;
 
@@ -900,7 +940,7 @@ const RouteComponent = () => {
       return;
     }
     try {
-      await axios.post('/v1/instrument-records', {
+      const response = await axios.post<InstrumentRecord>('/v1/instrument-records', {
         data: payloadData,
         date: new Date(),
         groupId: currentGroup?.id,
@@ -908,6 +948,16 @@ const RouteComponent = () => {
         sessionId: currentSession!.id,
         subjectId: currentSession!.subject.id
       } satisfies CreateInstrumentRecordData);
+      const savedData = response.data?.data;
+      if (
+        isOrionSelection &&
+        savedData &&
+        typeof savedData === 'object' &&
+        'patient_code' in savedData &&
+        isOrionPatientCode(savedData.patient_code)
+      ) {
+        setSubmittedPatientCode(savedData.patient_code);
+      }
     } catch (error) {
       const responseData = axios.isAxiosError(error) ? error.response?.data : undefined;
       const issue = responseData?.issues?.[0];
@@ -1026,6 +1076,11 @@ const RouteComponent = () => {
           {title ?? t('core.instrument')}
         </Heading>
       </PageHeader>
+      {formSubmitted && submittedPatientCode ? (
+        <p className="mx-auto mb-4 rounded-md border p-3 text-center font-medium" role="status">
+          {t({ en: 'Codi de pacient desat', fr: 'Código de paciente guardado' })}: {submittedPatientCode}
+        </p>
+      ) : null}
       {currentStep === 1 && !recordId && !formSubmitted ? (
         <div className="fixed right-6 top-6 z-[70]">
           <Button

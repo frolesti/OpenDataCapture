@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { isOrionPatientCode } from '@opendatacapture/schemas/instrument-records';
 
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '../instrument-draft';
 import { loadSchema, selectionData } from './orion-test-utils';
@@ -7,6 +8,13 @@ const selectionSchema = loadSchema('orion-pr-2026.ts');
 const followupSchema = loadSchema('orion-pr-2026-followup.ts');
 
 describe('ORION client date and draft regressions', () => {
+  it.each(['OR-01-01', 'OR-02-01', 'OR-TEST-01-01', 'OR-1000-101'])(
+    'accepts real and test patient codes: %s',
+    (code) => {
+      expect(isOrionPatientCode(code)).toBe(true);
+      expect(selectionSchema.safeParse({ ...selectionData(), patient_code: code }).success).toBe(true);
+    }
+  );
   it.each(['01-11-2026', '30-11-2026', '15-12-2026', '31-12-2027'])(
     'accepts selection and consent dates within the expanded study window: %s',
     (date) => {
@@ -100,10 +108,10 @@ describe('ORION client date and draft regressions', () => {
     ).toBe(true);
   });
 
-  it('preserves adverse-event selections accepted by the Followup schema', () => {
+  it.each(['OR-01-01', 'OR-TEST-01-01'])('preserves adverse-event selections in Followup for %s', (patientCode) => {
     const event = (selectionData().adverse_event_records as Record<string, unknown>[])[0];
     const data: Record<string, unknown> = {
-      patient_code: '01-001',
+      patient_code: patientCode,
       continues_study: 'si',
       followup_date: '15-03-2027',
       eq5d_vas: 80,

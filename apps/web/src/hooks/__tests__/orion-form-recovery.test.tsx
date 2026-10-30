@@ -120,6 +120,7 @@ beforeEach(() => {
   mocks.state = {};
   mocks.submit = undefined;
   mocks.change = undefined;
+  mocks.store.currentGroup = { id: 'group', name: 'ORION', hospitals: [] };
   localStorage.clear();
   vi.resetAllMocks();
 });
@@ -137,6 +138,7 @@ describe('ORION selection submission date window', () => {
       data[`inclusion_${criterion}`] = 'si';
       data[`exclusion_${criterion}`] = 'no';
     }
+
     localStorage.setItem('instrument-draft:selection:investigator', serializeInstrumentDraft(data));
     vi.mocked(axios.post).mockResolvedValue({ data: {} });
     renderForm();
@@ -146,6 +148,29 @@ describe('ORION selection submission date window', () => {
     }
     return () => submit({ data, instrumentId: 'selection' });
   }
+
+  it('shows the saved server code rather than a stale concurrent preview', async () => {
+    const submit = prepareSubmission('15-12-2026', '15-12-2026');
+    vi.mocked(axios.post).mockResolvedValueOnce({ data: { id: 'record', data: { patient_code: 'OR-01-02' } } });
+    await act(async () => {
+      await submit();
+    });
+    expect(screen.getByRole('status').textContent).toContain('OR-01-02');
+  });
+
+  it('discards pre-reset ORION test drafts without touching OMEGA drafts', async () => {
+    localStorage.setItem(
+      'instrument-draft:selection:investigator',
+      serializeInstrumentDraft({ patient_code: 'OR-99-99' })
+    );
+    localStorage.setItem('instrument-draft:omega:investigator', 'preserve-omega-draft');
+    Object.assign(mocks.store.currentGroup, { studyCode: 'OR', dataResetAt: new Date('2026-10-30') });
+    vi.mocked(axios.post).mockResolvedValue({ data: { code: 'OR-01-01' } });
+    renderForm();
+    await waitFor(() => expect(screen.getByTestId('renderer').textContent).toBe('OR-01-01'));
+    expect(localStorage.getItem('instrument-draft:selection:investigator')).toBeNull();
+    expect(localStorage.getItem('instrument-draft:omega:investigator')).toBe('preserve-omega-draft');
+  });
 
   it.each(['01-11-2026', '30-11-2026', '15-12-2026', '31-12-2027'])(
     'saves a selection with visit and consent on %s',

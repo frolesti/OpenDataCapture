@@ -22,6 +22,8 @@ import { groupsQueryOptions, useGroupsQuery } from '@/hooks/useGroupsQuery';
 import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 import { useSearch } from '@/hooks/useSearch';
 import { useUpdateGroupByIdMutation } from '@/hooks/useUpdateGroupByIdMutation';
+import { useRenameHospitalMutation } from '@/hooks/useRenameHospitalMutation';
+import { getHospitalCatalog } from '@/components/admin/groups/StudyHospitalFields';
 
 const arraysHaveSameSet = (a: string[], b: string[]) => {
   if (a.length !== b.length) return false;
@@ -46,6 +48,7 @@ const RouteComponent = () => {
   const instrumentInfoQuery = useInstrumentInfoQuery();
   const deleteGroupMutation = useDeleteGroupMutation();
   const updateGroupMutation = useUpdateGroupByIdMutation();
+  const renameHospitalMutation = useRenameHospitalMutation();
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [groupHospitals, setGroupHospitals] = useState<string[]>([]);
   const [nameValue, setNameValue] = useState('');
@@ -91,9 +94,10 @@ const RouteComponent = () => {
     if (!selectedGroup) return false;
     if (nameValue.trim() !== selectedGroup.name) return true;
     if (!setsAreEqual(instrumentIds, originalInstrumentIds)) return true;
-    if (!arraysHaveSameSet(groupHospitals, selectedGroup.hospitals)) return true;
+    const latest = groupsQuery.data?.find((group) => group.id === selectedGroup.id);
+    if (!arraysHaveSameSet(groupHospitals, latest?.hospitals ?? selectedGroup.hospitals)) return true;
     return false;
-  }, [selectedGroup, nameValue, instrumentIds, originalInstrumentIds, groupHospitals]);
+  }, [selectedGroup, nameValue, instrumentIds, originalInstrumentIds, groupHospitals, groupsQuery.data]);
 
   const canSave = Boolean(selectedGroup) && isDirty && nameValue.trim().length > 0;
 
@@ -210,6 +214,15 @@ const RouteComponent = () => {
                   hospitals={groupHospitals}
                   knownHospitals={knownHospitals}
                   onHospitalsChange={setGroupHospitals}
+                  onRenameHospital={async (original, name) => {
+                    const latest = groupsQuery.data?.find((group) => group.id === selectedGroup.id) ?? selectedGroup;
+                    const hospital = getHospitalCatalog(latest).find((entry) => entry.name === original);
+                    if (!hospital) {
+                      if (!latest.hospitals.includes(original)) return;
+                      throw new Error('El centre no existeix al catàleg compartit.');
+                    }
+                    await renameHospitalMutation.mutateAsync({ id: hospital.id, name });
+                  }}
                 />
               }
               initialValues={{

@@ -21,10 +21,31 @@ export const $GroupSettings = z.object({
 export type GroupType = z.infer<typeof $GroupType>;
 export const $GroupType = z.enum(['CLINICAL', 'RESEARCH']);
 
+export const $HospitalOption = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  isInternal: z.boolean()
+});
+export type HospitalOption = z.infer<typeof $HospitalOption>;
+
+export function normalizeHospitalKey(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\bc\s*\.\s*s\b\.?|\bcs\b\.?/g, 'cs')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
 export type Group = z.infer<typeof $Group>;
 export const $Group = $BaseModel.extend({
   accessibleInstrumentIds: z.array(z.string()),
   hospitals: z.array(z.string().min(1)),
+  hospitalCatalog: z.array($HospitalOption).optional(),
+  hospitalIds: z.array(z.string()).optional(),
+  studyCode: z.string().nullish(),
+  dataResetAt: z.coerce.date().nullish(),
   name: z.string().min(1),
   settings: $GroupSettings,
   subjectIds: z.array(z.string()),
@@ -43,6 +64,10 @@ export const $CreateGroupData = z.object({
 export type UpdateGroupData = z.infer<typeof $UpdateGroupData>;
 export const $UpdateGroupData = $Group
   .omit({
+    hospitalCatalog: true,
+    hospitalIds: true,
+    studyCode: true,
+    dataResetAt: true,
     subjectIds: true,
     userIds: true
   })

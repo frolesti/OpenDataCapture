@@ -6,6 +6,10 @@ import { $InstrumentMeasureValue } from '../instrument/instrument.js';
 
 import type { SessionType } from '../session/session.js';
 
+export function isOrionPatientCode(value: unknown): value is string {
+  return typeof value === 'string' && /^OR-(?:TEST-)?\d{2,}-\d+$/.test(value.trim());
+}
+
 export const $CreateInstrumentRecordData = z.object({
   assignmentId: z.string().optional(),
   data: $Json,

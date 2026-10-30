@@ -3,6 +3,7 @@ import type { ExtendedPrismaClient, Model } from '@douglasneuroinformatics/libne
 import { Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 import type { User } from '@prisma/client';
 import nodemailer from 'nodemailer';
+import { isOrionPatientCode } from '@opendatacapture/schemas/instrument-records';
 
 import { InstrumentsService } from '@/instruments/instruments.service';
 import { AssignmentsService } from '@/assignments/assignments.service';
@@ -94,7 +95,7 @@ export class OrionFollowupService {
       const recordPatientCode = selectionData?.patient_code ?? selectionData?.user_code;
       return (
         typeof recordPatientCode === 'string' &&
-        /^OR-\d{2,3}-\d+$/.test(recordPatientCode) &&
+        isOrionPatientCode(recordPatientCode) &&
         recordPatientCode === userCode.trim() &&
         Boolean(selectionData?.selection_visit_date)
       );

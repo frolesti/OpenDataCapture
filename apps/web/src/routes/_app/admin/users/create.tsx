@@ -16,12 +16,22 @@ import {
 } from '@douglasneuroinformatics/libui/components';
 import { ArrowsUpDownIcon, ChevronDownIcon, ClockIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
-import type { BasePermissionLevel, PendingInvestigator, ProfessionalTitle, User } from '@opendatacapture/schemas/user';
+import type {
+  BasePermissionLevel,
+  PendingInvestigator,
+  ProfessionalTitle,
+  StudyHospital,
+  User
+} from '@opendatacapture/schemas/user';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { PageHeader } from '@/components/PageHeader';
 import { ProfessionalTitleField } from '@/components/admin/ProfessionalTitleField';
-import { HospitalSelect } from '@/components/admin/groups/HospitalSelect';
+import {
+  StudyHospitalFields,
+  getHospitalCatalog,
+  hasCompleteStudyHospitals
+} from '@/components/admin/groups/StudyHospitalFields';
 import { formatHospitalLabel, serializeHospital, type HospitalMetadata } from '@/components/admin/groups/hospitals';
 import { useCreatePendingInvestigatorMutation } from '@/hooks/useCreatePendingInvestigatorMutation';
 import { useCreateUserMutation } from '@/hooks/useCreateUserMutation';
@@ -73,6 +83,8 @@ function buildPendingForm(entry?: PendingInvestigator): InvestigatorFormState {
     firstName: entry?.firstName ?? '',
     groupIds: entry?.groupIds ?? [],
     hospital: entry?.hospital ?? '',
+    studyHospitals: entry?.studyHospitals ?? [],
+    userType: entry?.userType ?? 'INVESTIGATOR',
     lastName: entry?.lastName ?? '',
     notes: entry?.notes ?? '',
     professionalTitle: entry?.professionalTitle ?? '',
@@ -94,6 +106,8 @@ function buildUserEditForm(user?: User) {
     firstName: user?.firstName ?? '',
     groupIds: user?.groupIds ?? [],
     hospital: user?.hospital ?? '',
+    studyHospitals: user?.studyHospitals ?? [],
+    userType: user?.userType ?? 'INVESTIGATOR',
     lastName: user?.lastName ?? '',
     password: '',
     username: user?.username ?? ''
@@ -119,6 +133,8 @@ type InvestigatorFormState = {
   firstName: string;
   groupIds: string[];
   hospital: string;
+  studyHospitals: StudyHospital[];
+  userType: 'INVESTIGATOR' | 'TEST_USER';
   lastName: string;
   notes: string;
   professionalTitle: ProfessionalTitle | '';
@@ -130,6 +146,8 @@ type CreatedUserFormState = {
   firstName: string;
   groupIds: string[];
   hospital: string;
+  studyHospitals: StudyHospital[];
+  userType: 'INVESTIGATOR' | 'TEST_USER';
   lastName: string;
   password: string;
   username: string;
@@ -175,6 +193,8 @@ const DEFAULT_INVESTIGATOR_FORM: InvestigatorFormState = {
   firstName: '',
   groupIds: [],
   hospital: '',
+  studyHospitals: [],
+  userType: 'INVESTIGATOR',
   lastName: '',
   notes: '',
   professionalTitle: '',
@@ -186,6 +206,8 @@ const DEFAULT_CREATED_USER_FORM: CreatedUserFormState = {
   firstName: '',
   groupIds: [],
   hospital: '',
+  studyHospitals: [],
+  userType: 'INVESTIGATOR',
   lastName: '',
   password: '',
   username: ''
@@ -234,6 +256,7 @@ const RouteComponent = () => {
   const [pendingPage, setPendingPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [hospitalDialogTarget, setHospitalDialogTarget] = useState<'create' | 'createdUser' | 'edit'>('create');
+  const [hospitalDialogGroupId, setHospitalDialogGroupId] = useState<string>();
   const [userForm, setUserForm] = useState<UserFormState>(DEFAULT_USER_FORM);
   const [investigatorForm, setInvestigatorForm] = useState<InvestigatorFormState>(DEFAULT_INVESTIGATOR_FORM);
   const [pendingDialogForm, setPendingDialogForm] = useState<InvestigatorFormState>(DEFAULT_INVESTIGATOR_FORM);
@@ -244,7 +267,14 @@ const RouteComponent = () => {
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
 
   const groupOptions = useMemo(
-    () => (groupsQuery.data ?? []).map((group) => ({ id: group.id, name: group.name, hospitals: group.hospitals })),
+    () =>
+      (groupsQuery.data ?? []).map((group) => ({
+        id: group.id,
+        name: group.name,
+        hospitals: group.hospitals,
+        hospitalIds: group.hospitalIds,
+        hospitalCatalog: group.hospitalCatalog
+      })),
     [groupsQuery.data]
   );
 
@@ -259,18 +289,6 @@ const RouteComponent = () => {
       )
     ).sort((left, right) => left.localeCompare(right));
   };
-
-  const investigatorHospitalOptions = useMemo(() => {
-    return getHospitalOptions(investigatorForm.groupIds);
-  }, [groupOptions, investigatorForm.groupIds]);
-
-  const pendingDialogHospitalOptions = useMemo(() => {
-    return getHospitalOptions(pendingDialogForm.groupIds);
-  }, [groupOptions, pendingDialogForm.groupIds]);
-
-  const createdUserDialogHospitalOptions = useMemo(() => {
-    return getHospitalOptions(createdUserDialogForm.groupIds);
-  }, [createdUserDialogForm.groupIds, groupOptions]);
 
   const pendingRows = useMemo(
     () => (pendingInvestigatorsQuery.data ?? []).filter((entry) => !entry.promotedAt),
@@ -548,7 +566,11 @@ const RouteComponent = () => {
     (createdUserDialogForm.groupIds.length !== selectedCreatedUser.groupIds.length ||
       createdUserDialogForm.groupIds.some((groupId) => !selectedCreatedUser.groupIds.includes(groupId)));
   const createdUserHospitalChanged =
-    selectedCreatedUser !== null && createdUserDialogForm.hospital !== (selectedCreatedUser.hospital ?? '');
+    selectedCreatedUser !== null &&
+    (createdUserDialogForm.hospital !== (selectedCreatedUser.hospital ?? '') ||
+      JSON.stringify(createdUserDialogForm.studyHospitals) !==
+        JSON.stringify(selectedCreatedUser.studyHospitals ?? []) ||
+      createdUserDialogForm.userType !== (selectedCreatedUser.userType ?? 'INVESTIGATOR'));
 
   const canCreateUser =
     userForm.firstName.trim().length > 0 &&
@@ -564,9 +586,14 @@ const RouteComponent = () => {
     investigatorForm.email.trim().length > 0 &&
     investigatorForm.groupIds.length > 0 &&
     (!investigatorForm.signed || investigatorForm.professionalTitle !== '') &&
-    investigatorForm.hospital.trim().length > 0;
+    hasCompleteStudyHospitals(
+      groupOptions,
+      investigatorForm.groupIds,
+      investigatorForm.studyHospitals,
+      investigatorForm.hospital,
+      investigatorForm.userType === 'TEST_USER'
+    );
 
-  const canOpenCreateHospitalDialog = (groupIds: string[]) => groupIds.length > 0;
   const canCreateHospital = (groupIds: string[]) => hospitalForm.name.trim().length > 0 && groupIds.length > 0;
   const canSavePendingDialog =
     pendingDialogForm.firstName.trim().length > 0 &&
@@ -574,7 +601,13 @@ const RouteComponent = () => {
     pendingDialogForm.email.trim().length > 0 &&
     pendingDialogForm.groupIds.length > 0 &&
     (!pendingDialogForm.signed || pendingDialogForm.professionalTitle !== '') &&
-    pendingDialogForm.hospital.trim().length > 0;
+    hasCompleteStudyHospitals(
+      groupOptions,
+      pendingDialogForm.groupIds,
+      pendingDialogForm.studyHospitals,
+      pendingDialogForm.hospital,
+      pendingDialogForm.userType === 'TEST_USER'
+    );
 
   const canSaveCreatedUserDialog =
     createdUserDialogForm.firstName.trim().length > 0 &&
@@ -582,8 +615,13 @@ const RouteComponent = () => {
     createdUserDialogForm.username.trim().length > 0 &&
     (selectedCreatedUser?.basePermissionLevel !== 'STANDARD' ||
       !(createdUserGroupMembershipChanged || createdUserHospitalChanged) ||
-      (createdUserDialogForm.hospital.trim().length > 0 &&
-        createdUserDialogHospitalOptions.includes(createdUserDialogForm.hospital))) &&
+      hasCompleteStudyHospitals(
+        groupOptions,
+        createdUserDialogForm.groupIds,
+        createdUserDialogForm.studyHospitals,
+        createdUserDialogForm.hospital,
+        createdUserDialogForm.userType === 'TEST_USER'
+      )) &&
     (createdUserDialogForm.password.trim().length === 0 || isCreatedUserPasswordStrong);
 
   const isBusy =
@@ -659,6 +697,8 @@ const RouteComponent = () => {
     firstName: form.firstName.trim(),
     groupIds: form.groupIds,
     hospital: form.hospital,
+    studyHospitals: form.studyHospitals.filter((entry) => form.groupIds.includes(entry.groupId)),
+    userType: form.userType,
     lastName: form.lastName.trim(),
     notes: form.notes.trim() || null,
     professionalTitle: form.professionalTitle || null,
@@ -699,6 +739,8 @@ const RouteComponent = () => {
           firstName: investigatorForm.firstName.trim(),
           groupIds: investigatorForm.groupIds,
           hospital: investigatorForm.hospital,
+          studyHospitals: investigatorForm.studyHospitals,
+          userType: investigatorForm.userType,
           lastName: investigatorForm.lastName.trim(),
           notes: investigatorForm.notes.trim() || undefined,
           professionalTitle: investigatorForm.professionalTitle || null,
@@ -830,6 +872,13 @@ const RouteComponent = () => {
         data: {
           firstName: createdUserDialogForm.firstName.trim(),
           groupIds: createdUserDialogForm.groupIds,
+          userType: createdUserDialogForm.userType,
+          studyHospitals:
+            selectedCreatedUser.basePermissionLevel === 'STANDARD'
+              ? createdUserDialogForm.studyHospitals.filter((entry) =>
+                  createdUserDialogForm.groupIds.includes(entry.groupId)
+                )
+              : undefined,
           hospital:
             selectedCreatedUser.basePermissionLevel === 'STANDARD' &&
             (createdUserGroupMembershipChanged || createdUserHospitalChanged)
@@ -880,12 +929,7 @@ const RouteComponent = () => {
   };
 
   const handleCreateHospital = async () => {
-    const targetGroupIds =
-      hospitalDialogTarget === 'edit'
-        ? pendingDialogForm.groupIds
-        : hospitalDialogTarget === 'createdUser'
-          ? createdUserDialogForm.groupIds
-          : investigatorForm.groupIds;
+    const targetGroupIds = hospitalDialogGroupId ? [hospitalDialogGroupId] : [];
     if (!canCreateHospital(targetGroupIds)) {
       return;
     }
@@ -899,18 +943,23 @@ const RouteComponent = () => {
       const selectedGroups = groupOptions.filter((group) => targetGroupIds.includes(group.id));
       for (const group of selectedGroups) {
         const nextHospitals = Array.from(new Set([...group.hospitals, serializedHospital]));
-        await updateGroupMutation.mutateAsync({
+        const updatedGroup = await updateGroupMutation.mutateAsync({
           data: { hospitals: nextHospitals },
           id: group.id
         });
-      }
-
-      if (hospitalDialogTarget === 'edit') {
-        setPendingDialogForm((current) => ({ ...current, hospital: serializedHospital }));
-      } else if (hospitalDialogTarget === 'createdUser') {
-        setCreatedUserDialogForm((current) => ({ ...current, hospital: serializedHospital }));
-      } else {
-        setInvestigatorForm((current) => ({ ...current, hospital: serializedHospital }));
+        const hospital = getHospitalCatalog(updatedGroup).find((entry) => entry.name === serializedHospital);
+        if (!hospital) throw new Error('El centre creat no apareix al catàleg de l’estudi.');
+        const updateAssignments = <T extends { hospital: string; studyHospitals: StudyHospital[] }>(current: T): T => ({
+          ...current,
+          hospital: hospital.name,
+          studyHospitals: [
+            ...current.studyHospitals.filter((entry) => entry.groupId !== group.id),
+            { groupId: group.id, hospitalId: hospital.id }
+          ]
+        });
+        if (hospitalDialogTarget === 'edit') setPendingDialogForm(updateAssignments);
+        else if (hospitalDialogTarget === 'createdUser') setCreatedUserDialogForm(updateAssignments);
+        else setInvestigatorForm(updateAssignments);
       }
       resetHospitalDialog();
     } catch (error) {
@@ -1470,40 +1519,30 @@ const RouteComponent = () => {
                 </div>
               </div>
               {selectedCreatedUser?.basePermissionLevel === 'STANDARD' ? (
-                <div className="grid gap-2">
-                  <Label>{t({ en: 'Hospital / Centre', fr: 'Hospital / Centro' })}</Label>
-                  <p className="text-muted-foreground text-xs">
-                    {t({
-                      en: "L'hospital disponible depèn dels grups seleccionats. Si no hi és, el podeu crear directament des d'aquí.",
-                      fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
-                    })}
-                  </p>
-                  <HospitalSelect
-                    options={createdUserDialogHospitalOptions}
-                    value={createdUserDialogForm.hospital}
-                    onValueChange={(value) => setCreatedUserDialogForm((current) => ({ ...current, hospital: value }))}
-                  />
-                  <Button
-                    disabled={!canOpenCreateHospitalDialog(createdUserDialogForm.groupIds) || isCreatedUserDialogBusy}
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setHospitalDialogTarget('createdUser');
-                      setHospitalForm(DEFAULT_HOSPITAL_FORM);
-                      setIsHospitalDialogOpen(true);
-                    }}
-                  >
-                    {t({ en: 'Crear hospital nou', fr: 'Crear hospital nuevo' })}
-                  </Button>
-                  {createdUserDialogForm.groupIds.length === 0 ? (
-                    <p className="text-muted-foreground text-xs">
-                      {t({
-                        en: 'Selecciona primer un o més grups per carregar els hospitals disponibles.',
-                        fr: 'Selecciona primero uno o más grupos para cargar los hospitales disponibles.'
-                      })}
-                    </p>
-                  ) : null}
-                </div>
+                <StudyHospitalFields
+                  groups={groupOptions}
+                  groupIds={createdUserDialogForm.groupIds}
+                  assignments={createdUserDialogForm.studyHospitals}
+                  legacyHospital={createdUserDialogForm.hospital}
+                  isTest={createdUserDialogForm.userType === 'TEST_USER'}
+                  numbers={selectedCreatedUser.studyNumbers}
+                  onTestChange={(isTest) =>
+                    setCreatedUserDialogForm((current) => ({
+                      ...current,
+                      userType: isTest ? 'TEST_USER' : 'INVESTIGATOR'
+                    }))
+                  }
+                  disabled={isCreatedUserDialogBusy}
+                  onChange={(studyHospitals, hospital) =>
+                    setCreatedUserDialogForm((current) => ({ ...current, studyHospitals, hospital }))
+                  }
+                  onCreate={(groupId) => {
+                    setHospitalDialogGroupId(groupId);
+                    setHospitalDialogTarget('createdUser');
+                    setHospitalForm(DEFAULT_HOSPITAL_FORM);
+                    setIsHospitalDialogOpen(true);
+                  }}
+                />
               ) : null}
               {selectedCreatedUser?.basePermissionLevel === 'STANDARD' ? (
                 <div className="grid gap-2">
@@ -1774,40 +1813,26 @@ const RouteComponent = () => {
                   })}
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label>{t({ en: 'Hospital / Centre', fr: 'Hospital / Centro' })}</Label>
-                <p className="text-muted-foreground text-xs">
-                  {t({
-                    en: "L'hospital disponible depèn dels grups seleccionats. Si no hi és, el podeu crear directament des d'aquí.",
-                    fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
-                  })}
-                </p>
-                <HospitalSelect
-                  options={investigatorHospitalOptions}
-                  value={investigatorForm.hospital}
-                  onValueChange={(value) => setInvestigatorForm((current) => ({ ...current, hospital: value }))}
-                />
-                <Button
-                  disabled={!canOpenCreateHospitalDialog(investigatorForm.groupIds) || isBusy}
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setHospitalDialogTarget('create');
-                    setHospitalForm(DEFAULT_HOSPITAL_FORM);
-                    setIsHospitalDialogOpen(true);
-                  }}
-                >
-                  {t({ en: 'Crear hospital nou', fr: 'Crear hospital nuevo' })}
-                </Button>
-                {investigatorForm.groupIds.length === 0 ? (
-                  <p className="text-muted-foreground text-xs">
-                    {t({
-                      en: 'Selecciona primer un o més grups per carregar els hospitals disponibles.',
-                      fr: 'Selecciona primero uno o más grupos para cargar los hospitales disponibles.'
-                    })}
-                  </p>
-                ) : null}
-              </div>
+              <StudyHospitalFields
+                groups={groupOptions}
+                groupIds={investigatorForm.groupIds}
+                assignments={investigatorForm.studyHospitals}
+                legacyHospital={investigatorForm.hospital}
+                isTest={investigatorForm.userType === 'TEST_USER'}
+                onTestChange={(isTest) =>
+                  setInvestigatorForm((current) => ({ ...current, userType: isTest ? 'TEST_USER' : 'INVESTIGATOR' }))
+                }
+                disabled={isBusy}
+                onChange={(studyHospitals, hospital) =>
+                  setInvestigatorForm((current) => ({ ...current, studyHospitals, hospital }))
+                }
+                onCreate={(groupId) => {
+                  setHospitalDialogGroupId(groupId);
+                  setHospitalDialogTarget('create');
+                  setHospitalForm(DEFAULT_HOSPITAL_FORM);
+                  setIsHospitalDialogOpen(true);
+                }}
+              />
               <div className="grid gap-2">
                 <Label htmlFor="investigator-notes">
                   {t({ en: 'Comentaris (només pendent)', fr: 'Comentarios (solo pendiente)' })}
@@ -1946,32 +1971,26 @@ const RouteComponent = () => {
                   })}
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label>{t({ en: 'Hospital / Centre', fr: 'Hospital / Centro' })}</Label>
-                <p className="text-muted-foreground text-xs">
-                  {t({
-                    en: "L'hospital disponible depèn dels grups seleccionats. Si no hi és, el podeu crear directament des d'aquí.",
-                    fr: 'El hospital disponible depende de los grupos seleccionados. Si no está, puedes crearlo directamente desde aquí.'
-                  })}
-                </p>
-                <HospitalSelect
-                  options={pendingDialogHospitalOptions}
-                  value={pendingDialogForm.hospital}
-                  onValueChange={(value) => setPendingDialogForm((current) => ({ ...current, hospital: value }))}
-                />
-                <Button
-                  disabled={!canOpenCreateHospitalDialog(pendingDialogForm.groupIds) || isBusy}
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setHospitalDialogTarget('edit');
-                    setHospitalForm(DEFAULT_HOSPITAL_FORM);
-                    setIsHospitalDialogOpen(true);
-                  }}
-                >
-                  {t({ en: 'Crear hospital nou', fr: 'Crear hospital nuevo' })}
-                </Button>
-              </div>
+              <StudyHospitalFields
+                groups={groupOptions}
+                groupIds={pendingDialogForm.groupIds}
+                assignments={pendingDialogForm.studyHospitals}
+                legacyHospital={pendingDialogForm.hospital}
+                isTest={pendingDialogForm.userType === 'TEST_USER'}
+                onTestChange={(isTest) =>
+                  setPendingDialogForm((current) => ({ ...current, userType: isTest ? 'TEST_USER' : 'INVESTIGATOR' }))
+                }
+                disabled={isBusy}
+                onChange={(studyHospitals, hospital) =>
+                  setPendingDialogForm((current) => ({ ...current, studyHospitals, hospital }))
+                }
+                onCreate={(groupId) => {
+                  setHospitalDialogGroupId(groupId);
+                  setHospitalDialogTarget('edit');
+                  setHospitalForm(DEFAULT_HOSPITAL_FORM);
+                  setIsHospitalDialogOpen(true);
+                }}
+              />
               <div className="grid gap-2">
                 <Label htmlFor="pending-notes">{t({ en: 'Comentaris', fr: 'Comentarios' })}</Label>
                 <textarea

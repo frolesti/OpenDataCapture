@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 
 import { Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
+import { isOrionPatientCode } from '@opendatacapture/schemas/instrument-records';
 import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
@@ -78,9 +79,7 @@ const RouteComponent = () => {
       .map((record) => {
         const data = record.data as Record<string, unknown>;
         const patientCode = data.patient_code ?? data.user_code;
-        return typeof patientCode === 'string' && /^OR-\d{2,3}-\d+$/.test(patientCode.trim())
-          ? patientCode.trim()
-          : undefined;
+        return isOrionPatientCode(patientCode) ? patientCode.trim() : undefined;
       })
       .filter((patientCode): patientCode is string => Boolean(patientCode))
   );
@@ -91,7 +90,7 @@ const RouteComponent = () => {
       const patientCode = data.patient_code ?? data.user_code;
       return (
         typeof patientCode === 'string' &&
-        /^OR-\d{2,3}-\d+$/.test(patientCode.trim()) &&
+        isOrionPatientCode(patientCode) &&
         Boolean(data.selection_visit_date) &&
         !completedOrionFollowupCodes.has(patientCode.trim())
       );

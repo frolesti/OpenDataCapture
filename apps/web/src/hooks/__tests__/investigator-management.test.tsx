@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import type { PropsWithChildren } from 'react';
 
 import type { PendingInvestigator, UpdatePendingInvestigatorData, User } from '@opendatacapture/schemas/user';
+import type { HospitalGroup } from '@/components/admin/groups/StudyHospitalFields';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import axios from 'axios';
@@ -13,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   notification: vi.fn(),
   pending: [] as PendingInvestigator[],
   users: [] as User[],
-  groups: [{ id: 'group', name: 'Estudi de prova', hospitals: ['Hospital de prova'] }]
+  groups: [] as HospitalGroup[]
 }));
 
 vi.mock('axios', () => ({ default: { get: vi.fn(), patch: vi.fn(), post: vi.fn() } }));
@@ -33,6 +34,28 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 vi.mock('@/components/PageHeader', () => ({
   PageHeader: ({ children }: PropsWithChildren) => <header>{children}</header>
+}));
+vi.mock('@/components/admin/groups/HospitalSelect', () => ({
+  HospitalSelect: ({
+    ariaLabel,
+    options,
+    value,
+    onValueChange
+  }: {
+    ariaLabel?: string;
+    options: string[];
+    value: string;
+    onValueChange: (value: string) => void;
+  }) => (
+    <select aria-label={ariaLabel} value={value} onChange={(event) => onValueChange(event.target.value)}>
+      <option value="">Selecciona un centre</option>
+      {options.map((option) => (
+        <option value={option} key={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  )
 }));
 vi.mock('@/hooks/useGroupsQuery', () => ({
   useGroupsQuery: () => ({ data: mocks.groups }),
@@ -97,6 +120,7 @@ function openPendingEditor() {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.pending = [pendingInvestigator()];
+  mocks.groups = [{ id: 'group', name: 'Estudi de prova', hospitals: ['Hospital de prova'] }];
   mocks.users = [];
   vi.mocked(axios.get).mockImplementation(async () => ({ data: mocks.pending }));
   vi.mocked(axios.patch).mockImplementation(async (_url, data: UpdatePendingInvestigatorData) => {
@@ -178,5 +202,94 @@ describe('selected account creation confirmation', () => {
     expect(confirmation.getByRole('button', { name: 'Crear comptes i enviar credencials' })).toBeDefined();
     expect(axios.post).not.toHaveBeenCalled();
     expect(axios.patch).not.toHaveBeenCalled();
+  });
+
+  describe('per-study centre assignments in the actual management route', () => {
+    function configureStudies() {
+      mocks.groups = [
+        {
+          id: 'omega',
+          name: 'OMEGA',
+          hospitals: ['Centre A', 'Centre B', 'Alta Medical Services'],
+          hospitalCatalog: [
+            { id: 'a', name: 'Centre A', isInternal: false },
+            { id: 'b', name: 'Centre B', isInternal: false },
+            { id: 'internal', name: 'Alta Medical Services', isInternal: true }
+          ]
+        },
+        {
+          id: 'orion',
+          name: 'ORION',
+          hospitals: ['Centre C'],
+          hospitalCatalog: [{ id: 'c', name: 'Centre C', isInternal: false }]
+        }
+      ];
+      mocks.pending = [
+        pendingInvestigator({
+          groupIds: ['omega', 'orion'],
+          hospital: 'Centre A',
+          studyHospitals: [
+            { groupId: 'omega', hospitalId: 'a' },
+            { groupId: 'orion', hospitalId: 'c' }
+          ]
+        })
+      ];
+    }
+
+    it('changes one study centre without modifying the other study assignment', async () => {
+      configureStudies();
+      renderDirectory();
+      const dialog = openPendingEditor();
+      const omega = dialog.getByRole('combobox', { name: 'Centre — OMEGA' });
+      const orion = dialog.getByRole('combobox', { name: 'Centre — ORION' });
+      expect((orion as HTMLSelectElement).value).toBe('Centre C');
+      expect(within(omega).queryByRole('option', { name: 'Centre C' })).toBeNull();
+      expect(within(omega).queryByRole('option', { name: 'Alta Medical Services' })).toBeNull();
+      fireEvent.change(omega, { target: { value: 'Centre B' } });
+      expect((orion as HTMLSelectElement).value).toBe('Centre C');
+      fireEvent.click(dialog.getByRole('button', { name: 'Desar' }));
+      await waitFor(() =>
+        expect(axios.patch).toHaveBeenCalledWith(
+          '/v1/users/pending/pending',
+          expect.objectContaining({
+            studyHospitals: expect.arrayContaining([
+              { groupId: 'omega', hospitalId: 'b' },
+              { groupId: 'orion', hospitalId: 'c' }
+            ])
+          })
+        )
+      );
+    });
+
+    it('requires a valid centre for every assigned study before saving', () => {
+      configureStudies();
+      mocks.pending[0]!.studyHospitals = [{ groupId: 'omega', hospitalId: 'a' }];
+      renderDirectory();
+      const dialog = openPendingEditor();
+      expect((dialog.getByRole('button', { name: 'Desar' }) as HTMLButtonElement).disabled).toBe(true);
+      fireEvent.change(dialog.getByRole('combobox', { name: 'Centre — ORION' }), { target: { value: 'Centre C' } });
+      expect((dialog.getByRole('button', { name: 'Desar' }) as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('exposes the internal centre only after explicitly classifying the account as a test account', async () => {
+      configureStudies();
+      renderDirectory();
+      const dialog = openPendingEditor();
+      const omega = dialog.getByRole('combobox', { name: 'Centre — OMEGA' });
+      expect(within(omega).queryByRole('option', { name: 'Alta Medical Services' })).toBeNull();
+      fireEvent.click(dialog.getByRole('checkbox', { name: 'Compte de proves (numeració separada)' }));
+      expect(within(omega).getByRole('option', { name: 'Alta Medical Services' })).toBeDefined();
+      fireEvent.change(omega, { target: { value: 'Alta Medical Services' } });
+      fireEvent.click(dialog.getByRole('button', { name: 'Desar' }));
+      await waitFor(() =>
+        expect(axios.patch).toHaveBeenCalledWith(
+          '/v1/users/pending/pending',
+          expect.objectContaining({
+            userType: 'TEST_USER',
+            studyHospitals: expect.arrayContaining([{ groupId: 'omega', hospitalId: 'internal' }])
+          })
+        )
+      );
+    });
   });
 });

@@ -12,8 +12,9 @@ import { WalkthroughProvider } from '@/providers/WalkthroughProvider';
 import { useAppStore } from '@/store';
 
 import type { Group } from '@opendatacapture/schemas/group';
+import type { User } from '@opendatacapture/schemas/user';
 
-type CurrentProfileResponse = {
+type CurrentProfileResponse = Pick<User, 'studyHospitals' | 'studyNumbers' | 'userType'> & {
   basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER' | 'STANDARD';
   firstName: string;
   groups: Group[];
