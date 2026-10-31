@@ -153,7 +153,6 @@ model OrionPatientCode {
   hospital           String
   investigatorId     String   @db.ObjectId
   investigatorNumber Int      @default(0)
-  isTest             Boolean  @default(false)
   sequence           Int
 
   @@unique([groupId, investigatorId, sequence])
@@ -181,10 +180,9 @@ model OrionInvestigator {
   groupId        String   @db.ObjectId
   investigatorId String   @db.ObjectId
   number         Int
-  isTest         Boolean  @default(false)
 
   @@unique([groupId, investigatorId])
-  @@unique([groupId, isTest, number])
+  @@unique([groupId, number])
   @@map("OrionInvestigatorModel")
 }
 
@@ -282,7 +280,7 @@ model User {
   email                 String?                     @unique
   hashedPassword        String                      @map("password")
   username              String
-  userType              PendingInvestigatorUserType @default(INVESTIGATOR)
+  professionalTitle     ProfessionalTitle?
   studyHospitals        StudyHospital[]
   sex                   Sex?
   dateOfBirth           DateTime?                   @db.Date
@@ -327,7 +325,6 @@ model PendingInvestigator {
   sex                 Sex?
   dateOfBirth         DateTime?                   @db.Date
   status              PendingInvestigatorStatus
-  userType            PendingInvestigatorUserType
   signed              Boolean                     @default(false)
   notes               String?
   promotedUserId      String?                     @db.ObjectId

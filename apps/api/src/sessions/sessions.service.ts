@@ -2,7 +2,6 @@ import { accessibleQuery, InjectModel, InjectPrismaClient, LoggingService } from
 import type { ExtendedPrismaClient, Model } from '@douglasneuroinformatics/libnest';
 import { Injectable } from '@nestjs/common';
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common/exceptions';
-import type { Group } from '@opendatacapture/schemas/group';
 import type { CreateSessionData } from '@opendatacapture/schemas/session';
 import type { CreateSubjectData } from '@opendatacapture/schemas/subject';
 import type { Prisma, Session, Subject, User } from '@prisma/client';
@@ -27,8 +26,12 @@ export class SessionsService {
     });
   }
 
-  async create({ date, groupId, subjectData, type, username }: CreateSessionData): Promise<Session> {
+  async create(
+    { date, groupId, subjectData, type, username }: CreateSessionData,
+    options: EntityOperationOptions = {}
+  ): Promise<Session> {
     this.loggingService.debug({ message: 'Attempting to create session' });
+    const group = groupId ? await this.groupsService.findById(groupId, options) : null;
     const subject = await this.resolveSubject(subjectData);
 
     let user: null | Omit<User, 'hashedPassword'> = null;
@@ -42,10 +45,8 @@ export class SessionsService {
     }
 
     // If the subject is not yet associated with the group, check it exists then append it
-    let group: Group | null = null;
     if (groupId && !subject.groupIds.includes(groupId)) {
-      group = await this.groupsService.findById(groupId);
-      await this.subjectsService.addGroupForSubject(subject.id, group.id);
+      await this.subjectsService.addGroupForSubject(subject.id, groupId);
     }
 
     const { id } = await this.sessionModel.create({

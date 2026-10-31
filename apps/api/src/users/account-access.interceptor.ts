@@ -15,7 +15,7 @@ export class AccountAccessInterceptor implements NestInterceptor {
       throw new UnauthorizedException('Cal tornar a iniciar la sessió.');
     }
     const account = await this.userModel.findUnique({
-      select: { basePermissionLevel: true, groupIds: true, userType: true },
+      select: { basePermissionLevel: true, groupIds: true },
       where: { id: user.id }
     });
     if (
@@ -26,7 +26,6 @@ export class AccountAccessInterceptor implements NestInterceptor {
     ) {
       throw new UnauthorizedException('Els permisos del compte han canviat. Torneu a iniciar la sessió.');
     }
-    Object.assign(user, { userType: account.userType });
     return next.handle();
   }
 }

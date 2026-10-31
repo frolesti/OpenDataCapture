@@ -62,7 +62,7 @@ describe('ORION record assignment and atomic code persistence', () => {
       lastName: 'Researcher',
       basePermissionLevel: 'STANDARD',
       groupIds: ['orion'],
-      userType: 'INVESTIGATOR',
+      professionalTitle: null,
       studyHospitals: [{ groupId: 'orion', hospitalId: 'aravaca' }],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -115,7 +115,7 @@ describe('ORION record assignment and atomic code persistence', () => {
 
   it('writes the final code and response in the same transaction, replacing a stale preview', async () => {
     const result = await service.create(input, { user });
-    expect(codes.create).toHaveBeenCalledWith('orion', 'researcher', false, 'CS Aravaca', transaction);
+    expect(codes.create).toHaveBeenCalledWith('orion', 'researcher', 'CS Aravaca', transaction);
     expect(records.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ data: { site_hospital: 'CS Aravaca', patient_code: 'OR-01-01' } })
     });

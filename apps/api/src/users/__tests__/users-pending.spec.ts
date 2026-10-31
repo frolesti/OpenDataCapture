@@ -122,26 +122,26 @@ describe('pending investigator comments', () => {
     expect(pendingModel.create).not.toHaveBeenCalled();
   });
 
-  it('does not assign the internal centre to a real investigator', async () => {
+  it('assigns any centre configured for the study without a special account classification', async () => {
     groups.findById.mockResolvedValue({
       id: 'orion',
       name: 'ORION',
       hospitals: ['Alta Medical Services'],
       hospitalCatalog: [{ id: 'internal', name: 'Alta Medical Services', isInternal: true }]
     });
-    await expect(
-      service.createPending({
-        basePermissionLevel: 'STANDARD',
-        email: 'doctor@example.test',
-        firstName: 'Maria',
-        lastName: 'Exemple',
-        groupIds: ['orion'],
-        hospital: 'Alta Medical Services',
-        studyHospitals: [{ groupId: 'orion', hospitalId: 'internal' }],
-        signed: false
-      })
-    ).rejects.toThrow('centre sanitari vàlid');
-    expect(pendingModel.create).not.toHaveBeenCalled();
+    await service.createPending({
+      basePermissionLevel: 'STANDARD',
+      email: 'doctor@example.test',
+      firstName: 'Maria',
+      lastName: 'Exemple',
+      groupIds: ['orion'],
+      hospital: 'Alta Medical Services',
+      studyHospitals: [{ groupId: 'orion', hospitalId: 'internal' }],
+      signed: false
+    });
+    expect(pendingModel.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ studyHospitals: [{ groupId: 'orion', hospitalId: 'internal' }] })
+    });
   });
 
   it('preserves generic group onboarding when no healthcare centres are configured', async () => {

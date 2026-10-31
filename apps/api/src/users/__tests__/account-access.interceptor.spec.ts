@@ -24,7 +24,7 @@ describe('current account access after study and role changes', () => {
     users.findUnique.mockResolvedValue({
       basePermissionLevel: 'STANDARD',
       groupIds: ['orion'],
-      userType: 'TEST_USER'
+      professionalTitle: 'Dra'
     });
   });
 
@@ -32,10 +32,10 @@ describe('current account access after study and role changes', () => {
     return { switchToHttp: () => ({ getRequest: () => ({ user }) }) } as ExecutionContext;
   }
 
-  it('hydrates test classification even when the existing token predates it', async () => {
+  it('allows an unchanged account without a special classification field', async () => {
     const user = { id: 'tester', basePermissionLevel: 'STANDARD', groups: [{ id: 'orion' }] };
     await interceptor.intercept(context(user), next);
-    expect(user).toMatchObject({ userType: 'TEST_USER' });
+    expect(user).not.toHaveProperty('userType');
     expect(next.handle).toHaveBeenCalledOnce();
   });
 

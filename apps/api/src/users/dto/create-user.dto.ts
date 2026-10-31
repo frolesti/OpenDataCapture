@@ -3,7 +3,12 @@ import { estimatePasswordStrength } from '@douglasneuroinformatics/libpasswd';
 import { ApiProperty } from '@nestjs/swagger';
 import type { Sex } from '@opendatacapture/schemas/subject';
 import { $CreateUserData } from '@opendatacapture/schemas/user';
-import type { BasePermissionLevel, CreateUserData, StudyHospital } from '@opendatacapture/schemas/user';
+import type {
+  BasePermissionLevel,
+  CreateUserData,
+  ProfessionalTitle,
+  StudyHospital
+} from '@opendatacapture/schemas/user';
 import { z } from 'zod/v4';
 
 @ValidationSchema(
@@ -46,8 +51,8 @@ export class CreateUserDto implements CreateUserData {
   @ApiProperty({ required: false })
   studyHospitals?: StudyHospital[];
 
-  @ApiProperty({ required: false, enum: ['INVESTIGATOR', 'TEST_USER'] })
-  userType?: 'INVESTIGATOR' | 'TEST_USER';
+  @ApiProperty({ required: false, nullable: true, enum: ['Dr', 'Dra'] })
+  professionalTitle?: ProfessionalTitle | null;
 
   @ApiProperty({ description: 'Last Name' })
   lastName: string;

@@ -59,7 +59,7 @@ export const createAuthSlice: SliceCreator<AuthSlice> = (set) => ({
         username: profile.username,
         studyHospitals: profile.studyHospitals,
         studyNumbers: profile.studyNumbers,
-        userType: profile.userType
+        professionalTitle: profile.professionalTitle
       };
 
       // If membership changed, keep a valid selected group or fallback to the first one.

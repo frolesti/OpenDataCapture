@@ -136,8 +136,7 @@ export class GroupsService {
     user?: EntityOperationOptions['user']
   ) {
     const catalog = group.hospitalIds?.length ? await this.hospitalsService.findByIds(group.hospitalIds) : undefined;
-    const canSeeInternal = !user || user.basePermissionLevel === 'ADMIN' || user.userType === 'TEST_USER';
-    const visibleCatalog = catalog?.filter((hospital) => canSeeInternal || !hospital.isInternal);
+    const visibleCatalog = catalog;
     return {
       ...group,
       hospitalCatalog: visibleCatalog,

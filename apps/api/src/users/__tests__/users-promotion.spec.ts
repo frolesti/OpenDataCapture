@@ -70,5 +70,25 @@ describe('investigator promotion', () => {
         username: 'mgarcia'
       })
     );
+    expect(userModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ professionalTitle: 'Dra' })
+      })
+    );
+  });
+
+  it('updates an existing account title and its associated investigator metadata atomically', async () => {
+    userModel.findUnique.mockResolvedValueOnce({ id: 'existing', email: null, groupIds: [] });
+    userModel.update.mockResolvedValueOnce({ id: 'existing', professionalTitle: 'Dr' });
+    await service.updateById('existing', { professionalTitle: 'Dr' });
+    expect(userModel.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ professionalTitle: 'Dr' })
+      })
+    );
+    expect(pendingModel.updateMany).toHaveBeenCalledWith({
+      where: { promotedUserId: 'existing' },
+      data: { professionalTitle: 'Dr' }
+    });
   });
 });

@@ -28,17 +28,17 @@ describe('permanent ORION numbering', () => {
   });
 
   it('previews OR-01-01 without reserving or consuming a patient code', async () => {
-    investigators.findFirst.mockResolvedValue({ number: 1, isTest: false });
-    expect(await service.preview('orion', 'first', false)).toBe('OR-01-01');
-    expect(await service.preview('orion', 'first', false)).toBe('OR-01-01');
+    investigators.findFirst.mockResolvedValue({ number: 1 });
+    expect(await service.preview('orion', 'first')).toBe('OR-01-01');
+    expect(await service.preview('orion', 'first')).toBe('OR-01-01');
     expect(patients.create).not.toHaveBeenCalled();
   });
 
   it('keeps the assigned investigator number when the hospital changes', async () => {
-    investigators.findFirst.mockResolvedValue({ number: 2, isTest: false });
+    investigators.findFirst.mockResolvedValue({ number: 2 });
     patients.findFirst.mockResolvedValueOnce({ sequence: 0 }).mockResolvedValueOnce({ sequence: 1 });
-    expect(await service.create('orion', 'second', false, 'Centre A')).toBe('OR-02-01');
-    expect(await service.create('orion', 'second', false, 'Centre B')).toBe('OR-02-02');
+    expect(await service.create('orion', 'second', 'Centre A')).toBe('OR-02-01');
+    expect(await service.create('orion', 'second', 'Centre B')).toBe('OR-02-02');
     expect(patients.findFirst).toHaveBeenLastCalledWith({
       where: { groupId: 'orion', investigatorId: 'second' },
       orderBy: { sequence: 'desc' }
@@ -46,12 +46,12 @@ describe('permanent ORION numbering', () => {
     expect(investigators.create).not.toHaveBeenCalled();
   });
 
-  it('uses a distinct TEST namespace without consuming real investigator numbers', async () => {
+  it('uses one consecutive numbering sequence for every account', async () => {
     investigators.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({ number: 3 });
-    investigators.create.mockResolvedValueOnce({ number: 4, isTest: true });
-    expect(await service.preview('orion', 'tester', true)).toBe('OR-TEST-04-01');
+    investigators.create.mockResolvedValueOnce({ number: 4 });
+    expect(await service.preview('orion', 'next')).toBe('OR-04-01');
     expect(investigators.findFirst).toHaveBeenNthCalledWith(2, {
-      where: { groupId: 'orion', isTest: true },
+      where: { groupId: 'orion' },
       orderBy: { number: 'desc' }
     });
   });
@@ -60,14 +60,14 @@ describe('permanent ORION numbering', () => {
     investigators.findFirst
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ groupId: 'orion', investigatorId: 'first', number: 1, isTest: false });
+      .mockResolvedValueOnce({ groupId: 'orion', investigatorId: 'first', number: 1 });
     investigators.create.mockRejectedValueOnce({ code: 'P2002' });
-    expect((await service.assignInvestigator('orion', 'first', false)).number).toBe(1);
+    expect((await service.assignInvestigator('orion', 'first')).number).toBe(1);
     expect(investigators.create).toHaveBeenCalledTimes(1);
   });
 
   it('allocates distinct consecutive patient codes for concurrent saves', async () => {
-    investigators.findFirst.mockResolvedValue({ number: 1, isTest: false });
+    investigators.findFirst.mockResolvedValue({ number: 1 });
     const saved: { code: string; sequence: number }[] = [];
     patients.findFirst.mockImplementation(async () => saved.at(-1) ?? null);
     patients.create.mockImplementation(async ({ data }) => {
@@ -77,15 +77,15 @@ describe('permanent ORION numbering', () => {
       return row;
     });
     const codes = await Promise.all([
-      service.create('orion', 'first', false, 'Centre A'),
-      service.create('orion', 'first', false, 'Centre A')
+      service.create('orion', 'first', 'Centre A'),
+      service.create('orion', 'first', 'Centre A')
     ]);
     expect(codes.sort()).toEqual(['OR-01-01', 'OR-01-02']);
   });
 
-  it('rejects reclassifying an investigator with an existing permanent number', async () => {
-    investigators.findFirst.mockResolvedValue({ number: 1, isTest: true });
-    await expect(service.assignInvestigator('orion', 'first', false)).rejects.toThrow('tipus de proves');
+  it('keeps existing ordinary numbers permanent', async () => {
+    investigators.findFirst.mockResolvedValue({ number: 1 });
+    expect((await service.assignInvestigator('orion', 'first')).number).toBe(1);
     expect(investigators.create).not.toHaveBeenCalled();
   });
 

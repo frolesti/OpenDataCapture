@@ -66,7 +66,7 @@ export class UsersService {
       sex,
       username,
       studyHospitals,
-      userType = 'INVESTIGATOR'
+      professionalTitle
     }: CreateUserDto,
     options?: EntityOperationOptions & { skipPendingEmailConflict?: boolean }
   ) {
@@ -98,7 +98,7 @@ export class UsersService {
     const hashedPassword = await this.cryptoService.hashPassword(password);
     const assignments =
       basePermissionLevel === 'STANDARD' || studyHospitals
-        ? await this.resolveStudyHospitals(groupIds, studyHospitals, undefined, userType === 'TEST_USER', options)
+        ? await this.resolveStudyHospitals(groupIds, studyHospitals, undefined, options)
         : [];
 
     return this.orionCodesService.transaction(async (transaction) => {
@@ -110,7 +110,7 @@ export class UsersService {
           email: normalizedEmail,
           firstName,
           studyHospitals: assignments,
-          userType,
+          professionalTitle,
           groups: {
             connect: groupIds.map((id) => ({ id }))
           },
@@ -123,7 +123,7 @@ export class UsersService {
           hashedPassword: true
         }
       });
-      await this.assignStudyNumbers(created.id, groupIds, userType === 'TEST_USER', options, transaction);
+      await this.assignStudyNumbers(created.id, groupIds, options, transaction);
       return created;
     });
   }
@@ -200,10 +200,9 @@ export class UsersService {
 
     return {
       ...user,
-      studyNumbers: (await this.orionCodesService.findForUsers([id])).map(({ groupId, number, isTest }) => ({
+      studyNumbers: (await this.orionCodesService.findForUsers([id])).map(({ groupId, number }) => ({
         groupId,
-        number,
-        isTest
+        number
       })),
       hospital: promotedPending?.hospital ?? null
     };
@@ -258,12 +257,7 @@ export class UsersService {
           };
 
     let assignments: StudyHospital[] | undefined;
-    if (
-      studyHospitals !== undefined ||
-      groupIds !== undefined ||
-      hospital !== undefined ||
-      data.userType !== undefined
-    ) {
+    if (studyHospitals !== undefined || groupIds !== undefined || hospital !== undefined) {
       const nextGroupIds = groupIds ?? currentUser.groupIds;
       const source =
         studyHospitals ?? currentUser.studyHospitals?.filter((entry) => nextGroupIds.includes(entry.groupId));
@@ -271,7 +265,6 @@ export class UsersService {
         nextGroupIds,
         studyHospitals !== undefined ? studyHospitals : source?.length ? source : undefined,
         hospital,
-        (data.userType ?? currentUser.userType) === 'TEST_USER',
         { ability }
       );
     }
@@ -290,23 +283,22 @@ export class UsersService {
         },
         where: { AND: [accessibleQuery(ability, 'update', 'User')], id }
       });
-      if (groupIds !== undefined || data.userType !== undefined) {
-        await this.assignStudyNumbers(
-          id,
-          groupIds ?? currentUser.groupIds,
-          (data.userType ?? currentUser.userType) === 'TEST_USER',
-          { ability },
-          transaction
-        );
+      if (groupIds !== undefined) {
+        await this.assignStudyNumbers(id, groupIds ?? currentUser.groupIds, { ability }, transaction);
       }
-      if (hospital !== undefined || assignments !== undefined || groupIds !== undefined) {
+      if (
+        hospital !== undefined ||
+        assignments !== undefined ||
+        groupIds !== undefined ||
+        data.professionalTitle !== undefined
+      ) {
         await transaction.pendingInvestigator.updateMany({
           where: { promotedUserId: id },
           data: {
             ...(hospital !== undefined ? { hospital } : {}),
             ...(assignments !== undefined ? { studyHospitals: assignments } : {}),
             ...(groupIds !== undefined ? { groupIds } : {}),
-            ...(data.userType !== undefined ? { userType: data.userType } : {})
+            ...(data.professionalTitle !== undefined ? { professionalTitle: data.professionalTitle } : {})
           }
         });
       }
@@ -318,7 +310,6 @@ export class UsersService {
     groupIds: string[],
     assignments: StudyHospital[] | undefined,
     legacyHospital: string | undefined,
-    isTest: boolean,
     options?: EntityOperationOptions
   ): Promise<StudyHospital[]> {
     if (
@@ -345,7 +336,7 @@ export class UsersService {
         : assignments === undefined
           ? catalog.find((entry) => entry.name === legacyHospital)
           : undefined;
-      if (!hospital || (hospital.isInternal && !isTest)) {
+      if (!hospital) {
         throw new BadRequestException(`Cal assignar un centre sanitari vàlid per a l'estudi '${group.name}'.`);
       }
       result.push({ groupId: id, hospitalId: hospital.id });
@@ -356,14 +347,13 @@ export class UsersService {
   private async assignStudyNumbers(
     userId: string,
     groupIds: string[],
-    isTest: boolean,
     options?: EntityOperationOptions,
     transaction?: OrionTransactionClient
   ) {
     for (const id of groupIds) {
       const group = await this.groupsService.findById(id, options);
       if (group.studyCode === 'OR') {
-        await this.orionCodesService.assignInvestigator(id, userId, isTest, transaction);
+        await this.orionCodesService.assignInvestigator(id, userId, transaction);
       }
     }
   }
@@ -380,7 +370,7 @@ export class UsersService {
       hospital: hospitalByUserId.get(user.id) ?? null,
       studyNumbers: numbers
         .filter((entry) => entry.investigatorId === user.id)
-        .map(({ groupId, number, isTest }) => ({ groupId, number, isTest }))
+        .map(({ groupId, number }) => ({ groupId, number }))
     }));
   }
 
@@ -405,13 +395,7 @@ export class UsersService {
       groups.push(group);
     }
 
-    const studyHospitals = await this.resolveStudyHospitals(
-      groupIds,
-      data.studyHospitals,
-      data.hospital,
-      data.userType === 'TEST_USER',
-      options
-    );
+    const studyHospitals = await this.resolveStudyHospitals(groupIds, data.studyHospitals, data.hospital, options);
 
     const normalizedEmail = this.normalizeEmail(data.email);
     if (!normalizedEmail) {
@@ -429,7 +413,6 @@ export class UsersService {
     return this.pendingInvestigatorModel.create({
       data: {
         ...data,
-        userType: data.userType ?? 'INVESTIGATOR',
         studyHospitals,
         email: normalizedEmail,
         groupIds,
@@ -469,16 +452,12 @@ export class UsersService {
       }
     }
     const studyHospitals =
-      update.studyHospitals !== undefined ||
-      update.groupIds !== undefined ||
-      update.hospital !== undefined ||
-      update.userType !== undefined
+      update.studyHospitals !== undefined || update.groupIds !== undefined || update.hospital !== undefined
         ? await this.resolveStudyHospitals(
             update.groupIds ?? pending.groupIds,
             update.studyHospitals ??
               pending.studyHospitals?.filter((entry) => (update.groupIds ?? pending.groupIds).includes(entry.groupId)),
-            update.hospital ?? pending.hospital,
-            (update.userType ?? pending.userType) === 'TEST_USER'
+            update.hospital ?? pending.hospital
           )
         : undefined;
     return this.pendingInvestigatorModel.update({
@@ -524,7 +503,6 @@ export class UsersService {
       pending.groupIds,
       pending.studyHospitals?.length ? pending.studyHospitals : undefined,
       pending.hospital,
-      pending.userType === 'TEST_USER',
       options
     );
     await this.onboardingMailService.verifyConnection();
@@ -544,7 +522,7 @@ export class UsersService {
           firstName: pending.firstName,
           groupIds: pending.groupIds,
           studyHospitals,
-          userType: pending.userType,
+          professionalTitle: pending.professionalTitle,
           lastName: pending.lastName,
           password,
           sex: pending.sex ?? undefined,

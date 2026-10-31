@@ -14,7 +14,8 @@ const mocks = vi.hoisted(() => ({
   notification: vi.fn(),
   pending: [] as PendingInvestigator[],
   users: [] as User[],
-  groups: [] as HospitalGroup[]
+  groups: [] as HospitalGroup[],
+  language: 'en' as 'en' | 'fr'
 }));
 
 vi.mock('axios', () => ({ default: { get: vi.fn(), patch: vi.fn(), post: vi.fn() } }));
@@ -23,10 +24,10 @@ vi.mock('@douglasneuroinformatics/libui/hooks', async (importOriginal) => ({
   useNotificationsStore: (selector: (store: { addNotification: typeof mocks.notification }) => unknown) =>
     selector({ addNotification: mocks.notification }),
   useTranslation: () => ({
-    t: (value: string | { en: string }) =>
+    t: (value: string | { en: string; fr: string }) =>
       typeof value === 'string'
         ? ({ 'core.save': 'Desar', 'core.cancel': 'Cancel·lar', 'common.groups': 'Grups' }[value] ?? value)
-        : value.en
+        : value[mocks.language]
   })
 }));
 vi.mock('@tanstack/react-router', () => ({
@@ -94,7 +95,6 @@ function pendingInvestigator(overrides: Partial<PendingInvestigator> = {}): Pend
     professionalTitle: 'Dra',
     signed: false,
     status: 'PENDING',
-    userType: 'INVESTIGATOR',
     ...overrides
   };
 }
@@ -119,6 +119,7 @@ function openPendingEditor() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.language = 'en';
   mocks.pending = [pendingInvestigator()];
   mocks.groups = [{ id: 'group', name: 'Estudi de prova', hospitals: ['Hospital de prova'] }];
   mocks.users = [];
@@ -133,6 +134,50 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   client.clear();
+});
+
+describe('active account titles and deletion translations', () => {
+  function configureActiveAccount() {
+    mocks.pending = [];
+    mocks.users = [
+      {
+        id: 'active-user',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        additionalPermissions: [],
+        basePermissionLevel: 'STANDARD',
+        email: 'active@example.test',
+        firstName: 'Maria',
+        lastName: 'Exemple',
+        groupIds: ['group'],
+        username: 'maria',
+        professionalTitle: 'Dra',
+        hospital: 'Hospital de prova'
+      }
+    ];
+  }
+
+  it('restores the production account title in the active-user editor', () => {
+    configureActiveAccount();
+    renderDirectory();
+    fireEvent.click(screen.getByText('active@example.test'));
+    expect(within(screen.getByRole('dialog')).getByLabelText('Tractament professional').textContent).toContain('Dra.');
+  });
+
+  it.each([
+    ['en', 'Eliminar usuari', 'Vols eliminar l’usuari?', 'Sí, elimina l’usuari'],
+    ['fr', 'Eliminar usuario', '¿Eliminar usuario?', 'Sí, eliminar usuario']
+  ] as const)('localizes the delete confirmation in %s', (language, button, title, confirm) => {
+    mocks.language = language;
+    configureActiveAccount();
+    renderDirectory();
+    fireEvent.click(screen.getByText('active@example.test'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: button }));
+    const alert = within(screen.getByRole('alertdialog'));
+    expect(alert.getByText(title)).toBeDefined();
+    expect(alert.getByRole('button', { name: confirm })).toBeDefined();
+    expect(alert.queryByText('Delete user?')).toBeNull();
+  });
 });
 
 describe('investigator comments in the actual user-management route', () => {
@@ -244,7 +289,7 @@ describe('selected account creation confirmation', () => {
       const orion = dialog.getByRole('combobox', { name: 'Centre — ORION' });
       expect((orion as HTMLSelectElement).value).toBe('Centre C');
       expect(within(omega).queryByRole('option', { name: 'Centre C' })).toBeNull();
-      expect(within(omega).queryByRole('option', { name: 'Alta Medical Services' })).toBeNull();
+      expect(within(omega).getByRole('option', { name: 'Alta Medical Services' })).toBeDefined();
       fireEvent.change(omega, { target: { value: 'Centre B' } });
       expect((orion as HTMLSelectElement).value).toBe('Centre C');
       fireEvent.click(dialog.getByRole('button', { name: 'Desar' }));
@@ -271,13 +316,12 @@ describe('selected account creation confirmation', () => {
       expect((dialog.getByRole('button', { name: 'Desar' }) as HTMLButtonElement).disabled).toBe(false);
     });
 
-    it('exposes the internal centre only after explicitly classifying the account as a test account', async () => {
+    it('allows every configured centre without classifying accounts differently', async () => {
       configureStudies();
       renderDirectory();
       const dialog = openPendingEditor();
       const omega = dialog.getByRole('combobox', { name: 'Centre — OMEGA' });
-      expect(within(omega).queryByRole('option', { name: 'Alta Medical Services' })).toBeNull();
-      fireEvent.click(dialog.getByRole('checkbox', { name: 'Compte de proves (numeració separada)' }));
+      expect(dialog.queryByRole('checkbox', { name: /Compte de proves/ })).toBeNull();
       expect(within(omega).getByRole('option', { name: 'Alta Medical Services' })).toBeDefined();
       fireEvent.change(omega, { target: { value: 'Alta Medical Services' } });
       fireEvent.click(dialog.getByRole('button', { name: 'Desar' }));
@@ -285,11 +329,52 @@ describe('selected account creation confirmation', () => {
         expect(axios.patch).toHaveBeenCalledWith(
           '/v1/users/pending/pending',
           expect.objectContaining({
-            userType: 'TEST_USER',
             studyHospitals: expect.arrayContaining([{ groupId: 'omega', hospitalId: 'internal' }])
           })
         )
       );
+      expect(vi.mocked(axios.patch).mock.calls[0]?.[1]).not.toHaveProperty('userType');
+    });
+
+    it('defaults to the only common centre and saves it for both selected studies', async () => {
+      configureStudies();
+      mocks.groups[1]!.hospitals.push('Centre A');
+      mocks.groups[1]!.hospitalCatalog!.push({ id: 'a', name: 'Centre A', isInternal: false });
+      mocks.pending[0]!.studyHospitals = [];
+      renderDirectory();
+      const dialog = openPendingEditor();
+      const common = dialog.getByRole('combobox', { name: 'Centre comú als estudis seleccionats' });
+      await waitFor(() => expect((common as HTMLSelectElement).value).toBe('Centre A'));
+      expect(within(common).queryByRole('option', { name: 'Centre B' })).toBeNull();
+      expect(within(common).queryByRole('option', { name: 'Centre C' })).toBeNull();
+      fireEvent.click(dialog.getByRole('button', { name: 'Desar' }));
+      await waitFor(() =>
+        expect(axios.patch).toHaveBeenCalledWith(
+          '/v1/users/pending/pending',
+          expect.objectContaining({
+            studyHospitals: [
+              { groupId: 'omega', hospitalId: 'a' },
+              { groupId: 'orion', hospitalId: 'a' }
+            ]
+          })
+        )
+      );
+    });
+
+    it('preserves different existing centres and offers switching back to a common centre', async () => {
+      configureStudies();
+      mocks.groups[1]!.hospitals.push('Centre A');
+      mocks.groups[1]!.hospitalCatalog!.push({ id: 'a', name: 'Centre A', isInternal: false });
+      renderDirectory();
+      const dialog = openPendingEditor();
+      expect((dialog.getByRole('combobox', { name: 'Centre — ORION' }) as HTMLSelectElement).value).toBe('Centre C');
+      fireEvent.click(dialog.getByRole('checkbox', { name: 'Assignar centres diferents per estudi' }));
+      await waitFor(() =>
+        expect(
+          (dialog.getByRole('combobox', { name: 'Centre comú als estudis seleccionats' }) as HTMLSelectElement).value
+        ).toBe('Centre A')
+      );
+      expect(dialog.queryByRole('combobox', { name: 'Centre — ORION' })).toBeNull();
     });
   });
 });

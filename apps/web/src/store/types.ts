@@ -7,7 +7,7 @@ import type { Simplify } from 'type-fest';
 import type { StateCreator } from 'zustand';
 
 export type CurrentUser = Omit<TokenPayload, 'permissions'> &
-  Pick<User, 'studyHospitals' | 'studyNumbers' | 'userType'> & {
+  Pick<User, 'studyHospitals' | 'studyNumbers' | 'professionalTitle'> & {
     ability: BaseAppAbility;
     id: string;
   };
@@ -20,7 +20,7 @@ export type AuthSlice = {
   login: (accessToken: string) => void;
   logout: () => void;
   syncCurrentUserFromProfile: (
-    profile: Pick<User, 'studyHospitals' | 'studyNumbers' | 'userType'> & {
+    profile: Pick<User, 'studyHospitals' | 'studyNumbers' | 'professionalTitle'> & {
       basePermissionLevel: CurrentUser['basePermissionLevel'];
       firstName: string;
       groups: Group[];

@@ -30,9 +30,6 @@ export class CreatePendingInvestigatorDto implements CreatePendingInvestigatorDa
   @ApiProperty({ required: false })
   studyHospitals?: StudyHospital[];
 
-  @ApiProperty({ required: false, enum: ['INVESTIGATOR', 'TEST_USER'] })
-  userType?: 'INVESTIGATOR' | 'TEST_USER';
-
   @ApiProperty()
   lastName: string;
 

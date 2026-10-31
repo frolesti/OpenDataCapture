@@ -7,12 +7,14 @@ export function HospitalSelect({
   onValueChange,
   ariaLabel,
   options,
-  value
+  value,
+  disabled = false
 }: {
   onValueChange: (value: string) => void;
   ariaLabel?: string;
   options: string[];
   value: string;
+  disabled?: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -20,7 +22,7 @@ export function HospitalSelect({
       <Select.Trigger
         aria-label={ariaLabel}
         className="w-full min-w-0 [&>span]:truncate"
-        disabled={options.length === 0}
+        disabled={disabled || options.length === 0}
       >
         <span className="min-w-0 truncate">
           {value ? (

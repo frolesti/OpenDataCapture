@@ -5,6 +5,12 @@ import axios, { isAxiosError } from 'axios';
 import { config } from '@/config';
 import { useAppStore } from '@/store';
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    suppressErrorNotification?: boolean;
+  }
+}
+
 axios.defaults.baseURL = import.meta.env.MODE !== 'test' ? config.setup.apiBaseUrl : undefined;
 
 axios.interceptors.request.use((config) => {
@@ -66,6 +72,9 @@ axios.interceptors.response.use(
 
     if (isAxiosError(error) && error.response?.status === 401) {
       useAppStore.getState().logout();
+      return Promise.reject(error);
+    }
+    if (isAxiosError(error) && error.config?.suppressErrorNotification) {
       return Promise.reject(error);
     }
     if (!isAxiosError(error)) {

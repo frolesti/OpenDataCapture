@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   },
   store: {
     setIsCurrentSessionSubmitted: vi.fn(),
+    startSession: vi.fn(),
     currentGroup: { id: 'group', name: 'ORION', hospitals: [] },
     currentSession: { id: 'session', subject: { id: 'subject' } },
     currentUser: { id: 'investigator', username: 'investigator', basePermissionLevel: 'STANDARD' }
@@ -34,6 +35,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('axios', () => ({
   default: {
+    get: vi.fn(),
     post: vi.fn(),
     patch: vi.fn(),
     isAxiosError: (error: unknown) => Boolean(error && typeof error === 'object' && 'isAxiosError' in error)
@@ -123,6 +125,7 @@ beforeEach(() => {
   mocks.store.currentGroup = { id: 'group', name: 'ORION', hospitals: [] };
   localStorage.clear();
   vi.resetAllMocks();
+  vi.mocked(axios.get).mockResolvedValue({ data: { groupId: 'group', subjectId: 'subject' } });
 });
 
 describe('ORION selection submission date window', () => {
@@ -158,6 +161,20 @@ describe('ORION selection submission date window', () => {
     expect(screen.getByRole('status').textContent).toContain('OR-01-02');
   });
 
+  it('shows one submission failure, retains the draft and does not mark the form saved', async () => {
+    const submit = prepareSubmission('15-12-2026', '15-12-2026');
+    const error = { isAxiosError: true, response: { status: 404, data: { message: 'Session unavailable' } } };
+    vi.mocked(axios.post).mockRejectedValueOnce(error);
+    await expect(submit()).rejects.toBe(error);
+    expect(mocks.notification).toHaveBeenCalledTimes(1);
+    expect(mocks.notification).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', message: 'Session unavailable' })
+    );
+    expect(mocks.store.setIsCurrentSessionSubmitted).not.toHaveBeenCalled();
+    expect(localStorage.getItem('instrument-draft:selection:investigator')).not.toBeNull();
+    expect(axios.post).toHaveBeenCalledTimes(1);
+  });
+
   it('discards pre-reset ORION test drafts without touching OMEGA drafts', async () => {
     localStorage.setItem(
       'instrument-draft:selection:investigator',
@@ -183,7 +200,8 @@ describe('ORION selection submission date window', () => {
         '/v1/instrument-records',
         expect.objectContaining({
           data: expect.objectContaining({ selection_visit_date: date, consent_signed_date: date })
-        })
+        }),
+        { suppressErrorNotification: true }
       );
       expect(mocks.notification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
       expect(mocks.store.setIsCurrentSessionSubmitted).toHaveBeenCalledWith(true);

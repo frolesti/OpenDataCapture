@@ -79,7 +79,7 @@ export class InstrumentRecordsService {
 
   async reserveOrionPatientCode({ groupId, user }: { groupId: string; user: EntityOperationOptions['user'] }) {
     const context = await this.getOrionPatientCodeContext({ groupId, user });
-    return { code: await this.orionCodesService.preview(groupId, context.user.id, context.isTest) };
+    return { code: await this.orionCodesService.preview(groupId, context.user.id) };
   }
 
   private async getOrionPatientCodeContext({
@@ -109,16 +109,12 @@ export class InstrumentRecordsService {
     }
     const assignment = account.studyHospitals.find((entry) => entry.groupId === groupId);
     const assignedHospital = group.hospitalCatalog?.find((entry) => entry.id === assignment?.hospitalId);
-    const isTest = account.userType === 'TEST_USER';
     const hospital = assignedHospital?.name;
-    if (assignedHospital?.isInternal && !isTest) {
-      throw new ForbiddenException('El centre intern només està disponible per als comptes de proves.');
-    }
     if (!hospital || !group.hospitals.includes(hospital)) {
       throw new BadRequestException('Assign a hospital to the investigator before creating an ORION patient code');
     }
 
-    return { group, hospital, isTest, user: account };
+    return { group, hospital, user: account };
   }
 
   async create(
@@ -164,7 +160,7 @@ export class InstrumentRecordsService {
       const assignment = account.studyHospitals.find((entry) => entry.groupId === group.id);
       const hospital = group.hospitalCatalog?.find((entry) => entry.id === assignment?.hospitalId);
       if (group.hospitals.length > 0) {
-        if (!hospital || (hospital.isInternal && account.userType !== 'TEST_USER')) {
+        if (!hospital) {
           throw new BadRequestException('Cal assignar un centre sanitari vàlid per a aquest estudi.');
         }
         this.validateHospitalSelection(parsedData, [hospital.name]);
@@ -195,7 +191,6 @@ export class InstrumentRecordsService {
         userCode = await this.orionCodesService.create(
           orionContext.group.id,
           orionContext.user.id,
-          orionContext.isTest,
           orionContext.hospital,
           transaction
         );
@@ -618,7 +613,7 @@ export class InstrumentRecordsService {
       const group = await this.groupsService.findById(instrumentRecord.groupId);
       const assignment = owner.studyHospitals.find((entry) => entry.groupId === group.id);
       const hospital = group.hospitalCatalog?.find((entry) => entry.id === assignment?.hospitalId);
-      if (!hospital || (hospital.isInternal && owner.userType !== 'TEST_USER')) {
+      if (!hospital) {
         throw new BadRequestException('Cal assignar un centre sanitari vàlid per a aquest estudi.');
       }
       this.validateHospitalSelection(newDataObj, [hospital.name]);
@@ -676,7 +671,7 @@ export class InstrumentRecordsService {
       if (account.basePermissionLevel === 'STANDARD' && hospitals.length > 0) {
         const assignment = account.studyHospitals.find((entry) => entry.groupId === group.id);
         const hospital = group.hospitalCatalog?.find((entry) => entry.id === assignment?.hospitalId);
-        if (!hospital || (hospital.isInternal && account.userType !== 'TEST_USER')) {
+        if (!hospital) {
           throw new BadRequestException('Cal assignar un centre sanitari vàlid per a aquest estudi.');
         }
         hospitals = [hospital.name];

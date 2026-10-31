@@ -32,30 +32,18 @@ export class OrionCodesService {
     return this.investigatorModel.findMany({ where: { investigatorId: { in: userIds } } });
   }
 
-  async assignInvestigator(
-    groupId: string,
-    investigatorId: string,
-    isTest: boolean,
-    transaction?: OrionTransactionClient
-  ) {
+  async assignInvestigator(groupId: string, investigatorId: string, transaction?: OrionTransactionClient) {
     const model = transaction?.orionInvestigator ?? this.investigatorModel;
     for (let attempt = 0; attempt < 20; attempt++) {
       const existing = await model.findFirst({ where: { groupId, investigatorId } });
-      if (existing) {
-        if (existing.isTest !== isTest) {
-          throw new ConflictException(
-            'No es pot canviar el tipus de proves d’un investigador amb numeració assignada.'
-          );
-        }
-        return existing;
-      }
+      if (existing) return existing;
       const latest = await model.findFirst({
-        where: { groupId, isTest },
+        where: { groupId },
         orderBy: { number: 'desc' }
       });
       try {
         return await model.create({
-          data: { groupId, investigatorId, isTest, number: (latest?.number ?? 0) + 1 }
+          data: { groupId, investigatorId, number: (latest?.number ?? 0) + 1 }
         });
       } catch (error) {
         if (transaction || !isDuplicate(error)) throw error;
@@ -64,8 +52,8 @@ export class OrionCodesService {
     throw new ConflictException('No s’ha pogut assignar el número d’investigador. Torneu-ho a provar.');
   }
 
-  async preview(groupId: string, investigatorId: string, isTest: boolean) {
-    const investigator = await this.assignInvestigator(groupId, investigatorId, isTest);
+  async preview(groupId: string, investigatorId: string) {
+    const investigator = await this.assignInvestigator(groupId, investigatorId);
     const latest = await this.patientCodeModel.findFirst({
       where: { groupId, investigatorId },
       orderBy: { sequence: 'desc' }
@@ -73,14 +61,8 @@ export class OrionCodesService {
     return this.format(investigator, (latest?.sequence ?? 0) + 1);
   }
 
-  async create(
-    groupId: string,
-    investigatorId: string,
-    isTest: boolean,
-    hospital: string,
-    transaction?: OrionTransactionClient
-  ) {
-    const investigator = await this.assignInvestigator(groupId, investigatorId, isTest, transaction);
+  async create(groupId: string, investigatorId: string, hospital: string, transaction?: OrionTransactionClient) {
+    const investigator = await this.assignInvestigator(groupId, investigatorId, transaction);
     const model = transaction?.orionPatientCode ?? this.patientCodeModel;
     for (let attempt = 0; attempt < 20; attempt++) {
       const latest = await model.findFirst({
@@ -91,7 +73,7 @@ export class OrionCodesService {
       const code = this.format(investigator, sequence);
       try {
         await model.create({
-          data: { code, groupId, investigatorId, hospital, sequence, isTest, investigatorNumber: investigator.number }
+          data: { code, groupId, investigatorId, hospital, sequence, investigatorNumber: investigator.number }
         });
         return code;
       } catch (error) {
@@ -101,7 +83,7 @@ export class OrionCodesService {
     throw new ConflictException('No s’ha pogut assignar un codi de pacient únic. Torneu-ho a provar.');
   }
 
-  private format(investigator: { number: number; isTest: boolean }, sequence: number) {
-    return `${investigator.isTest ? 'OR-TEST' : 'OR'}-${String(investigator.number).padStart(2, '0')}-${String(sequence).padStart(2, '0')}`;
+  private format(investigator: { number: number }, sequence: number) {
+    return `OR-${String(investigator.number).padStart(2, '0')}-${String(sequence).padStart(2, '0')}`;
   }
 }

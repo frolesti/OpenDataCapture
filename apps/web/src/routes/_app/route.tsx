@@ -14,7 +14,7 @@ import { useAppStore } from '@/store';
 import type { Group } from '@opendatacapture/schemas/group';
 import type { User } from '@opendatacapture/schemas/user';
 
-type CurrentProfileResponse = Pick<User, 'studyHospitals' | 'studyNumbers' | 'userType'> & {
+type CurrentProfileResponse = Pick<User, 'studyHospitals' | 'studyNumbers' | 'professionalTitle'> & {
   basePermissionLevel: 'ADMIN' | 'GROUP_MANAGER' | 'STANDARD';
   firstName: string;
   groups: Group[];

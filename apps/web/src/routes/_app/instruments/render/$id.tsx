@@ -21,6 +21,7 @@ import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
 import { useOrionPatientCode } from '@/hooks/useOrionPatientCode';
 import { useAppStore } from '@/store';
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '@/utils/instrument-draft';
+import { ensureStudySession } from '@/utils/ensure-study-session';
 
 const HOSPITAL_META_SEPARATOR = '|||';
 const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
@@ -334,6 +335,7 @@ const RouteComponent = () => {
   const currentSession = useAppStore((store) => store.currentSession);
   const currentUser = useAppStore((store) => store.currentUser);
   const endSession = useAppStore((store) => store.endSession);
+  const startSession = useAppStore((store) => store.startSession);
   const setIsCurrentSessionSubmitted = useAppStore((store) => store.setIsCurrentSessionSubmitted);
 
   const params = Route.useParams();
@@ -391,10 +393,7 @@ const RouteComponent = () => {
   const instrumentInfoQuery = useInstrumentInfoQuery();
   const studyAssignment = currentUser?.studyHospitals?.find((entry) => entry.groupId === currentGroup?.id);
   const assignedHospital = currentGroup
-    ? getHospitalCatalog(currentGroup).find(
-        (entry) =>
-          entry.id === studyAssignment?.hospitalId && (!entry.isInternal || currentUser?.userType === 'TEST_USER')
-      )
+    ? getHospitalCatalog(currentGroup).find((entry) => entry.id === studyAssignment?.hospitalId)
     : undefined;
   const availableHospitals = assignedHospital
     ? [assignedHospital.name]
@@ -940,14 +939,28 @@ const RouteComponent = () => {
       return;
     }
     try {
-      const response = await axios.post<InstrumentRecord>('/v1/instrument-records', {
-        data: payloadData,
-        date: new Date(),
-        groupId: currentGroup?.id,
-        instrumentId,
-        sessionId: currentSession!.id,
-        subjectId: currentSession!.subject.id
-      } satisfies CreateInstrumentRecordData);
+      if (!currentSession) {
+        throw new Error(
+          t({
+            en: 'No hi ha cap sessió activa. Les dades del formulari es conserven.',
+            fr: 'No hay ninguna sesión activa. Los datos del formulario se conservan.'
+          })
+        );
+      }
+      const session = await ensureStudySession({ session: currentSession, group: currentGroup, user: currentUser });
+      if (session.id !== currentSession.id) startSession(session);
+      const response = await axios.post<InstrumentRecord>(
+        '/v1/instrument-records',
+        {
+          data: payloadData,
+          date: new Date(),
+          groupId: currentGroup?.id,
+          instrumentId,
+          sessionId: session.id,
+          subjectId: session.subject.id
+        } satisfies CreateInstrumentRecordData,
+        { suppressErrorNotification: true }
+      );
       const savedData = response.data?.data;
       if (
         isOrionSelection &&
@@ -961,7 +974,16 @@ const RouteComponent = () => {
     } catch (error) {
       const responseData = axios.isAxiosError(error) ? error.response?.data : undefined;
       const issue = responseData?.issues?.[0];
-      const message = issue?.message ?? responseData?.message ?? 'No se ha podido guardar el formulario.';
+      const message =
+        issue?.message ??
+        responseData?.message ??
+        (error instanceof Error
+          ? error.message
+          : t({
+              en: 'No s’ha pogut desar el formulari. Les dades es conserven.',
+              fr: 'No se ha podido guardar el formulario. Los datos se conservan.'
+            }));
+      saveDraft(params.id, mergedData);
       const field = issue?.path?.[0];
       if (typeof field === 'string') {
         const fieldElement = document.querySelector<HTMLElement>(`[name="${field}"]`);
@@ -987,9 +1009,13 @@ const RouteComponent = () => {
   const handleConfirmEdit = async () => {
     if (!pendingSubmitRef.current || !recordId) return;
     try {
-      await axios.patch(`/v1/instrument-records/${recordId}`, {
-        data: pendingSubmitRef.current.data
-      });
+      await axios.patch(
+        `/v1/instrument-records/${recordId}`,
+        {
+          data: pendingSubmitRef.current.data
+        },
+        { suppressErrorNotification: true }
+      );
       notifications.addNotification({
         message: t({
           en: 'Registre actualitzat correctament. Els canvis han quedat registrats.',
@@ -997,12 +1023,16 @@ const RouteComponent = () => {
         } as any),
         type: 'success'
       });
-    } catch {
+    } catch (error) {
+      console.error(error);
       notifications.addNotification({
-        message: t({
-          en: 'Error en actualitzar el registre',
-          fr: 'Error al actualizar el registro'
-        } as any),
+        message:
+          axios.isAxiosError(error) && typeof error.response?.data?.message === 'string'
+            ? error.response.data.message
+            : t({
+                en: 'Error en actualitzar el registre',
+                fr: 'Error al actualizar el registro'
+              } as any),
         type: 'error'
       });
     } finally {

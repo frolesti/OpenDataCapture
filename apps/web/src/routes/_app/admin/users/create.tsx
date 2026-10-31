@@ -84,7 +84,6 @@ function buildPendingForm(entry?: PendingInvestigator): InvestigatorFormState {
     groupIds: entry?.groupIds ?? [],
     hospital: entry?.hospital ?? '',
     studyHospitals: entry?.studyHospitals ?? [],
-    userType: entry?.userType ?? 'INVESTIGATOR',
     lastName: entry?.lastName ?? '',
     notes: entry?.notes ?? '',
     professionalTitle: entry?.professionalTitle ?? '',
@@ -100,14 +99,14 @@ function toggleGroups(groupIds: string[], groupId: string) {
   return groupIds.includes(groupId) ? groupIds.filter((id) => id !== groupId) : [...groupIds, groupId];
 }
 
-function buildUserEditForm(user?: User) {
+function buildUserEditForm(user?: User): CreatedUserFormState {
   return {
     email: user?.email ?? '',
     firstName: user?.firstName ?? '',
     groupIds: user?.groupIds ?? [],
     hospital: user?.hospital ?? '',
     studyHospitals: user?.studyHospitals ?? [],
-    userType: user?.userType ?? 'INVESTIGATOR',
+    professionalTitle: user?.professionalTitle ?? '',
     lastName: user?.lastName ?? '',
     password: '',
     username: user?.username ?? ''
@@ -134,7 +133,6 @@ type InvestigatorFormState = {
   groupIds: string[];
   hospital: string;
   studyHospitals: StudyHospital[];
-  userType: 'INVESTIGATOR' | 'TEST_USER';
   lastName: string;
   notes: string;
   professionalTitle: ProfessionalTitle | '';
@@ -147,7 +145,7 @@ type CreatedUserFormState = {
   groupIds: string[];
   hospital: string;
   studyHospitals: StudyHospital[];
-  userType: 'INVESTIGATOR' | 'TEST_USER';
+  professionalTitle: ProfessionalTitle | '';
   lastName: string;
   password: string;
   username: string;
@@ -194,7 +192,6 @@ const DEFAULT_INVESTIGATOR_FORM: InvestigatorFormState = {
   groupIds: [],
   hospital: '',
   studyHospitals: [],
-  userType: 'INVESTIGATOR',
   lastName: '',
   notes: '',
   professionalTitle: '',
@@ -207,7 +204,7 @@ const DEFAULT_CREATED_USER_FORM: CreatedUserFormState = {
   groupIds: [],
   hospital: '',
   studyHospitals: [],
-  userType: 'INVESTIGATOR',
+  professionalTitle: '',
   lastName: '',
   password: '',
   username: ''
@@ -569,8 +566,7 @@ const RouteComponent = () => {
     selectedCreatedUser !== null &&
     (createdUserDialogForm.hospital !== (selectedCreatedUser.hospital ?? '') ||
       JSON.stringify(createdUserDialogForm.studyHospitals) !==
-        JSON.stringify(selectedCreatedUser.studyHospitals ?? []) ||
-      createdUserDialogForm.userType !== (selectedCreatedUser.userType ?? 'INVESTIGATOR'));
+        JSON.stringify(selectedCreatedUser.studyHospitals ?? []));
 
   const canCreateUser =
     userForm.firstName.trim().length > 0 &&
@@ -590,8 +586,7 @@ const RouteComponent = () => {
       groupOptions,
       investigatorForm.groupIds,
       investigatorForm.studyHospitals,
-      investigatorForm.hospital,
-      investigatorForm.userType === 'TEST_USER'
+      investigatorForm.hospital
     );
 
   const canCreateHospital = (groupIds: string[]) => hospitalForm.name.trim().length > 0 && groupIds.length > 0;
@@ -605,8 +600,7 @@ const RouteComponent = () => {
       groupOptions,
       pendingDialogForm.groupIds,
       pendingDialogForm.studyHospitals,
-      pendingDialogForm.hospital,
-      pendingDialogForm.userType === 'TEST_USER'
+      pendingDialogForm.hospital
     );
 
   const canSaveCreatedUserDialog =
@@ -619,8 +613,7 @@ const RouteComponent = () => {
         groupOptions,
         createdUserDialogForm.groupIds,
         createdUserDialogForm.studyHospitals,
-        createdUserDialogForm.hospital,
-        createdUserDialogForm.userType === 'TEST_USER'
+        createdUserDialogForm.hospital
       )) &&
     (createdUserDialogForm.password.trim().length === 0 || isCreatedUserPasswordStrong);
 
@@ -698,7 +691,6 @@ const RouteComponent = () => {
     groupIds: form.groupIds,
     hospital: form.hospital,
     studyHospitals: form.studyHospitals.filter((entry) => form.groupIds.includes(entry.groupId)),
-    userType: form.userType,
     lastName: form.lastName.trim(),
     notes: form.notes.trim() || null,
     professionalTitle: form.professionalTitle || null,
@@ -740,7 +732,6 @@ const RouteComponent = () => {
           groupIds: investigatorForm.groupIds,
           hospital: investigatorForm.hospital,
           studyHospitals: investigatorForm.studyHospitals,
-          userType: investigatorForm.userType,
           lastName: investigatorForm.lastName.trim(),
           notes: investigatorForm.notes.trim() || undefined,
           professionalTitle: investigatorForm.professionalTitle || null,
@@ -872,7 +863,7 @@ const RouteComponent = () => {
         data: {
           firstName: createdUserDialogForm.firstName.trim(),
           groupIds: createdUserDialogForm.groupIds,
-          userType: createdUserDialogForm.userType,
+          professionalTitle: createdUserDialogForm.professionalTitle || null,
           studyHospitals:
             selectedCreatedUser.basePermissionLevel === 'STANDARD'
               ? createdUserDialogForm.studyHospitals.filter((entry) =>
@@ -1450,6 +1441,15 @@ const RouteComponent = () => {
                   }
                 />
               </div>
+              {selectedCreatedUser?.basePermissionLevel === 'STANDARD' ? (
+                <ProfessionalTitleField
+                  id="created-user-professional-title"
+                  value={createdUserDialogForm.professionalTitle}
+                  onValueChange={(professionalTitle) =>
+                    setCreatedUserDialogForm((current) => ({ ...current, professionalTitle }))
+                  }
+                />
+              ) : null}
               <div className="grid gap-2">
                 <Label htmlFor="created-user-username">{t({ en: "Nom d'usuari", fr: 'Nombre de usuario' })}</Label>
                 <Input
@@ -1524,14 +1524,7 @@ const RouteComponent = () => {
                   groupIds={createdUserDialogForm.groupIds}
                   assignments={createdUserDialogForm.studyHospitals}
                   legacyHospital={createdUserDialogForm.hospital}
-                  isTest={createdUserDialogForm.userType === 'TEST_USER'}
                   numbers={selectedCreatedUser.studyNumbers}
-                  onTestChange={(isTest) =>
-                    setCreatedUserDialogForm((current) => ({
-                      ...current,
-                      userType: isTest ? 'TEST_USER' : 'INVESTIGATOR'
-                    }))
-                  }
                   disabled={isCreatedUserDialogBusy}
                   onChange={(studyHospitals, hospital) =>
                     setCreatedUserDialogForm((current) => ({ ...current, studyHospitals, hospital }))
@@ -1818,10 +1811,6 @@ const RouteComponent = () => {
                 groupIds={investigatorForm.groupIds}
                 assignments={investigatorForm.studyHospitals}
                 legacyHospital={investigatorForm.hospital}
-                isTest={investigatorForm.userType === 'TEST_USER'}
-                onTestChange={(isTest) =>
-                  setInvestigatorForm((current) => ({ ...current, userType: isTest ? 'TEST_USER' : 'INVESTIGATOR' }))
-                }
                 disabled={isBusy}
                 onChange={(studyHospitals, hospital) =>
                   setInvestigatorForm((current) => ({ ...current, studyHospitals, hospital }))
@@ -1976,10 +1965,6 @@ const RouteComponent = () => {
                 groupIds={pendingDialogForm.groupIds}
                 assignments={pendingDialogForm.studyHospitals}
                 legacyHospital={pendingDialogForm.hospital}
-                isTest={pendingDialogForm.userType === 'TEST_USER'}
-                onTestChange={(isTest) =>
-                  setPendingDialogForm((current) => ({ ...current, userType: isTest ? 'TEST_USER' : 'INVESTIGATOR' }))
-                }
                 disabled={isBusy}
                 onChange={(studyHospitals, hospital) =>
                   setPendingDialogForm((current) => ({ ...current, studyHospitals, hospital }))
@@ -2136,11 +2121,11 @@ const RouteComponent = () => {
         <AlertDialog.Content>
           <AlertDialog.Header>
             <AlertDialog.Title>
-              {t({ en: 'Confirm signed investigator', fr: 'Confirmar investigador firmado' })}
+              {t({ en: 'Confirmar la signatura de l’investigador', fr: 'Confirmar la firma del investigador' })}
             </AlertDialog.Title>
             <AlertDialog.Description>
               {t({
-                en: 'If you confirm that the investigator has signed, the platform will automatically create the user account, generate a real password, and send the welcome email.',
+                en: 'Si confirmes que l’investigador ha signat, la plataforma crearà automàticament el compte d’usuari, generarà una contrasenya i enviarà el correu de benvinguda.',
                 fr: 'Si confirmas que el investigador ha firmado, la plataforma creará automáticamente la cuenta de usuario, generará una contraseña real y enviará el correo de bienvenida.'
               })}
             </AlertDialog.Description>
@@ -2151,7 +2136,7 @@ const RouteComponent = () => {
               className="bg-violet-600 text-white hover:bg-violet-700"
               onClick={() => void handleConfirmSignedPromotion()}
             >
-              {t({ en: 'Confirm and continue', fr: 'Confirmar y continuar' })}
+              {t({ en: 'Confirmar i continuar', fr: 'Confirmar y continuar' })}
             </AlertDialog.Action>
           </AlertDialog.Footer>
         </AlertDialog.Content>
@@ -2190,24 +2175,24 @@ const RouteComponent = () => {
           <AlertDialog.Header>
             <AlertDialog.Title>
               {selectedCreatedUser?.basePermissionLevel === 'ADMIN'
-                ? t({ en: 'Delete admin user?', fr: '¿Eliminar usuario administrador?' })
-                : t({ en: 'Delete user?', fr: '¿Eliminar usuario?' })}
+                ? t({ en: 'Vols eliminar l’usuari administrador?', fr: '¿Eliminar usuario administrador?' })
+                : t({ en: 'Vols eliminar l’usuari?', fr: '¿Eliminar usuario?' })}
             </AlertDialog.Title>
             <AlertDialog.Description>
               {selectedCreatedUser?.basePermissionLevel === 'ADMIN'
                 ? t({
-                    en: 'This account has administrator permissions. Deleting it can affect platform management. This action cannot be undone.',
+                    en: 'Aquest compte té permisos d’administrador. Eliminar-lo pot afectar la gestió de la plataforma. Aquesta acció no es pot desfer.',
                     fr: 'Esta cuenta tiene permisos de administrador. Eliminarla puede afectar a la gestión de la plataforma. Esta acción no se puede deshacer.'
                   })
                 : t({
-                    en: 'This action will permanently delete the user account and cannot be undone.',
+                    en: 'Aquesta acció eliminarà permanentment el compte d’usuari i no es pot desfer.',
                     fr: 'Esta acción eliminará permanentemente la cuenta de usuario y no se puede deshacer.'
                   })}
             </AlertDialog.Description>
             {selectedCreatedUser?.username === currentUser?.username ? (
               <p className="text-sm font-medium text-red-700">
                 {t({
-                  en: 'You cannot delete your own active account from this screen.',
+                  en: 'No pots eliminar el teu propi compte actiu des d’aquesta pantalla.',
                   fr: 'No puedes eliminar tu propia cuenta activa desde esta pantalla.'
                 })}
               </p>
@@ -2220,7 +2205,7 @@ const RouteComponent = () => {
               disabled={selectedCreatedUser?.username === currentUser?.username || isCreatedUserDeleteBusy}
               onClick={() => void handleDeleteCreatedUser()}
             >
-              {t({ en: 'Yes, delete user', fr: 'Sí, eliminar usuario' })}
+              {t({ en: 'Sí, elimina l’usuari', fr: 'Sí, eliminar usuario' })}
             </AlertDialog.Action>
           </AlertDialog.Footer>
         </AlertDialog.Content>
