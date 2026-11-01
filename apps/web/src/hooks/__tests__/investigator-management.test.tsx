@@ -162,6 +162,7 @@ describe('active account titles and deletion translations', () => {
     renderDirectory();
     fireEvent.click(screen.getByText('active@example.test'));
     expect(within(screen.getByRole('dialog')).getByLabelText('Tractament professional').textContent).toContain('Dra.');
+    expect(screen.queryByText(/Cal confirmar el tractament abans de crear el compte/)).toBeNull();
   });
 
   it.each([
@@ -280,6 +281,73 @@ describe('selected account creation confirmation', () => {
         })
       ];
     }
+
+    it('shows a single simple centre selector without the different-centres option for one study', async () => {
+      configureStudies();
+      mocks.pending[0]!.groupIds = ['omega'];
+      mocks.pending[0]!.studyHospitals = [{ groupId: 'omega', hospitalId: 'a' }];
+      renderDirectory();
+      const dialog = openPendingEditor();
+      expect(dialog.getAllByRole('combobox', { name: /^Centre/ })).toHaveLength(1);
+      const centre = dialog.getByRole('combobox', { name: 'Centre sanitari' });
+      expect((centre as HTMLSelectElement).value).toBe('Centre A');
+      expect(dialog.queryByRole('checkbox', { name: 'Assignar centres diferents per estudi' })).toBeNull();
+      expect(dialog.queryByRole('combobox', { name: 'Centre — OMEGA' })).toBeNull();
+      fireEvent.change(centre, { target: { value: 'Centre B' } });
+      fireEvent.click(dialog.getByRole('button', { name: 'Desar' }));
+      await waitFor(() =>
+        expect(axios.patch).toHaveBeenCalledWith(
+          '/v1/users/pending/pending',
+          expect.objectContaining({ studyHospitals: [{ groupId: 'omega', hospitalId: 'b' }] })
+        )
+      );
+    });
+
+    it('shows study selectors only after enabling different centres for multiple studies', () => {
+      configureStudies();
+      mocks.groups[1]!.hospitals.push('Centre A');
+      mocks.groups[1]!.hospitalCatalog!.push({ id: 'a', name: 'Centre A', isInternal: false });
+      mocks.pending[0]!.studyHospitals = [
+        { groupId: 'omega', hospitalId: 'a' },
+        { groupId: 'orion', hospitalId: 'a' }
+      ];
+      renderDirectory();
+      const dialog = openPendingEditor();
+      expect(dialog.getByRole('combobox', { name: 'Centre comú als estudis seleccionats' })).toBeDefined();
+      expect(dialog.queryByRole('combobox', { name: 'Centre — OMEGA' })).toBeNull();
+      expect(dialog.queryByRole('button', { name: 'Afegir centre a aquest estudi' })).toBeNull();
+      fireEvent.click(dialog.getByRole('checkbox', { name: 'Assignar centres diferents per estudi' }));
+      expect(dialog.queryByRole('combobox', { name: 'Centre comú als estudis seleccionats' })).toBeNull();
+      const omega = dialog.getByRole('combobox', { name: 'Centre — OMEGA' });
+      const orion = dialog.getByRole('combobox', { name: 'Centre — ORION' });
+      expect(omega.parentElement?.querySelector('label')?.textContent).toBe('OMEGA');
+      expect(orion.parentElement?.querySelector('label')?.textContent).toBe('ORION');
+      expect(dialog.getAllByRole('button', { name: 'Afegir centre a aquest estudi' })).toHaveLength(2);
+    });
+
+    it('returns to a simple selector when only one study remains after enabling different centres', () => {
+      configureStudies();
+      mocks.groups[1]!.hospitals.push('Centre A');
+      mocks.groups[1]!.hospitalCatalog!.push({ id: 'a', name: 'Centre A', isInternal: false });
+      renderDirectory();
+      const dialog = openPendingEditor();
+      expect(dialog.getByRole('combobox', { name: 'Centre — OMEGA' })).toBeDefined();
+      fireEvent.click(dialog.getByRole('checkbox', { name: 'ORION', exact: true }));
+      expect((dialog.getByRole('combobox', { name: 'Centre sanitari' }) as HTMLSelectElement).value).toBe('Centre A');
+      expect(dialog.queryByRole('checkbox', { name: 'Assignar centres diferents per estudi' })).toBeNull();
+      expect(dialog.queryByRole('combobox', { name: 'Centre — OMEGA' })).toBeNull();
+    });
+
+    it('keeps separate selection mandatory when the selected studies have no common centre', () => {
+      configureStudies();
+      renderDirectory();
+      const dialog = openPendingEditor();
+      const toggle = dialog.getByRole('checkbox', { name: 'Assignar centres diferents per estudi' });
+      expect(toggle.getAttribute('aria-checked')).toBe('true');
+      expect((toggle as HTMLButtonElement).disabled).toBe(true);
+      expect(dialog.getByRole('combobox', { name: 'Centre — OMEGA' })).toBeDefined();
+      expect(dialog.getByRole('combobox', { name: 'Centre — ORION' })).toBeDefined();
+    });
 
     it('changes one study centre without modifying the other study assignment', async () => {
       configureStudies();

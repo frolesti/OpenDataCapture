@@ -79,8 +79,8 @@ export function StudyHospitalFields({
   const assignedIds = selectedGroups.map((group) => assignedHospital(group)?.id).filter(Boolean);
   const [useDifferentCentres, setUseDifferentCentres] = useState<boolean | null>(null);
   const hasDifferentCentres = new Set(assignedIds).size > 1;
-  const separate =
-    (useDifferentCentres ?? hasDifferentCentres) || (selectedGroups.length > 1 && commonHospitals.length === 0);
+  const hasMultipleStudies = selectedGroups.length > 1;
+  const separate = hasMultipleStudies && ((useDifferentCentres ?? hasDifferentCentres) || commonHospitals.length === 0);
   const commonValue =
     new Set(assignedIds).size === 1 ? (commonHospitals.find((entry) => entry.id === assignedIds[0])?.name ?? '') : '';
 
@@ -105,11 +105,11 @@ export function StudyHospitalFields({
   return (
     <div className="min-w-0 space-y-3">
       <p className="text-sm font-medium">{t({ en: 'Centre sanitari', fr: 'Centro sanitario' })}</p>
-      {selectedGroups.length > 1 && commonHospitals.length > 0 ? (
+      {hasMultipleStudies ? (
         <label className="flex items-center gap-2 text-sm">
           <Checkbox
             checked={separate}
-            disabled={disabled}
+            disabled={disabled || commonHospitals.length === 0}
             onCheckedChange={(checked) => {
               setUseDifferentCentres(checked === true);
               if (checked !== true)
@@ -126,7 +126,11 @@ export function StudyHospitalFields({
       ) : null}
       {!separate && selectedGroups.length > 0 ? (
         <HospitalSelect
-          ariaLabel={t({ en: 'Centre comú als estudis seleccionats', fr: 'Centro común a los estudios seleccionados' })}
+          ariaLabel={
+            hasMultipleStudies
+              ? t({ en: 'Centre comú als estudis seleccionats', fr: 'Centro común a los estudios seleccionados' })
+              : t({ en: 'Centre sanitari', fr: 'Centro sanitario' })
+          }
           options={commonHospitals.map((entry) => entry.name)}
           value={commonValue}
           disabled={disabled}
@@ -141,45 +145,61 @@ export function StudyHospitalFields({
           })}
         </p>
       ) : null}
-      {selectedGroups.map((group) => {
-        const fullCatalog = getHospitalCatalog(group);
-        const catalog = fullCatalog;
-        const assignment = assignments.find((entry) => entry.groupId === group.id);
-        const number = numbers?.find((entry) => entry.groupId === group.id);
-        const value =
-          catalog.find((entry) => entry.id === assignment?.hospitalId)?.name ??
-          (!fullCatalog.length && group.hospitals.includes(legacyHospital) ? legacyHospital : '');
-        return (
-          <div className="min-w-0 space-y-2 rounded-md border p-3" key={group.id}>
-            <Label>{group.name}</Label>
-            {number ? (
-              <p className="text-muted-foreground text-xs">
-                {t({ en: 'Número d’investigador', fr: 'Número de investigador' })}:{' '}
+      {!separate
+        ? selectedGroups.map((group) => {
+            const number = numbers?.find((entry) => entry.groupId === group.id);
+            return number ? (
+              <p className="text-muted-foreground text-xs" key={group.id}>
+                {group.name} — {t({ en: 'Número d’investigador', fr: 'Número de investigador' })}:{' '}
                 {String(number.number).padStart(2, '0')}
               </p>
-            ) : null}
-            {separate ? (
-              <HospitalSelect
-                ariaLabel={`${t({ en: 'Centre', fr: 'Centro' })} — ${group.name}`}
-                options={fullCatalog.length ? catalog.map((entry) => entry.name) : group.hospitals}
-                value={value}
-                disabled={disabled}
-                onValueChange={(name) => {
-                  const hospital = catalog.find((entry) => entry.name === name);
-                  const next = assignments.filter(
-                    (entry) => entry.groupId !== group.id && groupIds.includes(entry.groupId)
-                  );
-                  if (hospital) next.push({ groupId: group.id, hospitalId: hospital.id });
-                  onChange(next, name);
-                }}
-              />
-            ) : null}
-            <Button type="button" variant="outline" disabled={disabled} onClick={() => onCreate(group.id)}>
-              {t({ en: 'Afegir centre a aquest estudi', fr: 'Añadir centro a este estudio' })}
-            </Button>
-          </div>
-        );
-      })}
+            ) : null;
+          })
+        : null}
+      {selectedGroups.length === 1 ? (
+        <Button type="button" variant="outline" disabled={disabled} onClick={() => onCreate(selectedGroups[0]!.id)}>
+          {t({ en: 'Afegir centre a aquest estudi', fr: 'Añadir centro a este estudio' })}
+        </Button>
+      ) : null}
+      {separate
+        ? selectedGroups.map((group) => {
+            const fullCatalog = getHospitalCatalog(group);
+            const catalog = fullCatalog;
+            const assignment = assignments.find((entry) => entry.groupId === group.id);
+            const number = numbers?.find((entry) => entry.groupId === group.id);
+            const value =
+              catalog.find((entry) => entry.id === assignment?.hospitalId)?.name ??
+              (!fullCatalog.length && group.hospitals.includes(legacyHospital) ? legacyHospital : '');
+            return (
+              <div className="min-w-0 space-y-2 rounded-md border p-3" key={group.id}>
+                <Label>{group.name}</Label>
+                {number ? (
+                  <p className="text-muted-foreground text-xs">
+                    {t({ en: 'Número d’investigador', fr: 'Número de investigador' })}:{' '}
+                    {String(number.number).padStart(2, '0')}
+                  </p>
+                ) : null}
+                <HospitalSelect
+                  ariaLabel={`${t({ en: 'Centre', fr: 'Centro' })} — ${group.name}`}
+                  options={fullCatalog.length ? catalog.map((entry) => entry.name) : group.hospitals}
+                  value={value}
+                  disabled={disabled}
+                  onValueChange={(name) => {
+                    const hospital = catalog.find((entry) => entry.name === name);
+                    const next = assignments.filter(
+                      (entry) => entry.groupId !== group.id && groupIds.includes(entry.groupId)
+                    );
+                    if (hospital) next.push({ groupId: group.id, hospitalId: hospital.id });
+                    onChange(next, name);
+                  }}
+                />
+                <Button type="button" variant="outline" disabled={disabled} onClick={() => onCreate(group.id)}>
+                  {t({ en: 'Afegir centre a aquest estudi', fr: 'Añadir centro a este estudio' })}
+                </Button>
+              </div>
+            );
+          })
+        : null}
     </div>
   );
 }

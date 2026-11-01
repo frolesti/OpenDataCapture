@@ -1444,6 +1444,7 @@ const RouteComponent = () => {
               {selectedCreatedUser?.basePermissionLevel === 'STANDARD' ? (
                 <ProfessionalTitleField
                   id="created-user-professional-title"
+                  showDescription={false}
                   value={createdUserDialogForm.professionalTitle}
                   onValueChange={(professionalTitle) =>
                     setCreatedUserDialogForm((current) => ({ ...current, professionalTitle }))

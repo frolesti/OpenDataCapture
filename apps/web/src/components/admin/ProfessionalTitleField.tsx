@@ -5,11 +5,13 @@ import { $ProfessionalTitle, type ProfessionalTitle } from '@opendatacapture/sch
 export function ProfessionalTitleField({
   id,
   onValueChange,
-  value
+  value,
+  showDescription = true
 }: {
   id: string;
   onValueChange: (value: ProfessionalTitle) => void;
   value: ProfessionalTitle | '';
+  showDescription?: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -24,12 +26,14 @@ export function ProfessionalTitleField({
           <Select.Item value="Dra">Dra.</Select.Item>
         </Select.Content>
       </Select>
-      <p className="text-muted-foreground text-xs">
-        {t({
-          en: 'Cal confirmar el tractament abans de crear el compte i enviar les credencials. No es dedueix del nom.',
-          fr: 'Debe confirmar el tratamiento antes de crear la cuenta y enviar las credenciales. No se deduce del nombre.'
-        })}
-      </p>
+      {showDescription ? (
+        <p className="text-muted-foreground text-xs">
+          {t({
+            en: 'Cal confirmar el tractament abans de crear el compte i enviar les credencials. No es dedueix del nom.',
+            fr: 'Debe confirmar el tratamiento antes de crear la cuenta y enviar las credenciales. No se deduce del nombre.'
+          })}
+        </p>
+      ) : null}
     </div>
   );
 }
