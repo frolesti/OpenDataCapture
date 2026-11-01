@@ -7,7 +7,7 @@ import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/
 import { InstrumentRenderer } from '@opendatacapture/react-core';
 import type { InstrumentSubmitHandler } from '@opendatacapture/react-core';
 import type { CreateInstrumentRecordData, InstrumentRecord } from '@opendatacapture/schemas/instrument-records';
-import { isOrionPatientCode } from '@opendatacapture/schemas/instrument-records';
+import { isOrionPatientCode, normalizeOrionAdverseEventRecords } from '@opendatacapture/schemas/instrument-records';
 import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
@@ -789,6 +789,13 @@ const RouteComponent = () => {
     // latestDataRef tracks cumulative snapshots seen via onDataChange, so we merge both
     // payloads while preserving previously entered non-empty values.
     const mergedData = mergeFormSnapshots(latestDataRef.current, data as Record<string, unknown>);
+    if (isOrionSelection || isOrionFollowup) {
+      const normalized = normalizeOrionAdverseEventRecords(
+        mergedData,
+        isOrionFollowup ? ORION_FOLLOWUP_INTERNAL_NAME : ORION_SELECTION_INTERNAL_NAME
+      );
+      if (normalized !== mergedData) delete mergedData.adverse_event_records;
+    }
     if (isOrionFollowup && mergedData.continues_study === 'no') {
       for (const field of [
         'followup_date',

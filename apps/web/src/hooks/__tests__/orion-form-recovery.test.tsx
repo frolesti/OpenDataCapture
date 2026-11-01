@@ -305,6 +305,44 @@ describe('ORION selection submission date window', () => {
     expect(mocks.notification).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
+  it('does not resurrect a hidden adverse-event row from cumulative snapshots when submitting No', async () => {
+    const data = { ...selectionData(), baseline_adverse_events: 'no' };
+    delete data.adverse_event_records;
+    localStorage.setItem('instrument-draft:selection:investigator', serializeInstrumentDraft(data));
+    vi.mocked(axios.post).mockResolvedValue({ data: {} });
+    renderForm();
+    const change = mocks.change;
+    const submit = mocks.submit;
+    if (!change || !submit) throw new Error('Instrument handlers unavailable');
+    act(() => change({ ...selectionData(), adverse_event_records: [{ seriousness: new Set() }] }));
+    await act(async () => {
+      await submit({ data, instrumentId: 'selection' });
+    });
+    const request = vi.mocked(axios.post).mock.calls.find(([url]) => url === '/v1/instrument-records');
+    expect(request?.[1].data).not.toHaveProperty('adverse_event_records');
+    const received = JSON.parse(JSON.stringify(request?.[1]), reviver) as { data: unknown };
+    expect(selectionSchema.safeParse(received.data).success).toBe(true);
+  });
+
+  it('drops hidden adverse events from the edit payload when changing the answer to No', async () => {
+    mocks.search = { recordId: 'existing-record' };
+    mocks.state = { initialData: selectionData() };
+    vi.mocked(axios.patch).mockResolvedValue({ data: {} });
+    renderForm();
+    const change = mocks.change;
+    const submit = mocks.submit;
+    if (!change || !submit) throw new Error('Instrument handlers unavailable');
+    act(() => change(selectionData()));
+    const data = { ...selectionData(), baseline_adverse_events: 'no' };
+    delete data.adverse_event_records;
+    await act(async () => {
+      await submit({ data, instrumentId: 'selection' });
+    });
+    fireEvent.click(screen.getByText('Confirmar i desar'));
+    await waitFor(() => expect(axios.patch).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(axios.patch).mock.calls[0]?.[1].data).not.toHaveProperty('adverse_event_records');
+  });
+
   it('preserves earlier-page multi-select answers when confirming an edit', async () => {
     mocks.search = { recordId: 'existing-record' };
     mocks.state = { initialData: selectionData() };

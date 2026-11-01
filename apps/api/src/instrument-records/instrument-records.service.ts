@@ -20,6 +20,7 @@ import type {
   LinearRegressionResults,
   UploadInstrumentRecordsData
 } from '@opendatacapture/schemas/instrument-records';
+import { normalizeOrionAdverseEventRecords } from '@opendatacapture/schemas/instrument-records';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
 import type { Prisma, Session } from '@prisma/client';
 import { isNumber, mergeWith, pickBy } from 'lodash-es';
@@ -138,7 +139,9 @@ export class InstrumentRecordsService {
 
     const normalizedRawData =
       instrument.internal.name === 'ORION_PR_2026_FOLLOWUP' ? this.normalizeOrionFollowupDates(rawData) : rawData;
-    const parseResult = instrument.validationSchema.safeParse(this.parseJson(normalizedRawData));
+    const parseResult = instrument.validationSchema.safeParse(
+      normalizeOrionAdverseEventRecords(this.parseJson(normalizedRawData), instrument.internal.name)
+    );
     if (!parseResult.success) {
       throw new UnprocessableEntityException({
         error: 'Unprocessable Entity',
@@ -582,7 +585,9 @@ export class InstrumentRecordsService {
       instrument.internal.name === 'ORION_PR_2026_FOLLOWUP'
         ? this.normalizeOrionFollowupDates(updatedData)
         : updatedData;
-    const parseResult = await instrument.validationSchema.safeParseAsync(this.parseJson(normalizedUpdatedData));
+    const parseResult = await instrument.validationSchema.safeParseAsync(
+      normalizeOrionAdverseEventRecords(this.parseJson(normalizedUpdatedData), instrument.internal.name)
+    );
     if (!parseResult.success) {
       throw new BadRequestException({
         issues: parseResult.error.issues,
@@ -699,7 +704,9 @@ export class InstrumentRecordsService {
           // Validate data
           const normalizedRawData =
             instrument.internal.name === 'ORION_PR_2026_FOLLOWUP' ? this.normalizeOrionFollowupDates(rawData) : rawData;
-          const parseResult = instrument.validationSchema.safeParse(this.parseJson(normalizedRawData));
+          const parseResult = instrument.validationSchema.safeParse(
+            normalizeOrionAdverseEventRecords(this.parseJson(normalizedRawData), instrument.internal.name)
+          );
           if (!parseResult.success) {
             console.error(parseResult.error.issues);
             throw new UnprocessableEntityException(

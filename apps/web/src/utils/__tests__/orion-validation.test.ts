@@ -1,11 +1,57 @@
 import { describe, expect, it } from 'vitest';
-import { isOrionPatientCode } from '@opendatacapture/schemas/instrument-records';
+import { isOrionPatientCode, normalizeOrionAdverseEventRecords } from '@opendatacapture/schemas/instrument-records';
 
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '../instrument-draft';
 import { loadSchema, selectionData } from './orion-test-utils';
 
 const selectionSchema = loadSchema('orion-pr-2026.ts');
 const followupSchema = loadSchema('orion-pr-2026-followup.ts');
+
+describe('ORION hidden adverse-event rows', () => {
+  it('reproduces the empty-set error and removes the hidden row before selection validation', () => {
+    const data = {
+      ...selectionData(),
+      baseline_adverse_events: 'no',
+      adverse_event_records: [{ seriousness: new Set() }]
+    };
+    const before = selectionSchema.safeParse(data);
+    expect(before.success).toBe(false);
+    if (!before.success)
+      expect(before.error.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: 'too_small', path: ['adverse_event_records', 0, 'seriousness'] })
+        ])
+      );
+    const normalized = normalizeOrionAdverseEventRecords(data, 'ORION_PR_2026_SELECTION');
+    expect(selectionSchema.safeParse(normalized).success).toBe(true);
+    expect(normalized).not.toHaveProperty('adverse_event_records');
+    expect(data.adverse_event_records).toHaveLength(1);
+  });
+
+  it('still rejects an empty seriousness selection when adverse events are reported', () => {
+    const data = { ...selectionData(), adverse_event_records: [{ seriousness: new Set() }] };
+    const normalized = normalizeOrionAdverseEventRecords(data, 'ORION_PR_2026_SELECTION');
+    expect(normalized).toBe(data);
+    const result = selectionSchema.safeParse(normalized);
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: ['adverse_event_records', 0, 'seriousness'] })])
+      );
+  });
+
+  it.each([{ adverse_events: 'no' }, { continues_study: 'no' }])('discards hidden follow-up rows for %j', (answers) => {
+    const data = { ...answers, adverse_event_records: [{ seriousness: new Set() }] };
+    expect(normalizeOrionAdverseEventRecords(data, 'ORION_PR_2026_FOLLOWUP')).not.toHaveProperty(
+      'adverse_event_records'
+    );
+  });
+
+  it.each(['OTHER_FORM', 'ORION_PR_2026_FOLLOWUP'])('does not use the selection answer for %s', (name) => {
+    const data = { baseline_adverse_events: 'no', adverse_event_records: [{ seriousness: new Set() }] };
+    expect(normalizeOrionAdverseEventRecords(data, name)).toBe(data);
+  });
+});
 
 describe('ORION client date and draft regressions', () => {
   it.each(['OR-01-01', 'OR-02-01', 'OR-TEST-01-01', 'OR-1000-101'])(

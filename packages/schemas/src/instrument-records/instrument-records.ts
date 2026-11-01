@@ -10,6 +10,19 @@ export function isOrionPatientCode(value: unknown): value is string {
   return typeof value === 'string' && /^OR-(?:TEST-)?\d{2,}-\d+$/.test(value.trim());
 }
 
+export function normalizeOrionAdverseEventRecords(data: unknown, instrumentName: string): unknown {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+  const values = data as Record<string, unknown>;
+  const discard =
+    (instrumentName === 'ORION_PR_2026_SELECTION' && values.baseline_adverse_events === 'no') ||
+    (instrumentName === 'ORION_PR_2026_FOLLOWUP' &&
+      (values.adverse_events === 'no' || values.continues_study === 'no'));
+  if (!discard) return data;
+  const normalized = { ...values };
+  delete normalized.adverse_event_records;
+  return normalized;
+}
+
 export const $CreateInstrumentRecordData = z.object({
   assignmentId: z.string().optional(),
   data: $Json,

@@ -1,4 +1,5 @@
 import { getModelToken } from '@douglasneuroinformatics/libnest';
+import { replacer } from '@douglasneuroinformatics/libjs';
 import type { Model } from '@douglasneuroinformatics/libnest';
 import { MockFactory, type MockedInstance } from '@douglasneuroinformatics/libnest/testing';
 import { Test } from '@nestjs/testing';
@@ -55,6 +56,9 @@ describe('ORION record assignment and atomic code persistence', () => {
     records = moduleRef.get(getModelToken('InstrumentRecord'));
     codes = moduleRef.get(OrionCodesService);
     instruments = moduleRef.get(InstrumentsService);
+    instruments.getInstrumentInstance.mockImplementation((instrument) => instrument);
+    moduleRef.get<MockedInstance<AuditLogService>>(AuditLogService).computeChanges.mockReturnValue([]);
+    moduleRef.get<MockedInstance<SessionsService>>(SessionsService).create.mockResolvedValue({ id: 'upload-session' });
     user = {
       id: 'researcher',
       username: 'researcher',
@@ -126,6 +130,110 @@ describe('ORION record assignment and atomic code persistence', () => {
     records.create.mockRejectedValueOnce(new Error('record write failed'));
     await expect(service.create(input, { user })).rejects.toThrow('record write failed');
     expect(codes.transaction).toHaveBeenCalledTimes(1);
+  });
+
+  function configureAdverseEvents(name = 'ORION_PR_2026_SELECTION') {
+    instruments.findById.mockResolvedValue({
+      id: 'selection',
+      kind: 'FORM',
+      internal: { name, edition: 33 },
+      measures: null,
+      validationSchema: z.object({
+        site_hospital: z.string(),
+        patient_code: z.string(),
+        baseline_adverse_events: z.enum(['si', 'no']),
+        adverse_event_records: z.array(z.object({ seriousness: z.set(z.string()).min(1) })).optional()
+      })
+    });
+  }
+
+  function emptySeriousness() {
+    return JSON.parse(JSON.stringify(new Set(), replacer)) as Record<string, never>;
+  }
+
+  it('accepts No with a hidden empty seriousness set before allocating and saving', async () => {
+    configureAdverseEvents();
+    await service.create(
+      {
+        ...input,
+        data: {
+          ...input.data,
+          baseline_adverse_events: 'no',
+          adverse_event_records: [{ seriousness: emptySeriousness() }]
+        }
+      },
+      { user }
+    );
+    const saved = records.create.mock.calls[0]?.[0].data.data;
+    expect(saved).not.toHaveProperty('adverse_event_records');
+    expect(saved).toHaveProperty('baseline_adverse_events', 'no');
+  });
+
+  it('still rejects Yes with empty seriousness before saving or consuming a code', async () => {
+    configureAdverseEvents();
+    await expect(
+      service.create(
+        {
+          ...input,
+          data: {
+            ...input.data,
+            baseline_adverse_events: 'si',
+            adverse_event_records: [{ seriousness: emptySeriousness() }]
+          }
+        },
+        { user }
+      )
+    ).rejects.toThrow('does not pass validation');
+    expect(records.create).not.toHaveBeenCalled();
+    expect(codes.create).not.toHaveBeenCalled();
+  });
+
+  it('removes stored hidden rows before validating a partial record edit', async () => {
+    configureAdverseEvents();
+    records.findFirst.mockResolvedValueOnce({
+      id: 'record',
+      instrumentId: 'selection',
+      groupId: 'orion',
+      session: { userId: user.id },
+      data: {
+        site_hospital: 'CS Aravaca',
+        patient_code: 'OR-01-01',
+        baseline_adverse_events: 'si',
+        adverse_event_records: [{ seriousness: emptySeriousness() }]
+      }
+    });
+    await service.updateById('record', { baseline_adverse_events: 'no' }, { user });
+    expect(records.update).toHaveBeenCalled();
+    expect(records.update.mock.calls[0]?.[0].data.data).not.toHaveProperty('adverse_event_records');
+  });
+
+  it('removes hidden rows before upload schema validation', async () => {
+    configureAdverseEvents();
+    await service.upload(
+      {
+        groupId: 'orion',
+        instrumentId: 'selection',
+        records: [
+          {
+            subjectId: input.subjectId,
+            date: input.date,
+            data: {
+              ...input.data,
+              baseline_adverse_events: 'no',
+              adverse_event_records: [{ seriousness: emptySeriousness() }]
+            }
+          }
+        ]
+      },
+      { user }
+    );
+    expect(records.createMany).toHaveBeenCalled();
+    const saved = records.createMany.mock.calls[0]?.[0].data;
+    expect(saved).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ data: expect.not.objectContaining({ adverse_event_records: expect.anything() }) })
+      ])
+    );
   });
 
   it('does not allocate ORION codes against the OMEGA group', async () => {
