@@ -7,7 +7,20 @@ import { $InstrumentMeasureValue } from '../instrument/instrument.js';
 import type { SessionType } from '../session/session.js';
 
 export function isOrionPatientCode(value: unknown): value is string {
-  return typeof value === 'string' && /^OR-(?:TEST-)?\d{2,}-\d+$/.test(value.trim());
+  return typeof value === 'string' && /^OR-(?:(?:TEST-)?\d{2,}|[A-Z]{2,})-\d+$/.test(value.trim());
+}
+
+export function formatOrionInvestigatorNumber(number: number, isInternal = false): string {
+  if (!Number.isSafeInteger(number) || number < 1) throw new RangeError('Invalid ORION investigator number');
+  if (!isInternal) return String(number).padStart(2, '0');
+  let value = number + 647;
+  let code = '';
+  while (value > 0) {
+    value--;
+    code = String.fromCharCode(65 + (value % 26)) + code;
+    value = Math.floor(value / 26);
+  }
+  return code;
 }
 
 export function normalizeOrionAdverseEventRecords(data: unknown, instrumentName: string): unknown {

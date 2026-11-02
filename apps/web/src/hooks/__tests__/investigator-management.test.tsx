@@ -165,6 +165,14 @@ describe('active account titles and deletion translations', () => {
     expect(screen.queryByText(/Cal confirmar el tractament abans de crear el compte/)).toBeNull();
   });
 
+  it('displays the alphabetic investigator code for an internal account', () => {
+    configureActiveAccount();
+    mocks.users[0]!.studyNumbers = [{ groupId: 'group', number: 'XX' }];
+    renderDirectory();
+    fireEvent.click(screen.getByText('active@example.test'));
+    expect(within(screen.getByRole('dialog')).getByText(/Número d’investigador: XX/)).toBeDefined();
+  });
+
   it.each([
     ['en', 'Eliminar usuari', 'Vols eliminar l’usuari?', 'Sí, elimina l’usuari'],
     ['fr', 'Eliminar usuario', '¿Eliminar usuario?', 'Sí, eliminar usuario']

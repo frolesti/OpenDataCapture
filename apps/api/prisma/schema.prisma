@@ -180,9 +180,10 @@ model OrionInvestigator {
   groupId        String   @db.ObjectId
   investigatorId String   @db.ObjectId
   number         Int
+  isInternal     Boolean  @default(false)
 
   @@unique([groupId, investigatorId])
-  @@unique([groupId, number])
+  @@unique([groupId, isInternal, number])
   @@map("OrionInvestigatorModel")
 }
 

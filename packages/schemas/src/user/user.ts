@@ -26,7 +26,11 @@ export const $User = $BaseModel.extend({
   groupIds: z.array(z.string()),
   hospital: z.string().nullish(),
   studyHospitals: z.array($StudyHospital).optional(),
-  studyNumbers: z.array(z.object({ groupId: z.string(), number: z.number().int().positive() })).optional(),
+  studyNumbers: z
+    .array(
+      z.object({ groupId: z.string(), number: z.union([z.number().int().positive(), z.string().regex(/^[A-Z]{2,}$/)]) })
+    )
+    .optional(),
   professionalTitle: $ProfessionalTitle.nullish(),
   lastName: z.string().min(1),
   sex: $Sex.nullish(),

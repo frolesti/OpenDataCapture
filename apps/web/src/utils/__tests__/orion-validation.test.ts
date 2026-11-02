@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { isOrionPatientCode, normalizeOrionAdverseEventRecords } from '@opendatacapture/schemas/instrument-records';
+import {
+  formatOrionInvestigatorNumber,
+  isOrionPatientCode,
+  normalizeOrionAdverseEventRecords
+} from '@opendatacapture/schemas/instrument-records';
 
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '../instrument-draft';
 import { loadSchema, selectionData } from './orion-test-utils';
@@ -54,8 +58,22 @@ describe('ORION hidden adverse-event rows', () => {
 });
 
 describe('ORION client date and draft regressions', () => {
-  it.each(['OR-01-01', 'OR-02-01', 'OR-TEST-01-01', 'OR-1000-101'])(
-    'accepts real and test patient codes: %s',
+  it.each([
+    [1, 'XX'],
+    [2, 'XY'],
+    [3, 'XZ'],
+    [4, 'YA'],
+    [5, 'YB'],
+    [55, 'ZZ'],
+    [56, 'AAA']
+  ] as const)('formats internal investigator %i as %s', (number, code) =>
+    expect(formatOrionInvestigatorNumber(number, true)).toBe(code)
+  );
+  it.each(['OR-X-01', 'OR-xx-01', 'OR-X1-01', 'OR--01', 'OR-XX-'])('rejects malformed codes: %s', (code) => {
+    expect(isOrionPatientCode(code)).toBe(false);
+  });
+  it.each(['OR-01-01', 'OR-02-01', 'OR-TEST-01-01', 'OR-1000-101', 'OR-XX-01', 'OR-XY-01', 'OR-YB-02', 'OR-AAA-01'])(
+    'accepts investigator and internal patient codes: %s',
     (code) => {
       expect(isOrionPatientCode(code)).toBe(true);
       expect(selectionSchema.safeParse({ ...selectionData(), patient_code: code }).success).toBe(true);
@@ -154,26 +172,30 @@ describe('ORION client date and draft regressions', () => {
     ).toBe(true);
   });
 
-  it.each(['OR-01-01', 'OR-TEST-01-01'])('preserves adverse-event selections in Followup for %s', (patientCode) => {
-    const event = (selectionData().adverse_event_records as Record<string, unknown>[])[0];
-    const data: Record<string, unknown> = {
-      patient_code: patientCode,
-      continues_study: 'si',
-      followup_date: '15-03-2027',
-      eq5d_vas: 80,
-      cgi_improvement: '2',
-      objective_achieved: 'si',
-      dose_change: 'no',
-      concomitant_treatment_changes: 'no',
-      adverse_events: 'si',
-      adverse_event_records: [event],
-      professional_attestation: true
-    };
-    for (const dimension of ['mobility', 'selfcare', 'activities', 'pain', 'anxiety']) data[`eq5d_${dimension}`] = '1';
-    for (const dimension of ['onset', 'maintenance', 'quality', 'daytime']) data[`sleep_${dimension}`] = '1';
-    for (const dimension of ['forget', 'remember', 'better', 'worse']) data[`mmas_${dimension}`] = 'no';
-    expect(followupSchema.safeParse(deserializeInstrumentDraft(serializeInstrumentDraft(data)).data).success).toBe(
-      true
-    );
-  });
+  it.each(['OR-01-01', 'OR-TEST-01-01', 'OR-XX-01', 'OR-YB-01'])(
+    'preserves adverse-event selections in Followup for %s',
+    (patientCode) => {
+      const event = (selectionData().adverse_event_records as Record<string, unknown>[])[0];
+      const data: Record<string, unknown> = {
+        patient_code: patientCode,
+        continues_study: 'si',
+        followup_date: '15-03-2027',
+        eq5d_vas: 80,
+        cgi_improvement: '2',
+        objective_achieved: 'si',
+        dose_change: 'no',
+        concomitant_treatment_changes: 'no',
+        adverse_events: 'si',
+        adverse_event_records: [event],
+        professional_attestation: true
+      };
+      for (const dimension of ['mobility', 'selfcare', 'activities', 'pain', 'anxiety'])
+        data[`eq5d_${dimension}`] = '1';
+      for (const dimension of ['onset', 'maintenance', 'quality', 'daytime']) data[`sleep_${dimension}`] = '1';
+      for (const dimension of ['forget', 'remember', 'better', 'worse']) data[`mmas_${dimension}`] = 'no';
+      expect(followupSchema.safeParse(deserializeInstrumentDraft(serializeInstrumentDraft(data)).data).success).toBe(
+        true
+      );
+    }
+  );
 });

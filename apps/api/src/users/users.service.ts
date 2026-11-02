@@ -2,6 +2,7 @@ import { accessibleQuery, CryptoService, InjectModel } from '@douglasneuroinform
 import type { Model } from '@douglasneuroinformatics/libnest';
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import type { User } from '@opendatacapture/schemas/user';
+import { formatOrionInvestigatorNumber } from '@opendatacapture/schemas/instrument-records';
 
 import type { EntityOperationOptions } from '@/core/types';
 import { GroupsService } from '@/groups/groups.service';
@@ -200,9 +201,9 @@ export class UsersService {
 
     return {
       ...user,
-      studyNumbers: (await this.orionCodesService.findForUsers([id])).map(({ groupId, number }) => ({
+      studyNumbers: (await this.orionCodesService.findForUsers([id])).map(({ groupId, number, isInternal }) => ({
         groupId,
-        number
+        number: isInternal ? formatOrionInvestigatorNumber(number, true) : number
       })),
       hospital: promotedPending?.hospital ?? null
     };
@@ -370,7 +371,10 @@ export class UsersService {
       hospital: hospitalByUserId.get(user.id) ?? null,
       studyNumbers: numbers
         .filter((entry) => entry.investigatorId === user.id)
-        .map(({ groupId, number }) => ({ groupId, number }))
+        .map(({ groupId, number, isInternal }) => ({
+          groupId,
+          number: isInternal ? formatOrionInvestigatorNumber(number, true) : number
+        }))
     }));
   }
 

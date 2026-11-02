@@ -66,7 +66,7 @@ export function StudyHospitalFields({
   legacyHospital: string;
   onChange: (assignments: StudyHospital[], legacyHospital: string) => void;
   onCreate: (groupId: string) => void;
-  numbers?: { groupId: string; number: number }[];
+  numbers?: { groupId: string; number: number | string }[];
   disabled?: boolean;
 }) {
   const { t } = useTranslation();

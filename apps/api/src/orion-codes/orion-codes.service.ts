@@ -1,6 +1,7 @@
 import { InjectModel, InjectPrismaClient } from '@douglasneuroinformatics/libnest';
 import type { ExtendedPrismaClient, Model } from '@douglasneuroinformatics/libnest';
 import { ConflictException, Injectable } from '@nestjs/common';
+import { formatOrionInvestigatorNumber } from '@opendatacapture/schemas/instrument-records';
 
 export type OrionTransactionClient = Parameters<Parameters<ExtendedPrismaClient['$transaction']>[0]>[0];
 
@@ -13,6 +14,8 @@ export class OrionCodesService {
   constructor(
     @InjectModel('OrionInvestigator') private readonly investigatorModel: Model<'OrionInvestigator'>,
     @InjectModel('OrionPatientCode') private readonly patientCodeModel: Model<'OrionPatientCode'>,
+    @InjectModel('User') private readonly userModel: Model<'User'>,
+    @InjectModel('Hospital') private readonly hospitalModel: Model<'Hospital'>,
     @InjectPrismaClient() private readonly prismaClient: ExtendedPrismaClient
   ) {}
 
@@ -37,13 +40,25 @@ export class OrionCodesService {
     for (let attempt = 0; attempt < 20; attempt++) {
       const existing = await model.findFirst({ where: { groupId, investigatorId } });
       if (existing) return existing;
+      const user = await (transaction?.user ?? this.userModel).findUniqueOrThrow({
+        where: { id: investigatorId },
+        select: { studyHospitals: true }
+      });
+      const hospitalId = user.studyHospitals.find((entry) => entry.groupId === groupId)?.hospitalId;
+      const hospital = hospitalId
+        ? await (transaction?.hospital ?? this.hospitalModel).findUniqueOrThrow({
+            where: { id: hospitalId },
+            select: { isInternal: true }
+          })
+        : null;
+      const isInternal = hospital?.isInternal === true;
       const latest = await model.findFirst({
-        where: { groupId },
+        where: { groupId, isInternal },
         orderBy: { number: 'desc' }
       });
       try {
         return await model.create({
-          data: { groupId, investigatorId, number: (latest?.number ?? 0) + 1 }
+          data: { groupId, investigatorId, isInternal, number: (latest?.number ?? 0) + 1 }
         });
       } catch (error) {
         if (transaction || !isDuplicate(error)) throw error;
@@ -83,7 +98,7 @@ export class OrionCodesService {
     throw new ConflictException('No s’ha pogut assignar un codi de pacient únic. Torneu-ho a provar.');
   }
 
-  private format(investigator: { number: number }, sequence: number) {
-    return `OR-${String(investigator.number).padStart(2, '0')}-${String(sequence).padStart(2, '0')}`;
+  private format(investigator: { number: number; isInternal?: boolean }, sequence: number) {
+    return `OR-${formatOrionInvestigatorNumber(investigator.number, investigator.isInternal)}-${String(sequence).padStart(2, '0')}`;
   }
 }
