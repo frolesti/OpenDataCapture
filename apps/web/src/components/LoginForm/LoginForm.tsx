@@ -56,7 +56,7 @@ export const LoginForm = ({ onResetModeChange, onSubmit }: LoginFormProps) => {
               }}
               submitBtnLabel={t('resetPassword.submit')}
               validationSchema={z.object({
-                identifier: z.string().min(1)
+                identifier: z.string().trim().min(1)
               })}
               onSubmit={async ({ identifier }) => {
                 setResetStatus('sending');
@@ -103,7 +103,7 @@ export const LoginForm = ({ onResetModeChange, onSubmit }: LoginFormProps) => {
         data-testid="login-form"
         submitBtnLabel={t('login')}
         validationSchema={z.object({
-          username: z.string().min(1),
+          username: z.string().trim().min(1),
           password: z.string().min(1)
         })}
         onSubmit={onSubmit}

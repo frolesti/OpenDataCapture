@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { z } from 'zod/v4';
 
 export const $ForgotPasswordDto = z.object({
-  identifier: z.string().min(1)
+  identifier: z.string().trim().min(1)
 });
 
 export type ForgotPasswordDtoType = z.infer<typeof $ForgotPasswordDto>;

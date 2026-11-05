@@ -21,8 +21,8 @@ export const $User = $BaseModel.extend({
   additionalPermissions: $Permissions,
   basePermissionLevel: $BasePermissionLevel.nullable(),
   dateOfBirth: z.coerce.date().nullish(),
-  email: z.string().email().nullish(),
-  firstName: z.string().min(1),
+  email: z.string().trim().email().nullish(),
+  firstName: z.string().trim().min(1),
   groupIds: z.array(z.string()),
   hospital: z.string().nullish(),
   studyHospitals: z.array($StudyHospital).optional(),
@@ -32,9 +32,9 @@ export const $User = $BaseModel.extend({
     )
     .optional(),
   professionalTitle: $ProfessionalTitle.nullish(),
-  lastName: z.string().min(1),
+  lastName: z.string().trim().min(1),
   sex: $Sex.nullish(),
-  username: z.string().min(1)
+  username: z.string().trim().min(1)
 });
 
 export type CreateUserData = z.infer<typeof $CreateUserData>;
@@ -68,12 +68,12 @@ export type PendingInvestigator = z.infer<typeof $PendingInvestigator>;
 export const $PendingInvestigator = $BaseModel.extend({
   basePermissionLevel: $BasePermissionLevel,
   dateOfBirth: z.coerce.date().nullish(),
-  email: z.string().email(),
-  firstName: z.string().min(1),
+  email: z.string().trim().email(),
+  firstName: z.string().trim().min(1),
   groupIds: z.array(z.string()),
   hospital: z.string().min(1),
   studyHospitals: z.array($StudyHospital).optional(),
-  lastName: z.string().min(1),
+  lastName: z.string().trim().min(1),
   mailError: z.string().nullish(),
   mailSentAt: z.coerce.date().nullish(),
   notes: z.string().nullish(),

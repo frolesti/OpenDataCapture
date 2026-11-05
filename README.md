@@ -73,6 +73,21 @@ they must not infer it from names or sex. The test-mail script requires
 `TEST_WELCOME_TITLE` and supports `TEST_WELCOME_NAME` and
 `TEST_WELCOME_LAST_NAME`. Never use real credentials in email previews.
 
+### Password recovery
+
+Login usernames and recovery identifiers ignore leading and trailing spaces.
+Account creation and editing also trim usernames, emails, first names and last
+names, including pending investigators. Internal spaces are preserved, and
+passwords are never trimmed. Recovery looks up the username or the email already
+associated with the account, not an arbitrary recipient supplied by the requester.
+
+Configure `MAIL_TLS_SERVERNAME` when the SMTP certificate identifies a relay
+different from `MAIL_HOST`. Certificate verification remains enabled, and
+non-implicit-TLS connections require STARTTLS. A recovery request only replaces
+the password after SMTP accepts the message; if both send attempts fail, the
+existing password remains valid. SMTP acceptance does not guarantee inbox
+delivery. If delivery fails later, an administrator must assist the investigator.
+
 ## Contribution
 
 We welcome contributions! If you're interested in improving the platform or adding new features, please refer to our Contribution Guide.

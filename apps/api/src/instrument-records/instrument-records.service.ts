@@ -542,8 +542,11 @@ export class InstrumentRecordsService {
       if (!isPrivileged && instrumentRecord.session.userId !== user.id) {
         throw new ForbiddenException('Only the owner of the record can edit it.');
       }
-      if (!isPrivileged && instrumentRecord.groupId && !user.groupIds.includes(instrumentRecord.groupId)) {
-        throw new ForbiddenException('L’investigador ja no està assignat a aquest estudi.');
+      if (!isPrivileged && instrumentRecord.groupId) {
+        const account = await this.userModel.findUniqueOrThrow({ where: { id: user.id } });
+        if (!account.groupIds.includes(instrumentRecord.groupId)) {
+          throw new ForbiddenException('L’investigador ja no està assignat a aquest estudi.');
+        }
       }
     }
 

@@ -22,6 +22,7 @@ describe('ORION record assignment and atomic code persistence', () => {
   let service: InstrumentRecordsService;
   let groups: MockedInstance<GroupsService>;
   let records: MockedInstance<Model<'InstrumentRecord'>>;
+  let accounts: MockedInstance<Model<'User'>>;
   let codes: MockedInstance<OrionCodesService>;
   let instruments: MockedInstance<InstrumentsService>;
   let user: User;
@@ -54,6 +55,7 @@ describe('ORION record assignment and atomic code persistence', () => {
     service = moduleRef.get(InstrumentRecordsService);
     groups = moduleRef.get(GroupsService);
     records = moduleRef.get(getModelToken('InstrumentRecord'));
+    accounts = moduleRef.get(getModelToken('User'));
     codes = moduleRef.get(OrionCodesService);
     instruments = moduleRef.get(InstrumentsService);
     instruments.getInstrumentInstance.mockImplementation((instrument) => instrument);
@@ -234,6 +236,36 @@ describe('ORION record assignment and atomic code persistence', () => {
         expect.objectContaining({ data: expect.not.objectContaining({ adverse_event_records: expect.anything() }) })
       ])
     );
+  });
+
+  it('checks current database membership when the authenticated payload has no groupIds', async () => {
+    configureAdverseEvents();
+    records.findFirst.mockResolvedValue({
+      data: { baseline_adverse_events: 'no', patient_code: 'OR-01-01', site_hospital: 'CS Aravaca' },
+      groupId: 'orion',
+      id: 'record',
+      instrumentId: 'selection',
+      session: { userId: user.id }
+    });
+    Reflect.deleteProperty(user, 'groupIds');
+    accounts.findUniqueOrThrow.mockResolvedValue({ ...user, groupIds: ['orion'] });
+
+    await service.updateById('record', { baseline_adverse_events: 'no' }, { user });
+    expect(records.update).toHaveBeenCalledOnce();
+  });
+
+  it('rejects editing after database membership is removed, even with an old authenticated payload', async () => {
+    records.findFirst.mockResolvedValue({
+      data: {},
+      groupId: 'orion',
+      id: 'record',
+      instrumentId: 'selection',
+      session: { userId: user.id }
+    });
+    accounts.findUniqueOrThrow.mockResolvedValue({ ...user, groupIds: [] });
+
+    await expect(service.updateById('record', {}, { user })).rejects.toThrow('ja no està assignat');
+    expect(records.update).not.toHaveBeenCalled();
   });
 
   it('does not allocate ORION codes against the OMEGA group', async () => {

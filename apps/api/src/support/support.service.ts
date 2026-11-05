@@ -16,6 +16,7 @@ export class SupportService {
   ) {
     const smtpPort = Number(process.env.MAIL_PORT ?? 587);
     const smtpSecure = (process.env.MAIL_SECURE ?? 'false') === 'true';
+    const mailHost = process.env.MAIL_HOST ?? 'smtp.servidor-correo.net';
 
     // Using credentials from environment variables
     this.transporter = nodemailer.createTransport({
@@ -23,13 +24,19 @@ export class SupportService {
         pass: process.env.MAIL_PASSWORD,
         user: process.env.MAIL_USER || 'info@altamedicalservices.com'
       },
-      host: process.env.MAIL_HOST ?? 'smtp.servidor-correo.net',
+      host: mailHost,
       port: Number.isNaN(smtpPort) ? 587 : smtpPort,
-      secure: smtpSecure
+      requireTLS: !smtpSecure,
+      secure: smtpSecure,
+      tls: {
+        rejectUnauthorized: true,
+        servername: process.env.MAIL_TLS_SERVERNAME ?? mailHost
+      }
     });
   }
 
   async sendForgotPasswordEmail(identifier: string) {
+    identifier = identifier.trim();
     // Try to find user by username or email
     const user = await this.userModel.findFirst({
       where: {
@@ -67,12 +74,6 @@ export class SupportService {
     // Generate new password
     const newPassword = this.generatePassword();
     const hashedPassword = await this.cryptoService.hashPassword(newPassword);
-
-    // Update user
-    await this.userModel.update({
-      data: { hashedPassword },
-      where: { id: user.id }
-    });
 
     // Send email to user
     const mailOptions = {
@@ -193,8 +194,6 @@ export class SupportService {
 
     try {
       await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Password reset email sent to ${emailToSendTo} for user ${user.username}`);
-      return { success: true };
     } catch (error) {
       this.logger.error(`Failed to send email: ${error}`);
       // Try sending without attachment if it fails (e.g. file not found)
@@ -203,13 +202,18 @@ export class SupportService {
         // Remove image tag from html if attachment fails? Or just let it be broken image.
         // Better to try sending without attachment.
         await this.transporter.sendMail(mailOptions);
-        this.logger.log(`Password reset email sent (without logo) to ${emailToSendTo} for user ${user.username}`);
-        return { success: true };
       } catch (retryError) {
         this.logger.error(`Failed to send email (retry): ${retryError}`);
         throw retryError;
       }
     }
+    // Keep the existing password valid if SMTP rejects the message.
+    await this.userModel.update({
+      data: { hashedPassword },
+      where: { id: user.id }
+    });
+    this.logger.log(`Password reset email sent to ${emailToSendTo} for user ${user.username}`);
+    return { success: true };
   }
 
   private generatePassword(length = 12) {

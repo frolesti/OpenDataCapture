@@ -11,7 +11,7 @@ export type AuthPayload = {
 export type LoginCredentials = z.infer<typeof $LoginCredentials>;
 export const $LoginCredentials = z.object({
   password: z.string(),
-  username: z.string()
+  username: z.string().trim().min(1)
 });
 
 export type TokenPayload = {
