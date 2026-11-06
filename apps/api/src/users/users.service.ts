@@ -1,19 +1,21 @@
 import { accessibleQuery, CryptoService, InjectModel } from '@douglasneuroinformatics/libnest';
 import type { Model } from '@douglasneuroinformatics/libnest';
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import type { User } from '@opendatacapture/schemas/user';
+import { hospitalMatchesName } from '@opendatacapture/schemas/group';
+import type { Group } from '@opendatacapture/schemas/group';
 import { formatOrionInvestigatorNumber } from '@opendatacapture/schemas/instrument-records';
-
-import type { EntityOperationOptions } from '@/core/types';
-import { GroupsService } from '@/groups/groups.service';
-import { OrionCodesService } from '@/orion-codes/orion-codes.service';
-import type { OrionTransactionClient } from '@/orion-codes/orion-codes.service';
 import type {
+  User,
   CreatePendingInvestigatorData,
   PendingInvestigator,
   UpdatePendingInvestigatorData,
   StudyHospital
 } from '@opendatacapture/schemas/user';
+
+import type { EntityOperationOptions } from '@/core/types';
+import { GroupsService } from '@/groups/groups.service';
+import { OrionCodesService } from '@/orion-codes/orion-codes.service';
+import type { OrionTransactionClient } from '@/orion-codes/orion-codes.service';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { OnboardingMailService } from './onboarding-mail.service';
@@ -178,7 +180,7 @@ export class UsersService {
   async findCurrentById(
     id: string,
     { ability }: EntityOperationOptions = {}
-  ): Promise<User & { hospital: null | string }> {
+  ): Promise<User & { groups: Group[]; hospital: null | string }> {
     const user = await this.userModel.findFirst({
       include: { groups: true },
       omit: {
@@ -201,6 +203,7 @@ export class UsersService {
 
     return {
       ...user,
+      groups: await Promise.all(user.groups.map((group) => this.groupsService.findById(group.id, { ability }))),
       studyNumbers: (await this.orionCodesService.findForUsers([id])).map(({ groupId, number, isInternal }) => ({
         groupId,
         number: isInternal ? formatOrionInvestigatorNumber(number, true) : number
@@ -335,7 +338,7 @@ export class UsersService {
       const hospital = assignment
         ? catalog.find((entry) => entry.id === assignment.hospitalId)
         : assignments === undefined
-          ? catalog.find((entry) => entry.name === legacyHospital)
+          ? catalog.find((entry) => legacyHospital !== undefined && hospitalMatchesName(entry, legacyHospital))
           : undefined;
       if (!hospital) {
         throw new BadRequestException(`Cal assignar un centre sanitari vàlid per a l'estudi '${group.name}'.`);

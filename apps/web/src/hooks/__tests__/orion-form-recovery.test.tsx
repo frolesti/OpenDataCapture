@@ -1,8 +1,12 @@
+import { runInNewContext } from 'node:vm';
+
 import { StrictMode } from 'react';
 import type { PropsWithChildren } from 'react';
 
 import { replacer, reviver } from '@douglasneuroinformatics/libjs';
 import type { InstrumentSubmitHandler } from '@opendatacapture/react-core';
+import type { Group } from '@opendatacapture/schemas/group';
+import type { StudyHospital } from '@opendatacapture/schemas/user';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import axios from 'axios';
@@ -12,25 +16,34 @@ import { serializeInstrumentDraft } from '../../utils/instrument-draft';
 import { loadSchema, selectionData } from '../../utils/__tests__/orion-test-utils';
 
 const mocks = vi.hoisted(() => ({
-  navigate: vi.fn(),
-  notification: vi.fn(),
-  change: undefined as ((data: Record<string, unknown>) => void) | undefined,
-  submit: undefined as InstrumentSubmitHandler | undefined,
-  search: {} as { recordId?: string },
-  state: {} as { initialData?: Record<string, unknown> },
   bundle: {
     id: 'selection',
     kind: 'FORM',
     internal: { name: 'ORION_PR_2026_SELECTION' },
     bundle: '({})'
   },
+  bundleContext: {} as { [key: string]: unknown },
+  change: undefined as ((data: { [key: string]: unknown }) => void) | undefined,
+  navigate: vi.fn(),
+  notification: vi.fn(),
+  renderedBundle: '',
+  renderedInitialData: undefined as undefined | { [key: string]: unknown },
+  search: {} as { recordId?: string },
+  state: {} as { initialData?: { [key: string]: unknown } },
   store: {
-    setIsCurrentSessionSubmitted: vi.fn(),
-    startSession: vi.fn(),
-    currentGroup: { id: 'group', name: 'ORION', hospitals: [] },
+    currentGroup: { hospitals: [], id: 'group', name: 'ORION' } as Partial<Group> &
+      Pick<Group, 'hospitals' | 'id' | 'name'>,
     currentSession: { id: 'session', subject: { id: 'subject' } },
-    currentUser: { id: 'investigator', username: 'investigator', basePermissionLevel: 'STANDARD' }
-  }
+    currentUser: {
+      basePermissionLevel: 'STANDARD',
+      id: 'investigator',
+      studyHospitals: [] as StudyHospital[],
+      username: 'investigator'
+    },
+    setIsCurrentSessionSubmitted: vi.fn(),
+    startSession: vi.fn()
+  },
+  submit: undefined as InstrumentSubmitHandler | undefined
 }));
 
 vi.mock('axios', () => ({
@@ -62,14 +75,18 @@ vi.mock('@opendatacapture/react-core', () => ({
   InstrumentRenderer: ({
     initialData,
     onDataChange,
-    onSubmit
+    onSubmit,
+    target
   }: {
     initialData?: Record<string, unknown>;
     onDataChange?: (data: Record<string, unknown>) => void;
     onSubmit: InstrumentSubmitHandler;
+    target: { bundle: string };
   }) => {
     mocks.change = onDataChange;
     mocks.submit = onSubmit;
+    mocks.renderedBundle = target.bundle;
+    mocks.renderedInitialData = initialData;
     return <div data-testid="renderer">{String(initialData?.patient_code ?? '')}</div>;
   }
 }));
@@ -122,10 +139,170 @@ beforeEach(() => {
   mocks.state = {};
   mocks.submit = undefined;
   mocks.change = undefined;
+  mocks.renderedBundle = '';
+  mocks.renderedInitialData = undefined;
+  mocks.bundleContext = {};
+  mocks.bundle.internal.name = 'ORION_PR_2026_SELECTION';
+  mocks.bundle.bundle = '({})';
+  mocks.store.currentUser.studyHospitals = [];
   mocks.store.currentGroup = { id: 'group', name: 'ORION', hospitals: [] };
   localStorage.clear();
   vi.resetAllMocks();
   vi.mocked(axios.get).mockResolvedValue({ data: { groupId: 'group', subjectId: 'subject' } });
+});
+
+describe('hospital options in published OMEGA forms', () => {
+  type HospitalField = {
+    options: { [key: string]: string };
+    render: (data: { informed_consent: string }) => HospitalField | null;
+  };
+  type EvaluatedForm = { content: { fields: { [key: string]: HospitalField } }[] };
+
+  function prepareOmega() {
+    mocks.bundle.internal.name = 'ESTUDI_OSTEOPOROSIS';
+    mocks.bundle.bundle = `Promise.resolve({
+      content: [{ fields: {
+        CAP: {
+          kind: 'dynamic',
+          deps: ['informed_consent'],
+          render(data) {
+            return data.informed_consent === 'si'
+              ? { kind: 'string', variant: 'select', options: { 'CS Ávila Norte': 'CS Ávila Norte', 'Centre OMEGA': 'Centre OMEGA' } }
+              : null;
+          }
+        },
+        treatment: { kind: 'string', variant: 'select', options: { no: 'No' } }
+      } }]
+    })`;
+    mocks.store.currentGroup = { hospitals: ['Centre OMEGA'], id: 'omega', name: 'OMEGA' };
+  }
+
+  async function evaluateForm(): Promise<EvaluatedForm> {
+    return await (runInNewContext(mocks.renderedBundle, mocks.bundleContext) as Promise<EvaluatedForm>);
+  }
+
+  it('replaces a legacy fixed list with only the current study hospitals and preserves consent', async () => {
+    prepareOmega();
+    renderForm();
+    const form = await evaluateForm();
+    const fields = form.content[0]!.fields;
+    expect(fields.CAP!.render({ informed_consent: 'si' })?.options).toEqual({ 'Centre OMEGA': 'Centre OMEGA' });
+    expect(fields.CAP!.render({ informed_consent: 'no' })).toBeNull();
+    expect(fields.treatment!.options).toEqual({ no: 'No' });
+  });
+
+  it('does not fall back to the legacy list when the study has no hospitals', async () => {
+    prepareOmega();
+    mocks.store.currentGroup.hospitals = [];
+    renderForm();
+    const form = await evaluateForm();
+    expect(form.content[0]!.fields.CAP!.render({ informed_consent: 'si' })?.options).toEqual({});
+  });
+
+  it('keeps the assigned hospital restriction within the current group', async () => {
+    prepareOmega();
+    Object.assign(mocks.store.currentGroup, {
+      hospitalCatalog: [
+        { id: 'centre', isInternal: false, name: 'Centre OMEGA' },
+        { id: 'other', isInternal: false, name: 'Altre centre OMEGA' }
+      ],
+      hospitalIds: ['centre', 'other'],
+      hospitals: ['Centre OMEGA', 'Altre centre OMEGA']
+    });
+    mocks.store.currentUser.studyHospitals = [
+      { groupId: 'omega', hospitalId: 'centre' },
+      { groupId: 'orion', hospitalId: 'other-study-centre' }
+    ];
+    renderForm();
+    const form = await evaluateForm();
+    expect(form.content[0]!.fields.CAP!.render({ informed_consent: 'si' })?.options).toEqual({
+      'Centre OMEGA': 'Centre OMEGA'
+    });
+  });
+
+  it('does not add an out-of-group hospital from an existing record to the options', async () => {
+    prepareOmega();
+    mocks.search = { recordId: 'existing-record' };
+    mocks.state = { initialData: { CAP: 'CS Ávila Norte' } };
+    renderForm();
+    const form = await evaluateForm();
+    expect(form.content[0]!.fields.CAP!.render({ informed_consent: 'si' })?.options).toEqual({
+      'Centre OMEGA': 'Centre OMEGA'
+    });
+  });
+
+  it.each([undefined, 'existing-record'])(
+    'preserves a reconciled hospital alias in a draft or record (%s)',
+    async (recordId) => {
+      prepareOmega();
+      mocks.search = { recordId };
+      mocks.state = { initialData: { CAP: 'CS Ávila Norte' } };
+      mocks.store.currentGroup = {
+        hospitalCatalog: [
+          {
+            aliasKeys: ['cs avila norte'],
+            id: 'avila',
+            isInternal: false,
+            name: 'CS Ávila Norte (Ávila)'
+          }
+        ],
+        hospitalIds: ['avila'],
+        hospitals: ['CS Ávila Norte (Ávila)'],
+        id: 'omega',
+        name: 'OMEGA'
+      };
+      mocks.store.currentUser.studyHospitals = [{ groupId: 'omega', hospitalId: 'avila' }];
+      renderForm();
+      const form = await evaluateForm();
+      expect(form.content[0]!.fields.CAP!.render({ informed_consent: 'si' })?.options).toEqual({
+        'CS Ávila Norte': 'CS Ávila Norte'
+      });
+      expect(mocks.renderedInitialData?.CAP).toBe('CS Ávila Norte');
+    }
+  );
+
+  it('retains a historical centre when the investigator now has a different centre in the same study', async () => {
+    prepareOmega();
+    mocks.search = { recordId: 'historical-record' };
+    mocks.state = { initialData: { CAP: 'CS Ávila Norte' } };
+    mocks.store.currentGroup = {
+      hospitalCatalog: [
+        { id: 'current', isInternal: false, name: 'Centre OMEGA' },
+        { aliasKeys: ['cs avila norte'], id: 'avila', isInternal: false, name: 'CS Ávila Norte (Ávila)' }
+      ],
+      hospitalIds: ['current', 'avila'],
+      hospitals: ['Centre OMEGA', 'CS Ávila Norte (Ávila)'],
+      id: 'omega',
+      name: 'OMEGA'
+    };
+    mocks.store.currentUser.studyHospitals = [{ groupId: 'omega', hospitalId: 'current' }];
+    renderForm();
+    const form = await evaluateForm();
+    expect(form.content[0]!.fields.CAP!.render({ informed_consent: 'si' })?.options).toEqual({
+      'Centre OMEGA': 'Centre OMEGA',
+      'CS Ávila Norte': 'CS Ávila Norte'
+    });
+    expect(mocks.renderedInitialData?.CAP).toBe('CS Ávila Norte');
+  });
+
+  it('captures each group list instead of sharing the last evaluated global list', async () => {
+    prepareOmega();
+    const view = renderForm();
+    const omega = await evaluateForm();
+    mocks.store.currentGroup = { hospitals: ['Centre ORION'], id: 'orion', name: 'ORION' };
+    view.rerender(
+      <QueryClientProvider client={client}>
+        <Component />
+      </QueryClientProvider>
+    );
+    const orion = await evaluateForm();
+    expect(orion.content[0]!.fields.CAP!.render({ informed_consent: 'si' })?.options).toEqual({
+      'Centre ORION': 'Centre ORION'
+    });
+    expect(omega.content[0]!.fields.CAP!.render({ informed_consent: 'si' })?.options).toEqual({
+      'Centre OMEGA': 'Centre OMEGA'
+    });
+  });
 });
 
 describe('ORION selection submission date window', () => {

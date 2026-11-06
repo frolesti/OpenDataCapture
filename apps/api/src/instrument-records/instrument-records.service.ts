@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import type { Json, ScalarInstrument } from '@opendatacapture/runtime-core';
 import { DEFAULT_GROUP_NAME } from '@opendatacapture/schemas/core';
+import { hospitalMatchesName } from '@opendatacapture/schemas/group';
+import type { HospitalOption } from '@opendatacapture/schemas/group';
 import { $RecordArrayFieldValue } from '@opendatacapture/schemas/instrument';
 import type {
   CreateInstrumentRecordData,
@@ -166,7 +168,7 @@ export class InstrumentRecordsService {
         if (!hospital) {
           throw new BadRequestException('Cal assignar un centre sanitari vàlid per a aquest estudi.');
         }
-        this.validateHospitalSelection(parsedData, [hospital.name]);
+        this.validateHospitalSelection(parsedData, [hospital.name], [hospital]);
       }
     }
 
@@ -624,7 +626,7 @@ export class InstrumentRecordsService {
       if (!hospital) {
         throw new BadRequestException('Cal assignar un centre sanitari vàlid per a aquest estudi.');
       }
-      this.validateHospitalSelection(newDataObj, [hospital.name]);
+      this.validateHospitalSelection(newDataObj, [hospital.name], [hospital]);
     }
     const changes = this.auditLogService.computeChanges(oldDataObj, newDataObj);
 
@@ -685,7 +687,7 @@ export class InstrumentRecordsService {
         hospitals = [hospital.name];
       }
       for (const record of records) {
-        this.validateHospitalSelection(this.parseJson(record.data), hospitals);
+        this.validateHospitalSelection(this.parseJson(record.data), hospitals, group.hospitalCatalog);
       }
     }
 
@@ -719,7 +721,7 @@ export class InstrumentRecordsService {
 
           // Only validate hospital selection for ORION instruments (OMEGA and others don't use group hospitals)
           if (instrument.internal.name.startsWith('ORION_')) {
-            this.validateHospitalSelection(parseResult.data, group?.hospitals ?? []);
+            this.validateHospitalSelection(parseResult.data, group?.hospitals ?? [], group?.hospitalCatalog);
           }
 
           const session = await this.sessionsService.create({
@@ -902,7 +904,7 @@ export class InstrumentRecordsService {
     return typeof value === 'string' ? value.trim() : undefined;
   }
 
-  private validateHospitalSelection(data: unknown, groupHospitals: string[]) {
+  private validateHospitalSelection(data: unknown, groupHospitals: string[], catalog: HospitalOption[] = []) {
     if (groupHospitals.length === 0) {
       return;
     }
@@ -912,7 +914,12 @@ export class InstrumentRecordsService {
       return;
     }
 
-    if (!groupHospitals.includes(normalized)) {
+    const matches = groupHospitals.some(
+      (name) =>
+        name === normalized ||
+        catalog.some((hospital) => hospital.name === name && hospitalMatchesName(hospital, normalized))
+    );
+    if (!matches) {
       throw new BadRequestException(
         `Hospital '${normalized}' is not configured in the current group. Configure it in group management first.`
       );

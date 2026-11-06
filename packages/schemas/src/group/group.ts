@@ -22,9 +22,10 @@ export type GroupType = z.infer<typeof $GroupType>;
 export const $GroupType = z.enum(['CLINICAL', 'RESEARCH']);
 
 export const $HospitalOption = z.object({
+  aliasKeys: z.array(z.string().min(1)).optional(),
   id: z.string().min(1),
-  name: z.string().min(1),
-  isInternal: z.boolean()
+  isInternal: z.boolean(),
+  name: z.string().min(1)
 });
 export type HospitalOption = z.infer<typeof $HospitalOption>;
 
@@ -36,6 +37,11 @@ export function normalizeHospitalKey(value: string) {
     .replace(/\bc\s*\.\s*s\b\.?|\bcs\b\.?/g, 'cs')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
+}
+
+export function hospitalMatchesName(hospital: Pick<HospitalOption, 'aliasKeys' | 'name'>, value: string) {
+  const key = normalizeHospitalKey(value);
+  return key.length > 0 && (normalizeHospitalKey(hospital.name) === key || hospital.aliasKeys?.includes(key) === true);
 }
 
 export type Group = z.infer<typeof $Group>;

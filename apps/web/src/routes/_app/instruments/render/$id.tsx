@@ -6,6 +6,7 @@ import { Button, Dialog, Heading, Spinner } from '@douglasneuroinformatics/libui
 import { useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { InstrumentRenderer } from '@opendatacapture/react-core';
 import type { InstrumentSubmitHandler } from '@opendatacapture/react-core';
+import { hospitalMatchesName } from '@opendatacapture/schemas/group';
 import type { CreateInstrumentRecordData, InstrumentRecord } from '@opendatacapture/schemas/instrument-records';
 import { isOrionPatientCode, normalizeOrionAdverseEventRecords } from '@opendatacapture/schemas/instrument-records';
 import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
@@ -400,10 +401,25 @@ const RouteComponent = () => {
     : !currentGroup?.hospitalIds?.length
       ? (currentGroup?.hospitals ?? [])
       : [];
-  const storedHospital = recordId ? (effectiveInitialData?.site_hospital ?? effectiveInitialData?.CAP) : undefined;
+  const storedHospital =
+    effectiveInitialData?.site_hospital ??
+    effectiveInitialData?.CAP ??
+    effectiveInitialData?.centro_sanitario ??
+    effectiveInitialData?.centroAtencionPrimaria;
+  const historicalHospital =
+    typeof storedHospital === 'string'
+      ? currentGroup &&
+        getHospitalCatalog(currentGroup).find(
+          (hospital) =>
+            (Boolean(recordId) || availableHospitals.includes(hospital.name)) &&
+            hospitalMatchesName(hospital, storedHospital)
+        )
+      : undefined;
   const groupHospitalOptions = buildGroupHospitalOptions([
-    ...availableHospitals,
-    ...(typeof storedHospital === 'string' ? [storedHospital] : [])
+    ...availableHospitals.map((name) =>
+      historicalHospital?.name === name && typeof storedHospital === 'string' ? storedHospital : name
+    ),
+    ...(historicalHospital && typeof storedHospital === 'string' ? [storedHospital] : [])
   ]);
 
   const instrumentInfo = (instrumentInfoQuery.data ?? []).find((instrument) => instrument.id === params.id);
@@ -540,7 +556,38 @@ const RouteComponent = () => {
       // IMPORTANT: `evaluateInstrument` wraps this string with `return ${bundle}`.
       // Any bare assignment prepended here becomes `return X = Y`, which returns Y
       // and skips the instrument IIFE. Wrap in an arrow so the IIFE is what gets returned.
-      bundle: `(()=>{const runtimeCacheBust = globalThis.__ODC_RUNTIME_CACHE_BUST__ ??= Date.now().toString(36); globalThis.__resolveImport = (specifier) => specifier.startsWith('/runtime/') ? specifier + (specifier.includes('?') ? '&' : '?') + 'v=' + runtimeCacheBust : specifier; globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = ${groupHospitalOptions}; globalThis.__ODC_ORION_USER_CODE_OPTIONS__ = ${orionFollowupUserCodeOptionsJson}; globalThis.__ODC_ORION_SELECTION_VISIT_DATE_BY_CODE__ = ${orionSelectionVisitDateByCodeJson}; return ${bundle}})()`
+      bundle: `(async()=>{
+        const runtimeCacheBust = globalThis.__ODC_RUNTIME_CACHE_BUST__ ??= Date.now().toString(36);
+        globalThis.__resolveImport = (specifier) => specifier.startsWith('/runtime/') ? specifier + (specifier.includes('?') ? '&' : '?') + 'v=' + runtimeCacheBust : specifier;
+        const hospitalOptions = ${groupHospitalOptions};
+        globalThis.__ODC_GROUP_HOSPITAL_OPTIONS__ = hospitalOptions;
+        globalThis.__ODC_ORION_USER_CODE_OPTIONS__ = ${orionFollowupUserCodeOptionsJson};
+        globalThis.__ODC_ORION_SELECTION_VISIT_DATE_BY_CODE__ = ${orionSelectionVisitDateByCodeJson};
+        const instrument = await ${bundle};
+        // Legacy published bundles can contain fixed options instead of reading the group options.
+        const restrictHospitalField = (field) => {
+          if (!field) return field;
+          if (field.kind === 'dynamic') {
+            return {
+              ...field,
+              render(...args) {
+                return restrictHospitalField(field.render.apply(this, args));
+              }
+            };
+          }
+          return field.kind === 'string' && field.variant === 'select'
+            ? { ...field, options: hospitalOptions }
+            : field;
+        };
+        const sections = Array.isArray(instrument.content) ? instrument.content : [{ fields: instrument.content }];
+        for (const section of sections) {
+          if (!section.fields) continue;
+          for (const name of ['CAP', 'site_hospital', 'centro_sanitario', 'centroAtencionPrimaria']) {
+            if (section.fields[name]) section.fields[name] = restrictHospitalField(section.fields[name]);
+          }
+        }
+        return instrument;
+      })()`
     };
   }, [
     groupHospitalOptions,
@@ -563,7 +610,9 @@ const RouteComponent = () => {
     assignedHospital && !recordId
       ? {
           ...normalizedInitialData,
-          [isOrionSelection || isOrionFollowup ? 'site_hospital' : 'CAP']: assignedHospital.name
+          [isOrionSelection || isOrionFollowup ? 'site_hospital' : 'CAP']:
+            normalizedInitialData?.[isOrionSelection || isOrionFollowup ? 'site_hospital' : 'CAP'] ??
+            assignedHospital.name
         }
       : normalizedInitialData;
   const formInitialData =

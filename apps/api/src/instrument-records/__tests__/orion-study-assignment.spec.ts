@@ -113,6 +113,50 @@ describe('ORION record assignment and atomic code persistence', () => {
     expect(records.create).not.toHaveBeenCalled();
   });
 
+  it('accepts a reconciled OMEGA alias without rewriting the submitted centre', async () => {
+    groups.findById.mockResolvedValue({
+      accessibleInstrumentIds: ['selection'],
+      hospitalCatalog: [
+        {
+          aliasKeys: ['cs aravaca'],
+          id: 'aravaca',
+          isInternal: false,
+          name: 'CS Aravaca (Madrid)'
+        }
+      ],
+      hospitals: ['CS Aravaca (Madrid)'],
+      id: 'orion'
+    });
+    instruments.findById.mockResolvedValue({
+      id: 'selection',
+      internal: { edition: 1, name: 'ESTUDI_OSTEOPOROSIS' },
+      kind: 'FORM',
+      validationSchema: z.object({ CAP: z.string() })
+    });
+    await service.create({ ...input, data: { CAP: 'CS Aravaca' } }, { user });
+    expect(records.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ data: { CAP: 'CS Aravaca' } })
+    });
+    expect(codes.create).not.toHaveBeenCalled();
+  });
+
+  it('does not accept an alias from a different hospital in the same catalogue', async () => {
+    groups.findById.mockResolvedValue({
+      accessibleInstrumentIds: ['selection'],
+      hospitalCatalog: [
+        { id: 'aravaca', isInternal: false, name: 'CS Aravaca' },
+        { aliasKeys: ['cs avila norte'], id: 'avila', isInternal: false, name: 'CS Ávila Norte (Ávila)' }
+      ],
+      hospitals: ['CS Aravaca', 'CS Ávila Norte (Ávila)'],
+      id: 'orion'
+    });
+    await expect(
+      service.create({ ...input, data: { ...input.data, site_hospital: 'CS Ávila Norte' } }, { user })
+    ).rejects.toThrow('not configured');
+    expect(records.create).not.toHaveBeenCalled();
+    expect(codes.create).not.toHaveBeenCalled();
+  });
+
   it('rejects an unassigned form before allocating any patient code', async () => {
     groups.findById.mockResolvedValueOnce({ id: 'orion', accessibleInstrumentIds: [], hospitals: [] });
     await expect(service.create(input, { user })).rejects.toThrow('no està habilitat');

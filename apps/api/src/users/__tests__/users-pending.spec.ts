@@ -13,7 +13,9 @@ import { UsersService } from '../users.service';
 describe('pending investigator comments', () => {
   let service: UsersService;
   let pendingModel: MockedInstance<Model<'PendingInvestigator'>>;
+  let userModel: MockedInstance<Model<'User'>>;
   let groups: MockedInstance<GroupsService>;
+  let codes: MockedInstance<OrionCodesService>;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -29,7 +31,9 @@ describe('pending investigator comments', () => {
     }).compile();
     service = moduleRef.get(UsersService);
     pendingModel = moduleRef.get(getModelToken('PendingInvestigator'));
+    userModel = moduleRef.get(getModelToken('User'));
     groups = moduleRef.get(GroupsService);
+    codes = moduleRef.get(OrionCodesService);
     groups.findById.mockResolvedValue({
       id: 'group',
       hospitals: ['Hospital de prova']
@@ -120,6 +124,62 @@ describe('pending investigator comments', () => {
       })
     ).rejects.toThrow('centre sanitari vàlid');
     expect(pendingModel.create).not.toHaveBeenCalled();
+  });
+
+  it('resolves a legacy hospital name to its existing catalogue ID', async () => {
+    groups.findById.mockResolvedValue({
+      hospitalCatalog: [
+        {
+          aliasKeys: ['cs avila norte'],
+          id: 'avila',
+          isInternal: false,
+          name: 'CS Ávila Norte (Ávila)'
+        }
+      ],
+      hospitals: ['CS Ávila Norte (Ávila)'],
+      id: 'omega',
+      name: 'OMEGA'
+    });
+    await service.createPending({
+      basePermissionLevel: 'STANDARD',
+      email: 'doctor@example.test',
+      firstName: 'Maria',
+      groupIds: ['omega'],
+      hospital: 'CS Ávila Norte',
+      lastName: 'Exemple',
+      signed: false
+    });
+    expect(pendingModel.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ studyHospitals: [{ groupId: 'omega', hospitalId: 'avila' }] })
+    });
+  });
+
+  it('hydrates the current profile groups with the same aliases used to validate records', async () => {
+    userModel.findFirst.mockResolvedValue({
+      groupIds: ['omega'],
+      groups: [{ id: 'omega' }],
+      id: 'investigator'
+    });
+    pendingModel.findFirst.mockResolvedValue({ hospital: 'CS Ávila Norte' });
+    codes.findForUsers.mockResolvedValue([]);
+    const hospitalCatalog = [
+      {
+        aliasKeys: ['cs avila norte'],
+        id: 'avila',
+        isInternal: false,
+        name: 'CS Ávila Norte (Ávila)'
+      }
+    ];
+    groups.findById.mockResolvedValue({
+      hospitalCatalog,
+      hospitals: ['CS Ávila Norte (Ávila)'],
+      id: 'omega'
+    });
+    const profile = await service.findCurrentById('investigator');
+    expect(profile).toMatchObject({
+      groups: [{ hospitalCatalog, id: 'omega' }],
+      hospital: 'CS Ávila Norte'
+    });
   });
 
   it('assigns any centre configured for the study without a special account classification', async () => {

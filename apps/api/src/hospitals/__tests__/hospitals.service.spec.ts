@@ -2,7 +2,7 @@ import { getModelToken, PRISMA_CLIENT_TOKEN } from '@douglasneuroinformatics/lib
 import type { Model } from '@douglasneuroinformatics/libnest';
 import { MockFactory, type MockedInstance } from '@douglasneuroinformatics/libnest/testing';
 import { Test } from '@nestjs/testing';
-import { normalizeHospitalKey } from '@opendatacapture/schemas/group';
+import { $HospitalOption, hospitalMatchesName, normalizeHospitalKey } from '@opendatacapture/schemas/group';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HospitalsService } from '../hospitals.service';
@@ -25,6 +25,19 @@ describe('canonical hospital catalogue', () => {
 
   it.each(['CS Aravaca', 'C.S. Aravaca', 'C. S. ARAVACA'])('normalizes %s to the same lookup key', (name) => {
     expect(normalizeHospitalKey(name)).toBe('cs aravaca');
+  });
+
+  it('keeps normalized aliases when parsing the public catalogue', () => {
+    const hospital = $HospitalOption.parse({
+      aliasKeys: [normalizeHospitalKey('CS Ávila Norte')],
+      id: 'avila',
+      isInternal: false,
+      name: 'CS Ávila Norte (Ávila)'
+    });
+    expect(hospitalMatchesName(hospital, 'CS Ávila Norte')).toBe(true);
+    expect(hospitalMatchesName(hospital, 'C. S. AVILA NORTE')).toBe(true);
+    expect(hospitalMatchesName(hospital, 'CS Ávila Sur')).toBe(false);
+    expect(hospitalMatchesName(hospital, '')).toBe(false);
   });
 
   it('unifies aliases by catalogue ID without creating duplicate centres', async () => {
