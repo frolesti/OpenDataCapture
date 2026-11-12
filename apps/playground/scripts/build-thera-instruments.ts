@@ -259,7 +259,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4', 'end']) {
   }
   const sourcePath = path.join(directory, `${filename}.ts`);
   const payloadPath = path.join(outputDirectory, `${filename}.json`);
-  const payload = `${JSON.stringify({ bundle: code })}\n`;
+  const payload = await format(JSON.stringify({ bundle: code }), { parser: 'json' });
   if (checkOnly) {
     verify((await readFile(sourcePath, 'utf8')) === entry, `${visit}: standalone source is up to date`);
     verify((await readFile(payloadPath, 'utf8')) === payload, `${visit}: upload payload is up to date`);
