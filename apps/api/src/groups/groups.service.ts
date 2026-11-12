@@ -1,6 +1,7 @@
 import { accessibleQuery, InjectModel } from '@douglasneuroinformatics/libnest';
 import type { Model } from '@douglasneuroinformatics/libnest';
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { DEFAULT_GROUP_HOSPITAL } from '@opendatacapture/schemas/group';
 import type { Prisma } from '@prisma/client';
 
 import type { EntityOperationOptions } from '@/core/types';
@@ -20,26 +21,39 @@ export class GroupsService {
     private readonly hospitalsService: HospitalsService
   ) {}
 
-  async create({ hospitals = [], name, settings, type, ...data }: CreateGroupDto) {
+  async create({ accessibleInstrumentIds, hospitals = [], name, settings, studyCode, type }: CreateGroupDto) {
     const exists = await this.groupModel.exists({ name });
     if (exists) {
       throw new ConflictException(`Group with name '${name}' already exists!`);
     }
-    const catalog = await this.hospitalsService.resolveNames(hospitals);
+    const instruments = await this.instrumentsService.find();
+    const availableIds = new Set(instruments.map(({ id }) => id));
+    if (accessibleInstrumentIds?.some((id) => !availableIds.has(id))) {
+      throw new BadRequestException('Hi ha instruments seleccionats que no estan disponibles.');
+    }
+    const instrumentIds = [...new Set(accessibleInstrumentIds ?? instruments.map(({ id }) => id))];
+    const catalog = await this.hospitalsService.resolveNames([DEFAULT_GROUP_HOSPITAL, ...hospitals]);
+    const administrators = await this.userModel.findMany({
+      where: { basePermissionLevel: 'ADMIN' },
+      select: { id: true }
+    });
     const created = await this.groupModel.create({
       data: {
         accessibleInstruments: {
-          connect: (await this.instrumentsService.find()).map(({ id }) => ({ id }))
+          connect: instrumentIds.map((id) => ({ id }))
         },
         hospitals: catalog.map((hospital) => hospital.name),
         hospitalIds: catalog.map((hospital) => hospital.id),
         name,
+        studyCode,
         settings: {
           defaultIdentificationMethod: type === 'CLINICAL' ? 'PERSONAL_INFO' : 'CUSTOM_ID',
           ...settings
         },
         type,
-        ...data
+        users: {
+          connect: administrators.map(({ id }) => ({ id }))
+        }
       }
     });
 

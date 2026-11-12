@@ -60,9 +60,12 @@ export const $Group = $BaseModel.extend({
 });
 
 export type CreateGroupData = z.infer<typeof $CreateGroupData>;
+export const DEFAULT_GROUP_HOSPITAL = 'Alta Medical Services';
 export const $CreateGroupData = z.object({
+  accessibleInstrumentIds: z.array(z.string().min(1)).optional(),
   hospitals: z.array(z.string().min(1)).default([]),
   name: z.string().min(1),
+  studyCode: z.enum(['OR', 'TH']).nullish(),
   settings: $GroupSettings.optional(),
   type: $GroupType
 });

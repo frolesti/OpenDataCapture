@@ -2,7 +2,7 @@ import type { Model } from '@douglasneuroinformatics/libnest';
 import { getModelToken } from '@douglasneuroinformatics/libnest';
 import { MockFactory } from '@douglasneuroinformatics/libnest/testing';
 import type { MockedInstance } from '@douglasneuroinformatics/libnest/testing';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -34,6 +34,7 @@ describe('GroupsService', () => {
     instrumentsService.find.mockResolvedValue([]);
     hospitalsService = moduleRef.get(HospitalsService);
     userModel = moduleRef.get(getModelToken('User'));
+    userModel.findMany.mockResolvedValue([]);
     hospitalsService.resolveNames.mockResolvedValue([]);
     groupModel.create.mockResolvedValue({ hospitals: [], hospitalIds: [] });
   });
@@ -42,6 +43,66 @@ describe('GroupsService', () => {
     it('should call the group model', async () => {
       await groupsService.create({ name: 'Test Group', type: 'CLINICAL', hospitals: [] });
       expect(groupModel.create.mock.lastCall?.[0]).toMatchObject({ data: { name: 'Test Group' } });
+    });
+
+    it('connects only the selected instruments and existing administrators when creating a group', async () => {
+      instrumentsService.find.mockResolvedValueOnce([{ id: 'baseline' }, { id: 'followup' }]);
+      userModel.findMany.mockResolvedValueOnce([{ id: 'admin-one' }, { id: 'admin-two' }]);
+      await groupsService.create({
+        accessibleInstrumentIds: ['baseline', 'baseline'],
+        hospitals: ['Hospital Clínic'],
+        name: 'THERA',
+        studyCode: 'TH',
+        type: 'CLINICAL'
+      });
+      expect(hospitalsService.resolveNames).toHaveBeenCalledWith(['Alta Medical Services', 'Hospital Clínic']);
+      expect(userModel.findMany).toHaveBeenCalledWith({
+        where: { basePermissionLevel: 'ADMIN' },
+        select: { id: true }
+      });
+      expect(groupModel.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accessibleInstruments: { connect: [{ id: 'baseline' }] },
+          studyCode: 'TH',
+          users: { connect: [{ id: 'admin-one' }, { id: 'admin-two' }] }
+        })
+      });
+    });
+
+    it('adds Alta Medical Services even if no hospital is provided', async () => {
+      await groupsService.create({ name: 'Study', type: 'CLINICAL', hospitals: [] });
+      expect(hospitalsService.resolveNames).toHaveBeenCalledWith(['Alta Medical Services']);
+    });
+
+    it('preserves the legacy all-instruments default when no selection is provided', async () => {
+      instrumentsService.find.mockResolvedValueOnce([{ id: 'baseline' }, { id: 'followup' }]);
+      await groupsService.create({ name: 'Study', type: 'CLINICAL', hospitals: [] });
+      expect(groupModel.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          accessibleInstruments: { connect: [{ id: 'baseline' }, { id: 'followup' }] }
+        })
+      });
+    });
+
+    it('preserves an explicit empty instrument selection', async () => {
+      instrumentsService.find.mockResolvedValueOnce([{ id: 'baseline' }]);
+      await groupsService.create({ accessibleInstrumentIds: [], name: 'Study', type: 'CLINICAL', hospitals: [] });
+      expect(groupModel.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ accessibleInstruments: { connect: [] } })
+      });
+    });
+
+    it('rejects unknown instruments before creating the group or changing hospitals', async () => {
+      await expect(
+        groupsService.create({
+          accessibleInstrumentIds: ['missing'],
+          hospitals: [],
+          name: 'Study',
+          type: 'CLINICAL'
+        })
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(groupModel.create).not.toHaveBeenCalled();
+      expect(hospitalsService.resolveNames).not.toHaveBeenCalled();
     });
 
     it('should throw a ConflictException if a group with the same name already exists in the db', async () => {
