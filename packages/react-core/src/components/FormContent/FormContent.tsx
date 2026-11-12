@@ -1,3 +1,4 @@
+import { replacer } from '@douglasneuroinformatics/libjs';
 import { Button, Dialog, Form, Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { AnyUnilingualFormInstrument, FormInstrument } from '@opendatacapture/runtime-core';
@@ -150,7 +151,7 @@ export const FormContent = ({
                   onChange: (values) => {
                     onDataChange(values as Record<string, unknown>);
                   },
-                  selector: (values) => JSON.stringify(values)
+                  selector: (values) => JSON.stringify(values, replacer)
                 }
               : undefined
           }

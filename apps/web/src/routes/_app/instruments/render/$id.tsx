@@ -10,6 +10,13 @@ import { hospitalMatchesName } from '@opendatacapture/schemas/group';
 import type { CreateInstrumentRecordData, InstrumentRecord } from '@opendatacapture/schemas/instrument-records';
 import { isOrionPatientCode, normalizeOrionAdverseEventRecords } from '@opendatacapture/schemas/instrument-records';
 import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
+import {
+  getTheraVisit,
+  isTheraEligible,
+  isTheraPatientCode,
+  theraPatientContext
+} from '@opendatacapture/schemas/thera';
+import type { TheraStoredVisit } from '@opendatacapture/schemas/thera';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { Save } from 'lucide-react';
@@ -442,6 +449,45 @@ const RouteComponent = () => {
   const isOrionSelection =
     instrumentInfo?.internal?.name === ORION_SELECTION_INTERNAL_NAME ||
     bundleInternalName === ORION_SELECTION_INTERNAL_NAME;
+  const theraVisit = getTheraVisit(instrumentInfo?.internal?.name ?? bundleInternalName ?? '');
+  const isThera = Boolean(theraVisit);
+  const [selectedTheraPatient, setSelectedTheraPatient] = useState('');
+  const theraPatientCodeQuery = useOrionPatientCode({
+    enabled: theraVisit === 'V0' && !recordId && !effectiveInitialData?.patient_code,
+    groupId: currentGroup?.id,
+    instrumentId: params.id,
+    sessionId: currentSession?.id,
+    userId: currentUser?.id,
+    study: 'TH'
+  });
+  const theraRecordsQuery = useInstrumentRecords({
+    enabled: isThera && Boolean(currentGroup?.id && scopedSubjectId),
+    params: { groupId: currentGroup?.id, subjectId: scopedSubjectId }
+  });
+  const theraRecords: TheraStoredVisit[] = (theraRecordsQuery.data ?? []).flatMap((record) => {
+    const info = instrumentInfoQuery.data?.find((item) => item.id === record.instrumentId);
+    const storedVisit =
+      record.data && typeof record.data === 'object' && 'study_visit' in record.data
+        ? getTheraVisit(`THERA_SGM_2026_${String(record.data.study_visit)}`)
+        : undefined;
+    const visit = (info?.internal && getTheraVisit(info.internal.name)) ?? storedVisit;
+    return visit && record.data && typeof record.data === 'object' && !Array.isArray(record.data)
+      ? [{ id: record.id, visit, data: record.data as Record<string, unknown> }]
+      : [];
+  });
+  const theraPatientCode = recordId
+    ? String(effectiveInitialData?.patient_code ?? '')
+    : selectedTheraPatient || String(effectiveInitialData?.patient_code ?? '');
+  const theraPatients = theraRecords.filter((record) => {
+    if (record.visit !== 'V0' || !isTheraEligible(record.data) || !isTheraPatientCode(record.data.patient_code))
+      return false;
+    const context = theraPatientContext(theraRecords, record.data.patient_code);
+    return (
+      !context.patient.some((item) => item.id !== recordId && (item.visit === 'END' || item.visit === theraVisit)) &&
+      (theraVisit === 'V1' || theraVisit === 'END' || Boolean(context.first))
+    );
+  });
+  const theraContext = theraPatientContext(theraRecords, theraPatientCode);
 
   const needsOrionPatientCode = Boolean(
     isOrionSelection && !recordId && !effectiveInitialData?.patient_code && !effectiveInitialData?.user_code
@@ -610,12 +656,12 @@ const RouteComponent = () => {
     assignedHospital && !recordId
       ? {
           ...normalizedInitialData,
-          [isOrionSelection || isOrionFollowup ? 'site_hospital' : 'CAP']:
-            normalizedInitialData?.[isOrionSelection || isOrionFollowup ? 'site_hospital' : 'CAP'] ??
+          [isOrionSelection || isOrionFollowup || isThera ? 'site_hospital' : 'CAP']:
+            normalizedInitialData?.[isOrionSelection || isOrionFollowup || isThera ? 'site_hospital' : 'CAP'] ??
             assignedHospital.name
         }
       : normalizedInitialData;
-  const formInitialData =
+  const originalFormInitialData =
     isOrionSelection &&
     reservedOrionPatientCode &&
     !normalizedInitialData?.patient_code &&
@@ -627,6 +673,21 @@ const RouteComponent = () => {
           patient_code: reservedOrionPatientCode
         }
       : assignedInitialData;
+  const formInitialData = isThera
+    ? {
+        ...(selectedTheraPatient && selectedTheraPatient !== effectiveInitialData?.patient_code
+          ? {}
+          : originalFormInitialData),
+        ...(theraVisit === 'V0'
+          ? { patient_code: effectiveInitialData?.patient_code ?? theraPatientCodeQuery.data }
+          : {
+              patient_code: theraPatientCode,
+              baseline_date: theraContext.baseline?.data.visit_date,
+              first_visit_date: theraContext.first?.data.visit_date,
+              site_hospital: theraContext.baseline?.data.site_hospital
+            })
+      }
+    : originalFormInitialData;
 
   const title = instrumentTitle;
 
@@ -1019,11 +1080,12 @@ const RouteComponent = () => {
       );
       const savedData = response.data?.data;
       if (
-        isOrionSelection &&
+        (isOrionSelection || theraVisit === 'V0') &&
         savedData &&
         typeof savedData === 'object' &&
         'patient_code' in savedData &&
-        isOrionPatientCode(savedData.patient_code)
+        typeof savedData.patient_code === 'string' &&
+        (theraVisit === 'V0' ? isTheraPatientCode(savedData.patient_code) : isOrionPatientCode(savedData.patient_code))
       ) {
         setSubmittedPatientCode(savedData.patient_code);
       }
@@ -1139,7 +1201,35 @@ const RouteComponent = () => {
     );
   }
 
-  if (!instrumentTarget || isLoadingData || isWaitingForOrionPatientCode) {
+  if (
+    isThera &&
+    (!currentGroup ||
+      !scopedSubjectId ||
+      theraRecordsQuery.isError ||
+      (theraVisit === 'V0' && theraPatientCodeQuery.isError))
+  ) {
+    return (
+      <div className="mx-auto max-w-3xl p-6" role="alert">
+        <Heading variant="h2">No se ha podido preparar THERA</Heading>
+        <p>Seleccione el grupo THERA, compruebe la asignación del hospital y la conexión. El borrador se conserva.</p>
+        <Button
+          onClick={() => {
+            void theraRecordsQuery.refetch();
+            if (theraVisit === 'V0') void theraPatientCodeQuery.refetch();
+          }}
+        >
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
+  if (
+    !instrumentTarget ||
+    isLoadingData ||
+    isWaitingForOrionPatientCode ||
+    instrumentInfoQuery.isLoading ||
+    (isThera && (theraRecordsQuery.isLoading || (theraVisit === 'V0' && !recordId && !formInitialData?.patient_code)))
+  ) {
     if (instrumentBundleQuery.isError) {
       return (
         <div className="flex grow items-center justify-center px-6">
@@ -1162,6 +1252,40 @@ const RouteComponent = () => {
           {title ?? t('core.instrument')}
         </Heading>
       </PageHeader>
+      {isThera && theraVisit !== 'V0' && !recordId ? (
+        <div className="mx-auto mb-4 w-full max-w-3xl p-3">
+          <label className="flex flex-col gap-2">
+            Paciente THERA con visita basal apta
+            <select
+              className="rounded border p-2"
+              value={theraPatientCode}
+              onChange={(event) => {
+                setSelectedTheraPatient(event.target.value);
+                latestDataRef.current = null;
+                setDraftDiscarded(true);
+                setDraftData(null);
+                setCurrentStep(0);
+                setFormSubmitted(false);
+                setSubmittedPatientCode(undefined);
+                setRendererKey((key) => key + 1);
+              }}
+            >
+              <option value="">Seleccione un código de paciente</option>
+              {theraPatients.map((record) => (
+                <option key={record.id} value={String(record.data.patient_code)}>
+                  {String(record.data.patient_code)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {!theraPatients.length ? (
+            <p role="status">
+              No hay pacientes aptas con las visitas de referencia necesarias, sin esta visita ya registrada y sin fin
+              de estudio.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       {formSubmitted && submittedPatientCode ? (
         <p className="mx-auto mb-4 rounded-md border p-3 text-center font-medium" role="status">
           {t({ en: 'Codi de pacient desat', fr: 'Código de paciente guardado' })}: {submittedPatientCode}
@@ -1185,21 +1309,26 @@ const RouteComponent = () => {
         </div>
       ) : null}
       <div className="grow">
-        <InstrumentRenderer
-          key={rendererKey}
-          className="mx-auto max-w-3xl"
-          initialData={formInitialData}
-          isAdmin={currentUser?.basePermissionLevel === 'ADMIN'}
-          isEditing={Boolean(recordId)}
-          isResuming={Boolean(recordId) || Boolean(effectiveInitialData)}
-          subject={currentSession?.subject}
-          target={instrumentTarget}
-          onDataChange={handleDataChange}
-          onDiscardDraft={draftData && !recordId && !draftDiscarded ? handleDiscardDraft : undefined}
-          onStepChange={setCurrentStep}
-          onSubmit={handleSubmit}
-          revalidateOnChange={isOrionSelection || isOrionFollowup}
-        />
+        {!isThera ||
+        theraVisit === 'V0' ||
+        Boolean(recordId) ||
+        theraPatients.some((record) => record.data.patient_code === theraPatientCode) ? (
+          <InstrumentRenderer
+            key={rendererKey}
+            className="mx-auto max-w-3xl"
+            initialData={formInitialData}
+            isAdmin={currentUser?.basePermissionLevel === 'ADMIN'}
+            isEditing={Boolean(recordId)}
+            isResuming={Boolean(recordId) || Boolean(effectiveInitialData)}
+            subject={currentSession?.subject}
+            target={instrumentTarget}
+            onDataChange={handleDataChange}
+            onDiscardDraft={draftData && !recordId && !draftDiscarded ? handleDiscardDraft : undefined}
+            onStepChange={setCurrentStep}
+            onSubmit={handleSubmit}
+            revalidateOnChange={isOrionSelection || isOrionFollowup || isThera}
+          />
+        ) : null}
       </div>
       {/* Edit confirmation dialog */}
       <Dialog open={showEditConfirmation} onOpenChange={setShowEditConfirmation}>

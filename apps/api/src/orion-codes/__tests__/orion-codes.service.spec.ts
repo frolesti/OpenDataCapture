@@ -42,6 +42,31 @@ describe('permanent ORION numbering', () => {
     expect(patients.create).not.toHaveBeenCalled();
   });
 
+  it('uses the same permanent numbering for THERA without an OR prefix', async () => {
+    investigators.findFirst.mockResolvedValue({ number: 1 });
+    expect(await service.preview('thera', 'first', 'TH')).toBe('TH-01-01');
+    expect(patients.create).not.toHaveBeenCalled();
+    expect(await service.create('thera', 'first', 'Centre A', undefined, 'TH')).toBe('TH-01-01');
+    expect(patients.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ code: 'TH-01-01', groupId: 'thera', sequence: 1 })
+    });
+  });
+
+  it('retains the internal-investigator format for THERA', async () => {
+    investigators.findFirst.mockResolvedValue({ number: 1, isInternal: true });
+    expect(await service.preview('thera', 'internal', 'TH')).toBe('TH-XX-01');
+  });
+
+  it('does not collide with THERA codes allocated in a separate test group', async () => {
+    investigators.findFirst.mockResolvedValue({ number: 1 });
+    patients.findFirst.mockResolvedValue({ sequence: 7 });
+    expect(await service.preview('thera-test', 'first', 'TH')).toBe('TH-01-08');
+    expect(patients.findFirst).toHaveBeenLastCalledWith({
+      where: { code: { startsWith: 'TH-01-' } },
+      orderBy: { sequence: 'desc' }
+    });
+  });
+
   it('keeps the assigned investigator number when the hospital changes', async () => {
     investigators.findFirst.mockResolvedValue({ number: 2 });
     patients.findFirst.mockResolvedValueOnce({ sequence: 0 }).mockResolvedValueOnce({ sequence: 1 });

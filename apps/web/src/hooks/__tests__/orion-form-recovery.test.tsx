@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { serializeInstrumentDraft } from '../../utils/instrument-draft';
 import { loadSchema, selectionData } from '../../utils/__tests__/orion-test-utils';
+import { THERA_EXCLUSIONS, THERA_INCLUSIONS, THERA_VAGINAL_ITEMS } from '@opendatacapture/schemas/thera';
 
 const mocks = vi.hoisted(() => ({
   bundle: {
@@ -28,6 +29,8 @@ const mocks = vi.hoisted(() => ({
   notification: vi.fn(),
   renderedBundle: '',
   renderedInitialData: undefined as undefined | { [key: string]: unknown },
+  records: [] as Record<string, unknown>[],
+  extraInfo: [] as { id: string; internal: { name: string } }[],
   search: {} as { recordId?: string },
   state: {} as { initialData?: { [key: string]: unknown } },
   store: {
@@ -106,10 +109,10 @@ vi.mock('@/hooks/useInstrumentBundle', () => ({
   useInstrumentBundle: () => ({ data: mocks.bundle, isError: false })
 }));
 vi.mock('@/hooks/useInstrumentInfoQuery', () => ({
-  useInstrumentInfoQuery: () => ({ data: [mocks.bundle] })
+  useInstrumentInfoQuery: () => ({ data: [mocks.bundle, ...mocks.extraInfo] })
 }));
 vi.mock('@/hooks/useInstrumentRecords', () => ({
-  useInstrumentRecords: () => ({ data: [], isLoading: false })
+  useInstrumentRecords: () => ({ data: mocks.records, isLoading: false })
 }));
 vi.mock('@/store', () => ({
   useAppStore: Object.assign((selector: (store: typeof mocks.store) => unknown) => selector(mocks.store), {
@@ -142,6 +145,8 @@ beforeEach(() => {
   mocks.renderedBundle = '';
   mocks.renderedInitialData = undefined;
   mocks.bundleContext = {};
+  mocks.records = [];
+  mocks.extraInfo = [];
   mocks.bundle.internal.name = 'ORION_PR_2026_SELECTION';
   mocks.bundle.bundle = '({})';
   mocks.store.currentUser.studyHospitals = [];
@@ -149,6 +154,85 @@ beforeEach(() => {
   localStorage.clear();
   vi.resetAllMocks();
   vi.mocked(axios.get).mockResolvedValue({ data: { groupId: 'group', subjectId: 'subject' } });
+});
+
+describe('THERA patient identity and persisted visit anchors', () => {
+  const baselineData = {
+    patient_code: 'TH-01-01',
+    site_hospital: 'Hospital THERA',
+    visit_date: '2024-01-31',
+    informed_consent: 'si',
+    age: 18,
+    eva_dryness: 5,
+    eva_dyspareunia: 0,
+    ...Object.fromEntries(THERA_INCLUSIONS.map((key) => [key, 'si'])),
+    ...Object.fromEntries(THERA_EXCLUSIONS.map((key) => [key, 'no'])),
+    ...Object.fromEntries(THERA_VAGINAL_ITEMS.map((key) => [key, 3]))
+  };
+  function prepareThera(visit: 'V0' | 'V1' | 'V2' = 'V1') {
+    mocks.bundle.internal.name = `THERA_SGM_2026_${visit}`;
+    mocks.store.currentGroup = { id: 'group', name: 'THERA', hospitals: [] };
+    mocks.extraInfo = [
+      { id: 'baseline', internal: { name: 'THERA_SGM_2026_V0' } },
+      { id: 'first', internal: { name: 'THERA_SGM_2026_V1' } }
+    ];
+    mocks.records = [{ id: 'baseline-record', instrumentId: 'baseline', data: baselineData }];
+  }
+  it('previews TH codes with the THERA endpoint, never the ORION endpoint', async () => {
+    prepareThera('V0');
+    vi.mocked(axios.post).mockResolvedValue({ data: { code: 'TH-01-02' } });
+    renderForm();
+    await screen.findByTestId('renderer');
+    expect(axios.post).toHaveBeenCalledWith('/v1/instrument-records/thera-patient-code', { groupId: 'group' });
+    expect(mocks.renderedInitialData?.patient_code).toBe('TH-01-02');
+  });
+  it('requires selecting an eligible patient and loads the saved basal date and hospital', async () => {
+    prepareThera();
+    renderForm();
+    expect(screen.queryByTestId('renderer')).toBeNull();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'TH-01-01' } });
+    await screen.findByTestId('renderer');
+    expect(mocks.renderedInitialData).toMatchObject({
+      patient_code: 'TH-01-01',
+      baseline_date: '2024-01-31',
+      site_hospital: 'Hospital THERA'
+    });
+  });
+  it('does not offer screen failures or patients who already have this visit', () => {
+    prepareThera();
+    mocks.records.push(
+      {
+        id: 'failed',
+        instrumentId: 'baseline',
+        data: { ...baselineData, patient_code: 'TH-01-02', exclusion_1: 'si' }
+      },
+      { id: 'completed', instrumentId: 'first', data: { patient_code: 'TH-01-01', visit_date: '2024-02-29' } }
+    );
+    renderForm();
+    expect(screen.queryByRole('option', { name: 'TH-01-01' })).toBeNull();
+    expect(screen.queryByRole('option', { name: 'TH-01-02' })).toBeNull();
+    expect(screen.queryByTestId('renderer')).toBeNull();
+  });
+  it('loads the actual V1 date for V2 and never carries answers to another patient', async () => {
+    prepareThera('V2');
+    mocks.records.push(
+      { id: 'first-record', instrumentId: 'first', data: { patient_code: 'TH-01-01', visit_date: '2024-02-29' } },
+      {
+        id: 'other-baseline',
+        instrumentId: 'baseline',
+        data: { ...baselineData, patient_code: 'TH-01-02', visit_date: '2024-02-01' }
+      },
+      { id: 'other-first', instrumentId: 'first', data: { patient_code: 'TH-01-02', visit_date: '2024-03-03' } }
+    );
+    mocks.state.initialData = { patient_code: 'TH-01-01', eva_dryness: 8, baseline_date: 'forged' };
+    renderForm();
+    await screen.findByTestId('renderer');
+    expect(mocks.renderedInitialData?.baseline_date).toBe('2024-01-31');
+    expect(mocks.renderedInitialData?.first_visit_date).toBe('2024-02-29');
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'TH-01-02' } });
+    expect(mocks.renderedInitialData?.first_visit_date).toBe('2024-03-03');
+    expect(mocks.renderedInitialData?.eva_dryness).toBeUndefined();
+  });
 });
 
 describe('hospital options in published OMEGA forms', () => {

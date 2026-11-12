@@ -67,25 +67,31 @@ export class OrionCodesService {
     throw new ConflictException('No s’ha pogut assignar el número d’investigador. Torneu-ho a provar.');
   }
 
-  async preview(groupId: string, investigatorId: string) {
+  async preview(groupId: string, investigatorId: string, prefix: 'OR' | 'TH' = 'OR') {
     const investigator = await this.assignInvestigator(groupId, investigatorId);
     const latest = await this.patientCodeModel.findFirst({
-      where: { groupId, investigatorId },
+      where: this.sequenceScope(groupId, investigatorId, investigator, prefix),
       orderBy: { sequence: 'desc' }
     });
-    return this.format(investigator, (latest?.sequence ?? 0) + 1);
+    return this.format(investigator, (latest?.sequence ?? 0) + 1, prefix);
   }
 
-  async create(groupId: string, investigatorId: string, hospital: string, transaction?: OrionTransactionClient) {
+  async create(
+    groupId: string,
+    investigatorId: string,
+    hospital: string,
+    transaction?: OrionTransactionClient,
+    prefix: 'OR' | 'TH' = 'OR'
+  ) {
     const investigator = await this.assignInvestigator(groupId, investigatorId, transaction);
     const model = transaction?.orionPatientCode ?? this.patientCodeModel;
     for (let attempt = 0; attempt < 20; attempt++) {
       const latest = await model.findFirst({
-        where: { groupId, investigatorId },
+        where: this.sequenceScope(groupId, investigatorId, investigator, prefix),
         orderBy: { sequence: 'desc' }
       });
       const sequence = (latest?.sequence ?? 0) + 1;
-      const code = this.format(investigator, sequence);
+      const code = this.format(investigator, sequence, prefix);
       try {
         await model.create({
           data: { code, groupId, investigatorId, hospital, sequence, investigatorNumber: investigator.number }
@@ -98,7 +104,18 @@ export class OrionCodesService {
     throw new ConflictException('No s’ha pogut assignar un codi de pacient únic. Torneu-ho a provar.');
   }
 
-  private format(investigator: { number: number; isInternal?: boolean }, sequence: number) {
-    return `OR-${formatOrionInvestigatorNumber(investigator.number, investigator.isInternal)}-${String(sequence).padStart(2, '0')}`;
+  private sequenceScope(
+    groupId: string,
+    investigatorId: string,
+    investigator: { number: number; isInternal?: boolean },
+    prefix: 'OR' | 'TH'
+  ) {
+    return prefix === 'TH'
+      ? { code: { startsWith: `TH-${formatOrionInvestigatorNumber(investigator.number, investigator.isInternal)}-` } }
+      : { groupId, investigatorId };
+  }
+
+  private format(investigator: { number: number; isInternal?: boolean }, sequence: number, prefix: 'OR' | 'TH') {
+    return `${prefix}-${formatOrionInvestigatorNumber(investigator.number, investigator.isInternal)}-${String(sequence).padStart(2, '0')}`;
   }
 }

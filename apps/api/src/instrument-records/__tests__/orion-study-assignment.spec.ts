@@ -17,6 +17,7 @@ import { SessionsService } from '../../sessions/sessions.service';
 import { SubjectsService } from '../../subjects/subjects.service';
 import { InstrumentMeasuresService } from '../instrument-measures.service';
 import { InstrumentRecordsService } from '../instrument-records.service';
+import { THERA_EXCLUSIONS, THERA_INCLUSIONS, THERA_NAMES, THERA_VAGINAL_ITEMS } from '@opendatacapture/schemas/thera';
 
 describe('ORION record assignment and atomic code persistence', () => {
   let service: InstrumentRecordsService;
@@ -111,6 +112,182 @@ describe('ORION record assignment and atomic code persistence', () => {
     ).rejects.toThrow('not configured');
     expect(codes.create).not.toHaveBeenCalled();
     expect(records.create).not.toHaveBeenCalled();
+  });
+
+  function configureThera(visit: 'V0' | 'V1' = 'V0') {
+    groups.findById.mockResolvedValue({
+      id: 'orion',
+      studyCode: 'TH',
+      accessibleInstrumentIds: ['selection', 'first'],
+      hospitals: ['CS Aravaca'],
+      hospitalCatalog: [{ id: 'aravaca', name: 'CS Aravaca', isInternal: false }]
+    });
+    const instrument = {
+      id: visit === 'V0' ? 'selection' : 'first',
+      kind: 'FORM' as const,
+      internal: { name: THERA_NAMES[visit], edition: 1 },
+      validationSchema: z
+        .object({ patient_code: z.string(), site_hospital: z.string(), visit_date: z.string() })
+        .passthrough()
+    };
+    instruments.findById.mockResolvedValue(instrument);
+    instruments.find.mockResolvedValue([
+      { ...instrument, id: 'selection', internal: { name: THERA_NAMES.V0, edition: 1 } },
+      { ...instrument, id: 'first', internal: { name: THERA_NAMES.V1, edition: 1 } }
+    ]);
+    codes.create.mockResolvedValue('TH-01-02');
+    codes.preview.mockResolvedValue('TH-01-02');
+    records.findMany.mockResolvedValue([]);
+    return {
+      ...input,
+      instrumentId: instrument.id,
+      data: {
+        site_hospital: 'CS Aravaca',
+        patient_code: 'TH-01-01',
+        visit_date: '2024-02-29',
+        baseline_date: '2024-01-31'
+      }
+    };
+  }
+
+  const theraBaselineData = {
+    patient_code: 'TH-01-01',
+    site_hospital: 'CS Aravaca',
+    visit_date: '2024-01-31',
+    informed_consent: 'si',
+    age: 18,
+    eva_dryness: 5,
+    eva_dyspareunia: 0,
+    ...Object.fromEntries(THERA_INCLUSIONS.map((key) => [key, 'si'])),
+    ...Object.fromEntries(THERA_EXCLUSIONS.map((key) => [key, 'no'])),
+    ...Object.fromEntries(THERA_VAGINAL_ITEMS.map((key) => [key, 3]))
+  };
+
+  it('previews a THERA code only for a TH study', async () => {
+    configureThera();
+    expect(await service.reserveTheraPatientCode({ groupId: 'orion', user })).toEqual({ code: 'TH-01-02' });
+    expect(codes.preview).toHaveBeenCalledWith('orion', user.id, 'TH');
+    expect(codes.create).not.toHaveBeenCalled();
+    groups.findById.mockResolvedValueOnce({ id: 'orion', studyCode: 'OR' });
+    await expect(service.reserveTheraPatientCode({ groupId: 'orion', user })).rejects.toThrow('THERA');
+  });
+
+  it('replaces a THERA preview inside the same atomic record transaction', async () => {
+    await service.create(configureThera(), { user });
+    expect(codes.create).toHaveBeenCalledWith('orion', user.id, 'CS Aravaca', transaction, 'TH');
+    expect(records.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ data: expect.objectContaining({ patient_code: 'TH-01-02' }) })
+    });
+    expect(codes.transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects THERA follow-up without eligible baseline, including direct API calls', async () => {
+    const data = configureThera('V1');
+    await expect(service.create(data, { user })).rejects.toThrow('basal apta');
+    records.findMany.mockResolvedValue([
+      { id: 'baseline', instrumentId: 'selection', data: { ...theraBaselineData, exclusion_1: 'si' } }
+    ]);
+    await expect(service.create(data, { user })).rejects.toThrow('basal apta');
+    expect(records.create).not.toHaveBeenCalled();
+  });
+
+  it('validates THERA saved dates rather than trusting client-supplied anchors', async () => {
+    const data = configureThera('V1');
+    records.findMany.mockResolvedValue([{ id: 'baseline', instrumentId: 'selection', data: theraBaselineData }]);
+    await expect(
+      service.create({ ...data, data: { ...data.data, baseline_date: '2024-02-01' } }, { user })
+    ).rejects.toThrow('basal');
+    await expect(
+      service.create({ ...data, data: { ...data.data, visit_date: '2024-03-08' } }, { user })
+    ).rejects.toThrow('entre');
+    await service.create(data, { user });
+    expect(records.create).toHaveBeenCalledTimes(1);
+    expect(codes.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects THERA baseline CSV upload before creating subjects or sessions', async () => {
+    const data = configureThera();
+    await expect(
+      service.upload(
+        {
+          groupId: 'orion',
+          instrumentId: 'selection',
+          records: [{ data: data.data, date: new Date(), subjectId: 'subject' }]
+        },
+        { user }
+      )
+    ).rejects.toThrow('atómica');
+    expect(records.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects editing a THERA anchor when that would invalidate an existing follow-up', async () => {
+    configureThera();
+    records.findFirst.mockResolvedValue({
+      id: 'baseline',
+      instrumentId: 'selection',
+      groupId: 'orion',
+      subjectId: 'subject',
+      data: { ...theraBaselineData },
+      session: { userId: user.id }
+    });
+    records.findMany.mockResolvedValue([
+      { id: 'baseline', instrumentId: 'selection', data: theraBaselineData },
+      {
+        id: 'followup',
+        instrumentId: 'first',
+        data: {
+          patient_code: 'TH-01-01',
+          site_hospital: 'CS Aravaca',
+          visit_date: '2024-02-29',
+          baseline_date: '2024-01-31'
+        }
+      }
+    ]);
+    await expect(service.updateById('baseline', { visit_date: '2024-01-30' }, { user })).rejects.toThrow('invalidaría');
+    expect(records.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects deleting a THERA baseline while its follow-up exists', async () => {
+    configureThera();
+    records.findFirst.mockResolvedValue({
+      id: 'baseline',
+      instrumentId: 'selection',
+      groupId: 'orion',
+      subjectId: 'subject',
+      data: theraBaselineData,
+      session: { userId: user.id }
+    });
+    records.findMany.mockResolvedValue([
+      { id: 'baseline', instrumentId: 'selection', data: theraBaselineData },
+      {
+        id: 'followup',
+        instrumentId: 'first',
+        data: {
+          patient_code: 'TH-01-01',
+          site_hospital: 'CS Aravaca',
+          visit_date: '2024-02-29',
+          baseline_date: '2024-01-31'
+        }
+      }
+    ]);
+    await expect(service.deleteById('baseline', { user })).rejects.toThrow('No se puede eliminar');
+    expect(records.delete).not.toHaveBeenCalled();
+  });
+
+  it('rejects out-of-window THERA CSV before creating sessions', async () => {
+    const data = configureThera('V1');
+    records.findMany.mockResolvedValue([{ id: 'baseline', instrumentId: 'selection', data: theraBaselineData }]);
+    await expect(
+      service.upload(
+        {
+          groupId: 'orion',
+          instrumentId: 'first',
+          records: [{ data: { ...data.data, visit_date: '2024-03-08' }, date: new Date(), subjectId: 'subject' }]
+        },
+        { user }
+      )
+    ).rejects.toThrow('entre');
+    expect(records.createMany).not.toHaveBeenCalled();
   });
 
   it('accepts a reconciled OMEGA alias without rewriting the submitted centre', async () => {

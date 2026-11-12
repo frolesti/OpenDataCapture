@@ -37,6 +37,13 @@ export class InstrumentRecordsController {
     return this.instrumentRecordsService.reserveOrionPatientCode({ groupId: data.groupId, user });
   }
 
+  @ApiOperation({ summary: 'Preview THERA Patient Code' })
+  @Post('thera-patient-code')
+  @RouteAccess({ action: 'create', subject: 'InstrumentRecord' })
+  reserveTheraPatientCode(@Body() data: ReserveOrionPatientCodeDto, @CurrentUser() user: User) {
+    return this.instrumentRecordsService.reserveTheraPatientCode({ groupId: data.groupId, user });
+  }
+
   @ApiOperation({ summary: 'Upload Multiple Instrument Records' })
   @Post('upload')
   @RouteAccess({ action: 'create', subject: 'InstrumentRecord' })

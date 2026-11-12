@@ -14,6 +14,7 @@
     "./session": "./src/session/session.ts",
     "./setup": "./src/setup/setup.ts",
     "./subject": "./src/subject/subject.ts",
+    "./thera": "./src/instrument-records/thera.ts",
     "./summary": "./src/summary/summary.ts",
     "./user": "./src/user/user.ts"
   },

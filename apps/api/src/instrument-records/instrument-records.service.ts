@@ -24,6 +24,8 @@ import type {
 } from '@opendatacapture/schemas/instrument-records';
 import { normalizeOrionAdverseEventRecords } from '@opendatacapture/schemas/instrument-records';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
+import { getTheraVisit, validateTheraVisit } from '@opendatacapture/schemas/thera';
+import type { TheraStoredVisit, TheraVisit } from '@opendatacapture/schemas/thera';
 import type { Prisma, Session } from '@prisma/client';
 import { isNumber, mergeWith, pickBy } from 'lodash-es';
 
@@ -85,12 +87,19 @@ export class InstrumentRecordsService {
     return { code: await this.orionCodesService.preview(groupId, context.user.id) };
   }
 
+  async reserveTheraPatientCode({ groupId, user }: { groupId: string; user: EntityOperationOptions['user'] }) {
+    const context = await this.getOrionPatientCodeContext({ groupId, user, prefix: 'TH' });
+    return { code: await this.orionCodesService.preview(groupId, context.user.id, 'TH') };
+  }
+
   private async getOrionPatientCodeContext({
     groupId,
-    user
+    user,
+    prefix = 'OR'
   }: {
     groupId: string;
     user: EntityOperationOptions['user'];
+    prefix?: 'OR' | 'TH';
   }) {
     if (!user) {
       throw new ForbiddenException('A signed-in investigator is required to reserve an ORION patient code');
@@ -100,8 +109,10 @@ export class InstrumentRecordsService {
     if (!group) {
       throw new NotFoundException(`Failed to resolve group with ID: ${groupId}`);
     }
-    if (group.studyCode !== 'OR') {
-      throw new BadRequestException('El grup seleccionat no correspon a l’estudi ORION.');
+    if (group.studyCode !== prefix) {
+      throw new BadRequestException(
+        `El grup seleccionat no correspon a l’estudi ${prefix === 'TH' ? 'THERA' : 'ORION'}.`
+      );
     }
 
     const account = await this.userModel.findUniqueOrThrow({
@@ -118,6 +129,63 @@ export class InstrumentRecordsService {
     }
 
     return { group, hospital, user: account };
+  }
+
+  private async getTheraRecords(
+    groupId: string,
+    subjectId: string,
+    options: EntityOperationOptions
+  ): Promise<TheraStoredVisit[]> {
+    const instruments = await this.instrumentsService.find(
+      { kind: 'FORM' },
+      {
+        ...options,
+        currentUser: this.buildCurrentUserContext(options.user)
+      }
+    );
+    const names = new Map(
+      instruments.flatMap((instrument) => {
+        const visit = instrument.internal && getTheraVisit(instrument.internal.name);
+        return visit ? [[instrument.id, visit] as const] : [];
+      })
+    );
+    const records = await this.instrumentRecordModel.findMany({
+      where: {
+        groupId,
+        subjectId,
+        instrumentId: { in: [...names.keys()] },
+        AND: [accessibleQuery(options.ability, 'read', 'InstrumentRecord')]
+      }
+    });
+    return records.flatMap((record) => {
+      const visit = names.get(record.instrumentId);
+      if (!visit || !record.data || typeof record.data !== 'object' || Array.isArray(record.data)) return [];
+      return [{ id: record.id, visit, data: record.data as Record<string, unknown> }];
+    });
+  }
+
+  private async validateTheraRecord(
+    visit: TheraVisit,
+    data: Record<string, unknown>,
+    groupId: null | string | undefined,
+    subjectId: string,
+    options: EntityOperationOptions,
+    editingId?: string
+  ) {
+    if (!groupId || !options.user) throw new BadRequestException('Seleccione un grupo THERA y una sesión autenticada.');
+    await this.getOrionPatientCodeContext({ groupId, user: options.user, prefix: 'TH' });
+    if (visit === 'V0' && !editingId) return;
+    const records = await this.getTheraRecords(groupId, subjectId, options);
+    const error = validateTheraVisit(visit, data, records, editingId);
+    if (error) throw new UnprocessableEntityException(error);
+    if (editingId) {
+      const replacement = records.map((record) => (record.id === editingId ? { ...record, data } : record));
+      for (const record of replacement) {
+        const dependentError = validateTheraVisit(record.visit, record.data, replacement, record.id);
+        if (dependentError)
+          throw new UnprocessableEntityException(`El cambio invalidaría una visita guardada: ${dependentError}`);
+      }
+    }
   }
 
   async create(
@@ -154,6 +222,7 @@ export class InstrumentRecordsService {
     }
 
     const parsedData = parseResult.data as Record<string, unknown>;
+    const theraVisit = getTheraVisit(instrument.internal.name);
     if (group && options?.user) {
       if (!group.accessibleInstrumentIds.includes(instrumentId)) {
         throw new ForbiddenException('El formulari no està habilitat per al grup seleccionat.');
@@ -172,7 +241,8 @@ export class InstrumentRecordsService {
       }
     }
 
-    const isSelection = instrument.internal.name === 'ORION_PR_2026_SELECTION';
+    const isTheraBaseline = theraVisit === 'V0';
+    const isSelection = instrument.internal.name === 'ORION_PR_2026_SELECTION' || isTheraBaseline;
     if (isSelection && !groupId) {
       throw new BadRequestException('Cal seleccionar el grup ORION abans de crear un pacient.');
     }
@@ -180,8 +250,15 @@ export class InstrumentRecordsService {
       throw new ForbiddenException('El codi de pacient s’ha de generar dins la sessió del mateix investigador.');
     }
     const orionContext = isSelection
-      ? await this.getOrionPatientCodeContext({ groupId: groupId!, user: options?.user })
+      ? await this.getOrionPatientCodeContext({
+          groupId: groupId!,
+          user: options?.user,
+          ...(isTheraBaseline ? { prefix: 'TH' as const } : {})
+        })
       : undefined;
+    if (theraVisit) {
+      await this.validateTheraRecord(theraVisit, parsedData, groupId, subjectId, options ?? {});
+    }
     const rawPatientCode = parsedData.patient_code ?? parsedData.user_code;
     let userCode = typeof rawPatientCode === 'string' ? rawPatientCode : '';
     const selectionRecordId = await this.orionFollowupService.validateFollowup({
@@ -193,12 +270,20 @@ export class InstrumentRecordsService {
     });
     const createRecord = async (transaction?: OrionTransactionClient) => {
       if (orionContext) {
-        userCode = await this.orionCodesService.create(
-          orionContext.group.id,
-          orionContext.user.id,
-          orionContext.hospital,
-          transaction
-        );
+        userCode = isTheraBaseline
+          ? await this.orionCodesService.create(
+              orionContext.group.id,
+              orionContext.user.id,
+              orionContext.hospital,
+              transaction,
+              'TH'
+            )
+          : await this.orionCodesService.create(
+              orionContext.group.id,
+              orionContext.user.id,
+              orionContext.hospital,
+              transaction
+            );
         parsedData.patient_code = userCode;
         parsedData.user_code = undefined;
       }
@@ -262,6 +347,20 @@ export class InstrumentRecordsService {
 
     if (!instrumentRecord) {
       throw new NotFoundException(`Could not find record with ID '${id}'`);
+    }
+
+    const instrument = await this.getInstrumentById(instrumentRecord.instrumentId);
+    if (instrument.kind !== 'SERIES' && getTheraVisit(instrument.internal.name) && instrumentRecord.groupId) {
+      const remaining = (
+        await this.getTheraRecords(instrumentRecord.groupId, instrumentRecord.subjectId, { ability, user })
+      ).filter((record) => record.id !== id);
+      for (const record of remaining) {
+        const error = validateTheraVisit(record.visit, record.data, remaining, record.id);
+        if (error)
+          throw new BadRequestException(
+            `No se puede eliminar una visita necesaria para otra visita guardada: ${error}`
+          );
+      }
     }
 
     return this.instrumentRecordModel.delete({
@@ -609,6 +708,20 @@ export class InstrumentRecordsService {
       typeof parseResult.data === 'object' && parseResult.data !== null && !Array.isArray(parseResult.data)
         ? (parseResult.data as { [key: string]: unknown })
         : {};
+    const theraVisit = getTheraVisit(instrument.internal.name);
+    if (theraVisit) {
+      if (oldDataObj.patient_code !== newDataObj.patient_code) {
+        throw new BadRequestException('El código de paciente asignado no se puede modificar.');
+      }
+      await this.validateTheraRecord(
+        theraVisit,
+        newDataObj,
+        instrumentRecord.groupId,
+        instrumentRecord.subjectId,
+        { ability, user },
+        id
+      );
+    }
     if (
       instrument.internal.name.startsWith('ORION_') &&
       (oldDataObj.patient_code ?? oldDataObj.user_code) !== (newDataObj.patient_code ?? newDataObj.user_code)
@@ -649,7 +762,7 @@ export class InstrumentRecordsService {
         computedMeasures: instrument.measures
           ? this.instrumentMeasuresService.computeMeasures(instrument.measures, parseResult.data as Json)
           : null,
-        data: parseResult.data
+        data: theraVisit ? this.serializeData(parseResult.data) : parseResult.data
       },
       where: { AND: [accessibleQuery(ability, 'update', 'InstrumentRecord')], id }
     });
@@ -667,6 +780,27 @@ export class InstrumentRecordsService {
       throw new UnprocessableEntityException(
         `Cannot create instrument record for series instrument '${instrument.id}'`
       );
+    }
+
+    const theraVisit = getTheraVisit(instrument.internal.name);
+    if (theraVisit === 'V0') {
+      throw new BadRequestException(
+        'Las visitas basales THERA deben registrarse desde el formulario para asignar el código de paciente de forma atómica.'
+      );
+    }
+    if (theraVisit) {
+      const seen = new Set<string>();
+      for (const record of records) {
+        const parsed = await instrument.validationSchema.safeParseAsync(this.parseJson(record.data));
+        if (!parsed.success)
+          throw new UnprocessableEntityException({ message: 'Datos THERA no válidos', issues: parsed.error.issues });
+        const data = parsed.data as Record<string, unknown>;
+        const key = `${record.subjectId}:${String(data.patient_code)}`;
+        if (seen.has(key))
+          throw new BadRequestException('El archivo contiene más de una visita para el mismo paciente.');
+        seen.add(key);
+        await this.validateTheraRecord(theraVisit, data, groupId, record.subjectId, options ?? {});
+      }
     }
 
     if (group && options?.user) {

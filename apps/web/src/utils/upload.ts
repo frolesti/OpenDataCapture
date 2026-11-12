@@ -211,12 +211,20 @@ export namespace Zod3 {
     return isObjectLike(value) && value.constructor.name === 'ZodEffects';
   }
 
-  function isZodEffectsObject(value: unknown): value is z3.ZodEffects<z3.AnyZodObject> {
-    return isZodEffects(value) && isZodObject(value.innerType());
-  }
-
   function isZodObject(value: unknown): value is z3.AnyZodObject {
     return isObjectLike(value) && value.constructor.name === 'ZodObject';
+  }
+
+  function unwrapObject(schema: z3.ZodType): z3.AnyZodObject {
+    let inner = schema;
+    while (isZodEffects(inner)) inner = inner.innerType();
+    if (!isZodObject(inner)) {
+      throw new UploadError({
+        en: 'CSV upload requires an object validation schema',
+        fr: 'Le téléversement CSV nécessite un schéma de validation objet'
+      });
+    }
+    return inner;
   }
 
   export function isZodTypeDef(value: unknown): value is AnyZodTypeDef {
@@ -241,10 +249,6 @@ export namespace Zod3 {
 
   function isZodObjectArrayDef(def: AnyZodTypeDef): def is ZodObjectArrayDef {
     return isZodArrayDef(def) && isZodObject(def.type);
-  }
-
-  function isZodEffectsDef(def: AnyZodTypeDef): def is z3.ZodEffectsDef {
-    return def.typeName === z3.ZodFirstPartyTypeKind.ZodEffects;
   }
 
   export function interpretZodArray(def: ZodObjectArrayDef, isOptional?: boolean): ZodTypeNameResult {
@@ -279,6 +283,7 @@ export namespace Zod3 {
   }
 
   export function getZodTypeName(schema: z3.ZodTypeAny, isOptional?: boolean): ZodTypeNameResult {
+    if (isZodEffects(schema)) return getZodTypeName(schema.innerType(), isOptional);
     const def: unknown = schema._def;
     if (!isZodTypeDef(def)) {
       console.error(`Cannot parse ZodType from schema: ${JSON.stringify(schema)}`);
@@ -432,13 +437,7 @@ export namespace Zod3 {
     instrumentSchema: z3.ZodType<FormTypes.Data>,
     instrumentInternal: AnyUnilingualFormInstrument['internal']
   ) {
-    if (!(isZodObject(instrumentSchema) || isZodEffectsObject(instrumentSchema))) {
-      throw new UploadError({});
-    }
-    const def = instrumentSchema._def;
-    const shape = (def.typeName === z3.ZodFirstPartyTypeKind.ZodObject ? def.shape() : def.schema._def.shape()) as {
-      [key: string]: z3.ZodTypeAny;
-    };
+    const shape = unwrapObject(instrumentSchema).shape;
 
     const columnNames = Object.keys(shape);
     const csvColumns = INTERNAL_HEADERS.concat(columnNames);
@@ -459,27 +458,15 @@ export namespace Zod3 {
     input: File,
     instrument: AnyUnilingualFormInstrument
   ): Promise<FormTypes.Data[]> {
-    const instrumentSchema = instrument.validationSchema as z3.AnyZodObject;
-    let shape: { [key: string]: z3.ZodTypeAny } = {};
-
-    let instrumentSchemaWithInternal: z3.AnyZodObject;
-    const instrumentSchemaDef: unknown = instrumentSchema._def;
-    if (isZodTypeDef(instrumentSchemaDef) && isZodEffectsDef(instrumentSchemaDef)) {
-      if (!isZodObject(instrumentSchemaDef.schema)) {
-        throw new UploadError({});
-      }
-      instrumentSchemaWithInternal = instrumentSchemaDef.schema.extend({
-        date: z3.coerce.date(),
-        subjectID: z3.string().regex(SUBJECT_ID_REGEX)
-      });
-      shape = (instrumentSchemaWithInternal._def as z3.ZodObjectDef).shape() as { [key: string]: z3.ZodTypeAny };
-    } else {
-      instrumentSchemaWithInternal = instrumentSchema.extend({
-        date: z3.coerce.date(),
-        subjectID: z3.string().regex(SUBJECT_ID_REGEX)
-      });
-      shape = instrumentSchemaWithInternal.shape as { [key: string]: z3.ZodTypeAny };
+    const instrumentSchema = instrument.validationSchema;
+    if (!isZodType(instrumentSchema, { version: 3 })) {
+      throw new UploadError({ en: 'Expected a Zod 3 instrument schema', fr: 'Un schéma Zod 3 est requis' });
     }
+    const internalSchema = z3.object({
+      date: z3.coerce.date(),
+      subjectID: z3.string().regex(SUBJECT_ID_REGEX)
+    });
+    const shape = unwrapObject(instrumentSchema).extend(internalSchema.shape).shape;
 
     return new Promise<FormTypes.Data[]>((resolve, reject) => {
       const reader = new FileReader();
@@ -580,17 +567,19 @@ export namespace Zod3 {
               );
             }
           }
-          const zodCheck = instrumentSchemaWithInternal.safeParse(jsonLine);
-          if (!zodCheck.success) {
-            console.error(zodCheck.error.issues);
+          const internalCheck = internalSchema.safeParse(jsonLine);
+          const zodCheck = instrumentSchema.safeParse(jsonLine);
+          if (!zodCheck.success || !internalCheck.success) {
+            console.error(zodCheck.success ? internalCheck.error?.issues : zodCheck.error.issues);
             console.error(`Failed to parse data: ${JSON.stringify(jsonLine)}`);
             return reject(
               new UploadError({
+                en: `Schema validation failed at row ${rowNumber}`,
                 fr: `Échec de l'analyse du schéma : reportez-vous à la console du navigateur pour plus de détails`
               })
             );
           }
-          result.push(zodCheck.data as FormTypes.Data);
+          result.push({ ...zodCheck.data, ...internalCheck.data });
           rowNumber++;
         }
         return resolve(result);
