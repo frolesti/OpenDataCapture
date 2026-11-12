@@ -19,7 +19,7 @@ const options = {
 };
 
 function createWrapper() {
-  const client = new QueryClient();
+  const client = new QueryClient({ defaultOptions: { queries: { throwOnError: true } } });
   function Wrapper({ children }: PropsWithChildren) {
     return (
       <StrictMode>

@@ -1,7 +1,7 @@
 import { accessibleQuery, InjectModel } from '@douglasneuroinformatics/libnest';
 import type { Model } from '@douglasneuroinformatics/libnest';
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DEFAULT_GROUP_HOSPITAL } from '@opendatacapture/schemas/group';
+import { DEFAULT_GROUP_HOSPITAL, inferGroupStudyCode } from '@opendatacapture/schemas/group';
 import type { Prisma } from '@prisma/client';
 
 import type { EntityOperationOptions } from '@/core/types';
@@ -18,6 +18,8 @@ export class GroupsService {
     @InjectModel('Group') private readonly groupModel: Model<'Group'>,
     @InjectModel('User') private readonly userModel: Model<'User'>,
     @InjectModel('PendingInvestigator') private readonly pendingModel: Model<'PendingInvestigator'>,
+    @InjectModel('OrionPatientCode') private readonly patientCodeModel: Model<'OrionPatientCode'>,
+    @InjectModel('InstrumentRecord') private readonly recordModel: Model<'InstrumentRecord'>,
     private readonly instrumentsService: InstrumentsService,
     private readonly hospitalsService: HospitalsService,
     private readonly administratorStudyAccessService: AdministratorStudyAccessService
@@ -42,7 +44,7 @@ export class GroupsService {
       hospitals: catalog.map((hospital) => hospital.name),
       hospitalIds: catalog.map((hospital) => hospital.id),
       name,
-      studyCode,
+      studyCode: studyCode ?? inferGroupStudyCode({ name, accessibleInstrumentIds: instrumentIds }, instruments),
       settings: {
         defaultIdentificationMethod: type === 'CLINICAL' ? 'PERSONAL_INFO' : 'CUSTOM_ID',
         ...settings
@@ -79,7 +81,7 @@ export class GroupsService {
 
   async updateById(
     id: string,
-    { accessibleInstrumentIds, hospitals, name, settings, type }: UpdateGroupDto,
+    { accessibleInstrumentIds, hospitals, name, settings, studyCode, type }: UpdateGroupDto,
     { ability }: EntityOperationOptions = {}
   ) {
     const where: Prisma.GroupWhereInput = { AND: [accessibleQuery(ability, 'update', 'Group')], id };
@@ -95,6 +97,18 @@ export class GroupsService {
     }
 
     const updateData: Prisma.GroupUpdateInput = {};
+    if (studyCode !== undefined && studyCode !== group.studyCode) {
+      const [codes, records] = await Promise.all([
+        this.patientCodeModel.count({ where: { groupId: id } }),
+        this.recordModel.count({ where: { groupId: id } })
+      ]);
+      if (codes || records) {
+        throw new ConflictException(
+          'No es pot canviar l’estudi d’un grup amb codis o registres clínics. Cal revisar-ne les dades abans.'
+        );
+      }
+      updateData.studyCode = studyCode;
+    }
     if (accessibleInstrumentIds) {
       updateData.accessibleInstruments = {
         set: accessibleInstrumentIds.map((instrumentId) => ({ id: instrumentId }))

@@ -52,6 +52,7 @@ const RouteComponent = () => {
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [groupHospitals, setGroupHospitals] = useState<string[]>([]);
   const [nameValue, setNameValue] = useState('');
+  const [studyCodeValue, setStudyCodeValue] = useState('GENERAL');
   const [instrumentIds, setInstrumentIds] = useState<Set<string>>(new Set());
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const { filteredData, searchTerm, setSearchTerm } = useSearch(groupsQuery.data ?? [], 'name');
@@ -80,11 +81,13 @@ const RouteComponent = () => {
     if (!selectedGroup) {
       setGroupHospitals([]);
       setNameValue('');
+      setStudyCodeValue('GENERAL');
       setInstrumentIds(new Set());
       return;
     }
     setGroupHospitals(selectedGroup.hospitals ?? []);
     setNameValue(selectedGroup.name);
+    setStudyCodeValue(selectedGroup.studyCode ?? 'GENERAL');
     setInstrumentIds(originalInstrumentIds);
   }, [selectedGroup, originalInstrumentIds]);
 
@@ -93,11 +96,20 @@ const RouteComponent = () => {
   const isDirty = useMemo(() => {
     if (!selectedGroup) return false;
     if (nameValue.trim() !== selectedGroup.name) return true;
+    if (studyCodeValue !== (selectedGroup.studyCode ?? 'GENERAL')) return true;
     if (!setsAreEqual(instrumentIds, originalInstrumentIds)) return true;
     const latest = groupsQuery.data?.find((group) => group.id === selectedGroup.id);
     if (!arraysHaveSameSet(groupHospitals, latest?.hospitals ?? selectedGroup.hospitals)) return true;
     return false;
-  }, [selectedGroup, nameValue, instrumentIds, originalInstrumentIds, groupHospitals, groupsQuery.data]);
+  }, [
+    selectedGroup,
+    nameValue,
+    studyCodeValue,
+    instrumentIds,
+    originalInstrumentIds,
+    groupHospitals,
+    groupsQuery.data
+  ]);
 
   const canSave = Boolean(selectedGroup) && isDirty && nameValue.trim().length > 0;
 
@@ -137,6 +149,11 @@ const RouteComponent = () => {
             label: t('common.groupName')
           },
           {
+            field: ({ studyCode }) =>
+              studyCode ?? t({ en: 'General / sense configurar', fr: 'General / sin configurar' }),
+            label: t({ en: 'Estudi', fr: 'Estudio' })
+          },
+          {
             field: ({ hospitals }) => {
               if (!hospitals.length) {
                 return '-';
@@ -161,8 +178,8 @@ const RouteComponent = () => {
           <Sheet.Title>{selectedGroup?.name}</Sheet.Title>
           <Sheet.Description>
             {t({
-              en: 'Edita la configuració bàsica, els instruments accessibles i els hospitals del grup.',
-              fr: 'Edita la configuración básica, los instrumentos accesibles y los hospitales del grupo.'
+              en: 'Edita l’estudi, la configuració bàsica, els instruments accessibles i els hospitals del grup.',
+              fr: 'Edita el estudio, la configuración básica, los instrumentos accesibles y los hospitales del grupo.'
             })}
           </Sheet.Description>
         </Sheet.Header>
@@ -189,6 +206,12 @@ const RouteComponent = () => {
                       kind: 'string',
                       label: t('common.groupName'),
                       variant: 'input'
+                    },
+                    studyCode: {
+                      kind: 'string',
+                      label: t({ en: 'Estudi', fr: 'Estudio' }),
+                      options: { GENERAL: t({ en: 'General', fr: 'General' }), OR: 'ORION', TH: 'THERA' },
+                      variant: 'select'
                     }
                   },
                   title: t({
@@ -229,24 +252,40 @@ const RouteComponent = () => {
                 accessibleFormInstrumentIds: new Set(
                   selectedGroup.accessibleInstrumentIds.filter((id) => id in availableInstrumentOptions.form)
                 ),
-                name: selectedGroup.name
+                name: selectedGroup.name,
+                studyCode:
+                  selectedGroup.studyCode === 'OR' || selectedGroup.studyCode === 'TH'
+                    ? selectedGroup.studyCode
+                    : selectedGroup.studyCode
+                      ? undefined
+                      : 'GENERAL'
               }}
               subscribe={{
                 onChange: (values) => {
-                  const casted = values as { accessibleFormInstrumentIds?: Set<string>; name?: string };
+                  const casted = values as {
+                    accessibleFormInstrumentIds?: Set<string>;
+                    name?: string;
+                    studyCode?: string;
+                  };
                   setNameValue(casted.name ?? '');
+                  setStudyCodeValue(casted.studyCode ?? 'GENERAL');
                   setInstrumentIds(new Set(casted.accessibleFormInstrumentIds ?? new Set<string>()));
                 },
                 selector: (values) => {
-                  const casted = values as { accessibleFormInstrumentIds?: Set<string>; name?: string };
+                  const casted = values as {
+                    accessibleFormInstrumentIds?: Set<string>;
+                    name?: string;
+                    studyCode?: string;
+                  };
                   const ids = casted.accessibleFormInstrumentIds
                     ? Array.from(casted.accessibleFormInstrumentIds).sort().join(',')
                     : '';
-                  return `${casted.name ?? ''}::${ids}`;
+                  return `${casted.name ?? ''}::${casted.studyCode ?? 'GENERAL'}::${ids}`;
                 }
               }}
               validationSchema={z.object({
                 accessibleFormInstrumentIds: z.set(z.string()),
+                studyCode: z.enum(['GENERAL', 'OR', 'TH']),
                 name: z
                   .string()
                   .trim()
@@ -258,7 +297,7 @@ const RouteComponent = () => {
                     })
                   )
               })}
-              onSubmit={async ({ accessibleFormInstrumentIds, name }) => {
+              onSubmit={async ({ accessibleFormInstrumentIds, name, studyCode }) => {
                 const preservedInteractiveInstrumentIds = selectedGroup.accessibleInstrumentIds.filter(
                   (id) => id in availableInstrumentOptions.interactive
                 );
@@ -266,7 +305,8 @@ const RouteComponent = () => {
                   data: {
                     accessibleInstrumentIds: [...accessibleFormInstrumentIds, ...preservedInteractiveInstrumentIds],
                     hospitals: groupHospitals,
-                    name
+                    name,
+                    studyCode: studyCode === 'GENERAL' ? null : studyCode
                   },
                   id: selectedGroup.id
                 });

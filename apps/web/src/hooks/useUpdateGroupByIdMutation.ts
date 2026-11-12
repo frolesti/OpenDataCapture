@@ -4,6 +4,7 @@ import type { Group, UpdateGroupData } from '@opendatacapture/schemas/group';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
+import { useAppStore } from '@/store';
 import { GROUPS_QUERY_KEY } from './useGroupsQuery';
 
 export function useUpdateGroupByIdMutation() {
@@ -16,6 +17,15 @@ export function useUpdateGroupByIdMutation() {
       return $Group.parseAsync(response.data);
     },
     onSuccess(updatedGroup) {
+      useAppStore.setState((state) => ({
+        currentGroup: state.currentGroup?.id === updatedGroup.id ? updatedGroup : state.currentGroup,
+        currentUser: state.currentUser
+          ? {
+              ...state.currentUser,
+              groups: state.currentUser.groups.map((group) => (group.id === updatedGroup.id ? updatedGroup : group))
+            }
+          : null
+      }));
       addNotification({ type: 'success' });
       queryClient.setQueryData<Group[]>([GROUPS_QUERY_KEY], (previous) =>
         previous ? previous.map((group) => (group.id === updatedGroup.id ? updatedGroup : group)) : previous

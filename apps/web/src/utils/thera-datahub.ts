@@ -1,7 +1,7 @@
 import { replacer, toBasicISOString } from '@douglasneuroinformatics/libjs';
 import type { InstrumentRecord } from '@opendatacapture/schemas/instrument-records';
-import { isTheraPatientCode, THERA_NAMES } from '@opendatacapture/schemas/thera';
-import type { TheraVisit } from '@opendatacapture/schemas/thera';
+import { getTheraVisit, isTheraPatientCode, THERA_NAMES } from '@opendatacapture/schemas/thera';
+import type { TheraStoredVisit, TheraVisit } from '@opendatacapture/schemas/thera';
 
 export const THERA_UNIFIED_OPTION_ID = '__THERA_SGM_2026__';
 export const THERA_VISIT_LABELS: { [key in TheraVisit]: string } = {
@@ -25,6 +25,22 @@ function recordData(record: InstrumentRecord): { [key: string]: unknown } {
   return record.data && typeof record.data === 'object' && !Array.isArray(record.data)
     ? Object.fromEntries(Object.entries(record.data))
     : {};
+}
+
+export function getTheraStoredVisits(
+  records: InstrumentRecord[],
+  instruments: readonly { id: string; internal?: null | { name: string } }[]
+): TheraStoredVisit[] {
+  const instrumentVisits = new Map(
+    instruments.flatMap((instrument) => {
+      const visit = instrument.internal && getTheraVisit(instrument.internal.name);
+      return visit ? [[instrument.id, visit] as const] : [];
+    })
+  );
+  return records.flatMap((record) => {
+    const visit = getTheraRecordVisit(record, instrumentVisits);
+    return visit ? [{ id: record.id, visit, data: recordData(record) }] : [];
+  });
 }
 
 export function getTheraRecordVisit(

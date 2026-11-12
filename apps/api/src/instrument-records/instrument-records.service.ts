@@ -110,8 +110,11 @@ export class InstrumentRecordsService {
       throw new NotFoundException(`Failed to resolve group with ID: ${groupId}`);
     }
     if (group.studyCode !== prefix) {
+      const studyName = prefix === 'TH' ? 'THERA' : 'ORION';
       throw new BadRequestException(
-        `El grup seleccionat no correspon a l’estudi ${prefix === 'TH' ? 'THERA' : 'ORION'}.`
+        group.studyCode
+          ? `El formulari ${studyName} no correspon al grup '${group.name}', configurat amb el codi '${group.studyCode}'. Seleccioneu el grup de l’estudi correcte.`
+          : `El grup '${group.name}' no té configurat el codi d’estudi ${studyName} (${prefix}). Cal configurar-lo a Gestionar grups abans de generar codis de pacient.`
       );
     }
 

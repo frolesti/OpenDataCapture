@@ -17,6 +17,8 @@ describe('GroupsService', () => {
   let instrumentsService: MockedInstance<InstrumentsService>;
   let hospitalsService: MockedInstance<HospitalsService>;
   let userModel: MockedInstance<Model<'User'>>;
+  let patientCodeModel: MockedInstance<Model<'OrionPatientCode'>>;
+  let recordModel: MockedInstance<Model<'InstrumentRecord'>>;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -25,6 +27,8 @@ describe('GroupsService', () => {
         MockFactory.createForModelToken(getModelToken('Group')),
         MockFactory.createForModelToken(getModelToken('User')),
         MockFactory.createForModelToken(getModelToken('PendingInvestigator')),
+        MockFactory.createForModelToken(getModelToken('OrionPatientCode')),
+        MockFactory.createForModelToken(getModelToken('InstrumentRecord')),
         MockFactory.createForService(HospitalsService),
         MockFactory.createForService(AdministratorStudyAccessService),
         MockFactory.createForService(InstrumentsService)
@@ -36,6 +40,11 @@ describe('GroupsService', () => {
     instrumentsService.find.mockResolvedValue([]);
     hospitalsService = moduleRef.get(HospitalsService);
     userModel = moduleRef.get(getModelToken('User'));
+    patientCodeModel = moduleRef.get(getModelToken('OrionPatientCode'));
+    recordModel = moduleRef.get(getModelToken('InstrumentRecord'));
+    patientCodeModel.count.mockResolvedValue(0);
+    recordModel.count.mockResolvedValue(0);
+    groupModel.update.mockResolvedValue({ hospitals: [], hospitalIds: [] });
     userModel.findMany.mockResolvedValue([]);
     hospitalsService.resolveNames.mockResolvedValue([]);
     groupModel.create.mockResolvedValue({ hospitals: [], hospitalIds: [] });
@@ -72,6 +81,14 @@ describe('GroupsService', () => {
     it('adds Alta Medical Services even if no hospital is provided', async () => {
       await groupsService.create({ name: 'Study', type: 'CLINICAL', hospitals: [] });
       expect(hospitalsService.resolveNames).toHaveBeenCalledWith(['Alta Medical Services']);
+    });
+
+    it('sets the study identity when a legacy client creates a named THERA group with its canonical forms', async () => {
+      instrumentsService.find.mockResolvedValueOnce([{ id: 'baseline', internal: { name: 'THERA_SGM_2026_V0' } }]);
+      await groupsService.create({ name: 'THERA-SGM-2026', type: 'CLINICAL', hospitals: [] });
+      expect(groupModel.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ studyCode: 'TH' })
+      });
     });
 
     it('preserves the legacy all-instruments default when no selection is provided', async () => {
@@ -117,6 +134,35 @@ describe('GroupsService', () => {
     it('should return the array returned by the group model', async () => {
       groupModel.findMany.mockResolvedValueOnce([{ name: 'Test Group' }]);
       await expect(groupsService.findAll()).resolves.toMatchObject([{ name: 'Test Group' }]);
+    });
+
+    describe('study configuration', () => {
+      it('persists an explicit study correction for an empty legacy group', async () => {
+        groupModel.findFirst.mockResolvedValueOnce({ id: 'thera', name: 'THERA', studyCode: null });
+        await groupsService.updateById('thera', { studyCode: 'TH' });
+        expect(groupModel.update).toHaveBeenCalledWith({
+          where: expect.objectContaining({ id: 'thera' }),
+          data: { studyCode: 'TH' }
+        });
+      });
+
+      it.each(['codes', 'records'])('does not reclassify a group with existing clinical %s', async (kind) => {
+        groupModel.findFirst.mockResolvedValueOnce({ id: 'orion', name: 'ORION', studyCode: 'OR' });
+        (kind === 'codes' ? patientCodeModel : recordModel).count.mockResolvedValueOnce(1);
+        await expect(groupsService.updateById('orion', { studyCode: 'TH' })).rejects.toBeInstanceOf(ConflictException);
+        expect(groupModel.update).not.toHaveBeenCalled();
+      });
+
+      it('allows unrelated edits without reclassifying a study with existing records', async () => {
+        groupModel.findFirst.mockResolvedValueOnce({ id: 'thera', name: 'THERA', studyCode: 'TH' });
+        await groupsService.updateById('thera', { name: 'THERA', studyCode: 'TH' });
+        expect(patientCodeModel.count).not.toHaveBeenCalled();
+        expect(recordModel.count).not.toHaveBeenCalled();
+        expect(groupModel.update).toHaveBeenCalledWith({
+          where: expect.objectContaining({ id: 'thera' }),
+          data: { name: 'THERA' }
+        });
+      });
     });
   });
 

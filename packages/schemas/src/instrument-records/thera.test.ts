@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  canStartTheraVisit,
   getTheraVisit,
   isTheraEligible,
   isTheraPatientCode,
@@ -8,6 +9,7 @@ import {
   THERA_EXCLUSIONS,
   THERA_INCLUSIONS,
   THERA_VAGINAL_ITEMS,
+  THERA_VISIT_ORDER,
   theraVisitWindow,
   validateTheraVisit
 } from './thera';
@@ -32,6 +34,22 @@ const first: TheraStoredVisit = {
   id: 'first',
   visit: 'V1'
 };
+const second: TheraStoredVisit = {
+  data: { ...first.data, first_visit_date: '2024-02-29', visit_date: '2024-05-29' },
+  id: 'second',
+  visit: 'V2'
+};
+const third: TheraStoredVisit = {
+  data: { ...second.data, visit_date: '2024-08-29' },
+  id: 'third',
+  visit: 'V3'
+};
+const fourth: TheraStoredVisit = {
+  data: { ...second.data, visit_date: '2025-02-28' },
+  id: 'fourth',
+  visit: 'V4'
+};
+const timeline = [baseline, first, second, third, fourth];
 
 describe('THERA protocol', () => {
   it('recognizes only declared instruments and assigned TH codes', () => {
@@ -87,19 +105,49 @@ describe('THERA protocol', () => {
   });
   it('does not cross patient identities and blocks new visits after the fourth visit', () => {
     expect(validateTheraVisit('V1', { ...first.data, patient_code: 'TH-01-02' }, [baseline])).toContain('basal apta');
-    const fourth: TheraStoredVisit = {
-      data: { ...first.data, first_visit_date: '2024-02-29', visit_date: '2025-02-28' },
-      id: 'fourth',
-      visit: 'V4'
-    };
     expect(validateTheraVisit('V1', first.data, [baseline, fourth])).toContain('completado');
-    expect(validateTheraVisit('V4', fourth.data, [baseline, first, fourth], fourth.id)).toBeUndefined();
-    expect(validateTheraVisit('V1', first.data, [baseline, first, fourth], first.id)).toBeUndefined();
+    expect(validateTheraVisit('V4', fourth.data, timeline, fourth.id)).toBeUndefined();
+    expect(validateTheraVisit('V1', first.data, timeline, first.id)).toBeUndefined();
   });
-  it('requires an eligible baseline and actual first visit before the fourth visit', () => {
+  it('requires all preceding visits, not just the baseline and first visit, before the fourth', () => {
     const data = { ...first.data, first_visit_date: '2024-02-29', visit_date: '2025-02-28' };
-    expect(validateTheraVisit('V4', data, [baseline, first])).toBeUndefined();
+    expect(validateTheraVisit('V4', data, [baseline, first])).toContain('V2');
+    expect(validateTheraVisit('V4', data, [baseline, first, second])).toContain('V3');
+    expect(validateTheraVisit('V4', data, [baseline, first, second, third])).toBeUndefined();
     expect(validateTheraVisit('V4', data, [baseline])).toContain('V1');
     expect(validateTheraVisit('V4', data, [first])).toContain('basal apta');
+  });
+
+  it('unlocks only the next unfinished visit for each patient, including after the first visit', () => {
+    for (let saved = 0; saved <= timeline.length; saved++) {
+      for (const [index, visit] of THERA_VISIT_ORDER.entries()) {
+        expect(canStartTheraVisit(visit, timeline.slice(0, saved), 'TH-01-01')).toBe(visit === 'V0' || index === saved);
+      }
+    }
+  });
+
+  it('rejects every missing predecessor even if later records have already been saved', () => {
+    for (let index = 1; index < timeline.length; index++) {
+      const current = timeline[index]!;
+      const previous = timeline.slice(0, index);
+      expect(validateTheraVisit(current.visit, current.data, previous)).toBeUndefined();
+      for (const missing of previous) {
+        const remaining = previous.filter((record) => record.id !== missing.id);
+        expect(validateTheraVisit(current.visit, current.data, remaining)).toBeDefined();
+        expect(canStartTheraVisit(current.visit, remaining, 'TH-01-01')).toBe(false);
+      }
+    }
+  });
+
+  it('never uses another patient’s previous visits to unlock a follow-up', () => {
+    const anotherPatient = timeline.map((record) => ({
+      ...record,
+      id: `other-${record.id}`,
+      data: { ...record.data, patient_code: 'TH-01-02' }
+    }));
+    expect(canStartTheraVisit('V3', [baseline, first, ...anotherPatient], 'TH-01-01')).toBe(false);
+    expect(canStartTheraVisit('V1', [{ ...baseline, data: { ...eligible, exclusion_1: 'si' } }], 'TH-01-01')).toBe(
+      false
+    );
   });
 });

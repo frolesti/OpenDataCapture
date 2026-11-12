@@ -156,7 +156,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     `${visit}: details identify the sponsor by role`
   );
   verify(form.details.description.includes('24/07/2026'), `${visit}: metadata retains the source CRF version`);
-  verify(form.internal.edition === 2, `${visit}: edition follows the latest published edition`);
+  verify(form.internal.edition === 3, `${visit}: edition follows the latest published edition`);
   const data = fixture(form, visit);
   const valid = await form.validationSchema.safeParseAsync(data);
   assert(valid.success, `${visit}: ${valid.success ? '' : JSON.stringify(valid.error.issues)}`);
@@ -209,6 +209,45 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
       ]
     };
     verify((await form.validationSchema.safeParseAsync(withEvent)).success, `${visit}: resolved safety event`);
+    const tableFields = [
+      'onset_date',
+      'event_type',
+      'description',
+      'device_problem',
+      'clinical_signs',
+      'action_evolution',
+      'causality',
+      'serious_unexpected_device_effect',
+      'status'
+    ];
+    const safety = Array.isArray(form.content) ? form.content.find((group) => group.title === 'Seguridad') : undefined;
+    const eventField = safety?.fields.adverse_event_records;
+    assert(eventField?.kind === 'dynamic', `${visit}: safety table is conditional`);
+    const activeEvents = eventField.render({ ...valid.data, serious_adverse_event: 'si' });
+    assert(activeEvents?.kind === 'record-array', `${visit}: safety events support multiple records`);
+    verify(
+      tableFields.every((field) => Object.hasOwn(activeEvents.fieldset, field)),
+      `${visit}: safety editor includes all nine CRF table columns`
+    );
+    for (const field of tableFields) {
+      const event: Record<string, unknown> = { ...withEvent.adverse_event_records[0] };
+      delete event[field];
+      verify(
+        !(await form.validationSchema.safeParseAsync({ ...withEvent, adverse_event_records: [event] })).success,
+        `${visit}: safety table requires ${field}`
+      );
+    }
+    const repeatedEvents = await form.validationSchema.parseAsync({
+      ...withEvent,
+      adverse_event_records: [
+        withEvent.adverse_event_records[0],
+        { ...withEvent.adverse_event_records[0], description: 'Segundo evento sintético' }
+      ]
+    });
+    verify(
+      Array.isArray(repeatedEvents.adverse_event_records) && repeatedEvents.adverse_event_records.length === 2,
+      `${visit}: multiple safety-table rows persist without overwriting events`
+    );
     verify(
       !(
         await form.validationSchema.safeParseAsync({

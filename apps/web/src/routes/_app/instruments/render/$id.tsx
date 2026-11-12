@@ -12,11 +12,10 @@ import { isOrionPatientCode, normalizeOrionAdverseEventRecords } from '@opendata
 import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
 import {
   getTheraVisit,
-  isTheraEligible,
+  canStartTheraVisit,
   isTheraPatientCode,
   theraPatientContext
 } from '@opendatacapture/schemas/thera';
-import type { TheraStoredVisit } from '@opendatacapture/schemas/thera';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { Save } from 'lucide-react';
@@ -30,6 +29,7 @@ import { useOrionPatientCode } from '@/hooks/useOrionPatientCode';
 import { useAppStore } from '@/store';
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '@/utils/instrument-draft';
 import { ensureStudySession } from '@/utils/ensure-study-session';
+import { getTheraStoredVisits } from '@/utils/thera-datahub';
 
 const HOSPITAL_META_SEPARATOR = '|||';
 const ORION_SELECTION_INTERNAL_NAME = 'ORION_PR_2026_SELECTION';
@@ -462,29 +462,19 @@ const RouteComponent = () => {
   });
   const theraRecordsQuery = useInstrumentRecords({
     enabled: isThera && Boolean(currentGroup?.id && scopedSubjectId),
-    params: { groupId: currentGroup?.id, subjectId: scopedSubjectId }
+    params: { groupId: currentGroup?.id, subjectId: scopedSubjectId },
+    throwOnError: false
   });
-  const theraRecords: TheraStoredVisit[] = (theraRecordsQuery.data ?? []).flatMap((record) => {
-    const info = instrumentInfoQuery.data?.find((item) => item.id === record.instrumentId);
-    const storedVisit =
-      record.data && typeof record.data === 'object' && 'study_visit' in record.data
-        ? getTheraVisit(`THERA_SGM_2026_${String(record.data.study_visit)}`)
-        : undefined;
-    const visit = (info?.internal && getTheraVisit(info.internal.name)) ?? storedVisit;
-    return visit && record.data && typeof record.data === 'object' && !Array.isArray(record.data)
-      ? [{ id: record.id, visit, data: record.data as Record<string, unknown> }]
-      : [];
-  });
+  const theraRecords = getTheraStoredVisits(theraRecordsQuery.data ?? [], instrumentInfoQuery.data ?? []);
   const theraPatientCode = recordId
     ? String(effectiveInitialData?.patient_code ?? '')
     : selectedTheraPatient || String(effectiveInitialData?.patient_code ?? '');
   const theraPatients = theraRecords.filter((record) => {
-    if (record.visit !== 'V0' || !isTheraEligible(record.data) || !isTheraPatientCode(record.data.patient_code))
-      return false;
-    const context = theraPatientContext(theraRecords, record.data.patient_code);
     return (
-      !context.patient.some((item) => item.id !== recordId && (item.visit === 'V4' || item.visit === theraVisit)) &&
-      (theraVisit === 'V1' || Boolean(context.first))
+      record.visit === 'V0' &&
+      theraVisit &&
+      typeof record.data.patient_code === 'string' &&
+      canStartTheraVisit(theraVisit, theraRecords, record.data.patient_code)
     );
   });
   const theraContext = theraPatientContext(theraRecords, theraPatientCode);
@@ -1208,10 +1198,16 @@ const RouteComponent = () => {
       theraRecordsQuery.isError ||
       (theraVisit === 'V0' && theraPatientCodeQuery.isError))
   ) {
+    const error = theraPatientCodeQuery.error;
+    const message =
+      axios.isAxiosError<{ message?: unknown }>(error) && typeof error.response?.data?.message === 'string'
+        ? error.response.data.message
+        : undefined;
     return (
       <div className="mx-auto max-w-3xl p-6" role="alert">
         <Heading variant="h2">No se ha podido preparar THERA</Heading>
-        <p>Seleccione el grupo THERA, compruebe la asignación del hospital y la conexión. El borrador se conserva.</p>
+        <p>{message ?? 'Seleccione el grupo THERA, compruebe la asignación del hospital y la conexión.'}</p>
+        <p>El borrador guardado se conserva.</p>
         <Button
           onClick={() => {
             void theraRecordsQuery.refetch();
@@ -1219,6 +1215,14 @@ const RouteComponent = () => {
           }}
         >
           Reintentar
+        </Button>
+        {currentUser?.basePermissionLevel === 'ADMIN' ? (
+          <Button variant="outline" onClick={() => void navigate({ to: '/admin/groups' })}>
+            Configurar estudio
+          </Button>
+        ) : null}
+        <Button variant="outline" onClick={() => void navigate({ to: '/instruments/accessible-instruments' })}>
+          Volver a los formularios
         </Button>
       </div>
     );

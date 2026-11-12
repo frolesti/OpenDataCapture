@@ -32,6 +32,7 @@ export function useOrionPatientCode({
       return data.code;
     },
     retry: false,
+    throwOnError: false,
     retryOnMount: false,
     refetchOnMount: false,
     refetchOnReconnect: false,

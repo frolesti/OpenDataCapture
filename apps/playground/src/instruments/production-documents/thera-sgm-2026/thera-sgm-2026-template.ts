@@ -765,7 +765,7 @@ export function createTheraInstrument(visit: TheraVisit) {
   return defineInstrument({
     kind: 'FORM',
     language: 'en',
-    internal: { name: THERA_NAMES[visit], edition: 2 },
+    internal: { name: THERA_NAMES[visit], edition: 3 },
     tags: ['THERA-SGM-2026', 'CRF', visit],
     clientDetails: {
       estimatedDuration: 30,

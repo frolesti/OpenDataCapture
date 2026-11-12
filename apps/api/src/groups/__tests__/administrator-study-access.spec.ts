@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { HospitalsService } from '../../hospitals/hospitals.service';
+import { InstrumentsService } from '../../instruments/instruments.service';
 import { OrionCodesService, type OrionTransactionClient } from '../../orion-codes/orion-codes.service';
 import { OnboardingMailService } from '../../users/onboarding-mail.service';
 import { UsersService } from '../../users/users.service';
@@ -13,7 +14,14 @@ import { GroupsService } from '../groups.service';
 
 const internalHospital = { id: 'alta', name: 'Alta Medical Services', isInternal: true };
 const externalHospital = { id: 'clinic', name: 'Hospital Clínic', isInternal: false };
-const study = { id: 'thera', name: 'THERA-SGM-2026', hospitals: ['Hospital Clínic'], hospitalIds: ['clinic'] };
+const study = {
+  id: 'thera',
+  name: 'THERA-SGM-2026',
+  hospitals: ['Hospital Clínic'],
+  hospitalIds: ['clinic'],
+  accessibleInstrumentIds: ['thera-v0'],
+  studyCode: null
+};
 const administrator = {
   id: 'admin',
   basePermissionLevel: 'ADMIN' as const,
@@ -31,6 +39,9 @@ describe('administrator study access', () => {
   let codes: MockedInstance<OrionCodesService>;
   let groups: MockedInstance<GroupsService>;
   let transaction: OrionTransactionClient;
+  let instruments: MockedInstance<InstrumentsService>;
+  let patientCodes: MockedInstance<Model<'OrionPatientCode'>>;
+  let records: MockedInstance<Model<'InstrumentRecord'>>;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -40,11 +51,14 @@ describe('administrator study access', () => {
         MockFactory.createForModelToken(getModelToken('Group')),
         MockFactory.createForModelToken(getModelToken('User')),
         MockFactory.createForModelToken(getModelToken('PendingInvestigator')),
+        MockFactory.createForModelToken(getModelToken('OrionPatientCode')),
+        MockFactory.createForModelToken(getModelToken('InstrumentRecord')),
         MockFactory.createForService(CryptoService),
         MockFactory.createForService(GroupsService),
         MockFactory.createForService(HospitalsService),
         MockFactory.createForService(OnboardingMailService),
-        MockFactory.createForService(OrionCodesService)
+        MockFactory.createForService(OrionCodesService),
+        MockFactory.createForService(InstrumentsService)
       ]
     }).compile();
     access = moduleRef.get(AdministratorStudyAccessService);
@@ -55,8 +69,20 @@ describe('administrator study access', () => {
     hospitals = moduleRef.get(HospitalsService);
     groups = moduleRef.get(GroupsService);
     codes = moduleRef.get(OrionCodesService);
+    instruments = moduleRef.get(InstrumentsService);
+    instruments.find.mockResolvedValue([]);
+    patientCodes = moduleRef.get(getModelToken('OrionPatientCode'));
+    records = moduleRef.get(getModelToken('InstrumentRecord'));
+    patientCodes.findFirst.mockResolvedValue(null);
+    records.findFirst.mockResolvedValue(null);
     transaction = {} as OrionTransactionClient;
-    Object.assign(transaction, { group: groupModel, user: userModel, pendingInvestigator: pendingModel });
+    Object.assign(transaction, {
+      group: groupModel,
+      user: userModel,
+      pendingInvestigator: pendingModel,
+      orionPatientCode: patientCodes,
+      instrumentRecord: records
+    });
     codes.transaction.mockImplementation((operation) => operation(transaction));
     groupModel.findMany.mockResolvedValue([study]);
     userModel.findMany.mockResolvedValue([administrator]);
@@ -92,6 +118,37 @@ describe('administrator study access', () => {
   it('preserves a valid existing centre instead of moving an administrator to Alta', async () => {
     const previous = [{ groupId: 'thera', hospitalId: 'clinic' }];
     expect(await access.resolve(transaction, previous)).toEqual({ groupIds: ['thera'], studyHospitals: previous });
+  });
+
+  it('repairs a legacy THERA study code before assigning administrators, even when none exist', async () => {
+    instruments.find.mockResolvedValue([{ id: 'thera-v0', internal: { name: 'THERA_SGM_2026_V0' } }]);
+    userModel.findMany.mockResolvedValue([]);
+    await access.onApplicationBootstrap();
+    expect(groupModel.update).toHaveBeenCalledWith({
+      where: { id: 'thera' },
+      data: { studyCode: 'TH' }
+    });
+    expect(patientCodes.findFirst).toHaveBeenCalledWith({
+      where: { groupId: 'thera', code: { not: { startsWith: 'TH-' } } },
+      select: { id: true }
+    });
+  });
+
+  it('never overwrites an explicitly configured study identity', async () => {
+    instruments.find.mockResolvedValue([{ id: 'thera-v0', internal: { name: 'THERA_SGM_2026_V0' } }]);
+    groupModel.findMany.mockResolvedValue([{ ...study, studyCode: 'OR' }]);
+    userModel.findMany.mockResolvedValue([]);
+    await access.onApplicationBootstrap();
+    expect(groupModel.update).not.toHaveBeenCalled();
+    expect(patientCodes.findFirst).not.toHaveBeenCalled();
+  });
+
+  it.each(['codes', 'records'])('does not infer a study identity over incompatible %s', async (kind) => {
+    instruments.find.mockResolvedValue([{ id: 'thera-v0', internal: { name: 'THERA_SGM_2026_V0' } }]);
+    userModel.findMany.mockResolvedValue([]);
+    (kind === 'codes' ? patientCodes : records).findFirst.mockResolvedValue({ id: 'conflict' });
+    await access.onApplicationBootstrap();
+    expect(groupModel.update).not.toHaveBeenCalled();
   });
 
   it('repairs every administrator across all studies while retaining each existing valid centre', async () => {

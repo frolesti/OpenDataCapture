@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   change: undefined as ((data: { [key: string]: unknown }) => void) | undefined,
   navigate: vi.fn(),
   notification: vi.fn(),
+  refetchRecords: vi.fn(),
   renderedBundle: '',
   renderedInitialData: undefined as undefined | { [key: string]: unknown },
   records: [] as Record<string, unknown>[],
@@ -112,7 +113,7 @@ vi.mock('@/hooks/useInstrumentInfoQuery', () => ({
   useInstrumentInfoQuery: () => ({ data: [mocks.bundle, ...mocks.extraInfo] })
 }));
 vi.mock('@/hooks/useInstrumentRecords', () => ({
-  useInstrumentRecords: () => ({ data: mocks.records, isLoading: false })
+  useInstrumentRecords: () => ({ data: mocks.records, isLoading: false, refetch: mocks.refetchRecords })
 }));
 vi.mock('@/store', () => ({
   useAppStore: Object.assign((selector: (store: typeof mocks.store) => unknown) => selector(mocks.store), {
@@ -127,7 +128,7 @@ const selectionSchema = loadSchema('orion-pr-2026.ts');
 let client: QueryClient;
 
 function renderForm() {
-  client = new QueryClient();
+  client = new QueryClient({ defaultOptions: { queries: { throwOnError: true } } });
   return render(
     <StrictMode>
       <QueryClientProvider client={client}>
@@ -150,6 +151,7 @@ beforeEach(() => {
   mocks.bundle.internal.name = 'ORION_PR_2026_SELECTION';
   mocks.bundle.bundle = '({})';
   mocks.store.currentUser.studyHospitals = [];
+  mocks.store.currentUser.basePermissionLevel = 'STANDARD';
   mocks.store.currentGroup = { id: 'group', name: 'ORION', hospitals: [] };
   localStorage.clear();
   vi.resetAllMocks();
@@ -169,7 +171,7 @@ describe('THERA patient identity and persisted visit anchors', () => {
     ...Object.fromEntries(THERA_EXCLUSIONS.map((key) => [key, 'no'])),
     ...Object.fromEntries(THERA_VAGINAL_ITEMS.map((key) => [key, 3]))
   };
-  function prepareThera(visit: 'V0' | 'V1' | 'V2' = 'V1') {
+  function prepareThera(visit: 'V0' | 'V1' | 'V2' | 'V3' | 'V4' = 'V1') {
     mocks.bundle.internal.name = `THERA_SGM_2026_${visit}`;
     mocks.store.currentGroup = { id: 'group', name: 'THERA', hospitals: [] };
     mocks.extraInfo = [
@@ -185,6 +187,29 @@ describe('THERA patient identity and persisted visit anchors', () => {
     await screen.findByTestId('renderer');
     expect(axios.post).toHaveBeenCalledWith('/v1/instrument-records/thera-patient-code', { groupId: 'group' });
     expect(mocks.renderedInitialData?.patient_code).toBe('TH-01-02');
+  });
+
+  it.each(['STANDARD', 'ADMIN'])('keeps a THERA configuration failure local and retryable for %s', async (role) => {
+    prepareThera('V0');
+    mocks.store.currentUser.basePermissionLevel = role;
+    const message = 'El grup THERA no té configurat el codi d’estudi TH.';
+    const draft = serializeInstrumentDraft({ age: 50 });
+    localStorage.setItem('instrument-draft:selection:investigator', draft);
+    vi.mocked(axios.post)
+      .mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { status: 400, data: { message } }
+      })
+      .mockResolvedValueOnce({ data: { code: 'TH-01-02' } });
+    renderForm();
+    await screen.findByText(message);
+    expect(screen.getByRole('alert')).toBeDefined();
+    expect(Boolean(screen.queryByRole('button', { name: 'Configurar estudio' }))).toBe(role === 'ADMIN');
+    expect(localStorage.getItem('instrument-draft:selection:investigator')).toBe(draft);
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    await screen.findByTestId('renderer');
+    expect(mocks.renderedInitialData?.age).toBe(50);
+    expect(axios.post).toHaveBeenCalledTimes(2);
   });
   it('requires selecting an eligible patient and loads the saved basal date and hospital', async () => {
     prepareThera();
@@ -223,6 +248,35 @@ describe('THERA patient identity and persisted visit anchors', () => {
     renderForm();
     expect(screen.queryByRole('option', { name: 'TH-01-01' })).toBeNull();
     expect(screen.queryByTestId('renderer')).toBeNull();
+  });
+  it.each(['V3', 'V4'] as const)('does not offer a patient for %s until every previous visit is saved', (visit) => {
+    prepareThera(visit);
+    mocks.records.push({
+      id: 'first-record',
+      instrumentId: 'first',
+      data: { patient_code: 'TH-01-01', study_visit: 'V1', visit_date: '2024-02-29' }
+    });
+    if (visit === 'V4')
+      mocks.records.push({
+        id: 'second-record',
+        instrumentId: 'historical-second',
+        data: { patient_code: 'TH-01-01', study_visit: 'V2', visit_date: '2024-05-29' }
+      });
+    const view = renderForm();
+    expect(screen.queryByRole('option', { name: 'TH-01-01' })).toBeNull();
+    expect(screen.queryByTestId('renderer')).toBeNull();
+    view.unmount();
+    mocks.records.push({
+      id: 'missing-record',
+      instrumentId: 'historical-predecessor',
+      data: {
+        patient_code: 'TH-01-01',
+        study_visit: visit === 'V3' ? 'V2' : 'V3',
+        visit_date: visit === 'V3' ? '2024-05-29' : '2024-08-29'
+      }
+    });
+    renderForm();
+    expect(screen.getByRole('option', { name: 'TH-01-01' })).toBeDefined();
   });
   it('still opens an existing visit for editing after the fourth visit has been saved', async () => {
     prepareThera();

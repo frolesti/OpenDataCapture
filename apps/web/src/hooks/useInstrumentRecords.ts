@@ -7,17 +7,19 @@ import axios from 'axios';
 type UseInstrumentRecordsOptions = {
   enabled?: boolean;
   params: InstrumentRecordQueryParams;
+  throwOnError?: boolean;
 };
 
 export const INSTRUMENT_RECORDS_QUERY_KEY = 'instrument-records';
 
 export const useInstrumentRecords = (
-  { enabled, params }: UseInstrumentRecordsOptions = {
+  { enabled, params, throwOnError }: UseInstrumentRecordsOptions = {
     enabled: true,
     params: {}
   }
 ) => {
   return useQuery({
+    ...(throwOnError === undefined ? {} : { throwOnError }),
     enabled,
     queryFn: async () => {
       const response = await axios.get('/v1/instrument-records', {

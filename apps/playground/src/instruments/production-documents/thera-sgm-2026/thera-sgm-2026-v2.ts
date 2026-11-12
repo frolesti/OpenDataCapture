@@ -13,6 +13,7 @@ export const THERA_NAMES = {
 } as const;
 
 export type TheraVisit = keyof typeof THERA_NAMES;
+export const THERA_VISIT_ORDER: readonly TheraVisit[] = ['V0', 'V1', 'V2', 'V3', 'V4'];
 export const THERA_RETIRED_INSTRUMENT_NAME = 'THERA_SGM_2026_END';
 
 export const THERA_INCLUSIONS = ['inclusion_1', 'inclusion_2', 'inclusion_3', 'inclusion_4'] as const;
@@ -101,6 +102,24 @@ export function theraPatientContext(records: TheraStoredVisit[], patientCode: st
   return { baseline, first, patient };
 }
 
+export function missingTheraPrerequisite(visit: TheraVisit, records: TheraStoredVisit[], patientCode: string) {
+  const patient = records.filter((record) => record.data.patient_code === patientCode);
+  return THERA_VISIT_ORDER.slice(0, THERA_VISIT_ORDER.indexOf(visit)).find(
+    (previous) => !patient.some((record) => record.visit === previous)
+  );
+}
+
+export function canStartTheraVisit(visit: TheraVisit, records: TheraStoredVisit[], patientCode: string): boolean {
+  if (visit === 'V0') return true;
+  const { baseline, patient } = theraPatientContext(records, patientCode);
+  return (
+    isTheraPatientCode(patientCode) &&
+    Boolean(baseline && isTheraEligible(baseline.data)) &&
+    !missingTheraPrerequisite(visit, records, patientCode) &&
+    !patient.some((record) => record.visit === visit || record.visit === 'V4')
+  );
+}
+
 export function validateTheraVisit(
   visit: TheraVisit,
   data: { [key: string]: unknown },
@@ -133,6 +152,8 @@ export function validateTheraVisit(
   if (visit !== 'V1' && data.first_visit_date !== first?.data.visit_date) {
     return 'La fecha de pauta completa debe coincidir con la visita V1 guardada.';
   }
+  const missing = missingTheraPrerequisite(visit, records, data.patient_code);
+  if (missing) return `Se requiere la visita ${missing} guardada antes de registrar la visita ${visit}.`;
   const window = theraVisitWindow(visit, String(visit === 'V1' ? baseline.data.visit_date : first?.data.visit_date));
   if (!window || visitDate < window.min || visitDate > window.max) {
     return window
@@ -879,7 +900,7 @@ const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = 
 export default defineInstrument({
   kind: 'FORM',
   language: 'en',
-  internal: { name: THERA_NAMES[visit], edition: 2 },
+  internal: { name: THERA_NAMES[visit], edition: 3 },
   tags: ['THERA-SGM-2026', 'CRF', visit],
   clientDetails: {
     estimatedDuration: 30,

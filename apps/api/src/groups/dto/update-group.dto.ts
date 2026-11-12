@@ -1,6 +1,6 @@
 import { ValidationSchema } from '@douglasneuroinformatics/libnest';
 import { $UpdateGroupData } from '@opendatacapture/schemas/group';
-import type { GroupSettings, GroupType, UpdateGroupData } from '@opendatacapture/schemas/group';
+import type { GroupSettings, GroupType, StudyCode, UpdateGroupData } from '@opendatacapture/schemas/group';
 
 @ValidationSchema($UpdateGroupData)
 export class UpdateGroupDto implements UpdateGroupData {
@@ -8,5 +8,6 @@ export class UpdateGroupDto implements UpdateGroupData {
   hospitals?: string[];
   name?: string;
   settings?: Partial<GroupSettings>;
+  studyCode?: StudyCode | null;
   type?: GroupType;
 }
