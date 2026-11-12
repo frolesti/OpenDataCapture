@@ -36,6 +36,7 @@ const first: TheraStoredVisit = {
 describe('THERA protocol', () => {
   it('recognizes only declared instruments and assigned TH codes', () => {
     expect(getTheraVisit('THERA_SGM_2026_V4')).toBe('V4');
+    expect(getTheraVisit('THERA_SGM_2026_END')).toBeUndefined();
     expect(getTheraVisit('ORION_PR_2026_SELECTION')).toBeUndefined();
     expect(isTheraPatientCode('TH-XX-01')).toBe(true);
     expect(isTheraPatientCode('OR-01-01')).toBe(false);
@@ -84,17 +85,21 @@ describe('THERA protocol', () => {
     expect(validateTheraVisit('V1', first.data, [baseline, first])).toContain('Ya existe');
     expect(validateTheraVisit('V1', first.data, [baseline, first], first.id)).toBeUndefined();
   });
-  it('does not cross patient identities and blocks visits after end of study', () => {
+  it('does not cross patient identities and blocks new visits after the fourth visit', () => {
     expect(validateTheraVisit('V1', { ...first.data, patient_code: 'TH-01-02' }, [baseline])).toContain('basal apta');
-    const end: TheraStoredVisit = { data: { ...first.data, completed_study: 'no' }, id: 'end', visit: 'END' };
-    expect(validateTheraVisit('V1', first.data, [baseline, end])).toContain('fin de estudio');
+    const fourth: TheraStoredVisit = {
+      data: { ...first.data, first_visit_date: '2024-02-29', visit_date: '2025-02-28' },
+      id: 'fourth',
+      visit: 'V4'
+    };
+    expect(validateTheraVisit('V1', first.data, [baseline, fourth])).toContain('completado');
+    expect(validateTheraVisit('V4', fourth.data, [baseline, first, fourth], fourth.id)).toBeUndefined();
+    expect(validateTheraVisit('V1', first.data, [baseline, first, fourth], first.id)).toBeUndefined();
   });
-  it('requires V4 for completed study but allows early termination', () => {
-    const data = { ...first.data, completed_study: 'si', visit_date: '2024-04-01' };
-    expect(validateTheraVisit('END', data, [baseline, first])).toContain('V4');
-    expect(validateTheraVisit('END', { ...data, completed_study: 'no' }, [baseline, first])).toBeUndefined();
-    expect(
-      validateTheraVisit('END', { ...data, completed_study: 'no', visit_date: '2024-02-01' }, [baseline, first])
-    ).toContain('preceder');
+  it('requires an eligible baseline and actual first visit before the fourth visit', () => {
+    const data = { ...first.data, first_visit_date: '2024-02-29', visit_date: '2025-02-28' };
+    expect(validateTheraVisit('V4', data, [baseline, first])).toBeUndefined();
+    expect(validateTheraVisit('V4', data, [baseline])).toContain('V1');
+    expect(validateTheraVisit('V4', data, [first])).toContain('basal apta');
   });
 });

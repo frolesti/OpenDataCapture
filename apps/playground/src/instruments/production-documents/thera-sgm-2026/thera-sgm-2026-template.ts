@@ -141,10 +141,25 @@ const cervantesQuestions = [
 
 export function createTheraInstrument(visit: TheraVisit) {
   const baseline = visit === 'V0';
-  const ending = visit === 'END';
   const fullAssessment = ['V0', 'V1', 'V2', 'V4'].includes(visit);
   const cervantes = ['V0', 'V2', 'V4'].includes(visit);
   const hasDeviceQuestion = visit === 'V0' || visit === 'V1';
+  const visitTitle = {
+    V0: 'Visita basal',
+    V1: 'Primera visita',
+    V2: 'Segunda visita',
+    V3: 'Tercera visita',
+    V4: 'Cuarta visita'
+  }[visit];
+  const studyDescription =
+    'Eficacia de las infiltraciones vaginales de complejos híbridos cooperativos de ácido hialurónico para el tratamiento del síndrome genitourinario de la menopausia en mujeres con antecedentes de cáncer de mama.';
+  const visitDescription = {
+    V0: 'Visita basal: consentimiento informado, criterios de selección, antecedentes clínicos, cuestionarios, exploración vaginal y vulvar y seguridad.',
+    V1: 'Primera visita: pauta completa, prevista un mes después de la visita basal (margen de ±7 días). Evaluación de síntomas, función sexual, exploración vaginal y vulvar y seguridad.',
+    V2: 'Segunda visita: seguimiento a los tres meses de la fecha real de la primera visita (margen de ±14 días). Evaluación de síntomas, función sexual, Cervantes, exploración vaginal y vulvar y seguridad.',
+    V3: 'Tercera visita: seguimiento a los seis meses de la fecha real de la primera visita (margen de ±28 días). Evaluación de síntomas, impresión global de mejoría (PGI-I) y seguridad.',
+    V4: 'Cuarta visita: seguimiento a los doce meses de la fecha real de la primera visita (margen de ±45 días). Evaluación de síntomas, función sexual, Cervantes, exploración vaginal y vulvar y seguridad. Esta visita completa el estudio.'
+  }[visit];
   const shape: { [key: string]: z.ZodType<FormInstrument.Data[string]> } = {
     study_visit: z.string().optional(),
     patient_code: z.string().refine(isTheraPatientCode, 'Se requiere un código THERA asignado por la plataforma'),
@@ -153,13 +168,13 @@ export function createTheraInstrument(visit: TheraVisit) {
   };
   const groups: Group[] = [
     {
-      title: `THERA-SGM-2026 · ${ending ? 'Fin de estudio' : visit}`,
+      title: 'Datos de la visita',
       description:
         'Fechas en formato AAAA-MM-DD. La identificación del investigador queda vinculada a la sesión autenticada.',
       fields: {
         patient_code: { ...text('Código de paciente'), disabled: true },
         site_hospital: { kind: 'string', variant: 'select', label: 'Hospital', options: {} },
-        visit_date: dateField(ending ? 'Fecha de finalización' : 'Fecha de visita')
+        visit_date: dateField('Fecha de visita')
       }
     }
   ];
@@ -186,11 +201,11 @@ export function createTheraInstrument(visit: TheraVisit) {
   if (!baseline) {
     shape.baseline_date = dateSchema;
     groups[0]!.fields.baseline_date = dateField('Fecha basal guardada', true);
-    if (!ending && visit !== 'V1') {
+    if (visit !== 'V1') {
       shape.first_visit_date = dateSchema;
-      groups[0]!.fields.first_visit_date = dateField('Fecha guardada de V1 (pauta completa)', true);
+      groups[0]!.fields.first_visit_date = dateField('Fecha guardada de la primera visita (pauta completa)', true);
     }
-    if (!ending) {
+    {
       groups[0]!.fields.visit_window_info = {
         kind: 'dynamic',
         deps: ['baseline_date', ...(visit === 'V1' ? [] : ['first_visit_date'])],
@@ -268,7 +283,7 @@ export function createTheraInstrument(visit: TheraVisit) {
     });
   }
 
-  if (!ending) {
+  {
     const evaFields: Fields = {};
     for (const [key, label] of [
       ['eva_dryness', 'Sequedad vaginal'],
@@ -534,7 +549,7 @@ export function createTheraInstrument(visit: TheraVisit) {
     addGroup('Actividad sexual actual', { ...fields });
   }
 
-  if (!ending) {
+  {
     const fields: Fields = {};
     if (hasDeviceQuestion) {
       addClinical(
@@ -609,27 +624,6 @@ export function createTheraInstrument(visit: TheraVisit) {
       fields,
       'Añada tantos registros como sea necesario. Causalidad y evolución se recogen en texto libre hasta disponer de catálogos oficiales.'
     );
-  } else {
-    shape.completed_study = z.enum(['si', 'no']);
-    shape.end_reason = z.enum(['investigador', 'paciente', 'otro']).optional();
-    shape.end_reason_other = z.string().optional();
-    addGroup('Finalización', {
-      completed_study: radio('¿Ha completado la paciente el estudio?'),
-      end_reason: conditional(
-        radio('Motivo de finalización anticipada', {
-          investigador: 'Decisión del investigador',
-          paciente: 'Decisión del paciente',
-          otro: 'Otro'
-        }),
-        ['completed_study'],
-        (data) => data.completed_study === 'no'
-      ),
-      end_reason_other: conditional(
-        text('Otro motivo: especificar'),
-        ['completed_study', 'end_reason'],
-        (data) => data.completed_study === 'no' && data.end_reason === 'otro'
-      )
-    });
   }
 
   const cleanInactive = (value: unknown) => {
@@ -657,11 +651,6 @@ export function createTheraInstrument(visit: TheraVisit) {
         return result;
       });
     }
-    if (ending && clean.completed_study === 'si') {
-      delete clean.end_reason;
-      delete clean.end_reason_other;
-    }
-    if (ending && clean.end_reason !== 'otro') delete clean.end_reason_other;
     delete clean.eligibility_info;
     delete clean.visit_window_info;
     return clean;
@@ -704,7 +693,7 @@ export function createTheraInstrument(visit: TheraVisit) {
         });
         if (data.study_visit !== undefined && data.study_visit !== visit)
           issue('study_visit', 'El tipo de visita no coincide con este instrumento');
-        if (!baseline && !ending) {
+        if (!baseline) {
           ['eva_dryness', 'eva_dyspareunia', ...(fullAssessment ? THERA_VAGINAL_ITEMS : [])].forEach(requireValue);
           const reference = visit === 'V1' ? data.baseline_date : data.first_visit_date;
           const window = typeof reference === 'string' ? theraVisitWindow(visit, reference) : undefined;
@@ -715,11 +704,7 @@ export function createTheraInstrument(visit: TheraVisit) {
             );
         }
         if (!baseline && typeof data.baseline_date === 'string' && data.baseline_date > visitDate)
-          issue('visit_date', 'La visita no puede preceder a V0');
-        if (ending && data.completed_study === 'no') {
-          requireValue('end_reason');
-          if (data.end_reason === 'otro') requireValue('end_reason_other');
-        }
+          issue('visit_date', 'La visita no puede preceder a la visita basal');
         for (const key of [
           'breast_cancer_diagnosis_date',
           'chemotherapy_end_date',
@@ -775,47 +760,60 @@ export function createTheraInstrument(visit: TheraVisit) {
         }
       })
     )
-    .transform((data) => ({ ...data, study_visit: visit }));
+    .transform((data) => ({ ...data, study_visit: visit, ...(visit === 'V4' ? { completed_study: true } : {}) }));
 
   return defineInstrument({
     kind: 'FORM',
     language: 'en',
-    internal: { name: THERA_NAMES[visit], edition: 1 },
+    internal: { name: THERA_NAMES[visit], edition: 2 },
     tags: ['THERA-SGM-2026', 'CRF', visit],
+    clientDetails: {
+      estimatedDuration: 30,
+      instructions: [
+        [
+          baseline
+            ? 'Complete el formulario con la información disponible en la historia clínica y las respuestas de la paciente. Registre el consentimiento informado y compruebe los criterios de inclusión y exclusión.'
+            : 'Complete la visita de seguimiento con la información de la historia clínica, las respuestas de la paciente y la exploración correspondiente.',
+          'Complete los campos obligatorios e introduzca las fechas en formato AAAA-MM-DD.',
+          'Si no puede completar el formulario en una sola sesión, puede guardarlo como borrador y continuar en otro momento. Revise la información antes de enviarlo.'
+        ].join(' ')
+      ]
+    },
     details: {
-      title: `THERA-SGM-2026 · ${ending ? 'Fin de estudio' : visit}`,
-      description:
-        'CRF v1.0, 24/07/2026. Eficacia de infiltraciones vaginales de complejos híbridos cooperativos de ácido hialurónico para el síndrome genitourinario de la menopausia en mujeres con antecedentes de cáncer de mama.',
-      license: 'FREE-NOS'
+      title: `THERA-SGM-2026 · ${visitTitle}`,
+      description: `${studyDescription} ${visitDescription} Promotora: Laura Baquedano Mainar. CRF v1.0, 24/07/2026.`,
+      license: 'FREE-NOS',
+      authors: ['Laura Baquedano Mainar (promotora)']
     },
     content: groups,
-    measures: ending
-      ? null
-      : {
-          ...(fullAssessment
-            ? {
-                vaginal_health_total: {
-                  kind: 'computed',
-                  label: 'Índice de salud vaginal (5-25)',
-                  value: (data: Values) => theraSum(data, THERA_VAGINAL_ITEMS)
-                },
-                vulvar_health_total: {
-                  kind: 'computed',
-                  label: 'Índice de salud vulvar (0-15), sin categoría',
-                  value: (data: Values) => theraSum(data, THERA_VULVAR_ITEMS)
-                }
-              }
-            : {}),
-          ...(baseline
-            ? {
-                eligible: {
-                  kind: 'computed',
-                  label: 'Apta para seguimiento',
-                  value: (data: Values) => isTheraEligible(data)
-                }
-              }
-            : {})
-        },
+    measures: {
+      ...(visit === 'V4'
+        ? { completed_study: { kind: 'computed', label: 'Estudio completado', value: () => true } }
+        : {}),
+      ...(fullAssessment
+        ? {
+            vaginal_health_total: {
+              kind: 'computed',
+              label: 'Índice de salud vaginal (5-25)',
+              value: (data: Values) => theraSum(data, THERA_VAGINAL_ITEMS)
+            },
+            vulvar_health_total: {
+              kind: 'computed',
+              label: 'Índice de salud vulvar (0-15), sin categoría',
+              value: (data: Values) => theraSum(data, THERA_VULVAR_ITEMS)
+            }
+          }
+        : {}),
+      ...(baseline
+        ? {
+            eligible: {
+              kind: 'computed',
+              label: 'Apta para seguimiento',
+              value: (data: Values) => isTheraEligible(data)
+            }
+          }
+        : {})
+    },
     validationSchema
   });
 }

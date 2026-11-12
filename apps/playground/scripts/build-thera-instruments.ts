@@ -61,12 +61,10 @@ function fixture(instrument: AnyUnilingualFormInstrument, visit: string): Record
     visit_date:
       visit === 'v0'
         ? '2024-01-31'
-        : visit === 'end'
-          ? '2025-03-01'
-          : theraVisitWindow(
-              visit.toUpperCase() as 'V1' | 'V2' | 'V3' | 'V4',
-              visit === 'v1' ? '2024-01-31' : '2024-02-29'
-            )!.min,
+        : theraVisitWindow(
+            visit.toUpperCase() as 'V1' | 'V2' | 'V3' | 'V4',
+            visit === 'v1' ? '2024-01-31' : '2024-02-29'
+          )!.min,
     informed_consent: 'si',
     consent_date: '2024-01-31',
     age: 18,
@@ -74,7 +72,6 @@ function fixture(instrument: AnyUnilingualFormInstrument, visit: string): Record
     eva_dyspareunia: 0,
     weight: 65,
     height: 165,
-    completed_study: 'si',
     ...Object.fromEntries(THERA_INCLUSIONS.map((key) => [key, 'si'])),
     ...Object.fromEntries(THERA_EXCLUSIONS.map((key) => [key, 'no'])),
     ...Object.fromEntries(THERA_VAGINAL_ITEMS.map((key) => [key, 3]))
@@ -107,8 +104,8 @@ const verify = (condition: boolean, message: string) => {
 };
 if (!checkOnly) await mkdir(outputDirectory, { recursive: true });
 
-for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4', 'end']) {
-  const filename = `thera-sgm-2026-${visit === 'end' ? 'end-of-study' : visit}`;
+for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
+  const filename = `thera-sgm-2026-${visit}`;
   const entry = await standaloneSource(visit);
   const code = await bundle({
     inputs: [{ name: 'index.ts', content: entry }]
@@ -119,11 +116,62 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4', 'end']) {
   assert(instrument.kind === 'FORM' && typeof instrument.language === 'string');
   const form = instrument as AnyUnilingualFormInstrument;
   verify(form.language === 'en', `${visit}: language metadata follows ORION and the public Playground contract`);
+  const instructions = form.clientDetails?.instructions ?? [];
+  const overview = instructions.join(', ');
+  verify(instructions.length === 1, `${visit}: instructions render without array separator commas`);
+  const expectedTitle = {
+    v0: 'Visita basal',
+    v1: 'Primera visita',
+    v2: 'Segunda visita',
+    v3: 'Tercera visita',
+    v4: 'Cuarta visita'
+  }[visit];
+  verify(form.details.title === `THERA-SGM-2026 · ${expectedTitle}`, `${visit}: title uses a descriptive visit name`);
+  verify(
+    Array.isArray(form.content) && form.content[0]?.title === 'Datos de la visita',
+    `${visit}: first section does not repeat the instrument title`
+  );
+  verify(
+    overview.includes('AAA-MM-DD. Si no puede'),
+    `${visit}: instruction sentences are separated by a period and space`
+  );
+  verify(form.clientDetails?.estimatedDuration === 30, `${visit}: overview includes the estimated duration`);
+  verify(!overview.includes('THERA-SGM-2026'), `${visit}: overview does not repeat the heading`);
+  verify(!overview.includes('.,'), `${visit}: rendered overview has no period-comma punctuation`);
+  verify(overview.split(/\s+/).length <= 80, `${visit}: overview stays concise`);
+  verify(
+    !overview.includes('Promotora:') && !overview.includes('Eficacia de'),
+    `${visit}: instructions exclude study metadata`
+  );
+  verify(
+    overview.includes('borrador') && overview.includes('AAA'),
+    `${visit}: instructions explain drafts and date format`
+  );
+  verify(
+    form.details.description.includes('Eficacia de las infiltraciones vaginales'),
+    `${visit}: details describe the study`
+  );
+  verify(
+    form.details.authors?.includes('Laura Baquedano Mainar (promotora)') === true,
+    `${visit}: details identify the sponsor by role`
+  );
+  verify(form.details.description.includes('24/07/2026'), `${visit}: metadata retains the source CRF version`);
+  verify(form.internal.edition === 2, `${visit}: edition follows the latest published edition`);
   const data = fixture(form, visit);
   const valid = await form.validationSchema.safeParseAsync(data);
   assert(valid.success, `${visit}: ${valid.success ? '' : JSON.stringify(valid.error.issues)}`);
   assertions++;
   verify(valid.data.study_visit === visit.toUpperCase(), `${visit}: canonical stored visit metadata`);
+  verify(
+    visit === 'v4' ? valid.data.completed_study === true : !('completed_study' in valid.data),
+    `${visit}: only the fourth visit automatically completes the study`
+  );
+  const forgedCompletion = await form.validationSchema.parseAsync({ ...data, completed_study: visit !== 'v4' });
+  verify(
+    visit === 'v4' ? forgedCompletion.completed_study === true : !('completed_study' in forgedCompletion),
+    `${visit}: submitted completion flags cannot override visit-based completion`
+  );
+  verify(!entry.includes('end_reason'), `${visit}: no independent finalization or early withdrawal fields`);
   verify(
     !(await form.validationSchema.safeParseAsync({ ...data, study_visit: 'wrong' })).success,
     `${visit}: reject forged visit metadata`
@@ -136,7 +184,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4', 'end']) {
     !(await form.validationSchema.safeParseAsync({ ...data, visit_date: '2024-02-30' })).success,
     `${visit}: invalid calendar date`
   );
-  if (visit !== 'end') {
+  {
     verify(
       !(await form.validationSchema.safeParseAsync({ ...data, eva_dryness: 11 })).success,
       `${visit}: EVA upper bound`
@@ -204,7 +252,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4', 'end']) {
       fsfi_1: 'stale-invalid'
     });
     verify(failedScreen.success && !('weight' in failedScreen.data), 'V0: inactive stale clinical fields are removed');
-  } else if (visit !== 'end') {
+  } else {
     const window = theraVisitWindow(
       visit.toUpperCase() as 'V1' | 'V2' | 'V3' | 'V4',
       visit === 'v1' ? String(data.baseline_date) : String(data.first_visit_date)
@@ -249,12 +297,6 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4', 'end']) {
     verify(
       stale.success && !('cervantes_12' in stale.data),
       `${visit}: stale inactive Cervantes item removed before validation`
-    );
-  }
-  if (visit === 'end') {
-    verify(
-      !(await form.validationSchema.safeParseAsync({ ...data, completed_study: 'no' })).success,
-      'END: reason required'
     );
   }
   const sourcePath = path.join(directory, `${filename}.ts`);

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toBasicISOString } from '@douglasneuroinformatics/libjs';
 import { useDownload, useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { InstrumentRecordQueryParams } from '@opendatacapture/schemas/instrument-records';
+import { getTheraVisit, isTheraPatientCode } from '@opendatacapture/schemas/thera';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
 import { omit } from 'lodash-es';
 import { unparse } from 'papaparse';
@@ -12,6 +13,8 @@ import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
 import { useAppStore } from '@/store';
 import { downloadSubjectTableExcel } from '@/utils/excel';
+import { formatTheraFieldLabel, mergeTheraRecords, THERA_UNIFIED_OPTION_ID } from '@/utils/thera-datahub';
+import type { TheraDatahubVisit } from '@/utils/thera-datahub';
 
 type InstrumentVisualizationRecord = {
   [key: string]: unknown;
@@ -21,6 +24,7 @@ type InstrumentVisualizationRecord = {
   __instrumentId__: string;
   __subjectId__: string;
   __time__: number;
+  __visits__?: TheraDatahubVisit[];
 };
 
 type UseGlobalInstrumentVisualizationOptions = {
@@ -380,6 +384,22 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     [orionFollowupInstruments, orionSelectionInstruments]
   );
   const isUnifiedOrionSelected = instrumentId === ORION_UNIFIED_OPTION_ID;
+  const theraInstruments = useMemo(
+    () => (instrumentInfoQuery.data ?? []).filter((entry) => entry.internal && getTheraVisit(entry.internal.name)),
+    [instrumentInfoQuery.data]
+  );
+  const theraInstrumentVisits = useMemo(
+    () =>
+      new Map(
+        theraInstruments.flatMap((entry) => {
+          const visit = getTheraVisit(entry.internal?.name ?? '');
+          return visit ? [[entry.id, visit] as const] : [];
+        })
+      ),
+    [theraInstruments]
+  );
+  const isUnifiedTheraSelected = instrumentId === THERA_UNIFIED_OPTION_ID;
+  const isUnifiedStudySelected = isUnifiedOrionSelected || isUnifiedTheraSelected;
 
   const availableInstrumentIds = useMemo(
     () => new Set((instrumentInfoQuery.data ?? []).map((availableInstrument) => availableInstrument.id)),
@@ -393,7 +413,10 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     hasRestoredDatahubInstrument.current = true;
     try {
       const stored = localStorage.getItem(datahubInstrumentKey);
-      if (stored && (stored === ORION_UNIFIED_OPTION_ID || availableInstrumentIds.has(stored))) {
+      if (
+        stored &&
+        (stored === ORION_UNIFIED_OPTION_ID || stored === THERA_UNIFIED_OPTION_ID || availableInstrumentIds.has(stored))
+      ) {
         setInstrumentId(stored);
       }
     } catch {
@@ -433,6 +456,14 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       }
       return;
     }
+    if (instrumentId === THERA_UNIFIED_OPTION_ID) {
+      if (!theraInstruments.length) setInstrumentId(null);
+      return;
+    }
+    if (theraInstrumentVisits.has(instrumentId)) {
+      setInstrumentId(THERA_UNIFIED_OPTION_ID);
+      return;
+    }
     if (orionInstrumentIds.has(instrumentId) && hasOrionInOptions) {
       setInstrumentId(ORION_UNIFIED_OPTION_ID);
       return;
@@ -440,26 +471,35 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     if (!availableInstrumentIds.has(instrumentId)) {
       setInstrumentId(null);
     }
-  }, [availableInstrumentIds, hasOrionInOptions, instrumentId, instrumentInfoQuery.isLoading, orionInstrumentIds]);
+  }, [
+    availableInstrumentIds,
+    hasOrionInOptions,
+    instrumentId,
+    instrumentInfoQuery.isLoading,
+    orionInstrumentIds,
+    theraInstruments.length,
+    theraInstrumentVisits
+  ]);
 
-  const selectedInstrumentId =
-    instrumentId === ORION_UNIFIED_OPTION_ID
-      ? ORION_UNIFIED_OPTION_ID
-      : instrumentId && availableInstrumentIds.has(instrumentId)
-        ? instrumentId
-        : null;
+  const selectedInstrumentId = isUnifiedStudySelected
+    ? instrumentId
+    : instrumentId && availableInstrumentIds.has(instrumentId)
+      ? instrumentId
+      : null;
 
   const instrument = useInstrument(
     isUnifiedOrionSelected
       ? (orionSelectionInstrument?.id ?? orionFollowupInstrument?.id ?? null)
-      : selectedInstrumentId
+      : isUnifiedTheraSelected
+        ? (theraInstruments[0]?.id ?? null)
+        : selectedInstrumentId
   );
 
   const recordsQuery = useInstrumentRecords({
     enabled: selectedInstrumentId !== null,
     params: {
-      groupId: isUnifiedOrionSelected ? undefined : currentGroup?.id,
-      instrumentId: isUnifiedOrionSelected ? undefined : (selectedInstrumentId ?? undefined),
+      groupId: isUnifiedStudySelected ? undefined : currentGroup?.id,
+      instrumentId: isUnifiedStudySelected ? undefined : (selectedInstrumentId ?? undefined),
       kind: params?.kind,
       minDate: minDate ?? undefined
     }
@@ -487,6 +527,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
 
       if (
         normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
+        (isUnifiedTheraSelected && normalizedKey === 'SITE_HOSPITAL') ||
         normalizedKey === 'CENTRO_SANITARIO' ||
         (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'))
       ) {
@@ -507,6 +548,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
 
       if (
         normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
+        (isUnifiedTheraSelected && normalizedKey === 'SITE_HOSPITAL') ||
         normalizedKey === 'CENTRO_SANITARIO' ||
         (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'))
       ) {
@@ -524,7 +566,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     });
 
     return options;
-  }, [currentGroup?.hospitals, records]);
+  }, [currentGroup?.hospitals, isUnifiedTheraSelected, records]);
 
   const filteredRecords = useMemo(() => {
     return records.filter((record) => {
@@ -544,11 +586,14 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       return;
     }
 
-    const instrumentName = instrument.internal?.name ?? 'instrument';
+    const instrumentName = isUnifiedTheraSelected ? 'THERA_SGM_2026' : (instrument.internal?.name ?? 'instrument');
     const instrumentEdition = instrument.internal?.edition ?? 'unknown';
     const baseFilename = `${currentUser!.username}_${instrumentName}_${instrumentEdition}_${new Date().toISOString()}`;
 
-    const exportRecords = filteredRecords.map((record) => omit(record, ['__time__', '__id__', '__data__']));
+    const exportRecords = filteredRecords.map((record) => {
+      const exported = omit(record, ['__time__', '__id__', '__data__', '__visits__']);
+      return isUnifiedTheraSelected ? omit(exported, ['__instrumentId__']) : exported;
+    });
 
     const makeWideRows = () => {
       const columnNames = Object.keys(exportRecords[0]!);
@@ -694,6 +739,10 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
 
   useEffect(() => {
     if (recordsQuery.data) {
+      if (isUnifiedTheraSelected) {
+        setRecords(mergeTheraRecords(recordsQuery.data, theraInstrumentVisits));
+        return;
+      }
       const sourceRecords = isUnifiedOrionSelected
         ? recordsQuery.data.filter((record) => {
             if (orionInstrumentIds.has(record.instrumentId)) {
@@ -703,7 +752,8 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
               return false;
             }
             const recordData = record.data as Record<string, unknown>;
-            return typeof recordData.user_code === 'string' || typeof recordData.patient_code === 'string';
+            const code = getOrionPatientCode(recordData);
+            return Boolean(code && !isTheraPatientCode(code));
           })
         : recordsQuery.data;
 
@@ -811,12 +861,20 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       }
       setRecords(Array.from(mergedRecords.values()));
     }
-  }, [instrument, isUnifiedOrionSelected, orionInstrumentIds, recordsQuery.data]);
+  }, [
+    instrument,
+    isUnifiedOrionSelected,
+    isUnifiedTheraSelected,
+    orionInstrumentIds,
+    recordsQuery.data,
+    theraInstrumentVisits
+  ]);
 
   const instrumentOptions: { [key: string]: string } = useMemo(() => {
     const options: { [key: string]: string } = {};
     for (const instrument of instrumentInfoQuery.data ?? []) {
       if (
+        (instrument.internal && getTheraVisit(instrument.internal.name)) ||
         instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME ||
         instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME
       ) {
@@ -827,12 +885,19 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     if (hasOrionInOptions) {
       options[ORION_UNIFIED_OPTION_ID] = 'ORION-PR-2026';
     }
+    if (theraInstruments.length) {
+      options[THERA_UNIFIED_OPTION_ID] = 'THERA-SGM-2026';
+    }
     return options;
-  }, [hasOrionInOptions, instrumentInfoQuery.data]);
+  }, [hasOrionInOptions, instrumentInfoQuery.data, theraInstruments.length]);
 
   return {
     dl,
-    formatFieldLabel: isUnifiedOrionSelected ? formatOrionFieldLabel : undefined,
+    formatFieldLabel: isUnifiedOrionSelected
+      ? formatOrionFieldLabel
+      : isUnifiedTheraSelected
+        ? formatTheraFieldLabel
+        : undefined,
     filterOptions,
     filters,
     instrument,

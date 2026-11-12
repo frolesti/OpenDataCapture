@@ -213,6 +213,35 @@ describe('THERA patient identity and persisted visit anchors', () => {
     expect(screen.queryByRole('option', { name: 'TH-01-02' })).toBeNull();
     expect(screen.queryByTestId('renderer')).toBeNull();
   });
+  it('does not offer completed patients for another visit, including historical V4 editions', () => {
+    prepareThera();
+    mocks.records.push({
+      id: 'fourth-record',
+      instrumentId: 'historical-fourth',
+      data: { patient_code: 'TH-01-01', study_visit: 'V4', visit_date: '2025-02-28' }
+    });
+    renderForm();
+    expect(screen.queryByRole('option', { name: 'TH-01-01' })).toBeNull();
+    expect(screen.queryByTestId('renderer')).toBeNull();
+  });
+  it('still opens an existing visit for editing after the fourth visit has been saved', async () => {
+    prepareThera();
+    mocks.search = { recordId: 'first-record' };
+    mocks.state.initialData = {
+      patient_code: 'TH-01-01',
+      baseline_date: '2024-01-31',
+      visit_date: '2024-02-29'
+    };
+    mocks.records.push({
+      id: 'fourth-record',
+      instrumentId: 'historical-fourth',
+      data: { patient_code: 'TH-01-01', study_visit: 'V4', visit_date: '2025-02-28' }
+    });
+    renderForm();
+    await screen.findByTestId('renderer');
+    expect(mocks.renderedInitialData?.patient_code).toBe('TH-01-01');
+    expect(mocks.renderedInitialData?.visit_date).toBe('2024-02-29');
+  });
   it('loads the actual V1 date for V2 and never carries answers to another patient', async () => {
     prepareThera('V2');
     mocks.records.push(

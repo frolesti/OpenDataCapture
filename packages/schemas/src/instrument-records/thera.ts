@@ -1,5 +1,4 @@
 export const THERA_NAMES = {
-  END: 'THERA_SGM_2026_END',
   V0: 'THERA_SGM_2026_V0',
   V1: 'THERA_SGM_2026_V1',
   V2: 'THERA_SGM_2026_V2',
@@ -8,6 +7,7 @@ export const THERA_NAMES = {
 } as const;
 
 export type TheraVisit = keyof typeof THERA_NAMES;
+export const THERA_RETIRED_INSTRUMENT_NAME = 'THERA_SGM_2026_END';
 
 export const THERA_INCLUSIONS = ['inclusion_1', 'inclusion_2', 'inclusion_3', 'inclusion_4'] as const;
 export const THERA_EXCLUSIONS = [
@@ -66,7 +66,7 @@ export function isTheraEligible(data: { [key: string]: unknown }): boolean {
 
 export function theraVisitWindow(visit: TheraVisit, reference: string): undefined | { max: string; min: string } {
   const settings = { V1: [1, 7], V2: [3, 14], V3: [6, 28], V4: [12, 45] } as const;
-  if (visit === 'V0' || visit === 'END') return undefined;
+  if (visit === 'V0') return undefined;
   const date = parseTheraDate(reference);
   if (!date) return undefined;
   const [months, days] = settings[visit];
@@ -119,19 +119,10 @@ export function validateTheraVisit(
   if (data.baseline_date !== baseline.data.visit_date || data.site_hospital !== baseline.data.site_hospital) {
     return 'La fecha basal y el hospital deben coincidir con la visita basal guardada.';
   }
-  if (!editingId && patient.some((record) => record.visit === 'END')) {
-    return 'El paciente ya tiene un formulario de fin de estudio.';
+  if (!editingId && patient.some((record) => record.visit === 'V4')) {
+    return 'El estudio ya está completado con la cuarta visita.';
   }
   if (visitDate < String(baseline.data.visit_date)) return 'La fecha no puede ser anterior a la visita basal.';
-  if (visit === 'END') {
-    if (data.completed_study === 'si' && !patient.some((record) => record.visit === 'V4')) {
-      return 'Para completar el estudio se requiere la visita V4.';
-    }
-    if (patient.some((record) => record.visit !== 'END' && String(record.data.visit_date) > visitDate)) {
-      return 'La fecha de finalización no puede preceder a una visita guardada.';
-    }
-    return undefined;
-  }
   if (visit !== 'V1' && !first) return 'Se requiere la visita V1 (pauta completa) guardada.';
   if (visit !== 'V1' && data.first_visit_date !== first?.data.visit_date) {
     return 'La fecha de pauta completa debe coincidir con la visita V1 guardada.';

@@ -483,8 +483,8 @@ const RouteComponent = () => {
       return false;
     const context = theraPatientContext(theraRecords, record.data.patient_code);
     return (
-      !context.patient.some((item) => item.id !== recordId && (item.visit === 'END' || item.visit === theraVisit)) &&
-      (theraVisit === 'V1' || theraVisit === 'END' || Boolean(context.first))
+      !context.patient.some((item) => item.id !== recordId && (item.visit === 'V4' || item.visit === theraVisit)) &&
+      (theraVisit === 'V1' || Boolean(context.first))
     );
   });
   const theraContext = theraPatientContext(theraRecords, theraPatientCode);

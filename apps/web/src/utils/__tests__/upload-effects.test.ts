@@ -43,38 +43,32 @@ const instrument: AnyUnilingualFormInstrument = {
 };
 
 describe('CSV schemas with nested clinical effects', () => {
-  it.each(['v0', 'v1', 'v2', 'v3', 'v4', 'end'])(
-    'generates a CSV template for the actual THERA %s bundle',
-    async (visit) => {
-      const root = path.resolve(import.meta.dirname, '../../../../..');
-      const filename = `thera-sgm-2026-${visit === 'end' ? 'end-of-study' : visit}`;
-      const payload: { bundle: string } = JSON.parse(
-        await readFile(
-          path.join(
-            root,
-            `apps/playground/src/instruments/production-documents/thera-sgm-2026/bundles/${filename}.json`
-          ),
-          'utf8'
-        )
-      );
-      const form = await $FormInstrument.parseAsync(
-        await runInNewContext(
-          payload.bundle,
-          {
-            __resolveImport: (specifier: string) => {
-              if (!specifier.startsWith('/runtime/v1/')) throw new Error(`Unexpected import: ${specifier}`);
-              return pathToFileURL(path.join(root, 'runtime/v1/dist', specifier.slice('/runtime/v1/'.length))).href;
-            }
-          },
-          { importModuleDynamically: constants.USE_MAIN_CONTEXT_DEFAULT_LOADER }
-        )
-      );
-      expect(form.language).toBe('en');
-      const template = createUploadTemplateCSV({ ...form, language: 'en' });
-      expect(template.content).toContain('visit_date');
-      expect(template.content).toContain('patient_code');
-    }
-  );
+  it.each(['v0', 'v1', 'v2', 'v3', 'v4'])('generates a CSV template for the actual THERA %s bundle', async (visit) => {
+    const root = path.resolve(import.meta.dirname, '../../../../..');
+    const filename = `thera-sgm-2026-${visit}`;
+    const payload: { bundle: string } = JSON.parse(
+      await readFile(
+        path.join(root, `apps/playground/src/instruments/production-documents/thera-sgm-2026/bundles/${filename}.json`),
+        'utf8'
+      )
+    );
+    const form = await $FormInstrument.parseAsync(
+      await runInNewContext(
+        payload.bundle,
+        {
+          __resolveImport: (specifier: string) => {
+            if (!specifier.startsWith('/runtime/v1/')) throw new Error(`Unexpected import: ${specifier}`);
+            return pathToFileURL(path.join(root, 'runtime/v1/dist', specifier.slice('/runtime/v1/'.length))).href;
+          }
+        },
+        { importModuleDynamically: constants.USE_MAIN_CONTEXT_DEFAULT_LOADER }
+      )
+    );
+    expect(form.language).toBe('en');
+    const template = createUploadTemplateCSV({ ...form, language: 'en' });
+    expect(template.content).toContain('visit_date');
+    expect(template.content).toContain('patient_code');
+  });
   it('generates a template without dropping preprocess/refinement/transform wrappers', () => {
     const result = createUploadTemplateCSV(instrument);
     expect(result.filename).toBe('THERA_UPLOAD_TEST_1_template.csv');

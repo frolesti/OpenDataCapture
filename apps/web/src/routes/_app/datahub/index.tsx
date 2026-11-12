@@ -96,7 +96,11 @@ const RouteComponent = () => {
   const canViewAudit =
     currentUser?.basePermissionLevel === 'ADMIN' || currentUser?.basePermissionLevel === 'GROUP_MANAGER';
 
-  const selectedRecord = selectedRecordId ? records.find((record) => record.__id__ === selectedRecordId) : undefined;
+  const selectedRecord = selectedRecordId
+    ? records
+        .flatMap<{ __id__: string; __subjectId__: string; label?: string }>((record) => record.__visits__ ?? [record])
+        .find((record) => record.__id__ === selectedRecordId)
+    : undefined;
 
   const getExportRecords = async () => {
     const response = await axios.get<InstrumentRecordsExport>('/v1/instrument-records/export', {
@@ -270,6 +274,7 @@ const RouteComponent = () => {
                       .map(([key, options]) => {
                         const normalizedKey = key.toUpperCase();
                         const isHealthCenter =
+                          normalizedKey === 'SITE_HOSPITAL' ||
                           normalizedKey === 'CENTRO_ATENCION_PRIMARIA' ||
                           normalizedKey === 'CENTRO_SANITARIO' ||
                           (normalizedKey.includes('CENTRO') && normalizedKey.includes('PRIMARIA'));
@@ -370,6 +375,40 @@ const RouteComponent = () => {
                   const canDeleteRecord =
                     isAdminUser || removeSubjectIdScope(record.__subjectId__ as string) === currentUser?.username;
 
+                  if (record.__visits__) {
+                    const visits = record.__visits__;
+                    return (
+                      <div className="flex items-center gap-1">
+                        <ActionDropdown
+                          disabled={isAdminUser || !canEditRecord}
+                          options={visits.map((visit) => visit.label)}
+                          title={t({ en: 'Edita visita', fr: 'Editar visita' })}
+                          onSelection={(label) => {
+                            const visit = visits.find((entry) => entry.label === label);
+                            if (!visit) return;
+                            void navigate({
+                              params: { id: visit.__instrumentId__ },
+                              search: { recordId: visit.__id__ },
+                              state: { initialData: visit.__data__, recordId: visit.__id__ },
+                              to: '/instruments/render/$id'
+                            });
+                          }}
+                        />
+                        <ActionDropdown
+                          disabled={!canDeleteRecord}
+                          options={visits.map((visit) => visit.label)}
+                          title={t({ en: 'Elimina visita', fr: 'Eliminar visita' })}
+                          onSelection={(label) => {
+                            const visit = visits.find((entry) => entry.label === label);
+                            if (!visit) return;
+                            setSelectedRecordId(visit.__id__);
+                            setIsDeleteConfirmOpen(true);
+                          }}
+                        />
+                      </div>
+                    );
+                  }
+
                   return (
                     <div className="flex items-center gap-1">
                       <Button
@@ -466,19 +505,24 @@ const RouteComponent = () => {
               })}
             </AlertDialog.Title>
             <AlertDialog.Description>
-              {selectedRecord
+              {selectedRecord?.label
                 ? t({
-                    en: `S'eliminarà la fila del subjecte "${removeSubjectIdScope(
-                      selectedRecord.__subjectId__
-                    )}". Aquesta acció no es pot desfer.`,
-                    fr: `Se eliminará la fila del sujeto "${removeSubjectIdScope(
-                      selectedRecord.__subjectId__
-                    )}". Esta acción no se puede deshacer.`
+                    en: `S'eliminarà només la visita "${selectedRecord.label}" de l'investigador "${removeSubjectIdScope(selectedRecord.__subjectId__)}". Aquesta acció no es pot desfer.`,
+                    fr: `Se eliminará únicamente la visita "${selectedRecord.label}" del investigador "${removeSubjectIdScope(selectedRecord.__subjectId__)}". Esta acción no se puede deshacer.`
                   })
-                : t({
-                    en: 'Aquesta acció no es pot desfer.',
-                    fr: 'Esta acción no se puede deshacer.'
-                  })}
+                : selectedRecord
+                  ? t({
+                      en: `S'eliminarà la fila del subjecte "${removeSubjectIdScope(
+                        selectedRecord.__subjectId__
+                      )}". Aquesta acció no es pot desfer.`,
+                      fr: `Se eliminará la fila del sujeto "${removeSubjectIdScope(
+                        selectedRecord.__subjectId__
+                      )}". Esta acción no se puede deshacer.`
+                    })
+                  : t({
+                      en: 'Aquesta acció no es pot desfer.',
+                      fr: 'Esta acción no se puede deshacer.'
+                    })}
             </AlertDialog.Description>
           </AlertDialog.Header>
           <AlertDialog.Footer>

@@ -24,7 +24,7 @@ import type {
 } from '@opendatacapture/schemas/instrument-records';
 import { normalizeOrionAdverseEventRecords } from '@opendatacapture/schemas/instrument-records';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
-import { getTheraVisit, validateTheraVisit } from '@opendatacapture/schemas/thera';
+import { getTheraVisit, THERA_RETIRED_INSTRUMENT_NAME, validateTheraVisit } from '@opendatacapture/schemas/thera';
 import type { TheraStoredVisit, TheraVisit } from '@opendatacapture/schemas/thera';
 import type { Prisma, Session } from '@prisma/client';
 import { isNumber, mergeWith, pickBy } from 'lodash-es';
@@ -131,6 +131,14 @@ export class InstrumentRecordsService {
     return { group, hospital, user: account };
   }
 
+  private assertTheraInstrumentActive(name: string) {
+    if (name === THERA_RETIRED_INSTRUMENT_NAME) {
+      throw new BadRequestException(
+        'El formulario de finalización THERA se ha retirado. El estudio se completa al registrar la cuarta visita.'
+      );
+    }
+  }
+
   private async getTheraRecords(
     groupId: string,
     subjectId: string,
@@ -200,6 +208,7 @@ export class InstrumentRecordsService {
         `Cannot create instrument record for series instrument '${instrument.id}'`
       );
     }
+    this.assertTheraInstrumentActive(instrument.internal.name);
 
     await this.subjectsService.findById(subjectId);
     const session = await this.sessionsService.findById(sessionId, options);
@@ -660,6 +669,7 @@ export class InstrumentRecordsService {
 
     // all records must be attached to scalar instruments
     const instrument = (await this.getInstrumentById(instrumentRecord.instrumentId)) as ScalarInstrument;
+    this.assertTheraInstrumentActive(instrument.internal.name);
 
     let normalizedData = data;
     if (!Array.isArray(data) && instrument.internal.name.startsWith('ORION_')) {
@@ -782,6 +792,7 @@ export class InstrumentRecordsService {
       );
     }
 
+    this.assertTheraInstrumentActive(instrument.internal.name);
     const theraVisit = getTheraVisit(instrument.internal.name);
     if (theraVisit === 'V0') {
       throw new BadRequestException(

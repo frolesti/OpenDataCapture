@@ -172,6 +172,53 @@ describe('ORION record assignment and atomic code persistence', () => {
     await expect(service.reserveTheraPatientCode({ groupId: 'orion', user })).rejects.toThrow('THERA');
   });
 
+  it('rejects new records, edits and CSV imports for the retired independent finalization form', async () => {
+    const data = configureThera('V1');
+    instruments.findById.mockResolvedValue({
+      id: 'retired',
+      kind: 'FORM',
+      internal: { name: 'THERA_SGM_2026_END', edition: 1 },
+      validationSchema: z.object({}).passthrough()
+    });
+    await expect(service.create({ ...data, instrumentId: 'retired' }, { user })).rejects.toThrow('se ha retirado');
+    await expect(
+      service.upload(
+        {
+          groupId: 'orion',
+          instrumentId: 'retired',
+          records: [{ data: data.data, date: new Date(), subjectId: 'subject' }]
+        },
+        { user }
+      )
+    ).rejects.toThrow('se ha retirado');
+    records.findFirst.mockResolvedValue({
+      id: 'retired-record',
+      instrumentId: 'retired',
+      groupId: 'orion',
+      data: data.data,
+      session: { userId: user.id }
+    });
+    await expect(service.updateById('retired-record', {}, { user })).rejects.toThrow('se ha retirado');
+    expect(records.create).not.toHaveBeenCalled();
+    expect(records.createMany).not.toHaveBeenCalled();
+    expect(records.update).not.toHaveBeenCalled();
+  });
+
+  it('blocks new follow-up submissions after the fourth visit completes the study', async () => {
+    const data = configureThera('V1');
+    instruments.find.mockResolvedValue([
+      { id: 'selection', internal: { name: THERA_NAMES.V0, edition: 1 } },
+      { id: 'first', internal: { name: THERA_NAMES.V1, edition: 1 } },
+      { id: 'fourth', internal: { name: THERA_NAMES.V4, edition: 1 } }
+    ]);
+    records.findMany.mockResolvedValue([
+      { id: 'baseline', instrumentId: 'selection', data: theraBaselineData },
+      { id: 'completed', instrumentId: 'fourth', data: { ...data.data, visit_date: '2025-02-28' } }
+    ]);
+    await expect(service.create(data, { user })).rejects.toThrow('completado');
+    expect(records.create).not.toHaveBeenCalled();
+  });
+
   it('replaces a THERA preview inside the same atomic record transaction', async () => {
     await service.create(configureThera(), { user });
     expect(codes.create).toHaveBeenCalledWith('orion', user.id, 'CS Aravaca', transaction, 'TH');

@@ -2,6 +2,7 @@ import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { translateInstrumentInfo } from '@opendatacapture/instrument-utils';
 import type { InstrumentKind } from '@opendatacapture/runtime-core';
 import { $InstrumentInfo } from '@opendatacapture/schemas/instrument';
+import { THERA_RETIRED_INSTRUMENT_NAME } from '@opendatacapture/schemas/thera';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 
@@ -22,7 +23,9 @@ export function useInstrumentInfoQuery<TKind extends InstrumentKind>({
         params
       });
       const infos = await $InstrumentInfo.array().parseAsync(response.data);
-      return infos.map((instrument) => translateInstrumentInfo(instrument, 'ca'));
+      return infos
+        .filter((instrument) => instrument.internal?.name !== THERA_RETIRED_INSTRUMENT_NAME)
+        .map((instrument) => translateInstrumentInfo(instrument, 'ca'));
     },
     queryKey: ['instrument-info', params?.kind, params?.subjectId, resolvedLanguage]
   });
