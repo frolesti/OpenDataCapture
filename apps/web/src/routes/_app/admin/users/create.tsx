@@ -637,7 +637,7 @@ const RouteComponent = () => {
     setUserForm((current) => ({
       ...current,
       basePermissionLevel,
-      groupIds: basePermissionLevel === 'ADMIN' ? [] : current.groupIds.slice(0, 1)
+      groupIds: basePermissionLevel === 'ADMIN' ? groupOptions.map((group) => group.id) : current.groupIds.slice(0, 1)
     }));
   };
 
@@ -862,7 +862,7 @@ const RouteComponent = () => {
       await updateUserMutation.mutateAsync({
         data: {
           firstName: createdUserDialogForm.firstName.trim(),
-          groupIds: createdUserDialogForm.groupIds,
+          groupIds: selectedCreatedUser.basePermissionLevel === 'ADMIN' ? undefined : createdUserDialogForm.groupIds,
           professionalTitle: createdUserDialogForm.professionalTitle || null,
           studyHospitals:
             selectedCreatedUser.basePermissionLevel === 'STANDARD'
@@ -1496,11 +1496,14 @@ const RouteComponent = () => {
                 <Label>{t('common.groups')}</Label>
                 <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
                   {groupOptions.map((group) => {
-                    const checked = createdUserDialogForm.groupIds.includes(group.id);
+                    const checked =
+                      selectedCreatedUser?.basePermissionLevel === 'ADMIN' ||
+                      createdUserDialogForm.groupIds.includes(group.id);
                     return (
                       <label key={group.id} className="flex items-start gap-2 text-sm">
                         <Checkbox
                           checked={checked}
+                          disabled={selectedCreatedUser?.basePermissionLevel === 'ADMIN'}
                           onCheckedChange={() =>
                             setCreatedUserDialogForm((current) => {
                               const nextGroupIds = toggleGroups(current.groupIds, group.id);
@@ -1518,6 +1521,14 @@ const RouteComponent = () => {
                     );
                   })}
                 </div>
+                {selectedCreatedUser?.basePermissionLevel === 'ADMIN' ? (
+                  <p className="text-muted-foreground text-xs">
+                    {t({
+                      en: 'Tots els estudis s’assignen automàticament als administradors. Si no tenen un centre vàlid assignat, s’utilitza Alta Medical Services.',
+                      fr: 'Todos los estudios se asignan automáticamente a los administradores. Si no tienen un centro válido asignado, se utiliza Alta Medical Services.'
+                    })}
+                  </p>
+                ) : null}
               </div>
               {selectedCreatedUser?.basePermissionLevel === 'STANDARD' ? (
                 <StudyHospitalFields
@@ -1699,8 +1710,8 @@ const RouteComponent = () => {
               ) : (
                 <div className="text-muted-foreground rounded-md border border-dashed p-3 text-sm">
                   {t({
-                    en: "Els administradors no necessiten assignació de grup en crear l'usuari.",
-                    fr: 'Los administradores no necesitan asignación de grupo al crear el usuario.'
+                    en: 'Tots els estudis s’assignen automàticament als administradors, amb Alta Medical Services com a centre per defecte.',
+                    fr: 'Todos los estudios se asignan automáticamente a los administradores, con Alta Medical Services como centro por defecto.'
                   })}
                 </div>
               )}

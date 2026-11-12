@@ -4,6 +4,8 @@ import { BadRequestException, ConflictException, Injectable } from '@nestjs/comm
 import { normalizeHospitalKey } from '@opendatacapture/schemas/group';
 import type { HospitalOption } from '@opendatacapture/schemas/group';
 
+type HospitalTransaction = Pick<Parameters<Parameters<ExtendedPrismaClient['$transaction']>[0]>[0], 'hospital'>;
+
 @Injectable()
 export class HospitalsService {
   constructor(
@@ -56,13 +58,14 @@ export class HospitalsService {
     });
   }
 
-  async resolveNames(names: string[]): Promise<HospitalOption[]> {
+  async resolveNames(names: string[], transaction?: HospitalTransaction): Promise<HospitalOption[]> {
+    const model = transaction?.hospital ?? this.hospitalModel;
     const result = new Map<string, HospitalOption>();
     for (const raw of names) {
       const name = raw.trim();
       const key = normalizeHospitalKey(name);
       if (!key) throw new BadRequestException('El centre sanitari ha de tenir un nom vàlid.');
-      const matches = await this.hospitalModel.findMany({
+      const matches = await model.findMany({
         where: { OR: [{ key }, { aliasKeys: { has: key } }] }
       });
       if (matches.length > 1) {
@@ -71,12 +74,13 @@ export class HospitalsService {
       let hospital = matches[0];
       if (!hospital) {
         try {
-          hospital = await this.hospitalModel.create({
+          hospital = await model.create({
             data: { name, key, aliasKeys: [key], isInternal: key === normalizeHospitalKey('Alta Medical Services') }
           });
         } catch (error) {
           if (!error || typeof error !== 'object' || !('code' in error) || error.code !== 'P2002') throw error;
-          hospital = await this.hospitalModel.findUniqueOrThrow({ where: { key } });
+          if (transaction) throw error;
+          hospital = await model.findUniqueOrThrow({ where: { key } });
         }
       }
       result.set(hospital.id, hospital);
@@ -84,8 +88,8 @@ export class HospitalsService {
     return [...result.values()];
   }
 
-  async findByIds(ids: string[]): Promise<HospitalOption[]> {
-    const hospitals = await this.hospitalModel.findMany({ where: { id: { in: ids } } });
+  async findByIds(ids: string[], transaction?: HospitalTransaction): Promise<HospitalOption[]> {
+    const hospitals = await (transaction?.hospital ?? this.hospitalModel).findMany({ where: { id: { in: ids } } });
     if (new Set(ids).size !== hospitals.length) {
       throw new BadRequestException('Hi ha centres sanitaris que no existeixen al catàleg.');
     }

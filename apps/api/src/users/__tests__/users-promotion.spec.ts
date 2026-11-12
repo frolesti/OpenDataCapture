@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { GroupsService } from '../../groups/groups.service';
+import { AdministratorStudyAccessService } from '../../groups/administrator-study-access.service';
 import { OrionCodesService } from '../../orion-codes/orion-codes.service';
 import type { OrionTransactionClient } from '../../orion-codes/orion-codes.service';
 import { OnboardingMailService } from '../onboarding-mail.service';
@@ -24,6 +25,7 @@ describe('investigator promotion', () => {
         MockFactory.createForModelToken(getModelToken('PendingInvestigator')),
         MockFactory.createForService(CryptoService),
         MockFactory.createForService(GroupsService),
+        MockFactory.createForService(AdministratorStudyAccessService),
         MockFactory.createForService(OnboardingMailService),
         MockFactory.createForService(OrionCodesService)
       ]

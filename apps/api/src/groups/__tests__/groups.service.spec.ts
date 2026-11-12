@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { InstrumentsService } from '../../instruments/instruments.service';
 import { HospitalsService } from '../../hospitals/hospitals.service';
 import { GroupsService } from '../groups.service';
+import { AdministratorStudyAccessService } from '../administrator-study-access.service';
 
 describe('GroupsService', () => {
   let groupsService: GroupsService;
@@ -25,6 +26,7 @@ describe('GroupsService', () => {
         MockFactory.createForModelToken(getModelToken('User')),
         MockFactory.createForModelToken(getModelToken('PendingInvestigator')),
         MockFactory.createForService(HospitalsService),
+        MockFactory.createForService(AdministratorStudyAccessService),
         MockFactory.createForService(InstrumentsService)
       ]
     }).compile();
@@ -37,6 +39,9 @@ describe('GroupsService', () => {
     userModel.findMany.mockResolvedValue([]);
     hospitalsService.resolveNames.mockResolvedValue([]);
     groupModel.create.mockResolvedValue({ hospitals: [], hospitalIds: [] });
+    moduleRef
+      .get<MockedInstance<AdministratorStudyAccessService>>(AdministratorStudyAccessService)
+      .createGroup.mockImplementation((data) => groupModel.create({ data }));
   });
 
   describe('create', () => {
@@ -45,7 +50,7 @@ describe('GroupsService', () => {
       expect(groupModel.create.mock.lastCall?.[0]).toMatchObject({ data: { name: 'Test Group' } });
     });
 
-    it('connects only the selected instruments and existing administrators when creating a group', async () => {
+    it('creates only the selected instruments through the atomic administrator assignment workflow', async () => {
       instrumentsService.find.mockResolvedValueOnce([{ id: 'baseline' }, { id: 'followup' }]);
       userModel.findMany.mockResolvedValueOnce([{ id: 'admin-one' }, { id: 'admin-two' }]);
       await groupsService.create({
@@ -56,15 +61,10 @@ describe('GroupsService', () => {
         type: 'CLINICAL'
       });
       expect(hospitalsService.resolveNames).toHaveBeenCalledWith(['Alta Medical Services', 'Hospital Clínic']);
-      expect(userModel.findMany).toHaveBeenCalledWith({
-        where: { basePermissionLevel: 'ADMIN' },
-        select: { id: true }
-      });
       expect(groupModel.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           accessibleInstruments: { connect: [{ id: 'baseline' }] },
-          studyCode: 'TH',
-          users: { connect: [{ id: 'admin-one' }, { id: 'admin-two' }] }
+          studyCode: 'TH'
         })
       });
     });

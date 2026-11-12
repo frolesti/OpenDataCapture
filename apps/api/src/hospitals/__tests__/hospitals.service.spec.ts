@@ -6,6 +6,7 @@ import { $HospitalOption, hospitalMatchesName, normalizeHospitalKey } from '@ope
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HospitalsService } from '../hospitals.service';
+import type { OrionTransactionClient } from '../../orion-codes/orion-codes.service';
 
 describe('canonical hospital catalogue', () => {
   let service: HospitalsService;
@@ -57,6 +58,34 @@ describe('canonical hospital catalogue', () => {
   it('rejects missing catalogue IDs', async () => {
     model.findMany.mockResolvedValue([{ id: 'existing' }]);
     await expect(service.findByIds(['existing', 'missing'])).rejects.toThrow('no existeixen');
+  });
+
+  it('resolves new default hospitals inside the caller transaction, visible to subsequent investigator allocation', async () => {
+    const client = {} as OrionTransactionClient;
+    const transactionalModel = {
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn().mockResolvedValue({ id: 'alta', name: 'Alta Medical Services', isInternal: true })
+    };
+    Object.assign(client, { hospital: transactionalModel });
+    expect(await service.resolveNames(['Alta Medical Services'], client)).toEqual([
+      { id: 'alta', name: 'Alta Medical Services', isInternal: true }
+    ]);
+    expect(transactionalModel.create).toHaveBeenCalledOnce();
+    expect(model.create).not.toHaveBeenCalled();
+    expect(model.findMany).not.toHaveBeenCalled();
+  });
+
+  it('propagates transaction conflicts to the outer retry instead of reading an aborted transaction', async () => {
+    const client = {} as OrionTransactionClient;
+    const conflict = { code: 'P2002' };
+    const transactionalModel = {
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn().mockRejectedValue(conflict),
+      findUniqueOrThrow: vi.fn()
+    };
+    Object.assign(client, { hospital: transactionalModel });
+    await expect(service.resolveNames(['Alta Medical Services'], client)).rejects.toEqual(conflict);
+    expect(transactionalModel.findUniqueOrThrow).not.toHaveBeenCalled();
   });
 
   it('renames a shared centre atomically while preserving its ID and both study assignments', async () => {

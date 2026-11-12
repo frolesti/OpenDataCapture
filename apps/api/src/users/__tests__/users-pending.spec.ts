@@ -6,6 +6,7 @@ import { $CreatePendingInvestigatorData, $UpdatePendingInvestigatorData } from '
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { GroupsService } from '../../groups/groups.service';
+import { AdministratorStudyAccessService } from '../../groups/administrator-study-access.service';
 import { OrionCodesService } from '../../orion-codes/orion-codes.service';
 import { OnboardingMailService } from '../onboarding-mail.service';
 import { UsersService } from '../users.service';
@@ -25,6 +26,7 @@ describe('pending investigator comments', () => {
         MockFactory.createForModelToken(getModelToken('PendingInvestigator')),
         MockFactory.createForService(CryptoService),
         MockFactory.createForService(GroupsService),
+        MockFactory.createForService(AdministratorStudyAccessService),
         MockFactory.createForService(OnboardingMailService),
         MockFactory.createForService(OrionCodesService)
       ]

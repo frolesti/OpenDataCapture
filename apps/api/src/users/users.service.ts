@@ -14,6 +14,7 @@ import type {
 
 import type { EntityOperationOptions } from '@/core/types';
 import { GroupsService } from '@/groups/groups.service';
+import { AdministratorStudyAccessService } from '@/groups/administrator-study-access.service';
 import { OrionCodesService } from '@/orion-codes/orion-codes.service';
 import type { OrionTransactionClient } from '@/orion-codes/orion-codes.service';
 
@@ -30,7 +31,8 @@ export class UsersService {
     private readonly cryptoService: CryptoService,
     private readonly groupsService: GroupsService,
     private readonly onboardingMailService: OnboardingMailService,
-    private readonly orionCodesService: OrionCodesService
+    private readonly orionCodesService: OrionCodesService,
+    private readonly administratorStudyAccessService: AdministratorStudyAccessService
   ) {}
 
   async checkUsernameExists(username: string, { ability }: EntityOperationOptions = {}): Promise<{ success: boolean }> {
@@ -100,11 +102,15 @@ export class UsersService {
 
     const hashedPassword = await this.cryptoService.hashPassword(password);
     const assignments =
-      basePermissionLevel === 'STANDARD' || studyHospitals
+      basePermissionLevel !== 'ADMIN' && (basePermissionLevel === 'STANDARD' || studyHospitals)
         ? await this.resolveStudyHospitals(groupIds, studyHospitals, undefined, options)
         : [];
 
     return this.orionCodesService.transaction(async (transaction) => {
+      const access =
+        basePermissionLevel === 'ADMIN'
+          ? await this.administratorStudyAccessService.resolve(transaction, [], studyHospitals)
+          : { groupIds, studyHospitals: assignments };
       const created = await transaction.user.create({
         data: {
           additionalPermissions: [],
@@ -112,10 +118,10 @@ export class UsersService {
           dateOfBirth,
           email: normalizedEmail,
           firstName,
-          studyHospitals: assignments,
+          studyHospitals: access.studyHospitals,
           professionalTitle,
           groups: {
-            connect: groupIds.map((id) => ({ id }))
+            connect: access.groupIds.map((id) => ({ id }))
           },
           hashedPassword,
           lastName,
@@ -126,7 +132,7 @@ export class UsersService {
           hashedPassword: true
         }
       });
-      await this.assignStudyNumbers(created.id, groupIds, options, transaction);
+      await this.assignStudyNumbers(created.id, access.groupIds, options, transaction);
       return created;
     });
   }
@@ -252,34 +258,37 @@ export class UsersService {
       hashedPassword = await this.cryptoService.hashPassword(password);
     }
 
-    const groupsUpdate =
-      groupIds === undefined
-        ? undefined
-        : {
-            // Replace memberships so unselected groups are removed as well.
-            set: groupIds.map((id) => ({ id }))
-          };
-
+    const nextPermissionLevel =
+      data.basePermissionLevel === undefined ? currentUser.basePermissionLevel : data.basePermissionLevel;
+    const isAdministrator = nextPermissionLevel === 'ADMIN';
     let assignments: StudyHospital[] | undefined;
-    if (studyHospitals !== undefined || groupIds !== undefined || hospital !== undefined) {
+    if (!isAdministrator && (studyHospitals !== undefined || groupIds !== undefined || hospital !== undefined)) {
       const nextGroupIds = groupIds ?? currentUser.groupIds;
       const source =
         studyHospitals ?? currentUser.studyHospitals?.filter((entry) => nextGroupIds.includes(entry.groupId));
-      assignments = await this.resolveStudyHospitals(
-        nextGroupIds,
-        studyHospitals !== undefined ? studyHospitals : source?.length ? source : undefined,
-        hospital,
-        { ability }
-      );
+      assignments =
+        nextPermissionLevel === 'STANDARD' || studyHospitals !== undefined || hospital !== undefined
+          ? await this.resolveStudyHospitals(
+              nextGroupIds,
+              studyHospitals !== undefined ? studyHospitals : source?.length ? source : undefined,
+              hospital,
+              { ability }
+            )
+          : source;
     }
 
     return this.orionCodesService.transaction(async (transaction) => {
+      const access = isAdministrator
+        ? await this.administratorStudyAccessService.resolve(transaction, currentUser.studyHospitals, studyHospitals)
+        : undefined;
+      const nextGroupIds = access?.groupIds ?? groupIds;
+      const nextAssignments = access?.studyHospitals ?? assignments;
       const updated = await transaction.user.update({
         data: {
           ...data,
-          ...(assignments ? { studyHospitals: assignments } : {}),
+          ...(nextAssignments !== undefined ? { studyHospitals: nextAssignments } : {}),
           email: normalizedEmail,
-          ...(groupsUpdate ? { groups: groupsUpdate } : {}),
+          ...(nextGroupIds !== undefined ? { groups: { set: nextGroupIds.map((groupId) => ({ id: groupId })) } } : {}),
           hashedPassword
         },
         omit: {
@@ -287,21 +296,21 @@ export class UsersService {
         },
         where: { AND: [accessibleQuery(ability, 'update', 'User')], id }
       });
-      if (groupIds !== undefined) {
-        await this.assignStudyNumbers(id, groupIds ?? currentUser.groupIds, { ability }, transaction);
+      if (nextGroupIds !== undefined) {
+        await this.assignStudyNumbers(id, nextGroupIds, { ability }, transaction);
       }
       if (
         hospital !== undefined ||
-        assignments !== undefined ||
-        groupIds !== undefined ||
+        nextAssignments !== undefined ||
+        nextGroupIds !== undefined ||
         data.professionalTitle !== undefined
       ) {
         await transaction.pendingInvestigator.updateMany({
           where: { promotedUserId: id },
           data: {
             ...(hospital !== undefined ? { hospital } : {}),
-            ...(assignments !== undefined ? { studyHospitals: assignments } : {}),
-            ...(groupIds !== undefined ? { groupIds } : {}),
+            ...(nextAssignments !== undefined ? { studyHospitals: nextAssignments } : {}),
+            ...(nextGroupIds !== undefined ? { groupIds: nextGroupIds } : {}),
             ...(data.professionalTitle !== undefined ? { professionalTitle: data.professionalTitle } : {})
           }
         });
