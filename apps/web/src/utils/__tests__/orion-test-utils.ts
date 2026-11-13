@@ -5,7 +5,21 @@ import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { z } from 'zod/v3';
 
-export function loadSchema(filename: string): z.ZodTypeAny {
+type InstrumentField = {
+  kind: string;
+  label?: string;
+  options?: Record<string, string>;
+  render?: (data: Record<string, unknown>) => InstrumentField | null;
+};
+
+type TestInstrument = {
+  content: { fields: Record<string, InstrumentField> }[];
+  internal: { edition: number; name: string };
+  measures: Record<string, unknown>;
+  validationSchema: z.ZodTypeAny;
+};
+
+export function loadInstrument(filename: string): TestInstrument {
   const source = readFileSync(
     resolve(import.meta.dirname, '../../../../playground/src/instruments/production-documents/orion-pr-2026', filename),
     'utf8'
@@ -13,7 +27,7 @@ export function loadSchema(filename: string): z.ZodTypeAny {
   const compiled = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
   });
-  const exports: { default?: { validationSchema: z.ZodTypeAny } } = {};
+  const exports: { default?: TestInstrument } = {};
   runInNewContext(compiled.outputText, {
     Date,
     Set,
@@ -26,7 +40,11 @@ export function loadSchema(filename: string): z.ZodTypeAny {
       throw new Error(`Unexpected instrument import: ${name}`);
     }
   });
-  return exports.default!.validationSchema;
+  return exports.default!;
+}
+
+export function loadSchema(filename: string): z.ZodTypeAny {
+  return loadInstrument(filename).validationSchema;
 }
 
 export function selectionData(): Record<string, unknown> {

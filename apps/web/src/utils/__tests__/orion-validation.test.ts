@@ -6,10 +6,57 @@ import {
 } from '@opendatacapture/schemas/instrument-records';
 
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '../instrument-draft';
-import { loadSchema, selectionData } from './orion-test-utils';
+import { loadInstrument, loadSchema, selectionData } from './orion-test-utils';
 
 const selectionSchema = loadSchema('orion-pr-2026.ts');
 const followupSchema = loadSchema('orion-pr-2026-followup.ts');
+
+const adherenceCombinations = Array.from({ length: 16 }, (_, combination) =>
+  Object.fromEntries(
+    ['forget', 'remember', 'better', 'worse'].map((field, index) => [
+      `mmas_${field}`,
+      combination & (1 << index) ? 'si' : 'no'
+    ])
+  )
+);
+
+describe('ORION adherence wording compatibility', () => {
+  it.each([
+    ['orion-pr-2026.ts', 'retro_', 'ORION_PR_2026_SELECTION', 36],
+    ['orion-pr-2026-followup.ts', '', 'ORION_PR_2026_FOLLOWUP', 19]
+  ] as const)(
+    'uses the supplied Spanish wording with unchanged answer keys in %s',
+    (filename, prefix, name, edition) => {
+      const instrument = loadInstrument(filename);
+      const data = { ...selectionData(), continues_study: 'si' };
+      const fields = Object.fromEntries(instrument.content.flatMap((group) => Object.entries(group.fields)));
+      const expectedLabels = {
+        mmas_forget: '¿Olvida alguna vez tomar sus medicamentos? *',
+        mmas_remember: '¿Alguna vez tiene problemas para recordar tomar su medicamento? *',
+        mmas_better: 'Cuando se siente mejor, ¿deja de tomar sus medicamentos en algunas ocasiones? *',
+        mmas_worse: 'Si alguna vez le sienta mal la medicación, ¿la deja de tomar? *'
+      };
+      expect(instrument.internal).toEqual({ edition, name });
+      expect(instrument.measures).toEqual({});
+      expect(Object.keys(fields).filter((key) => key.startsWith(`${prefix}mmas_`))).toEqual(
+        Object.keys(expectedLabels).map((key) => `${prefix}${key}`)
+      );
+      for (const [key, label] of Object.entries(expectedLabels)) {
+        const field = fields[`${prefix}${key}`];
+        const rendered = field?.kind === 'dynamic' ? field.render?.(data) : field;
+        expect(rendered).toMatchObject({ kind: 'string', label, options: { no: 'No', si: 'Sí' } });
+      }
+    }
+  );
+
+  it.each(adherenceCombinations)('preserves stored selection responses and draft answers: %j', (answers) => {
+    const storedAnswers = Object.fromEntries(Object.entries(answers).map(([key, value]) => [`retro_${key}`, value]));
+    const data = { ...selectionData(), patient_code: 'OR-01-01', ...storedAnswers };
+    const restored = deserializeInstrumentDraft(serializeInstrumentDraft(data)).data;
+    expect(selectionSchema.parse(restored)).toMatchObject(storedAnswers);
+    expect(restored).toEqual(data);
+  });
+});
 
 describe('ORION hidden adverse-event rows', () => {
   it('reproduces the empty-set error and removes the hidden row before selection validation', () => {
@@ -192,10 +239,12 @@ describe('ORION client date and draft regressions', () => {
       for (const dimension of ['mobility', 'selfcare', 'activities', 'pain', 'anxiety'])
         data[`eq5d_${dimension}`] = '1';
       for (const dimension of ['onset', 'maintenance', 'quality', 'daytime']) data[`sleep_${dimension}`] = '1';
-      for (const dimension of ['forget', 'remember', 'better', 'worse']) data[`mmas_${dimension}`] = 'no';
-      expect(followupSchema.safeParse(deserializeInstrumentDraft(serializeInstrumentDraft(data)).data).success).toBe(
-        true
-      );
+      for (const answers of adherenceCombinations) {
+        const stored = { ...data, ...answers };
+        const restored = deserializeInstrumentDraft(serializeInstrumentDraft(stored)).data;
+        expect(followupSchema.parse(restored)).toMatchObject(answers);
+        expect(restored).toEqual(stored);
+      }
     }
   );
 });

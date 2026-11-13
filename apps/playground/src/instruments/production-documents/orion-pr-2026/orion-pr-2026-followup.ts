@@ -254,25 +254,25 @@ function adherenceFields() {
   return {
     mmas_forget: {
       kind: 'string' as const,
-      label: '¿Alguna vez olvida tomar su medicación? *',
+      label: '¿Olvida alguna vez tomar sus medicamentos? *',
       options: YES_NO_OPTIONS,
       variant: 'radio' as const
     },
     mmas_remember: {
       kind: 'string' as const,
-      label: '¿Alguna vez tiene problemas para recordar tomar su medicación? *',
+      label: '¿Alguna vez tiene problemas para recordar tomar su medicamento? *',
       options: YES_NO_OPTIONS,
       variant: 'radio' as const
     },
     mmas_better: {
       kind: 'string' as const,
-      label: 'Cuando se siente mejor, ¿a veces deja de tomar su medicación? *',
+      label: 'Cuando se siente mejor, ¿deja de tomar sus medicamentos en algunas ocasiones? *',
       options: YES_NO_OPTIONS,
       variant: 'radio' as const
     },
     mmas_worse: {
       kind: 'string' as const,
-      label: 'A veces, si se siente peor cuando toma su medicación, ¿deja de tomarla? *',
+      label: 'Si alguna vez le sienta mal la medicación, ¿la deja de tomar? *',
       options: YES_NO_OPTIONS,
       variant: 'radio' as const
     }
@@ -285,7 +285,7 @@ const instrumentDefinition: any = {
   kind: 'FORM',
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
-  internal: { edition: 18, name: 'ORION_PR_2026_FOLLOWUP' },
+  internal: { edition: 19, name: 'ORION_PR_2026_FOLLOWUP' },
   content: [
     {
       fields: { patient_code: { kind: 'string', label: 'Código del paciente *', variant: 'input' } }

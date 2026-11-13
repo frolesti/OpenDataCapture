@@ -268,30 +268,29 @@ function adherenceFields(
   fieldPrefix = timeframe === 'retrospective' ? 'retro_' : 'prosp_'
 ): Record<string, any> {
   const prefix = fieldPrefix;
-  const labelSuffix = '';
 
   return {
     [`${prefix}mmas_forget`]: requiresEligibility({
       kind: 'string',
-      label: `¿Alguna vez olvida tomar su medicación?${labelSuffix} *`,
+      label: '¿Olvida alguna vez tomar sus medicamentos? *',
       variant: 'radio',
       options: YES_NO_OPTIONS
     }),
     [`${prefix}mmas_remember`]: requiresEligibility({
       kind: 'string',
-      label: `¿Alguna vez tiene problemas para recordar tomar su medicación?${labelSuffix} *`,
+      label: '¿Alguna vez tiene problemas para recordar tomar su medicamento? *',
       variant: 'radio',
       options: YES_NO_OPTIONS
     }),
     [`${prefix}mmas_better`]: requiresEligibility({
       kind: 'string',
-      label: `Cuando se siente mejor, ¿a veces deja de tomar su medicación?${labelSuffix} *`,
+      label: 'Cuando se siente mejor, ¿deja de tomar sus medicamentos en algunas ocasiones? *',
       variant: 'radio',
       options: YES_NO_OPTIONS
     }),
     [`${prefix}mmas_worse`]: requiresEligibility({
       kind: 'string',
-      label: `A veces, si se siente peor cuando toma su medicación, ¿deja de tomarla?${labelSuffix} *`,
+      label: 'Si alguna vez le sienta mal la medicación, ¿la deja de tomar? *',
       variant: 'radio',
       options: YES_NO_OPTIONS
     })
@@ -582,7 +581,7 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 35,
+    edition: 36,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
