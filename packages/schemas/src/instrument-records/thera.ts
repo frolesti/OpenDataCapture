@@ -42,6 +42,21 @@ export function parseTheraDate(value: unknown): Date | undefined {
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value ? date : undefined;
 }
 
+export function theraDateToISO(value: unknown): string | undefined {
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value.toISOString().slice(0, 10) : undefined;
+  }
+  if (typeof value !== 'string') return undefined;
+  const display = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  const canonical = display ? `${display[3]}-${display[2]}-${display[1]}` : value;
+  return parseTheraDate(canonical) ? canonical : undefined;
+}
+
+export function formatTheraDate(value: unknown): string | undefined {
+  const canonical = theraDateToISO(value);
+  return canonical ? `${canonical.slice(8, 10)}/${canonical.slice(5, 7)}/${canonical.slice(0, 4)}` : undefined;
+}
+
 export function theraToday(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -151,7 +166,7 @@ export function validateTheraVisit(
   const window = theraVisitWindow(visit, String(visit === 'V1' ? baseline.data.visit_date : first?.data.visit_date));
   if (!window || visitDate < window.min || visitDate > window.max) {
     return window
-      ? `La visita debe realizarse entre ${window.min} y ${window.max}, ambos incluidos.`
+      ? `La visita debe realizarse entre ${formatTheraDate(window.min)} y ${formatTheraDate(window.max)}, ambos incluidos.`
       : 'No se puede calcular la ventana de visita.';
   }
   return undefined;

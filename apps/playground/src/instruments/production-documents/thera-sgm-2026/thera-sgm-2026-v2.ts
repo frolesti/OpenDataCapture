@@ -48,6 +48,21 @@ export function parseTheraDate(value: unknown): Date | undefined {
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value ? date : undefined;
 }
 
+export function theraDateToISO(value: unknown): string | undefined {
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value.toISOString().slice(0, 10) : undefined;
+  }
+  if (typeof value !== 'string') return undefined;
+  const display = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  const canonical = display ? `${display[3]}-${display[2]}-${display[1]}` : value;
+  return parseTheraDate(canonical) ? canonical : undefined;
+}
+
+export function formatTheraDate(value: unknown): string | undefined {
+  const canonical = theraDateToISO(value);
+  return canonical ? `${canonical.slice(8, 10)}/${canonical.slice(5, 7)}/${canonical.slice(0, 4)}` : undefined;
+}
+
 export function theraToday(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -157,7 +172,7 @@ export function validateTheraVisit(
   const window = theraVisitWindow(visit, String(visit === 'V1' ? baseline.data.visit_date : first?.data.visit_date));
   if (!window || visitDate < window.min || visitDate > window.max) {
     return window
-      ? `La visita debe realizarse entre ${window.min} y ${window.max}, ambos incluidos.`
+      ? `La visita debe realizarse entre ${formatTheraDate(window.min)} y ${formatTheraDate(window.max)}, ambos incluidos.`
       : 'No se puede calcular la ventana de visita.';
   }
   return undefined;
@@ -171,8 +186,23 @@ type Group = FormInstrument.FieldsGroup<FormInstrument.Data, 'en'>;
 const yesNo = { si: 'Sí', no: 'No' };
 const requiredText = z.string().trim().min(1, 'Este campo es obligatorio');
 const dateSchema = z
-  .string()
-  .refine((value) => Boolean(parseTheraDate(value)), 'Introduzca una fecha válida (AAAA-MM-DD)');
+  .union([z.string(), z.date(), z.undefined()], {
+    errorMap: (_issue, context) => ({
+      message: context.data === undefined ? 'Este campo es obligatorio' : 'Introduzca una fecha válida (dd/mm/aaaa)'
+    })
+  })
+  .transform((value, context) => {
+    const canonical = theraDateToISO(value);
+    if (!canonical) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          value === undefined || value === '' ? 'Este campo es obligatorio' : 'Introduzca una fecha válida (dd/mm/aaaa)'
+      });
+      return undefined;
+    }
+    return canonical;
+  });
 const optionalDate = dateSchema.optional();
 const eligibilityDeps = [
   'informed_consent',
@@ -184,31 +214,38 @@ const eligibilityDeps = [
   ...THERA_VAGINAL_ITEMS
 ];
 
+const requiredLabel = (label: string) => (label.endsWith(' *') ? label : `${label} *`);
 const radio = (label: string, options: { [key: string]: string } = yesNo): FormInstrument.StringField<'en'> => ({
   kind: 'string',
   variant: 'radio',
-  label,
+  label: requiredLabel(label),
   options
 });
-const text = (label: string): FormInstrument.StringField<'en'> => ({ kind: 'string', variant: 'input', label });
-const dateField = (label: string, disabled = false): FormInstrument.StringField<'en'> => ({
+const text = (label: string, required = true): FormInstrument.StringField<'en'> => ({
   kind: 'string',
   variant: 'input',
-  label,
-  placeholder: 'AAAA-MM-DD',
+  label: required ? requiredLabel(label) : label
+});
+const dateField = (
+  label: string,
+  disabled = false
+): FormInstrument.DateField<'en'> & { displayFormat: 'dd/MM/yyyy' } => ({
+  kind: 'date',
+  displayFormat: 'dd/MM/yyyy',
+  label: disabled ? label : requiredLabel(label),
   disabled
 });
 const numeric = (label: string, min: number, max?: number): Field => ({
   kind: 'number',
   variant: 'input',
-  label,
+  label: requiredLabel(label),
   min,
   ...(max === undefined ? {} : { max })
 });
 const score = (label: string, options: { [key: number]: string }): Field => ({
   kind: 'number',
   variant: 'radio',
-  label,
+  label: requiredLabel(label),
   options
 });
 const optionsFrom = (labels: string[], start = 1): { [key: number]: string } =>
@@ -308,16 +345,16 @@ const shape: { [key: string]: z.ZodType<FormInstrument.Data[string]> } = {
   study_visit: z.string().optional(),
   patient_code: z.string().refine(isTheraPatientCode, 'Se requiere un código THERA asignado por la plataforma'),
   site_hospital: requiredText,
-  visit_date: dateSchema.refine((value) => value <= theraToday(), 'La fecha no puede ser futura')
+  visit_date: dateSchema.refine((value) => value === undefined || value <= theraToday(), 'La fecha no puede ser futura')
 };
 const groups: Group[] = [
   {
     title: 'Datos de la visita',
     description:
-      'Fechas en formato AAAA-MM-DD. La identificación del investigador queda vinculada a la sesión autenticada.',
+      'Fechas en formato dd/mm/aaaa. Puede escribir la fecha o seleccionarla en el calendario. La identificación del investigador queda vinculada a la sesión autenticada.',
     fields: {
-      patient_code: { ...text('Código de paciente'), disabled: true },
-      site_hospital: { kind: 'string', variant: 'select', label: 'Hospital', options: {} },
+      patient_code: { ...text('Código de paciente', false), disabled: true },
+      site_hospital: { kind: 'string', variant: 'select', label: 'Hospital *', options: {} },
       visit_date: dateField('Fecha de visita')
     }
   }
@@ -338,7 +375,7 @@ function addClinical(
   predicate: (data: Values) => boolean = () => true
 ) {
   shape[key] = schema.optional();
-  fields[key] = clinical(field, deps, predicate);
+  fields[key] = clinical({ ...field, label: requiredLabel(field.label) }, deps, predicate);
   requiredWhen.push({ key, deps, predicate: (data) => active(data) && predicate(data) });
 }
 
@@ -354,10 +391,16 @@ if (!baseline) {
       kind: 'dynamic',
       deps: ['baseline_date', ...(visit === 'V1' ? [] : ['first_visit_date'])],
       render(data) {
-        const reference = visit === 'V1' ? data.baseline_date : data.first_visit_date;
-        const window = typeof reference === 'string' ? theraVisitWindow(visit, reference) : undefined;
+        const reference = theraDateToISO(visit === 'V1' ? data.baseline_date : data.first_visit_date);
+        const window = reference ? theraVisitWindow(visit, reference) : undefined;
         return window
-          ? { ...text(`Ventana permitida: ${window.min} a ${window.max} (ambos incluidos)`), disabled: true }
+          ? {
+              ...text(
+                `Ventana permitida: ${formatTheraDate(window.min)} a ${formatTheraDate(window.max)} (ambos incluidos)`,
+                false
+              ),
+              disabled: true
+            }
           : null;
       }
     };
@@ -408,23 +451,8 @@ if (baseline) {
     shape[key] = z.enum(['si', 'no']).optional();
     exclusionFields[key] = consentGate(radio(`${index + 1}. ${exclusionLabels[index]}`));
   });
-  addGroup('Criterios de inclusión · todos deben ser SÍ', inclusionFields);
-  addGroup('Criterios de exclusión · todos deben ser NO', exclusionFields);
-  shape.eligibility_info = z.string().optional();
-  addGroup('Resultado del cribado', {
-    eligibility_info: {
-      kind: 'dynamic',
-      deps: eligibilityDeps,
-      render: (data) => ({
-        ...text(
-          isTheraEligible(data)
-            ? 'APTA: continúe con el CRF basal'
-            : 'No apta o cribado incompleto: no se habilitan seguimientos'
-        ),
-        disabled: true
-      })
-    }
-  });
+  addGroup('Criterios de inclusión (todos deben ser SÍ)', inclusionFields);
+  addGroup('Criterios de exclusión (todos deben ser NO)', exclusionFields);
 }
 
 {
@@ -434,9 +462,17 @@ if (baseline) {
     ['eva_dyspareunia', 'Dispareunia (dolor)']
   ]) {
     shape[key!] = z.number().int().min(0).max(10).optional();
+    const field: Field = {
+      kind: 'number',
+      variant: 'slider',
+      label: requiredLabel(`${label!} (0–10)`),
+      description: 'Seleccione un número entero: 0 = sin síntomas; 10 = máxima intensidad imaginable.',
+      min: 0,
+      max: 10
+    };
     evaFields[key!] = baseline
-      ? conditional(numeric(label!, 0, 10), ['informed_consent'], (data) => data.informed_consent === 'si')
-      : numeric(label!, 0, 10);
+      ? conditional(field, ['informed_consent'], (data) => data.informed_consent === 'si')
+      : field;
   }
   addGroup(
     'Escala visual análoga para síndrome genitourinario',
@@ -732,10 +768,10 @@ if (baseline) {
         deficiencia: 'Deficiencia del dispositivo',
         ambos: 'Ambos'
       }),
-      description: { kind: 'string', variant: 'textarea', label: 'Descripción del evento' },
+      description: { kind: 'string', variant: 'textarea', label: 'Descripción del evento *' },
       device_problem: text('Problema del dispositivo (indique «no aplica» si procede)'),
       clinical_signs: text('Signos y síntomas clínicos (indique «no aplica» si procede)'),
-      action_evolution: { kind: 'string', variant: 'textarea', label: 'Acción/tratamiento y evolución clínica' },
+      action_evolution: { kind: 'string', variant: 'textarea', label: 'Acción/tratamiento y evolución clínica *' },
       causality: text('Relación con el dispositivo (causalidad, texto libre)'),
       serious_unexpected_device_effect: radio('¿Efecto adverso grave o imprevisto relacionado con el dispositivo?'),
       status: radio('Estado técnico del evento', { en_curso: 'En curso', resuelto: 'Resuelto' }),
@@ -794,13 +830,16 @@ const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = 
   .preprocess(
     cleanInactive,
     z.object(shape).superRefine((data, ctx) => {
-      const visitDate = typeof data.visit_date === 'string' ? data.visit_date : '';
+      const visitDate = theraDateToISO(data.visit_date);
       const issue = (key: string, message: string) =>
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message });
       const requireValue = (key: string) => {
         if (data[key] === undefined || data[key] === '' || (data[key] instanceof Set && data[key].size === 0))
           issue(key, 'Este campo es obligatorio');
       };
+      if (baseline && data.informed_consent === 'no') {
+        issue('informed_consent', 'No se puede continuar sin consentimiento informado firmado.');
+      }
       if (baseline && data.informed_consent === 'si') {
         [
           'consent_date',
@@ -811,10 +850,18 @@ const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = 
           'eva_dyspareunia',
           ...THERA_VAGINAL_ITEMS
         ].forEach(requireValue);
-        if (typeof data.consent_date === 'string' && data.consent_date > visitDate)
+        THERA_INCLUSIONS.forEach((key) => {
+          if (data[key] === 'no') issue(key, 'Este criterio de inclusión debe marcarse como "Sí".');
+        });
+        THERA_EXCLUSIONS.forEach((key) => {
+          if (data[key] === 'si') issue(key, 'Este criterio de exclusión debe marcarse como "No".');
+        });
+        if (visitDate && typeof data.consent_date === 'string' && data.consent_date > visitDate)
           issue('consent_date', 'El consentimiento debe ser anterior o igual a la visita basal');
-        if (data.inclusion_4 === 'si' && typeof data.age === 'number' && data.age < 18)
-          issue('inclusion_4', 'La edad registrada es inferior a 18 años');
+        if (typeof data.age === 'number' && data.age < 18) {
+          issue('age', 'La paciente debe tener al menos 18 años.');
+          if (data.inclusion_4 === 'si') issue('inclusion_4', 'La edad registrada es inferior a 18 años');
+        }
         const vhi = theraSum(data, THERA_VAGINAL_ITEMS);
         if (
           data.inclusion_3 === 'si' &&
@@ -832,13 +879,15 @@ const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = 
         ['eva_dryness', 'eva_dyspareunia', ...(fullAssessment ? THERA_VAGINAL_ITEMS : [])].forEach(requireValue);
         const reference = visit === 'V1' ? data.baseline_date : data.first_visit_date;
         const window = typeof reference === 'string' ? theraVisitWindow(visit, reference) : undefined;
-        if (!window || visitDate < window.min || visitDate > window.max)
+        if (visitDate && (!window || visitDate < window.min || visitDate > window.max))
           issue(
             'visit_date',
-            window ? `Fecha fuera de ventana: ${window.min} a ${window.max}` : 'Falta una fecha de referencia válida'
+            window
+              ? `Fecha fuera de ventana: ${formatTheraDate(window.min)} a ${formatTheraDate(window.max)}`
+              : 'Falta una fecha de referencia válida'
           );
       }
-      if (!baseline && typeof data.baseline_date === 'string' && data.baseline_date > visitDate)
+      if (visitDate && !baseline && typeof data.baseline_date === 'string' && data.baseline_date > visitDate)
         issue('visit_date', 'La visita no puede preceder a la visita basal');
       for (const key of [
         'breast_cancer_diagnosis_date',
@@ -848,7 +897,7 @@ const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = 
         'genital_symptoms_diagnosis_date'
       ]) {
         const rule = requiredWhen.find((item) => item.key === key);
-        if (rule?.predicate(data) && typeof data[key] === 'string' && data[key] > visitDate)
+        if (visitDate && rule?.predicate(data) && typeof data[key] === 'string' && data[key] > visitDate)
           issue(key, 'La fecha no puede ser posterior a la visita');
       }
       for (const key of ['chemotherapy_end_date', 'hormonal_end_date', 'radiotherapy_end_date']) {
@@ -870,7 +919,7 @@ const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = 
         const eventIssue = (index: number, key: string, message: string) =>
           ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['adverse_event_records', index, key], message });
         events.forEach((event, index) => {
-          if (typeof event.onset_date === 'string' && event.onset_date > visitDate)
+          if (visitDate && typeof event.onset_date === 'string' && event.onset_date > visitDate)
             eventIssue(index, 'onset_date', 'El inicio no puede ser posterior a la visita');
           if (event.status === 'resuelto' && !event.resolution_date)
             eventIssue(index, 'resolution_date', 'Indique la fecha de resolución');
@@ -878,7 +927,7 @@ const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = 
             typeof event.resolution_date === 'string' &&
             event.status === 'resuelto' &&
             ((typeof event.onset_date === 'string' && event.resolution_date < event.onset_date) ||
-              event.resolution_date > visitDate)
+              (visitDate !== undefined && event.resolution_date > visitDate))
           )
             eventIssue(index, 'resolution_date', 'La resolución debe estar entre el inicio y la visita');
         });
@@ -909,7 +958,7 @@ export default defineInstrument({
         baseline
           ? 'Complete el formulario con la información disponible en la historia clínica y las respuestas de la paciente. Registre el consentimiento informado y compruebe los criterios de inclusión y exclusión.'
           : 'Complete la visita de seguimiento con la información de la historia clínica, las respuestas de la paciente y la exploración correspondiente.',
-        'Complete los campos obligatorios e introduzca las fechas en formato AAAA-MM-DD.',
+        'Complete los campos marcados con asterisco e introduzca las fechas en formato dd/mm/aaaa o selecciónelas en el calendario.',
         'Si no puede completar el formulario en una sola sesión, puede guardarlo como borrador y continuar en otro momento. Revise la información antes de enviarlo.'
       ].join(' ')
     ]

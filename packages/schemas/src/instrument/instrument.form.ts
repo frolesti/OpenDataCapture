@@ -59,6 +59,7 @@ const $FormInstrumentNumberField = z.discriminatedUnion('variant', [
 ]) satisfies z.ZodType<FormInstrument.NumberField>;
 
 const $FormInstrumentDateField = $FormInstrumentBaseField.extend({
+  displayFormat: z.literal('dd/MM/yyyy').optional(),
   kind: z.literal('date')
 }) satisfies z.ZodType<FormInstrument.DateField>;
 

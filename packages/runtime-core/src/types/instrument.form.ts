@@ -77,7 +77,7 @@ declare namespace FormInstrument {
   type DateField<TLanguage extends InstrumentLanguage = InstrumentLanguage> = FieldMixin<
     TLanguage,
     FormTypes.DateField
-  >;
+  > & { displayFormat?: 'dd/MM/yyyy' };
 
   type BooleanField<TLanguage extends InstrumentLanguage = InstrumentLanguage> = FieldMixin<
     TLanguage,

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   canStartTheraVisit,
+  formatTheraDate,
   getTheraVisit,
   isTheraEligible,
   isTheraPatientCode,
@@ -10,6 +11,7 @@ import {
   THERA_INCLUSIONS,
   THERA_VAGINAL_ITEMS,
   THERA_VISIT_ORDER,
+  theraDateToISO,
   theraVisitWindow,
   validateTheraVisit
 } from './thera';
@@ -72,6 +74,22 @@ describe('THERA protocol', () => {
     expect(theraVisitWindow('V1', '2023-01-31')).toEqual({ max: '2023-03-07', min: '2023-02-21' });
     expect(theraVisitWindow('V4', '2024-02-29')).toEqual({ max: '2025-04-14', min: '2025-01-14' });
   });
+  it.each([
+    ['29/02/2024', '2024-02-29'],
+    ['31/01/2024', '2024-01-31'],
+    ['2024-02-29', '2024-02-29'],
+    [new Date('2024-02-29T12:00:00Z'), '2024-02-29']
+  ])('normalizes calendar input without changing historical storage: %s', (input, expected) => {
+    expect(theraDateToISO(input)).toBe(expected);
+    expect(formatTheraDate(input)).toBe(expected === '2024-01-31' ? '31/01/2024' : '29/02/2024');
+  });
+  it.each(['31/02/2024', '29/02/2023', '1/2/2024', '02/13/2024', '', new Date(Number.NaN)])(
+    'rejects invalid date presentation %s',
+    (input) => {
+      expect(theraDateToISO(input)).toBeUndefined();
+      expect(formatTheraDate(input)).toBeUndefined();
+    }
+  );
   it('enforces exact age, inclusion and symptom thresholds', () => {
     expect(isTheraEligible(eligible)).toBe(true);
     expect(isTheraEligible({ ...eligible, age: 17 })).toBe(false);

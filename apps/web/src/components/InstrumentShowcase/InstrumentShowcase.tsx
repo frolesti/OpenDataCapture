@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 
 import { SearchBar, Select } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
-import type { TranslatedInstrumentInfo } from '@opendatacapture/schemas/instrument';
 import type { Group } from '@opendatacapture/schemas/group';
+import type { TranslatedInstrumentInfo } from '@opendatacapture/schemas/instrument';
+import { getTheraVisit, THERA_VISIT_ORDER } from '@opendatacapture/schemas/thera';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { InstrumentCard } from '../InstrumentCard';
@@ -94,9 +95,14 @@ export const InstrumentShowcase: React.FC<{
   );
 };
 
-function compareInstruments(first: TranslatedInstrumentInfo, second: TranslatedInstrumentInfo): number {
+export function compareInstruments(first: TranslatedInstrumentInfo, second: TranslatedInstrumentInfo): number {
   const firstName = first.internal?.name ?? first.details.title;
   const secondName = second.internal?.name ?? second.details.title;
+  const firstVisit = getTheraVisit(firstName);
+  const secondVisit = getTheraVisit(secondName);
+  if (firstVisit && secondVisit) {
+    return THERA_VISIT_ORDER.indexOf(firstVisit) - THERA_VISIT_ORDER.indexOf(secondVisit);
+  }
   const firstIsFollowup = firstName.includes('FOLLOWUP');
   const secondIsFollowup = secondName.includes('FOLLOWUP');
   if (firstIsFollowup !== secondIsFollowup) {
@@ -107,5 +113,7 @@ function compareInstruments(first: TranslatedInstrumentInfo, second: TranslatedI
   if (firstIsSelection !== secondIsSelection) {
     return firstIsSelection ? -1 : 1;
   }
-  return first.details.title.localeCompare(second.details.title);
+  const firstTitle = firstVisit ? 'THERA-SGM-2026' : first.details.title;
+  const secondTitle = secondVisit ? 'THERA-SGM-2026' : second.details.title;
+  return firstTitle.localeCompare(secondTitle);
 }

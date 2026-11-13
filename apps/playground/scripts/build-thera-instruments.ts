@@ -11,6 +11,7 @@ import { bundle } from '@opendatacapture/instrument-bundler';
 import type { AnyUnilingualFormInstrument, FormInstrument } from '@opendatacapture/runtime-core';
 import { $AnyInstrument } from '@opendatacapture/schemas/instrument';
 import {
+  formatTheraDate,
   THERA_EXCLUSIONS,
   THERA_INCLUSIONS,
   THERA_VAGINAL_ITEMS,
@@ -90,6 +91,8 @@ function fixture(instrument: AnyUnilingualFormInstrument, visit: string): Record
           data[key] = 'options' in field ? Number(Object.keys(field.options)[0]) : 1;
         } else if (field.kind === 'set') {
           data[key] = new Set([Object.keys(field.options)[0]]);
+        } else if (field.kind === 'date') {
+          data[key] = '2024-01-31';
         }
       }
     }
@@ -132,7 +135,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     `${visit}: first section does not repeat the instrument title`
   );
   verify(
-    overview.includes('AAA-MM-DD. Si no puede'),
+    overview.includes('calendario. Si no puede'),
     `${visit}: instruction sentences are separated by a period and space`
   );
   verify(form.clientDetails?.estimatedDuration === 30, `${visit}: overview includes the estimated duration`);
@@ -144,7 +147,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     `${visit}: instructions exclude study metadata`
   );
   verify(
-    overview.includes('borrador') && overview.includes('AAA'),
+    overview.includes('borrador') && overview.includes('dd/mm/aaaa'),
     `${visit}: instructions explain drafts and date format`
   );
   verify(
@@ -158,9 +161,65 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
   verify(form.details.description.includes('24/07/2026'), `${visit}: metadata retains the source CRF version`);
   verify(form.internal.edition === 3, `${visit}: edition follows the latest published edition`);
   const data = fixture(form, visit);
+  const groups = Array.isArray(form.content) ? form.content : [{ fields: form.content }];
+  const renderedFields = Object.fromEntries(
+    groups.flatMap((group) =>
+      Object.entries(group.fields).map(
+        ([key, field]) =>
+          [key, field?.kind === 'dynamic' ? field.render(data as FormInstrument.PartialData) : field] as const
+      )
+    )
+  );
+  verify(!('eligibility_info' in renderedFields), `${visit}: no screening-result pseudo-field`);
+  for (const [key, field] of Object.entries(renderedFields)) {
+    if (!field || field.disabled) continue;
+    verify(field.label.endsWith(' *'), `${visit}: ${key} has a required marker`);
+    if (field.kind === 'date') {
+      verify(field.displayFormat === 'dd/MM/yyyy', `${visit}: ${key} uses the clinical date/calendar format`);
+    }
+  }
+  for (const key of ['eva_dryness', 'eva_dyspareunia']) {
+    verify(
+      renderedFields[key]?.kind === 'number' &&
+        renderedFields[key].variant === 'slider' &&
+        renderedFields[key].min === 0 &&
+        renderedFields[key].max === 10,
+      `${visit}: ${key} is an explicit 0-10 slider`
+    );
+    verify(!form.initialValues || form.initialValues[key] === undefined, `${visit}: ${key} has no implicit score`);
+    for (const value of [0, 10]) {
+      const answers = {
+        ...data,
+        ...Object.fromEntries(THERA_VAGINAL_ITEMS.map((item) => [item, 2])),
+        [key]: value
+      };
+      verify(
+        (await form.validationSchema.safeParseAsync(answers)).success,
+        `${visit}: ${key} accepts endpoint ${value}`
+      );
+    }
+    for (const value of [-1, 11, 0.5]) {
+      verify(
+        !(await form.validationSchema.safeParseAsync({ ...data, [key]: value })).success,
+        `${visit}: ${key} rejects invalid score ${value}`
+      );
+    }
+  }
   const valid = await form.validationSchema.safeParseAsync(data);
   assert(valid.success, `${visit}: ${valid.success ? '' : JSON.stringify(valid.error.issues)}`);
   assertions++;
+  for (const value of [formatTheraDate(data.visit_date), new Date(`${String(data.visit_date)}T12:00:00.000Z`)]) {
+    const calendarData = await form.validationSchema.safeParseAsync({ ...data, visit_date: value });
+    verify(
+      calendarData.success && calendarData.data.visit_date === data.visit_date,
+      `${visit}: date display preserves ISO storage`
+    );
+  }
+  const impossibleDate = await form.validationSchema.safeParseAsync({ ...data, visit_date: '31/02/2024' });
+  verify(
+    !impossibleDate.success && impossibleDate.error.issues.every((issue) => issue.path[0] === 'visit_date'),
+    `${visit}: impossible day-first date produces only its own field error`
+  );
   verify(valid.data.study_visit === visit.toUpperCase(), `${visit}: canonical stored visit metadata`);
   verify(
     visit === 'v4' ? valid.data.completed_study === true : !('completed_study' in valid.data),
@@ -194,7 +253,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
       serious_adverse_event: 'si',
       adverse_event_records: [
         {
-          onset_date: data.visit_date,
+          onset_date: String(data.visit_date),
           event_type: 'grave',
           description: 'Evento sintético',
           device_problem: 'No aplica',
@@ -204,7 +263,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
           serious_unexpected_device_effect: 'no',
           status: 'resuelto',
           status_detail: 'Resuelto',
-          resolution_date: data.visit_date
+          resolution_date: String(data.visit_date)
         }
       ]
     };
@@ -225,6 +284,13 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     assert(eventField?.kind === 'dynamic', `${visit}: safety table is conditional`);
     const activeEvents = eventField.render({ ...valid.data, serious_adverse_event: 'si' });
     assert(activeEvents?.kind === 'record-array', `${visit}: safety events support multiple records`);
+    for (const [key, field] of Object.entries(activeEvents.fieldset)) {
+      const rendered = field.kind === 'dynamic' ? field.render(withEvent.adverse_event_records[0]!) : field;
+      verify(Boolean(rendered?.label.endsWith(' *')), `${visit}: safety ${key} has a required marker`);
+      if (rendered?.kind === 'date') {
+        verify(rendered.displayFormat === 'dd/MM/yyyy', `${visit}: safety ${key} uses the clinical date format`);
+      }
+    }
     verify(
       tableFields.every((field) => Object.hasOwn(activeEvents.fieldset, field)),
       `${visit}: safety editor includes all nine CRF table columns`
@@ -264,17 +330,28 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     );
   }
   if (visit === 'v0') {
+    const withoutConsent = await form.validationSchema.safeParseAsync({
+      patient_code: data.patient_code,
+      site_hospital: data.site_hospital,
+      visit_date: data.visit_date,
+      informed_consent: 'no'
+    });
     verify(
-      (
-        await form.validationSchema.safeParseAsync({
-          patient_code: data.patient_code,
-          site_hospital: data.site_hospital,
-          visit_date: data.visit_date,
-          informed_consent: 'no'
-        })
-      ).success,
-      'V0: retain non-consenting screening'
+      !withoutConsent.success && withoutConsent.error.issues.some((issue) => issue.path[0] === 'informed_consent'),
+      'V0: block non-consenting submissions at the consent field'
     );
+    for (const [keys, answer] of [
+      [THERA_INCLUSIONS, 'no'],
+      [THERA_EXCLUSIONS, 'si']
+    ] as const) {
+      for (const key of keys) {
+        const rejected = await form.validationSchema.safeParseAsync({ ...data, [key]: answer });
+        verify(
+          !rejected.success && rejected.error.issues.some((issue) => issue.path[0] === key),
+          `V0: ${key} blocks submission with a field-specific error`
+        );
+      }
+    }
     verify(!(await form.validationSchema.safeParseAsync({ ...data, age: 17 })).success, 'V0: contradictory age');
     verify(
       !(await form.validationSchema.safeParseAsync({ ...data, eva_dryness: 4, eva_dyspareunia: 4 })).success,
@@ -290,7 +367,12 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
       weight: -10,
       fsfi_1: 'stale-invalid'
     });
-    verify(failedScreen.success && !('weight' in failedScreen.data), 'V0: inactive stale clinical fields are removed');
+    verify(
+      !failedScreen.success &&
+        failedScreen.error.issues.some((issue) => issue.path[0] === 'inclusion_1') &&
+        !failedScreen.error.issues.some((issue) => ['weight', 'fsfi_1'].includes(String(issue.path[0]))),
+      'V0: screening errors stay on criteria; inactive stale clinical fields are removed'
+    );
   } else {
     const window = theraVisitWindow(
       visit.toUpperCase() as 'V1' | 'V2' | 'V3' | 'V4',

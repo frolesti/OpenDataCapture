@@ -85,7 +85,7 @@
       "sharp"
     ],
     "patchedDependencies": {
-      "@douglasneuroinformatics/libui": "patches/@douglasneuroinformatics__libui.patch"
+      "@douglasneuroinformatics/libui@4.8.1": "patches/@douglasneuroinformatics__libui.patch"
     }
   },
   "__isODCRepo": true,

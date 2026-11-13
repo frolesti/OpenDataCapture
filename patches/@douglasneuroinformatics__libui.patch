@@ -1,10 +1,62 @@
-diff --git a/dist/components.js b/dist/components.js
-index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3bde25a81e 100755
 --- a/dist/components.js
 +++ b/dist/components.js
-@@ -3030,7 +3030,8 @@
+@@ -2843,7 +2843,16 @@
+           onValueChange: ([value2]) => setValue(value2)
+         }
+       ),
+-      /* @__PURE__ */ jsx110("span", { className: "flex h-full w-8 items-center justify-center text-sm text-muted-foreground", children: value ?? "NA" })
++      value === void 0 && min === 0
++        ? /* @__PURE__ */ jsx110("button", {
++            "aria-label": `${label}: 0`,
++            className: "flex h-full w-8 items-center justify-center rounded border text-sm",
++            disabled: disabled || readOnly,
++            type: "button",
++            onClick: () => setValue(0),
++            children: "0"
++          })
++        : /* @__PURE__ */ jsx110("span", { className: "flex h-full w-8 items-center justify-center text-sm text-muted-foreground", children: value ?? "NA" })
+     ] }),
+     /* @__PURE__ */ jsx110(FieldGroup.Error, { error })
+   ] });
+@@ -3021,38 +3030,69 @@
+ import { toBasicISOString as toBasicISOString2 } from "@douglasneuroinformatics/libjs";
+ import { jsx as jsx116, jsxs as jsxs40 } from "react/jsx-runtime";
+ var isValidDateString = (s) => /^(\d{4})-((0[1-9])|(1[0-2]))-((0[1-9])|([12])[0-9]|3[01])$/.test(s);
+-var DateField = ({ disabled, error, label, name, readOnly, setValue, value }) => {
++var DateField = ({ disabled, displayFormat, error, label, name, readOnly, setError, setValue, value }) => {
++  const dayFirst = displayFormat === "dd/MM/yyyy";
++  const parseDisplayDate = (input) => {
++    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(input);
++    if (!match) return;
++    const [, day, month, year] = match.map(Number);
++    const date = new Date(0);
++    date.setUTCFullYear(year, month - 1, day);
++    date.setUTCHours(12, 0, 0, 0);
++    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
++      ? date
++      : void 0;
++  };
++  const formatValue = (input) => {
++    if (!input) return "";
++    if (!dayFirst) return toBasicISOString2(input);
++    const canonical = typeof input === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input);
++    const date = canonical ? new Date(`${input}T12:00:00.000Z`) : input;
++    if (!(date instanceof Date) || !Number.isFinite(date.getTime())) return String(input);
++    if (canonical && date.toISOString().slice(0, 10) !== input) return input;
++    return `${String(date.getUTCDate()).padStart(2, "0")}/${String(date.getUTCMonth() + 1).padStart(2, "0")}/${String(date.getUTCFullYear()).padStart(4, "0")}`;
++  };
+   const [isDatePickerOpen, setIsDatePickerOpen] = useState6(false);
+   const [isInputFocused, setIsInputFocused] = useState6(false);
+-  const [inputValue, setInputValue] = useState6(value ? toBasicISOString2(value) : "");
++  const [inputValue, setInputValue] = useState6(formatValue(value));
+   useEffect6(() => {
+     const isSelecting = isDatePickerOpen || isInputFocused;
      if (isSelecting) {
        return;
++    } else if (dayFirst) {
++      const parsed = parseDisplayDate(inputValue);
++      setValue(inputValue === "" ? void 0 : parsed ?? inputValue);
++      setError(parsed || inputValue === "" ? [] : ["Introduzca una fecha válida (dd/mm/aaaa)"]);
      } else if (isValidDateString(inputValue)) {
 -      setValue(new Date(inputValue));
 +      const [year, month, day] = inputValue.split("-").map(Number);
@@ -12,7 +64,54 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
      } else {
        setInputValue("");
      }
-@@ -3761,15 +3762,61 @@
+   }, [isDatePickerOpen, isInputFocused]);
+   useEffect6(() => {
+-    setInputValue(value ? toBasicISOString2(value) : "");
++    setInputValue(formatValue(value));
+   }, [value]);
+   return /* @__PURE__ */ jsxs40(FieldGroup, { name, children: [
+     /* @__PURE__ */ jsx116(Label3, { htmlFor: name, children: label }),
+     /* @__PURE__ */ jsxs40(Popover, { open: isDatePickerOpen, onOpenChange: setIsDatePickerOpen, children: [
+-      /* @__PURE__ */ jsx116(Popover.Trigger, { children: /* @__PURE__ */ jsx116(
++      /* @__PURE__ */ jsx116(Popover.Trigger, { asChild: dayFirst, children: /* @__PURE__ */ jsx116(
+         Input,
+         {
+           autoComplete: "off",
+           "data-testid": "date-input",
+           disabled: disabled || readOnly,
++          id: dayFirst ? name : void 0,
+           name,
+-          placeholder: "YYYY-MM-DD",
++          placeholder: dayFirst ? "dd/mm/aaaa" : "YYYY-MM-DD",
+           type: "text",
+           value: inputValue,
+           onBlur: () => setIsInputFocused(false),
+-          onChange: (event) => setInputValue(event.target.value),
++          onChange: (event) => {
++            const input = event.target.value;
++            setInputValue(input);
++            if (dayFirst) setValue(input === "" ? void 0 : parseDisplayDate(input) ?? input);
++          },
+           onFocus: () => setIsInputFocused(true)
+         }
+       ) }),
+@@ -3060,7 +3100,14 @@
+         DatePicker,
+         {
+           onSelection: (value2) => {
+-            setInputValue(toBasicISOString2(value2));
++            if (dayFirst) {
++              const selected = new Date(Date.UTC(value2.getFullYear(), value2.getMonth(), value2.getDate(), 12));
++              setInputValue(formatValue(selected));
++              setValue(selected);
++              setError([]);
++            } else {
++              setInputValue(toBasicISOString2(value2));
++            }
+             setIsDatePickerOpen(false);
+           }
+         }
+@@ -3761,15 +3808,61 @@
      }
    };
    const isGrouped = Array.isArray(content);
@@ -69,7 +168,7 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
 +      }
 +      setErrors(fieldErrors);
 +    }).catch(console.error);
-   };
++  };
 +  const revalidateOnChangeHandler = (event) => {
 +    if (!Object.keys(errors).length && !rootErrors.length) return;
 +    const fieldGroup = event?.target?.closest?.("[data-field-group]");
@@ -79,10 +178,10 @@ index 3e09f8e839959093bea112de9af9572b88687329..98821ef1837dcc5629e63dab3e700f3b
 +      touchedFields.current.add(fieldName);
 +      revalidateOnBlurHandler(event);
 +    }, 0);
-+  };
+   };
    useEffect11(() => {
      setErrors({});
-@@ -3782,7 +3828,8 @@
+@@ -3782,7 +3875,8 @@
        autoComplete: "off",
        className: twMerge("relative flex w-full flex-col", !isGrouped && "gap-6", className),
        id,
