@@ -24,7 +24,12 @@ import type {
 } from '@opendatacapture/schemas/instrument-records';
 import { normalizeOrionAdverseEventRecords } from '@opendatacapture/schemas/instrument-records';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
-import { getTheraVisit, THERA_RETIRED_INSTRUMENT_NAME, validateTheraVisit } from '@opendatacapture/schemas/thera';
+import {
+  canOpenTheraVisit,
+  getTheraVisit,
+  THERA_RETIRED_INSTRUMENT_NAME,
+  validateTheraVisit
+} from '@opendatacapture/schemas/thera';
 import type { TheraStoredVisit, TheraVisit } from '@opendatacapture/schemas/thera';
 import type { Prisma, Session } from '@prisma/client';
 import { isNumber, mergeWith, pickBy } from 'lodash-es';
@@ -189,6 +194,11 @@ export class InstrumentRecordsService {
     const records = await this.getTheraRecords(groupId, subjectId, options);
     const error = validateTheraVisit(visit, data, records, editingId);
     if (error) throw new UnprocessableEntityException(error);
+    if (!editingId && !canOpenTheraVisit(visit, records, String(data.patient_code))) {
+      throw new UnprocessableEntityException(
+        'No se puede registrar esta visita: hoy está fuera del periodo permitido para este paciente.'
+      );
+    }
     if (editingId) {
       const replacement = records.map((record) => (record.id === editingId ? { ...record, data } : record));
       for (const record of replacement) {

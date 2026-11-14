@@ -177,6 +177,13 @@ describe('THERA patient identity and persisted visit anchors', () => {
     ...Object.fromEntries(THERA_VAGINAL_ITEMS.map((key) => [key, 3]))
   };
   function prepareThera(visit: 'V0' | 'V1' | 'V2' | 'V3' | 'V4' = 'V1') {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(
+      new Date(
+        { V0: '2024-01-31', V1: '2024-02-29', V2: '2024-05-29', V3: '2024-08-29', V4: '2025-02-28' }[visit] +
+          'T12:00:00Z'
+      )
+    );
     mocks.bundle.internal.name = `THERA_SGM_2026_${visit}`;
     mocks.store.currentGroup = { id: 'group', name: 'THERA', hospitals: [] };
     mocks.extraInfo = [
@@ -219,8 +226,9 @@ describe('THERA patient identity and persisted visit anchors', () => {
   it('requires selecting an eligible patient and loads the saved basal date and hospital', async () => {
     prepareThera();
     renderForm();
-    expect(screen.queryByTestId('renderer')).toBeNull();
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'TH-01-01' } });
+    expect(screen.getByTestId('renderer')).toBeDefined();
+    expect(screen.queryByRole('combobox')).toBeNull();
+    act(() => mocks.change?.({ patient_code: 'TH-01-01' }));
     await screen.findByTestId('renderer');
     expect(mocks.renderedInitialData).toMatchObject({
       patient_code: 'TH-01-01',
@@ -281,7 +289,8 @@ describe('THERA patient identity and persisted visit anchors', () => {
       }
     });
     renderForm();
-    expect(screen.getByRole('option', { name: 'TH-01-01' })).toBeDefined();
+    expect(screen.getByTestId('renderer')).toBeDefined();
+    expect(mocks.renderedBundle).toContain('"TH-01-01":"TH-01-01"');
   });
   it('still opens an existing visit for editing after the fourth visit has been saved', async () => {
     prepareThera();
@@ -323,9 +332,19 @@ describe('THERA patient identity and persisted visit anchors', () => {
     await screen.findByTestId('renderer');
     expect(mocks.renderedInitialData?.baseline_date).toBe('2024-01-31');
     expect(mocks.renderedInitialData?.first_visit_date).toBe('2024-02-29');
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'TH-01-02' } });
+    act(() => mocks.change?.({ patient_code: 'TH-01-02' }));
     expect(mocks.renderedInitialData?.first_visit_date).toBe('2024-03-03');
     expect(mocks.renderedInitialData?.eva_dryness).toBeUndefined();
+  });
+
+  it.each(['2024-02-21', '2024-03-08'])('redirects direct access outside the real visit window on %s', (today) => {
+    prepareThera();
+    vi.setSystemTime(new Date(`${today}T12:00:00Z`));
+    renderForm();
+    expect(screen.queryByTestId('renderer')).toBeNull();
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: '/instruments/accessible-instruments' });
+    expect(mocks.notification).toHaveBeenCalledWith(expect.objectContaining({ type: 'info' }));
   });
 });
 
@@ -732,6 +751,7 @@ describe('ORION selection submission date window', () => {
 afterEach(() => {
   cleanup();
   client.clear();
+  vi.useRealTimers();
 });
 
 describe('ORION form recovery without an assigned hospital', () => {

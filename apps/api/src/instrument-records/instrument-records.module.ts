@@ -7,10 +7,12 @@ import { OrionFollowupModule } from '@/orion-followup/orion-followup.module';
 import { OrionCodesModule } from '@/orion-codes/orion-codes.module';
 import { SessionsModule } from '@/sessions/sessions.module';
 import { SubjectsModule } from '@/subjects/subjects.module';
+import { UsersModule } from '@/users/users.module';
 
 import { InstrumentMeasuresService } from './instrument-measures.service';
 import { InstrumentRecordsController } from './instrument-records.controller';
 import { InstrumentRecordsService } from './instrument-records.service';
+import { TheraRemindersService } from './thera-reminders.service';
 
 @Module({
   controllers: [InstrumentRecordsController],
@@ -22,8 +24,9 @@ import { InstrumentRecordsService } from './instrument-records.service';
     InstrumentsModule,
     forwardRef(() => OrionFollowupModule),
     SessionsModule,
-    SubjectsModule
+    SubjectsModule,
+    UsersModule
   ],
-  providers: [InstrumentMeasuresService, InstrumentRecordsService]
+  providers: [InstrumentMeasuresService, InstrumentRecordsService, TheraRemindersService]
 })
 export class InstrumentRecordsModule {}

@@ -135,6 +135,48 @@ export function canStartTheraVisit(visit: TheraVisit, records: TheraStoredVisit[
   );
 }
 
+export function theraPatientVisitWindow(visit: TheraVisit, records: TheraStoredVisit[], patientCode: string) {
+  const { baseline, first } = theraPatientContext(records, patientCode);
+  const reference = theraDateToISO(visit === 'V1' ? baseline?.data.visit_date : first?.data.visit_date);
+  return reference ? theraVisitWindow(visit, reference) : undefined;
+}
+
+export function canOpenTheraVisit(
+  visit: TheraVisit,
+  records: TheraStoredVisit[],
+  patientCode: string,
+  today = theraToday()
+): boolean {
+  if (!canStartTheraVisit(visit, records, patientCode)) return false;
+  if (visit === 'V0') return true;
+  const window = theraPatientVisitWindow(visit, records, patientCode);
+  return Boolean(parseTheraDate(today) && window && today >= window.min && today <= window.max);
+}
+
+export function theraVisitDateError(visit: TheraVisit, data: { [key: string]: unknown }): string | undefined {
+  const date = theraDateToISO(data.visit_date);
+  if (!date) {
+    return data.visit_date === undefined || data.visit_date === ''
+      ? 'Este campo es obligatorio'
+      : 'Introduzca una fecha válida (DD/MM/AAAA)';
+  }
+  const messages: string[] = [];
+  if (date > theraToday()) messages.push('La fecha no puede ser futura.');
+  if (visit !== 'V0') {
+    const reference = theraDateToISO(visit === 'V1' ? data.baseline_date : data.first_visit_date);
+    const window = reference ? theraVisitWindow(visit, reference) : undefined;
+    if (!window) messages.push('Se requiere una fecha de referencia guardada válida.');
+    else if (date < window.min || date > window.max) {
+      messages.push(
+        `La visita debe realizarse entre ${formatTheraDate(window.min)} y ${formatTheraDate(window.max)}, ambos incluidos.`
+      );
+    }
+    const baseline = theraDateToISO(data.baseline_date);
+    if (baseline && date < baseline) messages.push('La visita no puede preceder a la visita basal.');
+  }
+  return messages.length ? messages.join(' ') : undefined;
+}
+
 export function validateTheraVisit(
   visit: TheraVisit,
   data: { [key: string]: unknown },
@@ -170,12 +212,8 @@ export function validateTheraVisit(
   const missing = missingTheraPrerequisite(visit, records, data.patient_code);
   if (missing) return `Se requiere la visita ${missing} guardada antes de registrar la visita ${visit}.`;
   const window = theraVisitWindow(visit, String(visit === 'V1' ? baseline.data.visit_date : first?.data.visit_date));
-  if (!window || visitDate < window.min || visitDate > window.max) {
-    return window
-      ? `La visita debe realizarse entre ${formatTheraDate(window.min)} y ${formatTheraDate(window.max)}, ambos incluidos.`
-      : 'No se puede calcular la ventana de visita.';
-  }
-  return undefined;
+  if (!window) return 'No se puede calcular la ventana de visita.';
+  return theraVisitDateError(visit, data);
 }
 
 type Values = { [key: string]: unknown };
@@ -188,7 +226,7 @@ const requiredText = z.string().trim().min(1, 'Este campo es obligatorio');
 const dateSchema = z
   .union([z.string(), z.date(), z.undefined()], {
     errorMap: (_issue, context) => ({
-      message: context.data === undefined ? 'Este campo es obligatorio' : 'Introduzca una fecha válida (dd/mm/aaaa)'
+      message: context.data === undefined ? 'Este campo es obligatorio' : 'Introduzca una fecha válida (DD/MM/AAAA)'
     })
   })
   .transform((value, context) => {
@@ -197,7 +235,7 @@ const dateSchema = z
       context.addIssue({
         code: z.ZodIssueCode.custom,
         message:
-          value === undefined || value === '' ? 'Este campo es obligatorio' : 'Introduzca una fecha válida (dd/mm/aaaa)'
+          value === undefined || value === '' ? 'Este campo es obligatorio' : 'Introduzca una fecha válida (DD/MM/AAAA)'
       });
       return undefined;
     }
@@ -334,26 +372,21 @@ const visitTitle = {
 }[visit];
 const studyDescription =
   'Eficacia de las infiltraciones vaginales de complejos híbridos cooperativos de ácido hialurónico para el tratamiento del síndrome genitourinario de la menopausia en mujeres con antecedentes de cáncer de mama.';
-const visitDescription = {
-  V0: 'Visita basal: consentimiento informado, criterios de selección, antecedentes clínicos, cuestionarios, exploración vaginal y vulvar y seguridad.',
-  V1: 'Primera visita: pauta completa, prevista un mes después de la visita basal (margen de ±7 días). Evaluación de síntomas, función sexual, exploración vaginal y vulvar y seguridad.',
-  V2: 'Segunda visita: seguimiento a los tres meses de la fecha real de la primera visita (margen de ±14 días). Evaluación de síntomas, función sexual, Cervantes, exploración vaginal y vulvar y seguridad.',
-  V3: 'Tercera visita: seguimiento a los seis meses de la fecha real de la primera visita (margen de ±28 días). Evaluación de síntomas, impresión global de mejoría (PGI-I) y seguridad.',
-  V4: 'Cuarta visita: seguimiento a los doce meses de la fecha real de la primera visita (margen de ±45 días). Evaluación de síntomas, función sexual, Cervantes, exploración vaginal y vulvar y seguridad. Esta visita completa el estudio.'
-}[visit];
 const shape: { [key: string]: z.ZodType<FormInstrument.Data[string]> } = {
   study_visit: z.string().optional(),
   patient_code: z.string().refine(isTheraPatientCode, 'Se requiere un código THERA asignado por la plataforma'),
   site_hospital: requiredText,
-  visit_date: dateSchema.refine((value) => value === undefined || value <= theraToday(), 'La fecha no puede ser futura')
+  visit_date: dateSchema
 };
 const groups: Group[] = [
   {
     title: 'Datos de la visita',
     description:
-      'Fechas en formato dd/mm/aaaa. Puede escribir la fecha o seleccionarla en el calendario. La identificación del investigador queda vinculada a la sesión autenticada.',
+      'Fechas en formato DD/MM/AAAA. Introduzca una fecha válida dentro del periodo permitido para desbloquear las demás preguntas. La identificación del investigador queda vinculada a la sesión autenticada.',
     fields: {
-      patient_code: { ...text('Código de paciente', false), disabled: true },
+      patient_code: baseline
+        ? { ...text('Código de paciente', false), disabled: true }
+        : { kind: 'string', variant: 'select', label: 'Código de paciente *', options: {} },
       site_hospital: { kind: 'string', variant: 'select', label: 'Hospital *', options: {} },
       visit_date: dateField('Fecha de visita')
     }
@@ -826,13 +859,15 @@ const cleanInactive = (value: unknown) => {
   delete clean.visit_window_info;
   return clean;
 };
-const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = z
+const parsedSchema = z
   .preprocess(
     cleanInactive,
     z.object(shape).superRefine((data, ctx) => {
       const visitDate = theraDateToISO(data.visit_date);
       const issue = (key: string, message: string) =>
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message });
+      const dateError = theraVisitDateError(visit, data);
+      if (dateError) issue('visit_date', dateError);
       const requireValue = (key: string) => {
         if (data[key] === undefined || data[key] === '' || (data[key] instanceof Set && data[key].size === 0))
           issue(key, 'Este campo es obligatorio');
@@ -877,18 +912,7 @@ const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = 
         issue('study_visit', 'El tipo de visita no coincide con este instrumento');
       if (!baseline) {
         ['eva_dryness', 'eva_dyspareunia', ...(fullAssessment ? THERA_VAGINAL_ITEMS : [])].forEach(requireValue);
-        const reference = visit === 'V1' ? data.baseline_date : data.first_visit_date;
-        const window = typeof reference === 'string' ? theraVisitWindow(visit, reference) : undefined;
-        if (visitDate && (!window || visitDate < window.min || visitDate > window.max))
-          issue(
-            'visit_date',
-            window
-              ? `Fecha fuera de ventana: ${formatTheraDate(window.min)} a ${formatTheraDate(window.max)}`
-              : 'Falta una fecha de referencia válida'
-          );
       }
-      if (visitDate && !baseline && typeof data.baseline_date === 'string' && data.baseline_date > visitDate)
-        issue('visit_date', 'La visita no puede preceder a la visita basal');
       for (const key of [
         'breast_cancer_diagnosis_date',
         'chemotherapy_end_date',
@@ -946,10 +970,48 @@ const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = 
   )
   .transform((data) => ({ ...data, study_visit: visit, ...(visit === 'V4' ? { completed_study: true } : {}) }));
 
+const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = z.unknown().transform((value, ctx) => {
+  const result = parsedSchema.safeParse(value);
+  if (result.success) return result.data;
+  const errors = new Map<string, { path: (string | number)[]; messages: Set<string> }>();
+  for (const issue of result.error.issues) {
+    const key = JSON.stringify(issue.path);
+    const error = errors.get(key) ?? { path: issue.path, messages: new Set<string>() };
+    error.messages.add(issue.message);
+    errors.set(key, error);
+  }
+  for (const error of errors.values()) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: error.path, message: [...error.messages].join(' ') });
+  }
+  return z.NEVER;
+});
+
+for (const group of groups) {
+  for (const [key, field] of Object.entries(group.fields)) {
+    if (
+      !field ||
+      ['patient_code', 'visit_date', 'baseline_date', 'first_visit_date', 'visit_window_info'].includes(key)
+    )
+      continue;
+    group.fields[key] = {
+      kind: 'dynamic',
+      deps: [
+        ...new Set(['visit_date', 'baseline_date', 'first_visit_date', ...(field.kind === 'dynamic' ? field.deps : [])])
+      ],
+      render(data) {
+        const rendered = field.kind === 'dynamic' ? field.render(data) : field;
+        return rendered
+          ? { ...rendered, disabled: Boolean(rendered.disabled || theraVisitDateError(visit, data)) }
+          : null;
+      }
+    };
+  }
+}
+
 export default defineInstrument({
   kind: 'FORM',
   language: 'en',
-  internal: { name: THERA_NAMES[visit], edition: 3 },
+  internal: { name: THERA_NAMES[visit], edition: 4 },
   tags: ['THERA-SGM-2026', 'CRF', visit],
   clientDetails: {
     estimatedDuration: 30,
@@ -958,16 +1020,16 @@ export default defineInstrument({
         baseline
           ? 'Complete el formulario con la información disponible en la historia clínica y las respuestas de la paciente. Registre el consentimiento informado y compruebe los criterios de inclusión y exclusión.'
           : 'Complete la visita de seguimiento con la información de la historia clínica, las respuestas de la paciente y la exploración correspondiente.',
-        'Complete los campos marcados con asterisco e introduzca las fechas en formato dd/mm/aaaa o selecciónelas en el calendario.',
+        'Complete los campos marcados con asterisco e introduzca las fechas en formato DD/MM/AAAA o selecciónelas en el calendario.',
         'Si no puede completar el formulario en una sola sesión, puede guardarlo como borrador y continuar en otro momento. Revise la información antes de enviarlo.'
       ].join(' ')
     ]
   },
   details: {
     title: `THERA-SGM-2026 · ${visitTitle}`,
-    description: `${studyDescription} ${visitDescription} Promotora: Laura Baquedano Mainar. CRF v1.0, 24/07/2026.`,
+    description: studyDescription,
     license: 'FREE-NOS',
-    authors: ['Laura Baquedano Mainar (promotora)']
+    authors: ['Laura Baquedano Mainar']
   },
   content: groups,
   measures: {

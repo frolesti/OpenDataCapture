@@ -12,9 +12,11 @@ import { isOrionPatientCode, normalizeOrionAdverseEventRecords } from '@opendata
 import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
 import {
   getTheraVisit,
+  canOpenTheraVisit,
   canStartTheraVisit,
   isTheraPatientCode,
-  theraPatientContext
+  theraPatientContext,
+  theraToday
 } from '@opendatacapture/schemas/thera';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -479,10 +481,41 @@ const RouteComponent = () => {
       record.visit === 'V0' &&
       theraVisit &&
       typeof record.data.patient_code === 'string' &&
-      canStartTheraVisit(theraVisit, theraRecords, record.data.patient_code)
+      (currentUser?.basePermissionLevel === 'ADMIN'
+        ? canStartTheraVisit(theraVisit, theraRecords, record.data.patient_code)
+        : canOpenTheraVisit(theraVisit, theraRecords, record.data.patient_code))
     );
   });
   const theraContext = theraPatientContext(theraRecords, theraPatientCode);
+  const theraPatientOptionsJson = JSON.stringify(
+    Object.fromEntries(
+      theraPatients.map((record) => [String(record.data.patient_code), String(record.data.patient_code)])
+    )
+  );
+  const theraAccessRedirected = useRef(false);
+  const noOpenTheraVisit = Boolean(
+    isThera &&
+      theraVisit !== 'V0' &&
+      !recordId &&
+      currentUser?.basePermissionLevel !== 'ADMIN' &&
+      !theraRecordsQuery.isLoading &&
+      !theraRecordsQuery.isError &&
+      !instrumentInfoQuery.isLoading &&
+      theraRecordsQuery.data &&
+      theraPatients.length === 0
+  );
+  useEffect(() => {
+    if (!noOpenTheraVisit || theraAccessRedirected.current) return;
+    theraAccessRedirected.current = true;
+    notifications.addNotification({
+      type: 'info',
+      message: t({
+        en: 'No hi ha cap pacient amb aquesta visita pendent dins del termini permes avui.',
+        fr: 'No hay pacientes con esta visita pendiente dentro del periodo permitido hoy.'
+      })
+    });
+    void navigate({ to: '/instruments/accessible-instruments' });
+  }, [noOpenTheraVisit, navigate, notifications, t]);
 
   const needsOrionPatientCode = Boolean(
     isOrionSelection && !recordId && !effectiveInitialData?.patient_code && !effectiveInitialData?.user_code
@@ -626,6 +659,12 @@ const RouteComponent = () => {
           for (const name of ['CAP', 'site_hospital', 'centro_sanitario', 'centroAtencionPrimaria']) {
             if (section.fields[name]) section.fields[name] = restrictHospitalField(section.fields[name]);
           }
+          if (${Boolean(isThera && theraVisit !== 'V0')}) {
+            if (section.fields.patient_code) section.fields.patient_code = {
+              kind: 'string', variant: 'select', label: 'Código de paciente *',
+              options: ${theraPatientOptionsJson}, disabled: ${Boolean(recordId)}
+            };
+          }
         }
         return instrument;
       })()`
@@ -636,7 +675,11 @@ const RouteComponent = () => {
     isOrionFollowup,
     isOrionSelection,
     orionSelectionVisitDateByCodeJson,
-    orionFollowupUserCodeOptionsJson
+    orionFollowupUserCodeOptionsJson,
+    isThera,
+    theraVisit,
+    recordId,
+    theraPatientOptionsJson
   ]);
 
   const instrumentTarget = instrumentBundleWithOverrides;
@@ -670,6 +713,7 @@ const RouteComponent = () => {
       : assignedInitialData;
   const formInitialData = isThera
     ? {
+        ...(!recordId ? { visit_date: theraToday() } : {}),
         ...(selectedTheraPatient && selectedTheraPatient !== effectiveInitialData?.patient_code
           ? {}
           : originalFormInitialData),
@@ -692,6 +736,20 @@ const RouteComponent = () => {
   // Auto-save form data to localStorage as draft
   const handleDataChange = useCallback(
     (data: Record<string, unknown>) => {
+      if (
+        isThera &&
+        theraVisit !== 'V0' &&
+        !recordId &&
+        typeof data.patient_code === 'string' &&
+        data.patient_code !== theraPatientCode
+      ) {
+        setSelectedTheraPatient(data.patient_code);
+        latestDataRef.current = null;
+        setDraftDiscarded(true);
+        setDraftData(null);
+        setRendererKey((key) => key + 1);
+        return;
+      }
       const nextData = mergeFormSnapshots(latestDataRef.current, data);
       latestDataRef.current = nextData;
       // Only auto-save for new records, not when editing existing ones
@@ -699,7 +757,7 @@ const RouteComponent = () => {
         saveDraft(params.id, nextData);
       }
     },
-    [isOrionFollowup, isOrionSelection, params.id, recordId]
+    [isOrionFollowup, isOrionSelection, params.id, recordId, isThera, theraVisit, theraPatientCode]
   );
 
   useEffect(() => {
@@ -1255,6 +1313,8 @@ const RouteComponent = () => {
     return <Spinner />;
   }
 
+  if (noOpenTheraVisit) return <Spinner />;
+
   return (
     <div className="flex grow flex-col">
       <PageHeader>
@@ -1262,40 +1322,6 @@ const RouteComponent = () => {
           {title ?? t('core.instrument')}
         </Heading>
       </PageHeader>
-      {isThera && theraVisit !== 'V0' && !recordId ? (
-        <div className="mx-auto mb-4 w-full max-w-3xl p-3">
-          <label className="flex flex-col gap-2">
-            Paciente THERA con visita basal apta
-            <select
-              className="rounded border p-2"
-              value={theraPatientCode}
-              onChange={(event) => {
-                setSelectedTheraPatient(event.target.value);
-                latestDataRef.current = null;
-                setDraftDiscarded(true);
-                setDraftData(null);
-                setCurrentStep(0);
-                setFormSubmitted(false);
-                setSubmittedPatientCode(undefined);
-                setRendererKey((key) => key + 1);
-              }}
-            >
-              <option value="">Seleccione un código de paciente</option>
-              {theraPatients.map((record) => (
-                <option key={record.id} value={String(record.data.patient_code)}>
-                  {String(record.data.patient_code)}
-                </option>
-              ))}
-            </select>
-          </label>
-          {!theraPatients.length ? (
-            <p role="status">
-              No hay pacientes aptas con las visitas de referencia necesarias, sin esta visita ya registrada y sin fin
-              de estudio.
-            </p>
-          ) : null}
-        </div>
-      ) : null}
       {formSubmitted && submittedPatientCode ? (
         <p className="mx-auto mb-4 rounded-md border p-3 text-center font-medium" role="status">
           {t({ en: 'Codi de pacient desat', fr: 'Código de paciente guardado' })}: {submittedPatientCode}
@@ -1319,26 +1345,21 @@ const RouteComponent = () => {
         </div>
       ) : null}
       <div className="grow">
-        {!isThera ||
-        theraVisit === 'V0' ||
-        Boolean(recordId) ||
-        theraPatients.some((record) => record.data.patient_code === theraPatientCode) ? (
-          <InstrumentRenderer
-            key={rendererKey}
-            className="mx-auto max-w-3xl"
-            initialData={formInitialData}
-            isAdmin={currentUser?.basePermissionLevel === 'ADMIN'}
-            isEditing={Boolean(recordId)}
-            isResuming={Boolean(recordId) || Boolean(effectiveInitialData)}
-            subject={currentSession?.subject}
-            target={instrumentTarget}
-            onDataChange={handleDataChange}
-            onDiscardDraft={draftData && !recordId && !draftDiscarded ? handleDiscardDraft : undefined}
-            onStepChange={setCurrentStep}
-            onSubmit={handleSubmit}
-            revalidateOnChange={isOrionSelection || isOrionFollowup || isThera}
-          />
-        ) : null}
+        <InstrumentRenderer
+          key={rendererKey}
+          className="mx-auto max-w-3xl"
+          initialData={formInitialData}
+          isAdmin={currentUser?.basePermissionLevel === 'ADMIN'}
+          isEditing={Boolean(recordId)}
+          isResuming={Boolean(recordId) || Boolean(effectiveInitialData)}
+          subject={currentSession?.subject}
+          target={instrumentTarget}
+          onDataChange={handleDataChange}
+          onDiscardDraft={draftData && !recordId && !draftDiscarded ? handleDiscardDraft : undefined}
+          onStepChange={setCurrentStep}
+          onSubmit={handleSubmit}
+          revalidateOnChange={isOrionSelection || isOrionFollowup || isThera}
+        />
       </div>
       {/* Edit confirmation dialog */}
       <Dialog open={showEditConfirmation} onOpenChange={setShowEditConfirmation}>

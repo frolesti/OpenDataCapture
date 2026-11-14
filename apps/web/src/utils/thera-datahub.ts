@@ -97,7 +97,6 @@ export function mergeTheraRecords(records: InstrumentRecord[], instrumentVisits:
       __subjectId__: first.subjectId,
       __time__: latest.date.getTime(),
       __visits__: [],
-      group_id: first.groupId,
       patient_code: recordData(first).patient_code,
       site_hospital: recordData(first).site_hospital,
       study_completed: entries.some(({ visit }) => visit === 'V4'),

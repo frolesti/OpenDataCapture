@@ -43,6 +43,7 @@ describe('THERA unified patient data', () => {
       completion_date: '2025-01-05'
     });
     expect(rows[0]?.__visits__).toHaveLength(5);
+    expect(rows[0]).not.toHaveProperty('group_id');
     expect(rows[0]?.__visits__[1]).toMatchObject({ __id__: 'V1', __instrumentId__: 'V1', label: 'Primera visita' });
     expect(rows[0]?.__visits__[1]?.__data__).toEqual(records[1]?.data);
   });

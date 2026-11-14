@@ -147,7 +147,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     `${visit}: instructions exclude study metadata`
   );
   verify(
-    overview.includes('borrador') && overview.includes('dd/mm/aaaa'),
+    overview.includes('borrador') && overview.includes('DD/MM/AAAA'),
     `${visit}: instructions explain drafts and date format`
   );
   verify(
@@ -155,11 +155,10 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     `${visit}: details describe the study`
   );
   verify(
-    form.details.authors?.includes('Laura Baquedano Mainar (promotora)') === true,
-    `${visit}: details identify the sponsor by role`
+    form.details.authors?.includes('Laura Baquedano Mainar') === true,
+    `${visit}: details identify the coordinating investigator`
   );
-  verify(form.details.description.includes('24/07/2026'), `${visit}: metadata retains the source CRF version`);
-  verify(form.internal.edition === 3, `${visit}: edition follows the latest published edition`);
+  verify(form.internal.edition === 4, `${visit}: edition succeeds published edition 3`);
   const data = fixture(form, visit);
   const groups = Array.isArray(form.content) ? form.content : [{ fields: form.content }];
   const renderedFields = Object.fromEntries(

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   canStartTheraVisit,
+  canOpenTheraVisit,
+  theraVisitDateError,
   formatTheraDate,
   getTheraVisit,
   isTheraEligible,
@@ -142,6 +144,23 @@ describe('THERA protocol', () => {
         expect(canStartTheraVisit(visit, timeline.slice(0, saved), 'TH-01-01')).toBe(visit === 'V0' || index === saved);
       }
     }
+  });
+
+  it.each([
+    ['2024-02-21', false],
+    ['2024-02-22', true],
+    ['2024-03-07', true],
+    ['2024-03-08', false]
+  ] as const)('opens V1 only inside the inclusive real-time window on %s', (today, expected) => {
+    expect(canOpenTheraVisit('V1', [baseline], 'TH-01-01', today)).toBe(expected);
+    expect(canOpenTheraVisit('V1', [baseline, first], 'TH-01-01', today)).toBe(false);
+  });
+
+  it('combines all date constraints into one message without changing the saved visit', () => {
+    const error = theraVisitDateError('V1', { visit_date: '2024-01-01', baseline_date: '2024-01-31' });
+    expect(error).toContain('22/02/2024');
+    expect(error).toContain('no puede preceder');
+    expect(baseline.data.visit_date).toBe('2024-01-31');
   });
 
   it('rejects every missing predecessor even if later records have already been saved', () => {

@@ -159,6 +159,15 @@ model OrionPatientCode {
   @@map("OrionPatientCodeModel")
 }
 
+model TheraVisitReminder {
+  id        String   @id @map("_id")
+  sentAt    DateTime? @db.Date
+  claimedAt DateTime? @db.Date
+  error     String?
+
+  @@map("TheraVisitReminderModel")
+}
+
 model Hospital {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   name       String

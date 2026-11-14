@@ -4,7 +4,7 @@ import type { Model } from '@douglasneuroinformatics/libnest';
 import { MockFactory, type MockedInstance } from '@douglasneuroinformatics/libnest/testing';
 import { Test } from '@nestjs/testing';
 import type { User } from '@prisma/client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod/v4';
 
 import { AuditLogService } from '../../audit-log/audit-log.service';
@@ -27,6 +27,7 @@ import {
 import type { TheraVisit } from '@opendatacapture/schemas/thera';
 
 describe('ORION record assignment and atomic code persistence', () => {
+  afterEach(() => vi.useRealTimers());
   let service: InstrumentRecordsService;
   let groups: MockedInstance<GroupsService>;
   let records: MockedInstance<Model<'InstrumentRecord'>>;
@@ -135,6 +136,8 @@ describe('ORION record assignment and atomic code persistence', () => {
   });
 
   function configureThera(visit: TheraVisit = 'V0') {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-14T12:00:00Z'));
     const ids = { V0: 'selection', V1: 'first', V2: 'second', V3: 'third', V4: 'fourth' };
     groups.findById.mockResolvedValue({
       id: 'orion',
@@ -228,6 +231,7 @@ describe('ORION record assignment and atomic code persistence', () => {
 
   it('accepts the fourth visit only with the full preceding sequence', async () => {
     const data = configureThera('V4');
+    vi.setSystemTime(new Date('2025-02-28T12:00:00Z'));
     records.findMany.mockResolvedValue([
       { id: 'baseline', instrumentId: 'selection', data: theraBaselineData },
       ...[
@@ -358,6 +362,7 @@ describe('ORION record assignment and atomic code persistence', () => {
     await expect(
       service.create({ ...data, data: { ...data.data, visit_date: '2024-03-08' } }, { user })
     ).rejects.toThrow('entre');
+    vi.setSystemTime(new Date('2024-02-29T12:00:00Z'));
     await service.create(data, { user });
     expect(records.create).toHaveBeenCalledTimes(1);
     expect(codes.create).not.toHaveBeenCalled();
@@ -415,6 +420,7 @@ describe('ORION record assignment and atomic code persistence', () => {
       data: theraBaselineData,
       session: { userId: user.id }
     });
+
     records.findMany.mockResolvedValue([
       { id: 'baseline', instrumentId: 'selection', data: theraBaselineData },
       {
@@ -430,6 +436,17 @@ describe('ORION record assignment and atomic code persistence', () => {
     ]);
     await expect(service.deleteById('baseline', { user })).rejects.toThrow('No se puede eliminar');
     expect(records.delete).not.toHaveBeenCalled();
+  });
+
+  it.each(['2024-02-21', '2024-03-08'])('rejects new visits when today is outside the window (%s)', async (today) => {
+    const input = configureThera('V1');
+    records.findMany.mockResolvedValue([{ id: 'baseline', instrumentId: 'selection', data: theraBaselineData }]);
+    vi.setSystemTime(new Date(`${today}T12:00:00Z`));
+    const data = { ...input.data, visit_date: today === '2024-02-21' ? '2024-02-22' : '2024-02-29' };
+    await expect(service.create({ ...input, data }, { user })).rejects.toThrow(
+      today === '2024-02-21' ? 'futura' : 'hoy está fuera'
+    );
+    expect(records.create).not.toHaveBeenCalled();
   });
 
   it.each(['THERA', 'ORION'])('atomically deletes only this %s patient across historical editions', async (study) => {

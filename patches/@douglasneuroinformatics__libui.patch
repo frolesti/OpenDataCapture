@@ -80,7 +80,7 @@
 +    } else if (dayFirst) {
 +      const parsed = parseDisplayDate(inputValue);
 +      setValue(inputValue === "" ? void 0 : parsed ?? inputValue);
-+      setError(parsed || inputValue === "" ? [] : ["Introduzca una fecha válida (dd/mm/aaaa)"]);
++      setError(parsed || inputValue === "" ? [] : ["Introduzca una fecha válida (DD/MM/AAAA)"]);
      } else if (isValidDateString(inputValue)) {
 -      setValue(new Date(inputValue));
 +      const [year, month, day] = inputValue.split("-").map(Number);
@@ -106,7 +106,7 @@
 +          id: dayFirst ? name : void 0,
            name,
 -          placeholder: "YYYY-MM-DD",
-+          placeholder: dayFirst ? "dd/mm/aaaa" : "YYYY-MM-DD",
++          placeholder: dayFirst ? "DD/MM/AAAA" : "YYYY-MM-DD",
            type: "text",
            value: inputValue,
            onBlur: () => setIsInputFocused(false),

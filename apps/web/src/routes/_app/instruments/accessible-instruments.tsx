@@ -4,7 +4,7 @@ import { Button, Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { isOrionPatientCode } from '@opendatacapture/schemas/instrument-records';
 import { getInstrumentStudyCode } from '@opendatacapture/schemas/group';
-import { canStartTheraVisit, getTheraVisit, THERA_VISIT_ORDER } from '@opendatacapture/schemas/thera';
+import { canOpenTheraVisit, getTheraVisit, THERA_VISIT_ORDER } from '@opendatacapture/schemas/thera';
 import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
@@ -118,7 +118,7 @@ const RouteComponent = () => {
           (record) =>
             record.visit === 'V0' &&
             typeof record.data.patient_code === 'string' &&
-            canStartTheraVisit(visit, theraRecords, record.data.patient_code)
+            canOpenTheraVisit(visit, theraRecords, record.data.patient_code)
         )
     )
   );

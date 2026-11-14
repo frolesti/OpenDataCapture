@@ -91,6 +91,47 @@ function renderBaseline(overrides: { [key: string]: unknown } = {}) {
 }
 
 describe('THERA real libui controls', () => {
+  it('locks the other controls until a valid visit date is entered and locks them again after an invalid change', async () => {
+    renderBaseline({ visit_date: '' });
+    const date = screen.getByLabelText<HTMLInputElement>('Fecha de visita *');
+    const consent = within(document.querySelector('[data-field-group="informed_consent"]') as HTMLElement).getByRole(
+      'radio',
+      { name: 'Sí' }
+    );
+    expect(consent.hasAttribute('disabled') || consent.getAttribute('aria-disabled') === 'true').toBe(true);
+    fireEvent.focus(date);
+    fireEvent.change(date, { target: { value: '31/01/2024' } });
+    fireEvent.blur(date);
+    await waitFor(() => expect(consent.hasAttribute('disabled')).toBe(false));
+    fireEvent.focus(date);
+    fireEvent.change(date, { target: { value: '31/02/2024' } });
+    fireEvent.blur(date);
+    await waitFor(() =>
+      expect(consent.hasAttribute('disabled') || consent.getAttribute('aria-disabled') === 'true').toBe(true)
+    );
+  });
+
+  it('combines a future date and an out-of-window date into one field error and disables the report', async () => {
+    const followup = definitions.createTheraInstrument!('V1');
+    const future = new Date();
+    future.setUTCFullYear(future.getUTCFullYear() + 1);
+    render(
+      <FormContent
+        revalidateOnChange
+        initialValues={{ ...initialData, baseline_date: '2024-01-31', visit_date: future.toISOString().slice(0, 10) }}
+        instrument={followup}
+        onSubmit={vi.fn()}
+      />
+    );
+    fireEvent.submit(document.querySelector('form')!);
+    const group = document.querySelector('[data-field-group="visit_date"]')!;
+    await waitFor(() => expect(group.textContent).toContain('La fecha no puede ser futura.'));
+    const errors = within(group as HTMLElement).getAllByText(/La fecha no puede ser futura/);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.textContent).toContain('22/02/2024');
+    expect(screen.getAllByRole('slider')[0]?.getAttribute('aria-disabled')).toBe('true');
+  });
+
   it.each(protocol.THERA_VISIT_ORDER)('blocks an actual incomplete submission for %s', async (visit) => {
     const submit = vi.fn();
     render(<FormContent instrument={definitions.createTheraInstrument!(visit)} onSubmit={submit} />);
@@ -103,11 +144,11 @@ describe('THERA real libui controls', () => {
     expect(submit).not.toHaveBeenCalled();
   });
 
-  it('shows stored dates as dd/mm/aaaa and accepts a manual leap-day date', async () => {
+  it('shows stored dates as DD/MM/AAAA and accepts a manual leap-day date', async () => {
     const { changes } = renderBaseline();
     const input = screen.getByLabelText<HTMLInputElement>('Fecha de visita *');
     expect(input.value).toBe('31/01/2024');
-    expect(input.placeholder).toBe('dd/mm/aaaa');
+    expect(input.placeholder).toBe('DD/MM/AAAA');
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: '29/02/2024' } });
     fireEvent.blur(input);
@@ -122,14 +163,14 @@ describe('THERA real libui controls', () => {
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: '31/02/2024' } });
     fireEvent.blur(input);
-    await screen.findByText('Introduzca una fecha válida (dd/mm/aaaa)');
+    await screen.findByText('Introduzca una fecha válida (DD/MM/AAAA)');
     expect(input.value).toBe('31/02/2024');
     expect(changes.mock.lastCall?.[0].visit_date).toBe('31/02/2024');
     expect(submit).not.toHaveBeenCalled();
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: '29/02/2024' } });
     fireEvent.blur(input);
-    await waitFor(() => expect(screen.queryByText('Introduzca una fecha válida (dd/mm/aaaa)')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Introduzca una fecha válida (DD/MM/AAAA)')).toBeNull());
   });
 
   it('restores a saved calendar-date draft without changing its date or display format', async () => {
@@ -154,7 +195,7 @@ describe('THERA real libui controls', () => {
     expect(input.value).toBe('2024-02-30');
     fireEvent.focus(input);
     fireEvent.blur(input);
-    await screen.findByText('Introduzca una fecha válida (dd/mm/aaaa)');
+    await screen.findByText('Introduzca una fecha válida (DD/MM/AAAA)');
   });
 
   it('keeps the follow-up window visible after stored reference dates become calendar values', async () => {

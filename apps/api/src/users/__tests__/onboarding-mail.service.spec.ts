@@ -31,6 +31,21 @@ const recipient = {
 };
 
 describe('OnboardingMailService', () => {
+  it('uses the existing SMTP sender for study reminders and propagates delivery failures', async () => {
+    const service = new OnboardingMailService();
+    await service.sendStudyReminder({ email: recipient.email, html: '<p>THERA reminder</p>', subject: 'THERA' });
+    expect(mail.sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: recipient.email,
+        html: '<p>THERA reminder</p>',
+        subject: 'THERA'
+      })
+    );
+    mail.sendMail.mockRejectedValueOnce(new Error('SMTP unavailable'));
+    await expect(
+      service.sendStudyReminder({ email: recipient.email, html: '<p>THERA</p>', subject: 'THERA' })
+    ).rejects.toThrow('SMTP unavailable');
+  });
   it('sends the formal template with the full name and explicit title', async () => {
     await new OnboardingMailService().sendWelcomeEmail(recipient);
     expect(mail.sendMail).toHaveBeenCalledOnce();

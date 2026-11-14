@@ -11,7 +11,7 @@ import { UsersService } from './users.service';
 
 @Module({
   controllers: [UsersController],
-  exports: [UsersService],
+  exports: [UsersService, OnboardingMailService],
   imports: [GroupsModule, OrionCodesModule],
   providers: [OnboardingMailService, UsersService, { provide: APP_INTERCEPTOR, useClass: AccountAccessInterceptor }]
 })

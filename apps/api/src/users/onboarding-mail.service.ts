@@ -103,6 +103,19 @@ export class OnboardingMailService {
     }
   }
 
+  async sendStudyReminder({ email, html, subject }: { email: string; html: string; subject: string }) {
+    if (!this.hasMailConfig) {
+      throw new ServiceUnavailableException('SMTP no configurado. Define MAIL_HOST, MAIL_USER y MAIL_PASSWORD.');
+    }
+    return this.transporter.sendMail({
+      bcc: (process.env.MAIL_AUDIT_BCC ?? process.env.MAIL_USER ?? '').trim() || undefined,
+      from: process.env.MAIL_FROM ?? '"Alta Medical Services" <info@altamedicalservices.com>',
+      to: email,
+      html,
+      subject
+    });
+  }
+
   private renderTemplate(data: WelcomeEmailData) {
     const templatePath = this.resolveTemplatePath();
     if (!templatePath) {

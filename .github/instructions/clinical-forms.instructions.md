@@ -45,7 +45,7 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 
 ## Dates
 
-- Mostrar i permetre introduir dates en format `dd/mm/aaaa`, amb calendari
+- Mostrar i permetre introduir dates en format `DD/MM/AAAA`, amb calendari
   coherent amb el mateix format. No dependre del format regional del navegador.
 - Per a THERA, usar el camp `kind: 'date', displayFormat: 'dd/MM/yyyy'`.
   La normalitzacio conserva `AAAA-MM-DD` a l'API i als registres.
@@ -80,6 +80,12 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   per provar-les, pero no saltar-se la validacio clinica en desar.
 - Recuperar dates de referencia i hospital dels registres autoritzats del
   mateix pacient. Rebutjar ancores o codis falsificats a l'API.
+- A THERA, comprovar tambe la data d'avui: nomes obrir un seguiment si algun
+  pacient pendent te la finestra oberta. No crear una pagina separada de selector
+  de pacient. Seleccionar-lo dins de "Datos de la visita"; una data incorrecta
+  deshabilita la resta de preguntes i impedeix enviar. Conservar l'edicio historica.
+- Mostrar un sol missatge per pregunta o cel-la, combinant les causes diferents
+  sense repetir el mateix text. Comprovar-ho al formulari real, no nomes a l'esquema.
 - THERA acaba a la quarta visita. No crear un formulari independent de
   finalitzacio. Mantenir una base de dades unificada per estudi.
 
@@ -102,6 +108,14 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 - A THERA, usar capcaleres identiques a taula, CSV i Excel: `v0_nom_del_camp`,
   `v1_nom_del_camp`, etc., amb barres baixes. No traduir-les a "Visita basal".
   No reanomenar per aixo els camps persistits.
+- No mostrar ni exportar `group_id` a THERA. Conservar la separacio entre estudis
+  internament, sense exposar identificadors tecnics a la taula.
+- Els recordatoris THERA reutilitzen l'SMTP d'alta d'investigadors. Enviar-ne un
+  7 dies abans d'obrir la finestra i un altre en obrir-la, nomes per a visites
+  pendents amb tots els precedents guardats. Usar dates reals, controlar enviaments
+  de manera persistent i no enviar fora de termini, despres de completar la
+  visita, a admin o a comptes sense assignacio. No incloure respostes cliniques
+  ni noms de pacients. Preparar una previsualitzacio HTML abans de provar SMTP.
 - A les files unificades, conservar les icones d'edicio i eliminacio. Obrir un
   selector de visita; editar el formulari de l'edicio original amb les respostes
   i l'historic correctes, mai totes les preguntes barrejades. Permetre eliminar
