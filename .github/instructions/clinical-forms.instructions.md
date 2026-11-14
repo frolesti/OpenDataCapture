@@ -29,6 +29,8 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   No marcar com obligatoris camps opcionals ni informatius deshabilitats.
 - Per a l'EVA, usar `kind: 'number', variant: 'slider', min: 0, max: 10`.
   Indicar 0 i 10, el significat dels extrems i el valor seleccionat.
+  Mostrar una linia de rang contrastada i instruccions visibles per seleccionar
+  la puntuacio. No deixar aquestes instruccions nomes dins d'un tooltip.
   No assignar 0 com a resposta per defecte: cal una seleccio explicita i 0 ha
   de poder seleccionar-se sense haver de canviar primer a un altre valor.
 - Usar controls accessibles, compatibles amb teclat i amb el disseny existent.
@@ -77,6 +79,9 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 
 ## Publicacio, dades i verificacio
 
+- Exportar els resultats tabulars amb les variables en columnes i una fila
+  per registre. No confondre un resum vertical de variable/valor amb una base
+  de dades exportable. Conservar les dades, l'escapat CSV i els valors compostos.
 - No sobreescriure registres ni edicions historiques. Conservar identificadors
   de camps i valors de resposta quan nomes canvia el redactat o la presentacio.
 - Preguntar l'ultima edicio publicada abans de preparar la seguent. No confondre

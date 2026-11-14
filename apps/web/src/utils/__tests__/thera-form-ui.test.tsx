@@ -6,14 +6,22 @@ import { Form } from '@douglasneuroinformatics/libui/components';
 import type { AnyUnilingualFormInstrument } from '@opendatacapture/runtime-core';
 import * as protocol from '@opendatacapture/schemas/thera';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { parse } from 'papaparse';
 import ts from 'typescript';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod/v3';
 
 import { FormContent } from '../../../../../packages/react-core/src/components/FormContent';
+import { InstrumentSummary } from '../../../../../packages/react-core/src/components/InstrumentSummary/InstrumentSummary';
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '../instrument-draft';
 
 import '../../services/i18n';
+
+const download = vi.hoisted(() => vi.fn<(filename: string, content: () => string) => Promise<void>>());
+vi.mock('@douglasneuroinformatics/libui/hooks', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@douglasneuroinformatics/libui/hooks')>()),
+  useDownload: () => download
+}));
 
 const source = readFileSync(
   resolve(
@@ -61,6 +69,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  download.mockClear();
   vi.restoreAllMocks();
   if (timezone === undefined) delete process.env.TZ;
   else process.env.TZ = timezone;
@@ -186,11 +195,47 @@ describe('THERA real libui controls', () => {
       expect(slider.getAttribute('aria-valuemin')).toBe('0');
       expect(slider.getAttribute('aria-valuemax')).toBe('10');
     }
+    for (const track of screen.getAllByTestId('slider-track')) {
+      expect(track.style.opacity).toBe('1');
+      expect(track.style.height).toBe('6px');
+    }
+    expect(
+      screen.getAllByText('Seleccione un número entero: 0 = sin síntomas; 10 = máxima intensidad imaginable.')
+    ).toHaveLength(2);
     expect(changes.mock.lastCall?.[0].eva_dryness).toBeUndefined();
     fireEvent.click(screen.getByRole('button', { name: 'Sequedad vaginal (0–10) *: 0' }));
     await waitFor(() => expect(changes.mock.lastCall?.[0].eva_dryness).toBe(0));
     fireEvent.keyDown(screen.getAllByRole('slider')[0]!, { key: 'End' });
     await waitFor(() => expect(changes.mock.lastCall?.[0].eva_dryness).toBe(10));
+  });
+
+  describe('instrument summary CSV', () => {
+    it('downloads variables as columns and one response row without losing structured or quoted values', () => {
+      const data = {
+        patient_code: 'TH-01-01',
+        eva_dryness: 6,
+        notes: 'Dolor, "leve"\nsegunda línea',
+        safety_events: [{ event: 'Dolor', resolved: false }],
+        _warning_hidden: 'Do not export'
+      };
+      render(
+        <InstrumentSummary
+          data={data}
+          instrument={{ ...instrument, measures: {} }}
+          timeCollected={Date.UTC(2024, 0, 31)}
+        />
+      );
+      fireEvent.click(screen.getByTitle('Descarregar resultats (CSV)'));
+      expect(download).toHaveBeenCalledOnce();
+      const content = download.mock.lastCall?.[1]();
+      if (!content) throw new Error('Missing CSV download');
+      expect(content.startsWith('\uFEFF')).toBe(true);
+      const rows = parse<string[]>(content.slice(1)).data;
+      expect(rows).toEqual([
+        ['patient_code', 'eva_dryness', 'notes', 'safety_events'],
+        ['TH-01-01', '6', 'Dolor, "leve"\nsegunda línea', JSON.stringify(data.safety_events)]
+      ]);
+    });
   });
 
   it.each([

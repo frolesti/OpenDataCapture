@@ -43,13 +43,13 @@ export const InstrumentSummary = ({ data, instrument, isAdmin, subject, timeColl
 
   const handleDownloadCSV = () => {
     const filename = `${internalName}_${internalEdition}_${new Date(timeCollected).toISOString()}.csv`;
-    const csvContent = [
-      ['Variable', 'Value'],
+    const columns = [
       ...Object.values(computedMeasures).map(({ label, value }) => [label, value?.toString() ?? 'NA']),
       ...Object.entries(data)
         .filter(([key]) => !key.startsWith('_warning'))
         .map(([key, value]) => [key, typeof value === 'object' ? JSON.stringify(value) : String(value ?? '')])
-    ]
+    ];
+    const csvContent = [columns.map(([label]) => label), columns.map(([, value]) => value)]
       .map((row) => row.map((cell) => `"${cell?.replace(/"/g, '""')}"`).join(','))
       .join('\n');
     void download(filename, () => `\uFEFF${csvContent}`);

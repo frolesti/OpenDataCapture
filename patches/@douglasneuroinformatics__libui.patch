@@ -1,6 +1,24 @@
 --- a/dist/components.js
 +++ b/dist/components.js
-@@ -2843,7 +2843,16 @@
+@@ -2795,6 +2795,7 @@
+               "aria-disabled": disabled,
+               className: "bg-primary relative h-1.5 w-full grow overflow-hidden rounded-full opacity-15 aria-disabled:cursor-not-allowed aria-disabled:opacity-10",
+               "data-testid": "slider-track",
++              style: { backgroundColor: "var(--color-slate-400, #94a3b8)", height: "6px", opacity: disabled ? 0.5 : 1 },
+               children: /* @__PURE__ */ jsx109(Range, { className: "bg-primary absolute h-full" })
+             }
+           ),
+@@ -2828,8 +2829,7 @@
+ }) => {
+   return /* @__PURE__ */ jsxs36(FieldGroup, { name, children: [
+     /* @__PURE__ */ jsxs36(FieldGroup.Row, { children: [
+-      /* @__PURE__ */ jsx110(Label3, { children: label }),
+-      /* @__PURE__ */ jsx110(FieldGroup.Description, { description })
++      /* @__PURE__ */ jsx110(Label3, { children: label })
+     ] }),
+     /* @__PURE__ */ jsxs36(FieldGroup.Row, { children: [
+       /* @__PURE__ */ jsx110(
+@@ -2843,8 +2843,22 @@
            onValueChange: ([value2]) => setValue(value2)
          }
        ),
@@ -16,9 +34,15 @@
 +          })
 +        : /* @__PURE__ */ jsx110("span", { className: "flex h-full w-8 items-center justify-center text-sm text-muted-foreground", children: value ?? "NA" })
      ] }),
++    /* @__PURE__ */ jsxs36("div", { className: "flex justify-between pr-8 text-xs text-muted-foreground", children: [
++      /* @__PURE__ */ jsx110("span", { children: min }),
++      /* @__PURE__ */ jsx110("span", { children: max })
++    ] }),
++    description && /* @__PURE__ */ jsx110("p", { className: "text-sm text-muted-foreground", children: description }),
      /* @__PURE__ */ jsx110(FieldGroup.Error, { error })
    ] });
-@@ -3021,38 +3030,69 @@
+ };
+@@ -3021,38 +3035,69 @@
  import { toBasicISOString as toBasicISOString2 } from "@douglasneuroinformatics/libjs";
  import { jsx as jsx116, jsxs as jsxs40 } from "react/jsx-runtime";
  var isValidDateString = (s) => /^(\d{4})-((0[1-9])|(1[0-2]))-((0[1-9])|([12])[0-9]|3[01])$/.test(s);
@@ -95,7 +119,7 @@
            onFocus: () => setIsInputFocused(true)
          }
        ) }),
-@@ -3060,7 +3100,14 @@
+@@ -3060,7 +3105,14 @@
          DatePicker,
          {
            onSelection: (value2) => {
@@ -111,7 +135,7 @@
              setIsDatePickerOpen(false);
            }
          }
-@@ -3761,15 +3808,61 @@
+@@ -3761,15 +3813,61 @@
      }
    };
    const isGrouped = Array.isArray(content);
@@ -181,7 +205,7 @@
    };
    useEffect11(() => {
      setErrors({});
-@@ -3782,7 +3875,8 @@
+@@ -3782,7 +3880,8 @@
        autoComplete: "off",
        className: twMerge("relative flex w-full flex-col", !isGrouped && "gap-6", className),
        id,
