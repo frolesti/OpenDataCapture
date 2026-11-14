@@ -1,7 +1,7 @@
 import { AuthModule, getModelToken } from '@douglasneuroinformatics/libnest';
 import type { Model } from '@douglasneuroinformatics/libnest';
 import { Module } from '@nestjs/common';
-import { $LoginCredentials } from '@opendatacapture/schemas/auth';
+import { $LoginCredentials, createTokenPayload } from '@opendatacapture/schemas/auth';
 
 @Module({
   imports: [
@@ -11,7 +11,7 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
         return {
           defineAbility: (ability, payload, metadata) => {
             const groupIds = payload.groups.map((group) => group.id);
-            const userId = (payload as any).id;
+            const userId = payload.id;
             switch (payload.basePermissionLevel) {
               case 'ADMIN':
                 ability.can('manage', 'all');
@@ -70,14 +70,7 @@ import { $LoginCredentials } from '@opendatacapture/schemas/auth';
               metadata: {
                 additionalPermissions: user.additionalPermissions
               },
-              tokenPayload: {
-                basePermissionLevel: user.basePermissionLevel,
-                firstName: user.firstName,
-                groups: user.groups,
-                id: user.id,
-                lastName: user.lastName,
-                username: user.username
-              } as any
+              tokenPayload: createTokenPayload(user)
             };
           }
         };

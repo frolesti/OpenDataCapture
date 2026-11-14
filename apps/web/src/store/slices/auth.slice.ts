@@ -21,13 +21,13 @@ export const createAuthSlice: SliceCreator<AuthSlice> = (set) => ({
       throw new Error('Token expired');
     }
 
-    const { groups, id, permissions, sub, ...rest } = decoded;
+    const { id, permissions, sub, ...rest } = decoded;
     const ability = createMongoAbility<PureAbility<[AppAction, AppSubjectName], any>>(permissions);
     set({
       accessToken,
       currentSession: null,
-      currentGroup: groups[0],
-      currentUser: { ability, groups, id: id || sub, ...rest }
+      currentGroup: null,
+      currentUser: { ...rest, ability, groups: [], id: id || sub }
     });
   },
   logout: () => {

@@ -17,8 +17,22 @@ export const $LoginCredentials = z.object({
 export type TokenPayload = {
   basePermissionLevel: BasePermissionLevel | null;
   firstName: null | string;
-  groups: Group[];
+  groups: Pick<Group, 'id'>[];
+  id?: string;
   lastName: null | string;
   permissions: Permissions;
   username: string;
 };
+
+export function createTokenPayload(
+  user: Pick<TokenPayload, 'basePermissionLevel' | 'firstName' | 'groups' | 'lastName' | 'username'> & { id: string }
+): Omit<TokenPayload, 'permissions'> {
+  return {
+    basePermissionLevel: user.basePermissionLevel,
+    firstName: user.firstName,
+    groups: user.groups.map(({ id }) => ({ id })),
+    id: user.id,
+    lastName: user.lastName,
+    username: user.username
+  };
+}

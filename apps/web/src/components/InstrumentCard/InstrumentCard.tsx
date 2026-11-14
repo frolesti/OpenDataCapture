@@ -5,6 +5,7 @@ import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { licenses } from '@opendatacapture/licenses';
 import { InstrumentIcon } from '@opendatacapture/react-core';
 import type { TranslatedInstrumentInfo } from '@opendatacapture/schemas/instrument';
+import { getTheraVisit } from '@opendatacapture/schemas/thera';
 import { BadgeAlertIcon, BadgeCheckIcon } from 'lucide-react';
 
 type BaseCardItem = { label: string; tooltip?: React.ReactNode };
@@ -26,6 +27,25 @@ export const InstrumentCard = ({ instrument, isAdmin, onClick }: InstrumentCardP
 
   const license = licenses.get(instrument.details.license);
   const isOrionInstrument = instrument.internal?.name?.startsWith('ORION_') ?? false;
+  const theraVisit = getTheraVisit(instrument.internal?.name ?? '');
+  const theraTiming =
+    theraVisit &&
+    {
+      V0: 'Evaluación inicial, antes de la primera visita de tratamiento.',
+      V1: '1 mes desde la fecha real de la visita basal (±7 días).',
+      V2: '3 meses desde la fecha real de la primera visita (±14 días).',
+      V3: '6 meses desde la fecha real de la primera visita (±28 días).',
+      V4: '12 meses desde la fecha real de la primera visita (±45 días).'
+    }[theraVisit];
+  const theraFocus =
+    theraVisit &&
+    {
+      V0: 'Consentimiento, selección, antecedentes, cuestionarios, exploración vaginal y vulvar y seguridad.',
+      V1: 'Pauta completa; síntomas, función sexual, Cervantes, exploración vaginal y vulvar y seguridad.',
+      V2: 'Síntomas, función sexual, Cervantes, exploración vaginal y vulvar y seguridad.',
+      V3: 'Síntomas, impresión global de mejoría (PGI-I) y seguridad.',
+      V4: 'Síntomas, función sexual, Cervantes, exploración vaginal y vulvar y seguridad. Esta visita completa el estudio.'
+    }[theraVisit];
 
   const content: CardItem[] = [
     {
@@ -170,6 +190,18 @@ export const InstrumentCard = ({ instrument, isAdmin, onClick }: InstrumentCardP
       </div>
       <div className="col-span-6 flex grow flex-col gap-2">
         <Heading variant="h4">{instrument.details.title}</Heading>
+        {theraVisit && (
+          <div className="rounded-md border border-indigo-200 bg-indigo-50 p-3 text-sm dark:border-indigo-800 dark:bg-indigo-950">
+            <p>
+              <span className="font-semibold">{t({ en: 'Temporalitat: ', fr: 'Temporalidad: ' })}</span>
+              {theraTiming}
+            </p>
+            <p>
+              <span className="font-semibold">{t({ en: 'Aquesta visita: ', fr: 'Esta visita: ' })}</span>
+              {theraFocus}
+            </p>
+          </div>
+        )}
         <div className="flex flex-col gap-2 text-sm tracking-tight">
           {content.map((item) => {
             if (item.kind === 'link' && !item.href) {

@@ -6,9 +6,10 @@ import type { User } from '@opendatacapture/schemas/user';
 import type { Simplify } from 'type-fest';
 import type { StateCreator } from 'zustand';
 
-export type CurrentUser = Omit<TokenPayload, 'permissions'> &
+export type CurrentUser = Omit<TokenPayload, 'groups' | 'permissions'> &
   Pick<User, 'studyHospitals' | 'studyNumbers' | 'professionalTitle'> & {
     ability: BaseAppAbility;
+    groups: Group[];
     id: string;
   };
 

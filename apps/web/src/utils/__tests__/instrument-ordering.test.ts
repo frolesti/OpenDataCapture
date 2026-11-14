@@ -1,8 +1,24 @@
+import { createElement } from 'react';
+
 import type { TranslatedInstrumentInfo } from '@opendatacapture/schemas/instrument';
 import { THERA_NAMES, THERA_VISIT_ORDER } from '@opendatacapture/schemas/thera';
-import { describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ErrorPage } from '../../../../../packages/react-core/src/components/ErrorPage/ErrorPage';
+import { InstrumentCard } from '../../components/InstrumentCard/InstrumentCard';
 import { compareInstruments } from '../../components/InstrumentShowcase/InstrumentShowcase';
+
+import i18n from '../../services/i18n';
+
+beforeEach(() => {
+  i18n.changeLanguage('en');
+});
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 function info(name: string, title: string): TranslatedInstrumentInfo {
   return {
@@ -18,6 +34,31 @@ function info(name: string, title: string): TranslatedInstrumentInfo {
 }
 
 describe('Clinical instrument ordering', () => {
+  it.each([
+    ['V0', 'Evaluación inicial, antes de la primera visita de tratamiento.'],
+    ['V1', '1 mes desde la fecha real de la visita basal (±7 días).'],
+    ['V2', '3 meses desde la fecha real de la primera visita (±14 días).'],
+    ['V3', '6 meses desde la fecha real de la primera visita (±28 días).'],
+    ['V4', '12 meses desde la fecha real de la primera visita (±45 días).']
+  ] as const)('highlights the protocol timing for %s without changing published metadata', (visit, timing) => {
+    const instrument = info(THERA_NAMES[visit], `THERA ${visit}`);
+    render(createElement(InstrumentCard, { instrument, onClick: vi.fn() }));
+    expect(screen.getByText(timing)).toBeDefined();
+    expect(instrument.details.description).toBe('Clinical study');
+    expect(instrument.internal?.edition).toBe(3);
+    if (visit === 'V4') expect(screen.getByText(/Esta visita completa el estudio/)).toBeDefined();
+  });
+
+  it('explains HTTP 431 and offers reauthentication instead of calling it not found', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const navigate = vi.spyOn(window.location, 'assign').mockImplementation(() => undefined);
+    render(createElement(ErrorPage, { error: { isAxiosError: true, response: { status: 431 } } }));
+    expect(screen.getByRole('heading', { name: '431 - Capçaleres HTTP massa grans' })).toBeDefined();
+    expect(screen.queryByText(/No trobat/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Tornar a iniciar sessió' }));
+    expect(navigate).toHaveBeenCalledWith('/auth/login');
+  });
+
   it('orders THERA visits clinically instead of alphabetically by translated title', () => {
     const titles = ['Visita basal', 'Primera visita', 'Segunda visita', 'Tercera visita', 'Cuarta visita'];
     const forms = THERA_VISIT_ORDER.map((visit, index) =>

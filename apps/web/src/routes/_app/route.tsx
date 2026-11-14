@@ -1,9 +1,10 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Layout } from '@/components/Layout';
+import { LoadingFallback } from '@/components/LoadingFallback';
 import { setupStateQueryOptions } from '@/hooks/useSetupStateQuery';
 import { DisclaimerProvider } from '@/providers/DisclaimerProvider';
 import { ForceClearQueryCacheProvider } from '@/providers/ForceClearQueryCacheProvider';
@@ -26,6 +27,7 @@ type CurrentProfileResponse = Pick<User, 'studyHospitals' | 'studyNumbers' | 'pr
 const AppShell = () => {
   const currentUser = useAppStore((store) => store.currentUser);
   const syncCurrentUserFromProfile = useAppStore((store) => store.syncCurrentUserFromProfile);
+  const [syncedUserId, setSyncedUserId] = useState<null | string>(null);
 
   const currentProfileQuery = useQuery({
     enabled: Boolean(currentUser?.id),
@@ -42,8 +44,16 @@ const AppShell = () => {
   useEffect(() => {
     if (currentProfileQuery.data) {
       syncCurrentUserFromProfile(currentProfileQuery.data);
+      setSyncedUserId(currentProfileQuery.data.id);
     }
   }, [currentProfileQuery.data, syncCurrentUserFromProfile]);
+
+  if (currentProfileQuery.isError) {
+    throw currentProfileQuery.error;
+  }
+  if (!currentUser || syncedUserId !== currentUser.id) {
+    return <LoadingFallback />;
+  }
 
   return (
     <InactivityProvider>

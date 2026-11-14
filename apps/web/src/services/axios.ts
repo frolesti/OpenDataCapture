@@ -31,7 +31,10 @@ axios.interceptors.request.use((config) => {
     });
   }
 
-  if (accessToken) {
+  const isPublicSetupRequest = config.url === '/v1/setup' && (config.method === 'get' || config.method === 'post');
+  if (config.url === '/v1/auth/login' || isPublicSetupRequest) {
+    config.headers.delete('Authorization');
+  } else if (accessToken) {
     config.headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
@@ -90,9 +93,17 @@ axios.interceptors.response.use(
     }
 
     const backendMessage = extractErrorMessage(error.response?.data);
+    const headerErrorMessage =
+      error.response?.status === 431
+        ? i18n.t({
+            en: 'Les capçaleres de la sessió són massa grans. Torneu a iniciar sessió.',
+            fr: 'Las cabeceras de la sesión son demasiado grandes. Vuelva a iniciar sesión.'
+          })
+        : null;
     notifications.addNotification({
       message:
         backendMessage ??
+        headerErrorMessage ??
         i18n.t({
           en: 'Sol\u00b7licitud HTTP fallida',
           fr: 'Solicitud HTTP fallida'
