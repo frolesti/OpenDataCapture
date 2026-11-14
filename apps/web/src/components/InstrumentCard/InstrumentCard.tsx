@@ -46,6 +46,12 @@ export const InstrumentCard = ({ instrument, isAdmin, onClick }: InstrumentCardP
       V3: 'Síntomas, impresión global de mejoría (PGI-I) y seguridad.',
       V4: 'Síntomas, función sexual, Cervantes, exploración vaginal y vulvar y seguridad. Esta visita completa el estudio.'
     }[theraVisit];
+  const orionDetails =
+    instrument.internal?.name === 'ORION_PR_2026_SELECTION'
+      ? 'Visita de selección: consentimiento, criterios de inclusión y exclusión, antecedentes y tratamientos; evaluación retrospectiva con pregabalina IR y actual con pregabalina PR, calidad de vida, sueño, adherencia, mejoría clínica y seguridad.'
+      : instrument.internal?.name === 'ORION_PR_2026_FOLLOWUP'
+        ? 'A los 3 meses de la visita de selección (±2 semanas). Requiere la selección previa del mismo paciente. Evaluación de calidad de vida, sueño, adherencia, mejoría clínica, cambios de tratamiento, seguridad y fin de estudio.'
+        : undefined;
 
   const content: CardItem[] = [
     {
@@ -58,67 +64,58 @@ export const InstrumentCard = ({ instrument, isAdmin, onClick }: InstrumentCardP
     },
     {
       kind: 'text',
-      label: t({
-        en: 'Descripció',
-        fr: 'Descripción'
-      }),
+      label: t({ en: 'Descripció', fr: 'Descripción' }),
       text: instrument.details.description
     },
-    ...(isOrionInstrument && !isAdmin
-      ? []
-      : [
-          {
-            kind: 'text' as const,
-            label: t({
-              en: 'Edició',
-              fr: 'Edición'
-            }),
-            text: instrument.internal?.edition.toString()
-          }
-        ]),
-    ...(isOrionInstrument
+    {
+      kind: 'text',
+      label: t({ en: 'Detalls', fr: 'Detalles' }),
+      text:
+        theraTiming && theraFocus
+          ? `${theraTiming} ${theraFocus}`
+          : (orionDetails ?? (instrument.clientDetails?.instructions ?? instrument.details.instructions)?.join(' '))
+    },
+    ...(isAdmin
       ? [
           {
             kind: 'text' as const,
-            label: t({
-              en: 'Promotor',
-              fr: 'Promotor'
-            }),
-            text: 'Laboratorios Gebro Pharma S.A.'
-          }
-        ]
-      : [
+            label: t({ en: 'Edició', fr: 'Edición' }),
+            text: instrument.internal?.edition.toString()
+          },
           {
             kind: 'text' as const,
-            label: t({
-              en: 'Idiomes',
-              fr: 'Idiomas'
-            }),
-            text: instrument.supportedLanguages
-              .map((language) => {
-                switch (language) {
-                  case 'ca':
-                    return 'Català';
-                  case 'en':
-                    return 'English';
-                  case 'es':
-                    return 'Español';
-                  case 'fr':
-                    return 'Français';
-                  default:
-                    return language;
-                }
-              })
-              .join(', ')
+            label: t({ en: 'Idiomes', fr: 'Idiomas' }),
+            text: instrument.supportedLanguages.join(', ')
+          },
+          {
+            kind: 'text' as const,
+            label: t({ en: 'Etiquetes', fr: 'Etiquetas' }),
+            text: instrument.tags.join(', ')
+          },
+          {
+            href: instrument.details.referenceUrl,
+            kind: 'link' as const,
+            label: t({ en: 'Enllaç de referència', fr: 'Enlace de referencia' })
+          },
+          {
+            href: instrument.details.sourceUrl,
+            kind: 'link' as const,
+            label: t({ en: 'Enllaç al codi font', fr: 'Enlace al código fuente' })
           }
-        ]),
+        ]
+      : []),
+    {
+      kind: 'text',
+      label: t({ en: 'Promotor', fr: 'Promotor' }),
+      text: isOrionInstrument ? 'Laboratorios Gebro Pharma S.A.' : undefined
+    },
     {
       kind: 'text',
       label: t({
         en: 'Llicència',
         fr: 'Licencia'
       }),
-      text: license?.name ?? 'NA',
+      text: license?.name,
       tooltip: (
         <Tooltip>
           <Tooltip.Trigger className="p-0 hover:bg-transparent" size="icon" variant="ghost">
@@ -143,35 +140,7 @@ export const InstrumentCard = ({ instrument, isAdmin, onClick }: InstrumentCardP
           </Tooltip.Content>
         </Tooltip>
       )
-    },
-    {
-      href: instrument.details.referenceUrl,
-      kind: 'link',
-      label: t({
-        en: 'Enllaç de referència',
-        fr: 'Enlace de referencia'
-      })
-    },
-    {
-      href: instrument.details.sourceUrl,
-      kind: 'link',
-      label: t({
-        en: 'Enllaç al codi font',
-        fr: 'Enlace al código fuente'
-      })
-    },
-    ...(isOrionInstrument
-      ? []
-      : [
-          {
-            kind: 'text' as const,
-            label: t({
-              en: 'Etiquetes',
-              fr: 'Etiquetas'
-            }),
-            text: instrument.tags.join(', ')
-          }
-        ])
+    }
   ];
 
   return (
@@ -190,18 +159,6 @@ export const InstrumentCard = ({ instrument, isAdmin, onClick }: InstrumentCardP
       </div>
       <div className="col-span-6 flex grow flex-col gap-2">
         <Heading variant="h4">{instrument.details.title}</Heading>
-        {theraVisit && (
-          <div className="rounded-md border border-indigo-200 bg-indigo-50 p-3 text-sm dark:border-indigo-800 dark:bg-indigo-950">
-            <p>
-              <span className="font-semibold">{t({ en: 'Temporalitat: ', fr: 'Temporalidad: ' })}</span>
-              {theraTiming}
-            </p>
-            <p>
-              <span className="font-semibold">{t({ en: 'Aquesta visita: ', fr: 'Esta visita: ' })}</span>
-              {theraFocus}
-            </p>
-          </div>
-        )}
         <div className="flex flex-col gap-2 text-sm tracking-tight">
           {content.map((item) => {
             if (item.kind === 'link' && !item.href) {
@@ -211,7 +168,7 @@ export const InstrumentCard = ({ instrument, isAdmin, onClick }: InstrumentCardP
             }
             return (
               <div className="flex items-center gap-1" key={item.label}>
-                <p className="line-clamp-3 leading-tight">
+                <p className="leading-tight">
                   <span className="font-medium">{item.label + t({ en: ': ', fr: ': ' })}</span>
                   {item.kind === 'text' && <span className="text-muted-foreground">{item.text}</span>}
                   {item.kind === 'link' && (

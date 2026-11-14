@@ -24,6 +24,8 @@ const study = {
 };
 const administrator = {
   id: 'admin',
+  username: 'admin',
+  additionalPermissions: [],
   basePermissionLevel: 'ADMIN' as const,
   groupIds: [] as string[],
   studyHospitals: [] as { groupId: string; hospitalId: string }[]
@@ -105,7 +107,7 @@ describe('administrator study access', () => {
         hospitals: { set: ['Hospital Clínic', 'Alta Medical Services'] }
       }
     });
-    expect(userModel.findMany).toHaveBeenCalledWith({ where: { basePermissionLevel: 'ADMIN' } });
+    expect(userModel.findMany).toHaveBeenCalledWith();
     expect(userModel.update).toHaveBeenCalledWith({
       where: { id: 'admin' },
       data: {
@@ -151,35 +153,30 @@ describe('administrator study access', () => {
     expect(groupModel.update).not.toHaveBeenCalled();
   });
 
-  it('repairs every administrator across all studies while retaining each existing valid centre', async () => {
+  it('only gives admin automatic study access and demotes other accounts without changing their centres', async () => {
     groupModel.findMany.mockResolvedValue([study, { ...study, id: 'orion', name: 'ORION' }]);
     userModel.findMany.mockResolvedValue([
       administrator,
       {
         ...administrator,
         id: 'second-admin',
+        username: 'amunyoz',
         groupIds: ['orion'],
         studyHospitals: [{ groupId: 'orion', hospitalId: 'clinic' }]
       }
     ]);
     await access.onApplicationBootstrap();
     expect(userModel.update).toHaveBeenNthCalledWith(1, {
+      where: { id: 'second-admin' },
+      data: { basePermissionLevel: 'STANDARD', additionalPermissions: [] }
+    });
+    expect(userModel.update).toHaveBeenNthCalledWith(2, {
       where: { id: 'admin' },
       data: {
         groups: { set: [{ id: 'thera' }, { id: 'orion' }] },
         studyHospitals: [
           { groupId: 'thera', hospitalId: 'alta' },
           { groupId: 'orion', hospitalId: 'alta' }
-        ]
-      }
-    });
-    expect(userModel.update).toHaveBeenNthCalledWith(2, {
-      where: { id: 'second-admin' },
-      data: {
-        groups: { set: [{ id: 'thera' }, { id: 'orion' }] },
-        studyHospitals: [
-          { groupId: 'thera', hospitalId: 'alta' },
-          { groupId: 'orion', hospitalId: 'clinic' }
         ]
       }
     });
@@ -255,6 +252,68 @@ describe('administrator study access', () => {
     );
   });
 
+  it.each(['amunyoz', 'ctorres', 'aramirez'])(
+    'demotes %s and clears extra grants without changing groups, hospitals or records',
+    async (username) => {
+      userModel.findMany.mockResolvedValueOnce([
+        {
+          ...administrator,
+          id: username,
+          username,
+          basePermissionLevel: 'GROUP_MANAGER',
+          additionalPermissions: [{ action: 'manage', subject: 'all' }],
+          groupIds: ['thera'],
+          studyHospitals: [{ groupId: 'thera', hospitalId: 'clinic' }]
+        }
+      ]);
+      await access.onApplicationBootstrap();
+      expect(userModel.update).toHaveBeenCalledExactlyOnceWith({
+        where: { id: username },
+        data: { basePermissionLevel: 'STANDARD', additionalPermissions: [] }
+      });
+      expect(records.deleteMany).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each(['amunyoz', 'ctorres', 'aramirez'])('rejects new admin accounts and promotions for %s', async (username) => {
+    await expect(
+      users.create({
+        username,
+        basePermissionLevel: 'ADMIN',
+        firstName: 'Test',
+        lastName: 'User',
+        password: 'test-password',
+        groupIds: []
+      })
+    ).rejects.toThrow('Solo la cuenta admin');
+    userModel.findUnique.mockResolvedValueOnce({
+      ...administrator,
+      username,
+      id: username,
+      basePermissionLevel: 'STANDARD'
+    });
+    await expect(users.updateById(username, { basePermissionLevel: 'ADMIN' })).rejects.toThrow('Solo la cuenta admin');
+    expect(userModel.create).not.toHaveBeenCalled();
+    expect(userModel.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects privilege grants and transfers of the reserved admin username', async () => {
+    userModel.findUnique.mockResolvedValue({
+      ...administrator,
+      username: 'researcher',
+      basePermissionLevel: 'STANDARD'
+    });
+    await expect(
+      users.updateById('researcher', {
+        additionalPermissions: [{ action: 'manage', subject: 'all' }]
+      })
+    ).rejects.toThrow('permisos administrativos');
+    await expect(users.updateById('researcher', { username: 'admin' })).rejects.toThrow('renombrar');
+    userModel.findUnique.mockResolvedValue(administrator);
+    await expect(users.updateById('admin', { username: 'other' })).rejects.toThrow('renombrar');
+    expect(userModel.update).not.toHaveBeenCalled();
+  });
+
   it('saves the exact admin group-edit payload from the UI without requiring hospital inputs', async () => {
     await users.updateById('admin', { groupIds: ['thera'], firstName: 'Admin' });
     expect(userModel.update).toHaveBeenCalledWith(
@@ -287,21 +346,23 @@ describe('administrator study access', () => {
   });
 
   it.each(['GROUP_MANAGER' as const, null])(
-    'does not apply administrator defaults when demoted to %s',
+    'does not permit changing the reserved administrator role to %s',
     async (role) => {
-      await users.updateById('admin', { basePermissionLevel: role, groupIds: [] });
-      expect(groupModel.findMany).not.toHaveBeenCalled();
-      expect(userModel.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ groups: { set: [] }, studyHospitals: [] })
-        })
+      await expect(users.updateById('admin', { basePermissionLevel: role, groupIds: [] })).rejects.toThrow(
+        'Solo la cuenta admin'
       );
+      expect(groupModel.findMany).not.toHaveBeenCalled();
+      expect(userModel.update).not.toHaveBeenCalled();
     }
   );
 
   it('still rejects standard-user memberships with no valid study centre', async () => {
-    userModel.findUnique.mockResolvedValue({ ...administrator, basePermissionLevel: 'STANDARD' });
-    await expect(users.updateById('admin', { groupIds: ['thera'] })).rejects.toThrow('centre sanitari vàlid');
+    userModel.findUnique.mockResolvedValue({
+      ...administrator,
+      username: 'researcher',
+      basePermissionLevel: 'STANDARD'
+    });
+    await expect(users.updateById('researcher', { groupIds: ['thera'] })).rejects.toThrow('centre sanitari vàlid');
     expect(userModel.update).not.toHaveBeenCalled();
   });
 

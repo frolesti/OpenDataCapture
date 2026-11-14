@@ -47,10 +47,12 @@ export const $UpdateSetupStateData = $SetupState
   .partial();
 
 export type CreateAdminData = z.infer<typeof $CreateAdminData>;
-export const $CreateAdminData = $CreateUserData.omit({
-  basePermissionLevel: true,
-  groupIds: true
-});
+export const $CreateAdminData = $CreateUserData
+  .omit({
+    basePermissionLevel: true,
+    groupIds: true
+  })
+  .extend({ username: z.literal('admin') });
 
 export type InitAppOptions = z.infer<typeof $InitAppOptions>;
 export const $InitAppOptions = z.object({

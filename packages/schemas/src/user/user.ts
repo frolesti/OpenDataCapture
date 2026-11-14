@@ -7,6 +7,10 @@ export const $BasePermissionLevel = z.enum(['ADMIN', 'GROUP_MANAGER', 'STANDARD'
 
 export type BasePermissionLevel = z.infer<typeof $BasePermissionLevel>;
 
+export function getAccountPermissionLevel(username: string): BasePermissionLevel {
+  return username === 'admin' ? 'ADMIN' : 'STANDARD';
+}
+
 export type User = z.infer<typeof $User>;
 export const $StudyHospital = z.object({
   groupId: z.string().min(1),

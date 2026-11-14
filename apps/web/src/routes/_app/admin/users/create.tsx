@@ -974,6 +974,11 @@ const RouteComponent = () => {
           <div className="flex flex-wrap gap-2">
             <Button
               className="bg-[#8f8df2] text-white hover:bg-[#7f7de4]"
+              disabled
+              title={t({
+                en: 'Nomes admin pot administrar la plataforma. Afegiu els comptes com a investigadors.',
+                fr: 'Solo admin puede administrar la plataforma. Añada las cuentas como investigadores.'
+              })}
               type="button"
               variant="primary"
               onClick={() => setIsUserDialogOpen(true)}

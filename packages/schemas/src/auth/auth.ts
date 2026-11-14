@@ -8,6 +8,8 @@ export type AuthPayload = {
   accessToken: string;
 };
 
+export const ACCOUNT_POLICY_VERSION = 1;
+
 export type LoginCredentials = z.infer<typeof $LoginCredentials>;
 export const $LoginCredentials = z.object({
   password: z.string(),
@@ -15,6 +17,7 @@ export const $LoginCredentials = z.object({
 });
 
 export type TokenPayload = {
+  accountPolicyVersion?: number;
   basePermissionLevel: BasePermissionLevel | null;
   firstName: null | string;
   groups: Pick<Group, 'id'>[];
@@ -28,6 +31,7 @@ export function createTokenPayload(
   user: Pick<TokenPayload, 'basePermissionLevel' | 'firstName' | 'groups' | 'lastName' | 'username'> & { id: string }
 ): Omit<TokenPayload, 'permissions'> {
   return {
+    accountPolicyVersion: ACCOUNT_POLICY_VERSION,
     basePermissionLevel: user.basePermissionLevel,
     firstName: user.firstName,
     groups: user.groups.map(({ id }) => ({ id })),

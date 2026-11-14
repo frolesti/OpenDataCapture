@@ -93,6 +93,18 @@ export class InstrumentRecordsController {
     await this.instrumentRecordsService.deleteById(id, { ability, user });
   }
 
+  @ApiOperation({ summary: 'Delete all visits for one study patient' })
+  @Delete(':id/visits')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RouteAccess({ action: 'delete', subject: 'InstrumentRecord' })
+  async deletePatientVisits(
+    @Param('id', ValidObjectIdPipe) id: string,
+    @CurrentUser('ability') ability: AppAbility,
+    @CurrentUser() user: User
+  ) {
+    await this.instrumentRecordsService.deletePatientVisits(id, { ability, user });
+  }
+
   @ApiOperation({ summary: 'Export Records' })
   @Get('export')
   @RouteAccess({ action: 'read', subject: 'InstrumentRecord' })

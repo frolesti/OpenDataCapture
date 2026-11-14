@@ -141,6 +141,11 @@ describe('THERA datahub integration', () => {
     expect(filename).toContain('THERA_SGM_2026');
     expect(content()).toContain('v0_eva_dryness');
     expect(content()).toContain('v4_eva_dryness');
+    const header = String(content()).split(/\r?\n/)[0]!.split(',');
+    expect(header).toContain('date_collected');
+    expect(header).toContain('subject_id');
+    expect(header.every((column) => /^[a-z][a-z0-9_]*$/.test(column))).toBe(true);
+    expect(result.current.formatFieldLabel?.('v0_eva_dryness')).toBe('v0_eva_dryness');
     act(() => result.current.setFilter('__subjectId__', 'other'));
     expect(result.current.records).toHaveLength(0);
   });
@@ -154,5 +159,40 @@ describe('THERA datahub integration', () => {
     act(() => result.current.setInstrumentId('__ORION_PR_2026__'));
     await waitFor(() => expect(result.current.records).toHaveLength(1));
     expect(result.current.records[0]?.patient_code).toBe('OR-01-01');
+  });
+
+  it('keeps each ORION visit and its historical answers separate for record actions', async () => {
+    const selection = {
+      ...record('V0', 2, 'OR-01-01'),
+      instrumentId: 'orion',
+      data: {
+        patient_code: 'OR-01-01',
+        selection_visit_date: '01-01-2025',
+        pain: 2
+      }
+    };
+    const followup = {
+      ...record('V1', 7, 'OR-01-01'),
+      instrumentId: 'historical-followup',
+      data: {
+        user_code: 'OR-01-01',
+        followup_date: '01-04-2025',
+        pain: 7
+      }
+    };
+    mocks.records = [selection, followup];
+    const { result } = renderHook(() => useGlobalInstrumentVisualization());
+    act(() => result.current.setInstrumentId('__ORION_PR_2026__'));
+    await waitFor(() => expect(result.current.records).toHaveLength(1));
+    const visits = result.current.records[0]?.__visits__;
+    expect(visits).toHaveLength(2);
+    expect(visits?.[0]).toMatchObject({ __id__: selection.id, __instrumentId__: 'orion', __data__: selection.data });
+    expect(visits?.[1]).toMatchObject({
+      __id__: followup.id,
+      __instrumentId__: 'historical-followup',
+      __data__: followup.data
+    });
+    expect(visits?.[0]?.label).toContain('Selección');
+    expect(visits?.[1]?.label).toContain('Seguimiento');
   });
 });

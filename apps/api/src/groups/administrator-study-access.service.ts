@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
 import { DEFAULT_GROUP_HOSPITAL, getInstrumentStudyCode, inferGroupStudyCode } from '@opendatacapture/schemas/group';
 import type { StudyHospital } from '@opendatacapture/schemas/user';
+import { getAccountPermissionLevel } from '@opendatacapture/schemas/user';
 import type { Prisma } from '@prisma/client';
 
 import { HospitalsService } from '@/hospitals/hospitals.service';
@@ -103,7 +104,24 @@ export class AdministratorStudyAccessService implements OnApplicationBootstrap {
       await transaction.group.update({ where: { id: group.id }, data: { studyCode } });
       this.logger.log(`Repaired missing study code '${studyCode}' for group '${group.id}'.`);
     }
-    const administrators = await transaction.user.findMany({ where: { basePermissionLevel: 'ADMIN' } });
+    const accounts = await transaction.user.findMany();
+    for (const account of accounts) {
+      const basePermissionLevel = getAccountPermissionLevel(account.username);
+      if (
+        account.basePermissionLevel !== basePermissionLevel ||
+        (account.username !== 'admin' && account.additionalPermissions.length > 0)
+      ) {
+        await transaction.user.update({
+          where: { id: account.id },
+          data: {
+            basePermissionLevel,
+            ...(account.username !== 'admin' ? { additionalPermissions: [] } : {})
+          }
+        });
+        this.logger.log(`Applied account role policy to '${account.username}'.`);
+      }
+    }
+    const administrators = accounts.filter((account) => account.username === 'admin');
     for (const administrator of administrators) {
       const access = await this.resolve(transaction, administrator.studyHospitals);
       const sameGroups =

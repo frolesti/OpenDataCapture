@@ -23,13 +23,16 @@ describe('current account access after study and role changes', () => {
     users = moduleRef.get(getModelToken('User'));
     users.findUnique.mockResolvedValue({
       basePermissionLevel: 'STANDARD',
+      username: 'tester',
       groupIds: ['orion'],
       professionalTitle: 'Dra'
     });
   });
 
   function context(user?: object) {
-    return { switchToHttp: () => ({ getRequest: () => ({ user }) }) } as ExecutionContext;
+    return {
+      switchToHttp: () => ({ getRequest: () => ({ user: user ? { accountPolicyVersion: 1, ...user } : undefined }) })
+    } as ExecutionContext;
   }
 
   it('allows an unchanged account without a special classification field', async () => {
@@ -58,6 +61,39 @@ describe('current account access after study and role changes', () => {
     expect(users.findUnique).not.toHaveBeenCalled();
     expect(next.handle).toHaveBeenCalledOnce();
   });
+
+  it('requires a new login for tokens issued before the sole-admin policy', async () => {
+    await expect(
+      interceptor.intercept(
+        context({
+          id: 'tester',
+          basePermissionLevel: 'STANDARD',
+          groups: [{ id: 'orion' }],
+          accountPolicyVersion: undefined
+        }),
+        next
+      )
+    ).rejects.toThrow('permisos');
+    expect(next.handle).not.toHaveBeenCalled();
+  });
+
+  it.each(['amunyoz', 'ctorres', 'aramirez'])(
+    'rejects administrator tokens for %s even before database reconciliation',
+    async (username) => {
+      users.findUnique.mockResolvedValueOnce({ username, basePermissionLevel: 'ADMIN', groupIds: ['orion'] });
+      await expect(
+        interceptor.intercept(
+          context({
+            id: 'tester',
+            basePermissionLevel: 'ADMIN',
+            groups: [{ id: 'orion' }]
+          }),
+          next
+        )
+      ).rejects.toThrow('permisos');
+      expect(next.handle).not.toHaveBeenCalled();
+    }
+  );
 
   it('rejects a token belonging to a deleted account', async () => {
     users.findUnique.mockResolvedValueOnce(null);

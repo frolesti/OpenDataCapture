@@ -5,6 +5,20 @@ import { createServer, get } from 'node:http';
 import { describe, expect, it } from 'vitest';
 
 import { $LoginCredentials, createTokenPayload } from './auth';
+import { getAccountPermissionLevel } from '../user/user';
+import { $CreateAdminData } from '../setup/setup';
+
+describe('sole administrator identity', () => {
+  it.each(['amunyoz', 'ctorres', 'aramirez', 'Admin'])('keeps %s at researcher permission level', (username) => {
+    expect(getAccountPermissionLevel(username)).toBe('STANDARD');
+  });
+
+  it('reserves administrator privileges and initial setup for the exact admin username', () => {
+    expect(getAccountPermissionLevel('admin')).toBe('ADMIN');
+    expect($CreateAdminData.shape.username.safeParse('admin').success).toBe(true);
+    expect($CreateAdminData.shape.username.safeParse('amunyoz').success).toBe(false);
+  });
+});
 
 describe('login credentials', () => {
   it('removes surrounding username whitespace without modifying the password', () => {
@@ -38,6 +52,7 @@ describe('compact authentication claims', () => {
 
   it('includes identity and group references, never group datasets or unrelated user fields', () => {
     expect(createTokenPayload({ ...user })).toEqual({
+      accountPolicyVersion: 1,
       basePermissionLevel: 'STANDARD',
       firstName: 'Test',
       groups: [{ id: group.id }],

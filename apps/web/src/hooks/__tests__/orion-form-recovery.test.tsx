@@ -28,12 +28,13 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   notification: vi.fn(),
   refetchRecords: vi.fn(),
+  recordRequests: vi.fn(),
   renderedBundle: '',
   renderedInitialData: undefined as undefined | { [key: string]: unknown },
   records: [] as Record<string, unknown>[],
   extraInfo: [] as { id: string; internal: { name: string } }[],
   search: {} as { recordId?: string },
-  state: {} as { initialData?: { [key: string]: unknown } },
+  state: {} as { initialData?: { [key: string]: unknown }; recordSubjectId?: string },
   store: {
     currentGroup: { hospitals: [], id: 'group', name: 'ORION' } as Partial<Group> &
       Pick<Group, 'hospitals' | 'id' | 'name'>,
@@ -113,7 +114,11 @@ vi.mock('@/hooks/useInstrumentInfoQuery', () => ({
   useInstrumentInfoQuery: () => ({ data: [mocks.bundle, ...mocks.extraInfo] })
 }));
 vi.mock('@/hooks/useInstrumentRecords', () => ({
-  useInstrumentRecords: () => ({ data: mocks.records, isLoading: false, refetch: mocks.refetchRecords })
+  INSTRUMENT_RECORDS_QUERY_KEY: 'instrument-records',
+  useInstrumentRecords: (options: unknown) => {
+    mocks.recordRequests(options);
+    return { data: mocks.records, isLoading: false, refetch: mocks.refetchRecords };
+  }
 }));
 vi.mock('@/store', () => ({
   useAppStore: Object.assign((selector: (store: typeof mocks.store) => unknown) => selector(mocks.store), {
@@ -281,6 +286,7 @@ describe('THERA patient identity and persisted visit anchors', () => {
   it('still opens an existing visit for editing after the fourth visit has been saved', async () => {
     prepareThera();
     mocks.search = { recordId: 'first-record' };
+    mocks.state.recordSubjectId = 'historical-investigator-subject';
     mocks.state.initialData = {
       patient_code: 'TH-01-01',
       baseline_date: '2024-01-31',
@@ -295,6 +301,11 @@ describe('THERA patient identity and persisted visit anchors', () => {
     await screen.findByTestId('renderer');
     expect(mocks.renderedInitialData?.patient_code).toBe('TH-01-01');
     expect(mocks.renderedInitialData?.visit_date).toBe('2024-02-29');
+    expect(mocks.recordRequests).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: { groupId: 'group', subjectId: 'historical-investigator-subject' }
+      })
+    );
   });
   it('loads the actual V1 date for V2 and never carries answers to another patient', async () => {
     prepareThera('V2');

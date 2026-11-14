@@ -15,6 +15,7 @@ const visitOrder: TheraVisit[] = ['V0', 'V1', 'V2', 'V3', 'V4'];
 
 export type TheraDatahubVisit = {
   __data__: { [key: string]: unknown };
+  __groupId__?: null | string;
   __id__: string;
   __instrumentId__: string;
   __subjectId__: string;
@@ -115,6 +116,7 @@ export function mergeTheraRecords(records: InstrumentRecord[], instrumentVisits:
       }
       row.__visits__.push({
         __data__: recordData(record),
+        __groupId__: record.groupId,
         __id__: record.id,
         __instrumentId__: record.instrumentId,
         __subjectId__: record.subjectId,
@@ -131,8 +133,5 @@ export function mergeTheraRecords(records: InstrumentRecord[], instrumentVisits:
 }
 
 export function formatTheraFieldLabel(field: string) {
-  const match = /^(v[0-4])(?:_(\d+))?_(.+)$/.exec(field);
-  if (!match) return field.replaceAll('_', ' ').toUpperCase();
-  const visit = match[1]!.toUpperCase() as TheraVisit;
-  return `${THERA_VISIT_LABELS[visit]}${match[2] ? ` (${match[2]})` : ''} · ${match[3]!.replaceAll('_', ' ')}`;
+  return field;
 }

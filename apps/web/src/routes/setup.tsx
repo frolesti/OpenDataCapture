@@ -32,7 +32,7 @@ const RouteComponent = () => {
           <Form
             content={[
               {
-                description: t('setup.admin.description'),
+                description: `${t('setup.admin.description')} ${t({ en: 'El compte administrador es dira admin.', fr: 'La cuenta administradora se llamará admin.' })}`,
                 fields: {
                   firstName: {
                     kind: 'string',
@@ -42,11 +42,6 @@ const RouteComponent = () => {
                   lastName: {
                     kind: 'string',
                     label: t('core.identificationData.lastName.label'),
-                    variant: 'input'
-                  },
-                  username: {
-                    kind: 'string',
-                    label: t('setup.admin.username'),
                     variant: 'input'
                   },
                   password: {
@@ -120,6 +115,7 @@ const RouteComponent = () => {
             ]}
             data-testid="setup-form"
             initialValues={{
+              username: 'admin',
               enableExperimentalFeatures: false
             }}
             submitBtnLabel={t('core.submit')}
@@ -127,7 +123,7 @@ const RouteComponent = () => {
               .object({
                 firstName: z.string().min(1),
                 lastName: z.string().min(1),
-                username: z.string().min(1),
+                username: z.literal('admin'),
                 password: z
                   .string()
                   .min(1)

@@ -17,6 +17,7 @@ import {
   theraPatientContext
 } from '@opendatacapture/schemas/thera';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Save } from 'lucide-react';
 
@@ -24,7 +25,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { getHospitalCatalog } from '@/components/admin/groups/StudyHospitalFields';
 import { useInstrumentBundle } from '@/hooks/useInstrumentBundle';
 import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
-import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
+import { INSTRUMENT_RECORDS_QUERY_KEY, useInstrumentRecords } from '@/hooks/useInstrumentRecords';
 import { useOrionPatientCode } from '@/hooks/useOrionPatientCode';
 import { useAppStore } from '@/store';
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '@/utils/instrument-draft';
@@ -349,6 +350,7 @@ const RouteComponent = () => {
   const params = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const notifications = useNotificationsStore();
   const location = useLocation();
   const { t } = useTranslation();
@@ -357,6 +359,8 @@ const RouteComponent = () => {
   const initialData = (location.state as any)?.initialData as Record<string, unknown> | undefined;
   // Fallback to state recordId if search param is missing (e.g. navigation timing issues)
   const recordId = search.recordId ?? ((location.state as any)?.recordId as string | undefined);
+  const recordSubjectId =
+    typeof location.state.recordSubjectId === 'string' ? location.state.recordSubjectId : undefined;
 
   // Draft management
   const [draftData, setDraftData] = useState<Record<string, unknown> | null>(() => {
@@ -434,6 +438,7 @@ const RouteComponent = () => {
     .filter((instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME)
     .sort((first, second) => (second.internal?.edition ?? 0) - (first.internal?.edition ?? 0))[0]?.id;
   const scopedSubjectId =
+    (recordId ? (recordSubjectId ?? fetchedRecord?.subjectId) : undefined) ??
     currentSession?.subject.id ??
     (currentUser && currentGroup
       ? encodeScopedSubjectId(currentUser.username, { groupName: currentGroup.name })
@@ -1124,6 +1129,7 @@ const RouteComponent = () => {
         },
         { suppressErrorNotification: true }
       );
+      await queryClient.invalidateQueries({ queryKey: [INSTRUMENT_RECORDS_QUERY_KEY] });
       notifications.addNotification({
         message: t({
           en: 'Registre actualitzat correctament. Els canvis han quedat registrats.',

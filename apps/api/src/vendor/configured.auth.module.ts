@@ -2,6 +2,7 @@ import { AuthModule, getModelToken } from '@douglasneuroinformatics/libnest';
 import type { Model } from '@douglasneuroinformatics/libnest';
 import { Module } from '@nestjs/common';
 import { $LoginCredentials, createTokenPayload } from '@opendatacapture/schemas/auth';
+import { getAccountPermissionLevel } from '@opendatacapture/schemas/user';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { $LoginCredentials, createTokenPayload } from '@opendatacapture/schemas/
           defineAbility: (ability, payload, metadata) => {
             const groupIds = payload.groups.map((group) => group.id);
             const userId = payload.id;
-            switch (payload.basePermissionLevel) {
+            switch (getAccountPermissionLevel(payload.username)) {
               case 'ADMIN':
                 ability.can('manage', 'all');
                 break;
@@ -43,6 +44,10 @@ import { $LoginCredentials, createTokenPayload } from '@opendatacapture/schemas/
                   groupId: { in: groupIds },
                   session: { userId }
                 });
+                ability.can('delete', 'InstrumentRecord', {
+                  groupId: { in: groupIds },
+                  session: { userId }
+                });
                 ability.can('read', 'Session', { groupId: { in: groupIds } });
                 ability.can('create', 'Session');
                 ability.can('create', 'Subject');
@@ -50,9 +55,11 @@ import { $LoginCredentials, createTokenPayload } from '@opendatacapture/schemas/
                 ability.can('update', 'User', { id: userId });
                 break;
             }
-            metadata.additionalPermissions?.forEach(({ action, subject }) => {
-              ability.can(action, subject);
-            });
+            if (payload.username === 'admin') {
+              metadata.additionalPermissions?.forEach(({ action, subject }) => {
+                ability.can(action, subject);
+              });
+            }
           },
           schemas: {
             loginCredentials: $LoginCredentials
@@ -70,7 +77,10 @@ import { $LoginCredentials, createTokenPayload } from '@opendatacapture/schemas/
               metadata: {
                 additionalPermissions: user.additionalPermissions
               },
-              tokenPayload: createTokenPayload(user)
+              tokenPayload: createTokenPayload({
+                ...user,
+                basePermissionLevel: getAccountPermissionLevel(user.username)
+              })
             };
           }
         };

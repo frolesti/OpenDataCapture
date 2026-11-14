@@ -1,6 +1,6 @@
 ---
 description: "Use when generating, translating or modifying clinical CRF instruments, visit forms, dates, eligibility, questionnaires or form UX in OpenDataCapture. Applies the user's ORION and THERA requirements."
-applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/playground/scripts/build-*-instruments.ts,packages/schemas/src/instrument-records/thera*,packages/schemas/src/auth/**,packages/react-core/src/components/FormContent/**,packages/react-core/src/components/InstrumentSummary/**,packages/react-core/src/components/ErrorPage/**,apps/web/src/components/InstrumentShowcase/**,apps/web/src/components/InstrumentCard/**,apps/api/src/vendor/configured.auth.module.ts,apps/web/src/store/slices/auth.slice.ts,apps/web/src/services/axios.ts'
+applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/playground/scripts/build-*-instruments.ts,packages/schemas/src/instrument-records/thera*,packages/schemas/src/auth/**,packages/react-core/src/components/FormContent/**,packages/react-core/src/components/InstrumentSummary/**,packages/react-core/src/components/ErrorPage/**,apps/web/src/components/InstrumentShowcase/**,apps/web/src/components/InstrumentCard/**,apps/web/src/components/StudyVisitActions.tsx,apps/web/src/routes/_app/datahub/**,apps/web/src/hooks/useGlobalInstrumentVisualization.ts,apps/web/src/utils/thera-datahub.ts,apps/api/src/instrument-records/**,apps/api/src/vendor/configured.auth.module.ts,apps/web/src/store/slices/auth.slice.ts,apps/web/src/services/axios.ts'
 ---
 
 # Normes obligatories per als formularis clinics
@@ -20,10 +20,12 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 
 - Ordenar les visites per protocol: visita basal, primera, segona, tercera i
   quarta visita. No ordenar aquestes visites alfabeticament pel titol.
-- Destacar a cada targeta el moment, la visita de referencia, el marge de dies
-  i les avaluacions propies d'aquella visita. Una descripcio general compartida
-  no substitueix aquesta informacio. Verificar-ne la coherencia amb els limits
-  del protocol sense modificar les edicions publicades nomes per una targeta.
+- Incloure el moment, la visita de referencia, el marge de dies i les avaluacions
+  en una unica fila "Detalles", just sota "Descripcion". No afegir fons destacats
+  ni files separades de temporalitat o "Esta visita". Els investigadors nomes
+  veuen coordinadors, descripcio, detalls, promotor i llicencia quan tenen contingut.
+  No inventar dades absents ni mostrar edicio, idiomes, etiquetes o enllacos tecnics.
+  No modificar les edicions publicades nomes per canviar la targeta.
 - Fer servir noms de fitxer recognoscibles i titols descriptius. No duplicar el
   titol de l'instrument a la primera seccio.
 - Escriure instruccions breus, separades per frases. Evitar comes afegides pel
@@ -97,6 +99,17 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 - Exportar els resultats tabulars amb les variables en columnes i una fila
   per registre. No confondre un resum vertical de variable/valor amb una base
   de dades exportable. Conservar les dades, l'escapat CSV i els valors compostos.
+- A THERA, usar capcaleres identiques a taula, CSV i Excel: `v0_nom_del_camp`,
+  `v1_nom_del_camp`, etc., amb barres baixes. No traduir-les a "Visita basal".
+  No reanomenar per aixo els camps persistits.
+- A les files unificades, conservar les icones d'edicio i eliminacio. Obrir un
+  selector de visita; editar el formulari de l'edicio original amb les respostes
+  i l'historic correctes, mai totes les preguntes barrejades. Permetre eliminar
+  una visita o totes les del mateix pacient, amb confirmacio i operacio atomica.
+  No eliminar una visita necessaria per validar altres visites que es conserven.
+- Nomes `admin` te privilegis administratius. La resta de comptes son
+  investigadors, sense permisos addicionals que els elevin. Aplicar-ho a l'API
+  i invalidar les sessions antigues, no nomes amagar controls al navegador.
 - No sobreescriure registres ni edicions historiques. Conservar identificadors
   de camps i valors de resposta quan nomes canvia el redactat o la presentacio.
 - Preguntar l'ultima edicio publicada abans de preparar la seguent. No confondre

@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ErrorPage } from '../../../../../packages/react-core/src/components/ErrorPage/ErrorPage';
 import { InstrumentCard } from '../../components/InstrumentCard/InstrumentCard';
+import { StudyVisitActions } from '../../components/StudyVisitActions';
 import { compareInstruments } from '../../components/InstrumentShowcase/InstrumentShowcase';
 
 import i18n from '../../services/i18n';
@@ -34,19 +35,89 @@ function info(name: string, title: string): TranslatedInstrumentInfo {
 }
 
 describe('Clinical instrument ordering', () => {
+  const visits = [
+    {
+      __data__: { eva_dryness: 2 },
+      __id__: 'basal',
+      __instrumentId__: 'historical-v0',
+      __subjectId__: 'investigator',
+      label: 'Visita basal'
+    },
+    {
+      __data__: { eva_dryness: 7 },
+      __id__: 'first',
+      __instrumentId__: 'historical-v1',
+      __subjectId__: 'investigator',
+      label: 'Primera visita'
+    }
+  ];
+
+  it('keeps icon buttons and edits only the chosen original visit with its own answers', () => {
+    const onEdit = vi.fn();
+    render(createElement(StudyVisitActions, { canEdit: true, canDelete: true, visits, onEdit, onDelete: vi.fn() }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edita visita' }));
+    expect(screen.queryByRole('button', { name: 'Elimina totes les visites' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Primera visita' }));
+    expect(onEdit).toHaveBeenCalledExactlyOnceWith(visits[1]);
+  });
+
+  it.each([false, true])('selects one visit or all visits for a separate deletion confirmation (%s)', (allVisits) => {
+    const onDelete = vi.fn();
+    render(createElement(StudyVisitActions, { canEdit: true, canDelete: true, visits, onEdit: vi.fn(), onDelete }));
+    fireEvent.click(screen.getByRole('button', { name: 'Elimina visita' }));
+    fireEvent.click(screen.getByRole('button', { name: allVisits ? 'Elimina totes les visites' : 'Primera visita' }));
+    expect(onDelete).toHaveBeenCalledExactlyOnceWith(allVisits ? 'basal' : 'first', allVisits);
+  });
+
   it.each([
     ['V0', 'Evaluación inicial, antes de la primera visita de tratamiento.'],
     ['V1', '1 mes desde la fecha real de la visita basal (±7 días).'],
     ['V2', '3 meses desde la fecha real de la primera visita (±14 días).'],
     ['V3', '6 meses desde la fecha real de la primera visita (±28 días).'],
     ['V4', '12 meses desde la fecha real de la primera visita (±45 días).']
-  ] as const)('highlights the protocol timing for %s without changing published metadata', (visit, timing) => {
-    const instrument = info(THERA_NAMES[visit], `THERA ${visit}`);
-    render(createElement(InstrumentCard, { instrument, onClick: vi.fn() }));
-    expect(screen.getByText(timing)).toBeDefined();
-    expect(instrument.details.description).toBe('Clinical study');
-    expect(instrument.internal?.edition).toBe(3);
-    if (visit === 'V4') expect(screen.getByText(/Esta visita completa el estudio/)).toBeDefined();
+  ] as const)(
+    'shows protocol timing as ordinary details for %s without changing published metadata',
+    (visit, timing) => {
+      const instrument = info(THERA_NAMES[visit], `THERA ${visit}`);
+      render(createElement(InstrumentCard, { instrument, onClick: vi.fn() }));
+      const details = screen.getByText('Detalls:').parentElement!;
+      expect(details.textContent).toContain(timing);
+      expect(details.parentElement?.previousElementSibling?.textContent).toContain('Descripció:');
+      expect(details.parentElement?.className).not.toContain('bg-');
+      expect(screen.queryByText('Temporalitat:')).toBeNull();
+      expect(instrument.details.description).toBe('Clinical study');
+      expect(instrument.internal?.edition).toBe(3);
+      if (visit === 'V4') expect(screen.getByText(/Esta visita completa el estudio/)).toBeDefined();
+    }
+  );
+
+  it('only shows the five permitted metadata labels to researchers for every study', () => {
+    const instrument = info('OMEGA_LUTS', 'OMEGA');
+    instrument.details.authors = ['Coordinator'];
+    instrument.clientDetails = { instructions: ['Complete this assessment.'] };
+    instrument.tags = ['Internal tag'];
+    instrument.details.sourceUrl = 'https://example.org/source';
+    const { container } = render(createElement(InstrumentCard, { instrument, onClick: vi.fn() }));
+    expect([...container.querySelectorAll('p > span.font-medium')].map((node) => node.textContent)).toEqual([
+      'Investigadors coordinadors: ',
+      'Descripció: ',
+      'Detalls: ',
+      'Llicència: '
+    ]);
+    expect(screen.queryByText('Edició:')).toBeNull();
+    expect(screen.queryByText('Idiomes:')).toBeNull();
+    expect(screen.queryByText('Etiquetes:')).toBeNull();
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('omits empty optional metadata and retains technical metadata for admin only', () => {
+    const instrument = info('OTHER', 'Other');
+    const { rerender } = render(createElement(InstrumentCard, { instrument, onClick: vi.fn() }));
+    expect(screen.queryByText('Detalls:')).toBeNull();
+    expect(screen.queryByText('Promotor:')).toBeNull();
+    rerender(createElement(InstrumentCard, { instrument, isAdmin: true, onClick: vi.fn() }));
+    expect(screen.getByText('Edició:')).toBeDefined();
+    expect(screen.getByText('Idiomes:')).toBeDefined();
   });
 
   it('explains HTTP 431 and offers reauthentication instead of calling it not found', () => {

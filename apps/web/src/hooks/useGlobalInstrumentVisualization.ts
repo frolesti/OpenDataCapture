@@ -19,6 +19,7 @@ import type { TheraDatahubVisit } from '@/utils/thera-datahub';
 type InstrumentVisualizationRecord = {
   [key: string]: unknown;
   __data__: Record<string, unknown>;
+  __groupId__?: null | string;
   __date__: Date;
   __id__: string;
   __instrumentId__: string;
@@ -591,13 +592,20 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     const baseFilename = `${currentUser!.username}_${instrumentName}_${instrumentEdition}_${new Date().toISOString()}`;
 
     const exportRecords = filteredRecords.map((record) => {
-      const exported = omit(record, ['__time__', '__id__', '__data__', '__visits__']);
+      const exported = omit(record, ['__time__', '__id__', '__data__', '__visits__', '__groupId__']);
       return isUnifiedTheraSelected ? omit(exported, ['__instrumentId__']) : exported;
     });
 
     const makeWideRows = () => {
       const columnNames = Object.keys(exportRecords[0]!);
       return exportRecords.map((item) => {
+        if (isUnifiedTheraSelected) {
+          return {
+            date_collected: toBasicISOString(item.__date__ as Date),
+            subject_id: removeSubjectIdScope(item.__subjectId__ as string),
+            ...omit(item, ['__date__', '__subjectId__'])
+          };
+        }
         const obj: { [key: string]: any } = {
           subjectId: removeSubjectIdScope(item.__subjectId__ as string),
           Date: ''
@@ -812,6 +820,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
 
         expandedRecords.push({
           __data__: record.data as Record<string, unknown>,
+          __groupId__: record.groupId,
           __date__: record.date,
           __id__: record.id,
           __instrumentId__: record.instrumentId,
@@ -830,12 +839,23 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
       const mergedRecords = new Map<string, InstrumentVisualizationRecord>();
       for (const record of expandedRecords.sort((a, b) => a.__time__ - b.__time__)) {
         const patientCode = getOrionPatientCode(record.__data__) ?? getOrionPatientCode(record);
-        const mergeKey = patientCode ? `${record.__subjectId__}:${patientCode}` : record.__id__;
+        const mergeKey = patientCode
+          ? JSON.stringify([record.__groupId__, record.__subjectId__, patientCode])
+          : record.__id__;
         const existing = mergedRecords.get(mergeKey);
+        const visit = {
+          __data__: record.__data__,
+          __groupId__: record.__groupId__,
+          __id__: record.__id__,
+          __instrumentId__: record.__instrumentId__,
+          __subjectId__: record.__subjectId__,
+          label: `${instrumentInfoQuery.data?.find((instrument) => instrument.id === record.__instrumentId__)?.internal?.name === ORION_SELECTION_INTERNAL_NAME || (!hasMeaningfulValue(record.__data__.followup_date) && hasMeaningfulValue(record.__data__.selection_visit_date)) ? 'Selección' : 'Seguimiento'} (${toBasicISOString(record.__date__)})`
+        };
         if (!existing) {
-          mergedRecords.set(mergeKey, { ...record, __data__: { ...record.__data__ } });
+          mergedRecords.set(mergeKey, { ...record, __data__: { ...record.__data__ }, __visits__: [visit] });
           continue;
         }
+        existing.__visits__!.push(visit);
 
         for (const [key, value] of Object.entries(record)) {
           if (key.startsWith('__')) {
@@ -866,6 +886,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     isUnifiedOrionSelected,
     isUnifiedTheraSelected,
     orionInstrumentIds,
+    instrumentInfoQuery.data,
     recordsQuery.data,
     theraInstrumentVisits
   ]);

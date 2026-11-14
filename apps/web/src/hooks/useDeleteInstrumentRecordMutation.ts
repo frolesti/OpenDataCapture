@@ -9,8 +9,8 @@ export function useDeleteInstrumentRecordMutation() {
   const addNotification = useNotificationsStore((store) => store.addNotification);
 
   return useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
-      await axios.delete(`/v1/instrument-records/${id}`);
+    mutationFn: async ({ allVisits = false, id }: { allVisits?: boolean; id: string }) => {
+      await axios.delete(`/v1/instrument-records/${id}${allVisits ? '/visits' : ''}`);
     },
     onSuccess() {
       addNotification({ type: 'success' });

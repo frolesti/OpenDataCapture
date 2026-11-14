@@ -3,6 +3,8 @@ import type { Model } from '@douglasneuroinformatics/libnest';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import type { Request } from 'express';
+import { ACCOUNT_POLICY_VERSION } from '@opendatacapture/schemas/auth';
+import { getAccountPermissionLevel } from '@opendatacapture/schemas/user';
 
 @Injectable()
 export class AccountAccessInterceptor implements NestInterceptor {
@@ -15,11 +17,13 @@ export class AccountAccessInterceptor implements NestInterceptor {
       throw new UnauthorizedException('Cal tornar a iniciar la sessió.');
     }
     const account = await this.userModel.findUnique({
-      select: { basePermissionLevel: true, groupIds: true },
+      select: { basePermissionLevel: true, groupIds: true, username: true },
       where: { id: user.id }
     });
     if (
       !account ||
+      user.accountPolicyVersion !== ACCOUNT_POLICY_VERSION ||
+      user.basePermissionLevel !== getAccountPermissionLevel(account.username) ||
       account.basePermissionLevel !== user.basePermissionLevel ||
       account.groupIds.length !== user.groups.length ||
       user.groups.some((group) => !account.groupIds.includes(group.id))

@@ -120,8 +120,8 @@ describe('THERA unified patient data', () => {
   });
 
   it('labels visit-specific columns without confusing the clinical field number with a duplicate visit', () => {
-    expect(formatTheraFieldLabel('v4_eva_dryness')).toBe('Cuarta visita · eva dryness');
-    expect(formatTheraFieldLabel('v2_cervantes_12')).toBe('Segunda visita · cervantes 12');
-    expect(formatTheraFieldLabel('v1_2_eva_dryness')).toBe('Primera visita (2) · eva dryness');
+    expect(formatTheraFieldLabel('v4_eva_dryness')).toBe('v4_eva_dryness');
+    expect(formatTheraFieldLabel('v2_cervantes_12')).toBe('v2_cervantes_12');
+    expect(formatTheraFieldLabel('v1_2_eva_dryness')).toBe('v1_2_eva_dryness');
   });
 });

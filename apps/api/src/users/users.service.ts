@@ -4,6 +4,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { hospitalMatchesName } from '@opendatacapture/schemas/group';
 import type { Group } from '@opendatacapture/schemas/group';
 import { formatOrionInvestigatorNumber } from '@opendatacapture/schemas/instrument-records';
+import { getAccountPermissionLevel } from '@opendatacapture/schemas/user';
 import type {
   User,
   CreatePendingInvestigatorData,
@@ -87,6 +88,11 @@ export class UsersService {
       }
     }
 
+    if (basePermissionLevel !== getAccountPermissionLevel(username)) {
+      throw new BadRequestException(
+        'Solo la cuenta admin puede administrar la plataforma. Los demás usuarios deben ser investigadores.'
+      );
+    }
     const normalizedEmail = this.normalizeEmail(email);
     if (normalizedEmail && (await this.userModel.exists({ email: normalizedEmail }))) {
       throw new ConflictException(`User with email '${normalizedEmail}' already exists!`);
@@ -242,6 +248,24 @@ export class UsersService {
       throw new NotFoundException(`Failed to find user with ID: ${id}`);
     }
 
+    if (
+      data.username !== undefined &&
+      data.username !== currentUser.username &&
+      (data.username === 'admin' || currentUser.username === 'admin')
+    ) {
+      throw new BadRequestException('La cuenta admin no se puede renombrar ni transferir.');
+    }
+    const accountRole = getAccountPermissionLevel(data.username ?? currentUser.username);
+    if (data.basePermissionLevel !== undefined && data.basePermissionLevel !== accountRole) {
+      throw new BadRequestException(
+        'Solo la cuenta admin puede administrar la plataforma. Los demás usuarios deben ser investigadores.'
+      );
+    }
+    data.basePermissionLevel = accountRole;
+    if (accountRole !== 'ADMIN' && data.additionalPermissions?.length) {
+      throw new BadRequestException('Los investigadores no pueden tener permisos administrativos adicionales.');
+    }
+
     const normalizedEmail = this.normalizeEmail(data.email);
     const currentEmail = this.normalizeEmail(currentUser.email);
     if (normalizedEmail && normalizedEmail !== currentEmail) {
@@ -286,6 +310,7 @@ export class UsersService {
       const updated = await transaction.user.update({
         data: {
           ...data,
+          ...(accountRole !== 'ADMIN' ? { additionalPermissions: [] } : {}),
           ...(nextAssignments !== undefined ? { studyHospitals: nextAssignments } : {}),
           email: normalizedEmail,
           ...(nextGroupIds !== undefined ? { groups: { set: nextGroupIds.map((groupId) => ({ id: groupId })) } } : {}),

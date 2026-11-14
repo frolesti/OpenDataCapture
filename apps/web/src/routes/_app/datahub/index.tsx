@@ -20,11 +20,13 @@ import { unparse } from 'papaparse';
 
 import { PageHeader } from '@/components/PageHeader';
 import { SelectInstrument } from '@/components/SelectInstrument';
+import { StudyVisitActions } from '@/components/StudyVisitActions';
 import { useDeleteInstrumentRecordMutation } from '@/hooks/useDeleteInstrumentRecordMutation';
 import { useGlobalInstrumentVisualization } from '@/hooks/useGlobalInstrumentVisualization';
 import { useSubjectsQuery } from '@/hooks/useSubjectsQuery';
 import { useAppStore } from '@/store';
 import { downloadExcel } from '@/utils/excel';
+import { THERA_UNIFIED_OPTION_ID } from '@/utils/thera-datahub';
 
 const SelectTrigger = Select.Trigger as unknown as React.ComponentType<React.PropsWithChildren<{ className?: string }>>;
 const SelectContent = Select.Content as unknown as React.ComponentType<React.PropsWithChildren<unknown>>;
@@ -47,9 +49,11 @@ const RouteComponent = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState(15);
   const [selectedRecordId, setSelectedRecordId] = useState<null | string>(null);
+  const [deleteAllVisits, setDeleteAllVisits] = useState(false);
 
   const currentGroup = useAppStore((store) => store.currentGroup);
   const currentUser = useAppStore((store) => store.currentUser);
+  const changeGroup = useAppStore((store) => store.changeGroup);
 
   const download = useDownload();
   const addNotification = useNotificationsStore((store) => store.addNotification);
@@ -152,7 +156,7 @@ const RouteComponent = () => {
     if (!selectedRecordId) {
       return;
     }
-    await deleteInstrumentRecordMutation.mutateAsync({ id: selectedRecordId });
+    await deleteInstrumentRecordMutation.mutateAsync({ id: selectedRecordId, allVisits: deleteAllVisits });
     setIsDeleteConfirmOpen(false);
     setSelectedRecordId(null);
   };
@@ -376,36 +380,41 @@ const RouteComponent = () => {
                     isAdminUser || removeSubjectIdScope(record.__subjectId__ as string) === currentUser?.username;
 
                   if (record.__visits__) {
-                    const visits = record.__visits__;
                     return (
-                      <div className="flex items-center gap-1">
-                        <ActionDropdown
-                          disabled={isAdminUser || !canEditRecord}
-                          options={visits.map((visit) => visit.label)}
-                          title={t({ en: 'Edita visita', fr: 'Editar visita' })}
-                          onSelection={(label) => {
-                            const visit = visits.find((entry) => entry.label === label);
-                            if (!visit) return;
-                            void navigate({
-                              params: { id: visit.__instrumentId__ },
-                              search: { recordId: visit.__id__ },
-                              state: { initialData: visit.__data__, recordId: visit.__id__ },
-                              to: '/instruments/render/$id'
+                      <StudyVisitActions
+                        canEdit={!isAdminUser && canEditRecord}
+                        canDelete={canDeleteRecord}
+                        visits={record.__visits__}
+                        onEdit={(visit) => {
+                          const group = currentUser?.groups.find((entry) => entry.id === visit.__groupId__);
+                          if (!group) {
+                            addNotification({
+                              type: 'error',
+                              message: t({
+                                en: "No s'ha pogut recuperar l'estudi d'aquesta visita. Actualitzeu la sessio.",
+                                fr: 'No se ha podido recuperar el estudio de esta visita. Actualice la sesión.'
+                              })
                             });
-                          }}
-                        />
-                        <ActionDropdown
-                          disabled={!canDeleteRecord}
-                          options={visits.map((visit) => visit.label)}
-                          title={t({ en: 'Elimina visita', fr: 'Eliminar visita' })}
-                          onSelection={(label) => {
-                            const visit = visits.find((entry) => entry.label === label);
-                            if (!visit) return;
-                            setSelectedRecordId(visit.__id__);
-                            setIsDeleteConfirmOpen(true);
-                          }}
-                        />
-                      </div>
+                            return;
+                          }
+                          changeGroup(group);
+                          void navigate({
+                            params: { id: visit.__instrumentId__ },
+                            search: { recordId: visit.__id__ },
+                            state: {
+                              initialData: visit.__data__,
+                              recordId: visit.__id__,
+                              recordSubjectId: visit.__subjectId__
+                            },
+                            to: '/instruments/render/$id'
+                          });
+                        }}
+                        onDelete={(id, allVisits) => {
+                          setSelectedRecordId(id);
+                          setDeleteAllVisits(allVisits);
+                          setIsDeleteConfirmOpen(true);
+                        }}
+                      />
                     );
                   }
 
@@ -426,7 +435,8 @@ const RouteComponent = () => {
                             state: {
                               instrumentTitle: instrument?.clientDetails?.title ?? instrument?.details?.title,
                               initialData: initialData,
-                              recordId: id
+                              recordId: id,
+                              recordSubjectId: record.__subjectId__
                             },
                             to: '/instruments/render/$id'
                           });
@@ -441,6 +451,7 @@ const RouteComponent = () => {
                         variant="ghost"
                         onClick={() => {
                           setSelectedRecordId(id);
+                          setDeleteAllVisits(false);
                           setIsDeleteConfirmOpen(true);
                         }}
                       >
@@ -457,17 +468,25 @@ const RouteComponent = () => {
               {
                 field: '__date__',
                 formatter: formatDisplayDate,
-                label: formatFieldLabel ? 'FECHA DE REGISTRO' : 'DATE_COLLECTED'
+                label:
+                  instrumentId === THERA_UNIFIED_OPTION_ID
+                    ? 'date_collected'
+                    : formatFieldLabel
+                      ? 'FECHA DE REGISTRO'
+                      : 'DATE_COLLECTED'
               },
               {
                 field: '__subjectId__',
                 formatter: (value: string) => removeSubjectIdScope(value),
-                label: formatFieldLabel
-                  ? 'INVESTIGADOR'
-                  : t({
-                      en: 'INVESTIGATOR',
-                      fr: 'INVESTIGADOR'
-                    })
+                label:
+                  instrumentId === THERA_UNIFIED_OPTION_ID
+                    ? 'subject_id'
+                    : formatFieldLabel
+                      ? 'INVESTIGADOR'
+                      : t({
+                          en: 'INVESTIGATOR',
+                          fr: 'INVESTIGADOR'
+                        })
               },
               ...fields
             ]}
@@ -493,6 +512,7 @@ const RouteComponent = () => {
           setIsDeleteConfirmOpen(open);
           if (!open) {
             setSelectedRecordId(null);
+            setDeleteAllVisits(false);
           }
         }}
       >
@@ -505,24 +525,29 @@ const RouteComponent = () => {
               })}
             </AlertDialog.Title>
             <AlertDialog.Description>
-              {selectedRecord?.label
+              {deleteAllVisits && selectedRecord
                 ? t({
-                    en: `S'eliminarà només la visita "${selectedRecord.label}" de l'investigador "${removeSubjectIdScope(selectedRecord.__subjectId__)}". Aquesta acció no es pot desfer.`,
-                    fr: `Se eliminará únicamente la visita "${selectedRecord.label}" del investigador "${removeSubjectIdScope(selectedRecord.__subjectId__)}". Esta acción no se puede deshacer.`
+                    en: `S'eliminaran totes les visites del pacient d'aquesta fila. Aquesta acció no es pot desfer.`,
+                    fr: 'Se eliminarán todas las visitas del paciente de esta fila. Esta acción no se puede deshacer.'
                   })
-                : selectedRecord
+                : selectedRecord?.label
                   ? t({
-                      en: `S'eliminarà la fila del subjecte "${removeSubjectIdScope(
-                        selectedRecord.__subjectId__
-                      )}". Aquesta acció no es pot desfer.`,
-                      fr: `Se eliminará la fila del sujeto "${removeSubjectIdScope(
-                        selectedRecord.__subjectId__
-                      )}". Esta acción no se puede deshacer.`
+                      en: `S'eliminarà només la visita "${selectedRecord.label}" de l'investigador "${removeSubjectIdScope(selectedRecord.__subjectId__)}". Aquesta acció no es pot desfer.`,
+                      fr: `Se eliminará únicamente la visita "${selectedRecord.label}" del investigador "${removeSubjectIdScope(selectedRecord.__subjectId__)}". Esta acción no se puede deshacer.`
                     })
-                  : t({
-                      en: 'Aquesta acció no es pot desfer.',
-                      fr: 'Esta acción no se puede deshacer.'
-                    })}
+                  : selectedRecord
+                    ? t({
+                        en: `S'eliminarà la fila del subjecte "${removeSubjectIdScope(
+                          selectedRecord.__subjectId__
+                        )}". Aquesta acció no es pot desfer.`,
+                        fr: `Se eliminará la fila del sujeto "${removeSubjectIdScope(
+                          selectedRecord.__subjectId__
+                        )}". Esta acción no se puede deshacer.`
+                      })
+                    : t({
+                        en: 'Aquesta acció no es pot desfer.',
+                        fr: 'Esta acción no se puede deshacer.'
+                      })}
             </AlertDialog.Description>
           </AlertDialog.Header>
           <AlertDialog.Footer>

@@ -380,6 +380,59 @@ export class InstrumentRecordsService {
     });
   }
 
+  async deletePatientVisits(id: string, { ability }: EntityOperationOptions = {}) {
+    return this.orionCodesService.transaction(async (transaction) => {
+      const authorization = accessibleQuery(ability, 'delete', 'InstrumentRecord');
+      const selected = await transaction.instrumentRecord.findFirst({
+        where: { AND: [authorization], id }
+      });
+      if (!selected) throw new NotFoundException(`Could not find record with ID '${id}'`);
+
+      const patientCode = (data: unknown) => {
+        if (!data || typeof data !== 'object' || Array.isArray(data)) return undefined;
+        const fields = Object.fromEntries(Object.entries(data));
+        const code = fields.patient_code ?? fields.user_code;
+        return typeof code === 'string' && code.trim() ? code : undefined;
+      };
+      const family = async (instrumentId: string) => {
+        const instrument = await this.getInstrumentById(instrumentId);
+        if (instrument.kind === 'SERIES') return undefined;
+        if (getTheraVisit(instrument.internal.name)) return 'THERA';
+        if (['ORION_PR_2026_SELECTION', 'ORION_PR_2026_FOLLOWUP'].includes(instrument.internal.name)) return 'ORION';
+        return undefined;
+      };
+      const code = patientCode(selected.data);
+      const study = await family(selected.instrumentId);
+      if (!selected.groupId || !code || !study) {
+        throw new BadRequestException('El registro no identifica un paciente de un estudio con múltiples visitas.');
+      }
+      const candidates = await transaction.instrumentRecord.findMany({
+        where: { groupId: selected.groupId, subjectId: selected.subjectId }
+      });
+      const ids: string[] = [];
+      for (const candidate of candidates) {
+        if (patientCode(candidate.data) === code && (await family(candidate.instrumentId)) === study) {
+          ids.push(candidate.id);
+        }
+      }
+      if (!ids.includes(id)) {
+        throw new BadRequestException('Las visitas han cambiado. Actualice la tabla antes de eliminarlas.');
+      }
+      const result = await transaction.instrumentRecord.deleteMany({
+        where: { id: { in: ids }, AND: [authorization] }
+      });
+      if (result.count !== ids.length) {
+        throw new ForbiddenException('No se han eliminado las visitas: faltan permisos para alguna de ellas.');
+      }
+      if (study === 'ORION') {
+        await transaction.orionFollowupReminder.deleteMany({
+          where: { OR: [{ selectionRecordId: { in: ids } }, { followupRecordId: { in: ids } }] }
+        });
+      }
+      return result;
+    });
+  }
+
   async exists(where: Prisma.InstrumentRecordWhereInput): Promise<boolean> {
     return this.instrumentRecordModel.exists(where);
   }

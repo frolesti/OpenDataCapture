@@ -4,7 +4,7 @@ import type { Model } from '@douglasneuroinformatics/libnest';
 import { MockFactory, type MockedInstance } from '@douglasneuroinformatics/libnest/testing';
 import { Test } from '@nestjs/testing';
 import type { User } from '@prisma/client';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod/v4';
 
 import { AuditLogService } from '../../audit-log/audit-log.service';
@@ -430,6 +430,58 @@ describe('ORION record assignment and atomic code persistence', () => {
     ]);
     await expect(service.deleteById('baseline', { user })).rejects.toThrow('No se puede eliminar');
     expect(records.delete).not.toHaveBeenCalled();
+  });
+
+  it.each(['THERA', 'ORION'])('atomically deletes only this %s patient across historical editions', async (study) => {
+    const selected = {
+      id: 'basal',
+      instrumentId: 'old-baseline',
+      groupId: 'study',
+      subjectId: 'subject',
+      data: { patient_code: 'PATIENT-1' }
+    };
+    const reminders = { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) };
+    Object.assign(transaction, { orionFollowupReminder: reminders });
+    instruments.findById.mockImplementation(async (id) => ({
+      id,
+      kind: 'FORM',
+      internal: {
+        edition: 1,
+        name: id === 'other-study' ? 'OTHER_STUDY' : study === 'THERA' ? THERA_NAMES.V0 : 'ORION_PR_2026_SELECTION'
+      }
+    }));
+    records.findFirst.mockResolvedValue(selected);
+    records.findMany.mockResolvedValue([
+      selected,
+      { ...selected, id: 'followup', instrumentId: 'old-followup', data: { user_code: 'PATIENT-1' } },
+      { ...selected, id: 'other-patient', data: { patient_code: 'PATIENT-2' } },
+      { ...selected, id: 'other-study', instrumentId: 'other-study' }
+    ]);
+    records.deleteMany.mockResolvedValue({ count: 2 });
+    await service.deletePatientVisits('basal', { user });
+    expect(codes.transaction).toHaveBeenCalledOnce();
+    expect(records.findMany).toHaveBeenCalledWith({ where: { groupId: 'study', subjectId: 'subject' } });
+    expect(records.deleteMany).toHaveBeenCalledExactlyOnceWith({
+      where: { id: { in: ['basal', 'followup'] }, AND: [{}] }
+    });
+    if (study === 'ORION') expect(reminders.deleteMany).toHaveBeenCalledOnce();
+    else expect(reminders.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('fails the whole deletion transaction if any visit is no longer deletable', async () => {
+    configureThera();
+    const selected = {
+      id: 'basal',
+      instrumentId: 'selection',
+      groupId: 'orion',
+      subjectId: 'subject',
+      data: theraBaselineData
+    };
+    records.findFirst.mockResolvedValue(selected);
+    records.findMany.mockResolvedValue([selected, { ...selected, id: 'followup' }]);
+    records.deleteMany.mockResolvedValue({ count: 1 });
+    await expect(service.deletePatientVisits('basal', { user })).rejects.toThrow('faltan permisos');
+    expect(codes.transaction).toHaveBeenCalledOnce();
   });
 
   it('rejects out-of-window THERA CSV before creating sessions', async () => {
