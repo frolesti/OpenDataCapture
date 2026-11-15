@@ -38,7 +38,13 @@ describe('OnboardingMailService', () => {
       expect.objectContaining({
         to: recipient.email,
         html: '<p>THERA reminder</p>',
-        subject: 'THERA'
+        subject: 'THERA',
+        attachments: [
+          expect.objectContaining({
+            cid: 'logo-alta',
+            filename: 'alta-medical-services-logo.png'
+          })
+        ]
       })
     );
     mail.sendMail.mockRejectedValueOnce(new Error('SMTP unavailable'));

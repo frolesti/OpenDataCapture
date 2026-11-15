@@ -107,7 +107,18 @@ export class OnboardingMailService {
     if (!this.hasMailConfig) {
       throw new ServiceUnavailableException('SMTP no configurado. Define MAIL_HOST, MAIL_USER y MAIL_PASSWORD.');
     }
+    const logoPath = this.resolveLogoPath();
+    if (!logoPath) {
+      throw new InternalServerErrorException('Alta Medical Services logo is missing');
+    }
     return this.transporter.sendMail({
+      attachments: [
+        {
+          cid: 'logo-alta',
+          filename: 'alta-medical-services-logo.png',
+          path: logoPath
+        }
+      ],
       bcc: (process.env.MAIL_AUDIT_BCC ?? process.env.MAIL_USER ?? '').trim() || undefined,
       from: process.env.MAIL_FROM ?? '"Alta Medical Services" <info@altamedicalservices.com>',
       to: email,

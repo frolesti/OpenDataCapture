@@ -12,21 +12,26 @@ export type TheraReminderEmailData = {
 };
 
 const escapeHtml = (value: string) =>
-  value.replace(
-    /[&<>"']/g,
-    (character) =>
-      ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-      })[character]!
-  );
+  value.replace(/[&<>"']/g, (character) => {
+    switch (character) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      default:
+        return '&#39;';
+    }
+  });
 
 export function renderTheraReminderEmail(data: TheraReminderEmailData) {
   const title = data.professionalTitle === 'Dra' ? 'Dra.' : data.professionalTitle === 'Dr' ? 'Dr.' : '';
-  const greeting = `${title} ${data.firstName} ${data.lastName}`.trim();
+  const salutation =
+    data.professionalTitle === 'Dra' ? 'Estimada' : data.professionalTitle === 'Dr' ? 'Estimado' : 'Hola';
+  const greeting = [salutation, title, data.firstName, data.lastName].filter(Boolean).join(' ');
   const visitName = {
     V0: 'Visita basal',
     V1: 'Primera visita',
@@ -37,34 +42,40 @@ export function renderTheraReminderEmail(data: TheraReminderEmailData) {
   const min = formatTheraDate(data.window.min);
   const max = formatTheraDate(data.window.max);
   if (!min || !max) throw new Error('Invalid THERA reminder window');
-  const heading =
-    data.stage === 'advance' ? 'Se acerca la apertura de la próxima visita' : 'El periodo de la visita ya está abierto';
+  const reminder =
+    data.stage === 'advance'
+      ? `La ventana para la ${visitName.toLowerCase()} se abre el ${min}.`
+      : `La ventana para la ${visitName.toLowerCase()} está abierta hasta el ${max}.`;
+
   return `<!doctype html>
 <html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Recordatorio THERA-SGM-2026</title></head>
-<body style="margin:0;background:#f3f6fb;color:#26334d;font-family:Arial,Helvetica,sans-serif">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
-    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background:#fff;border:1px solid #e1e5ee;border-radius:12px">
-      <tr><td style="padding:24px 32px;background:#9794f5;color:#fff"><strong style="font-size:24px">ALTA</strong><br><span style="font-size:12px">medical services</span></td></tr>
-      <tr><td style="padding:32px">
-        <p style="margin:0 0 20px">Hola, ${escapeHtml(greeting)}:</p>
-        <h1 style="font-size:22px;margin:0 0 16px">${heading}</h1>
-        <p style="line-height:1.6">Le recordamos la visita pendiente del estudio <strong>THERA-SGM-2026</strong>.</p>
-        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;line-height:1.8;border-top:1px solid #e1e5ee;border-bottom:1px solid #e1e5ee;margin:24px 0">
-          <tr><td style="padding:12px 0"><strong>Código del paciente</strong><br>${escapeHtml(data.patientCode)}</td></tr>
-          <tr><td><strong>Visita</strong><br>${data.visit.toLowerCase()} · ${visitName}</td></tr>
-          <tr><td style="padding:12px 0"><strong>Periodo permitido</strong><br>${min} — ${max}, ambos incluidos</td></tr>
-        </table>
-        <p style="line-height:1.6">${
-          data.stage === 'advance'
-            ? `Podrá abrir el formulario a partir del ${min}, siempre que las visitas anteriores estén guardadas.`
-            : `Ya puede acceder al formulario de esta visita hasta el ${max}, siempre que las visitas anteriores estén guardadas.`
-        }</p>
-        <p style="margin:28px 0"><a href="https://altahealthdata.com/instruments/accessible-instruments" style="display:inline-block;padding:14px 22px;border-radius:6px;background:#8f8df2;color:#fff;text-decoration:none;font-weight:bold">Acceder al estudio</a></p>
-        <p style="font-size:13px;line-height:1.6;color:#667085">El acceso requiere iniciar sesión. Registre la fecha real de la visita dentro del periodo permitido. Este correo no contiene respuestas clínicas ni nombres de pacientes.</p>
-        <p style="margin:24px 0 0">Atentamente,<br>El equipo de Alta Medical Services</p>
-      </td></tr>
-    </table>
-  </td></tr></table>
-</body></html>`;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Recordatorio THERA-SGM-2026</title>
+  </head>
+  <body style="background:#f6f8fb;font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:0">
+    <div style="box-sizing:border-box;max-width:520px;width:100%;margin:48px auto;background:#fff;border-radius:16px;box-shadow:0 6px 32px rgba(100,100,150,.18),0 1.5px 6px rgba(100,100,150,.1);padding:32px 24px;text-align:center;border:1px solid #ececec">
+      <div style="text-align:center;margin-bottom:24px">
+        <img src="cid:logo-alta" alt="ALTA medical services" width="170" style="display:block;margin:0 auto;max-width:100%;height:auto" />
+      </div>
+      <div style="font-size:1.1rem;margin-bottom:16px;color:#222">${escapeHtml(greeting)}:</div>
+      <p style="text-align:left;color:#333;line-height:1.6">${reminder}</p>
+      <div style="background:#f6f8fb;border-radius:8px;padding:16px;margin-bottom:24px;font-size:1rem;color:#333;text-align:left">
+        <strong>Código de paciente:</strong> ${escapeHtml(data.patientCode)}<br />
+        <strong>Periodo permitido:</strong> ${min} – ${max}
+      </div>
+      <a href="https://altahealthdata.com/auth/login" style="display:block;width:100%;box-sizing:border-box;background:#a7a6f9;color:#fff;border-radius:8px;padding:12px 0;font-size:1.1rem;font-weight:bold;text-decoration:none;margin:8px 0 16px">
+        Acceder a la plataforma
+      </a>
+      <div style="font-size:.95rem;color:#555;margin-top:24px;text-align:left;line-height:1.6">
+        Registre la fecha real de la visita dentro del periodo indicado. Las visitas anteriores deben estar guardadas.
+      </div>
+      <div style="font-size:.95rem;color:#888;text-align:left">
+        <br />Reciba un cordial saludo,<br />
+        El equipo de Alta Medical Services
+      </div>
+    </div>
+  </body>
+</html>`;
 }

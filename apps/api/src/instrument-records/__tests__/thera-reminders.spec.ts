@@ -81,11 +81,16 @@ describe('THERA reminder windows and email', () => {
         window: { min: '2024-02-22', max: '2024-03-07' }
       });
       expect(html).toContain('&lt;María&gt;');
+      expect(html).toContain('Estimada Dra. &lt;María&gt; García:');
       expect(html).toContain('22/02/2024');
       expect(html).toContain('07/03/2024');
-      expect(html).toContain('https://altahealthdata.com/instruments/accessible-instruments');
+      expect(html).toContain('src="cid:logo-alta"');
+      expect(html).toContain('https://altahealthdata.com/auth/login');
       expect(html).not.toContain('eva_dryness');
-      expect(html).toContain(stage === 'advance' ? 'Se acerca la apertura' : 'ya está abierto');
+      expect(html).toContain(
+        stage === 'advance' ? 'primera visita se abre el 22/02/2024' : 'primera visita está abierta hasta el 07/03/2024'
+      );
+      expect(html.split(/\s+/).length).toBeLessThan(180);
     }
   });
 });

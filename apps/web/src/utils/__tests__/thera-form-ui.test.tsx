@@ -198,7 +198,7 @@ describe('THERA real libui controls', () => {
     await screen.findByText('Introduzca una fecha válida (DD/MM/AAAA)');
   });
 
-  it('keeps the follow-up window visible after stored reference dates become calendar values', async () => {
+  it('keeps the stored reference date in the form without a blank visit-window input', async () => {
     const followup = definitions.createTheraInstrument!('V1');
     render(
       <FormContent
@@ -208,7 +208,8 @@ describe('THERA real libui controls', () => {
         onSubmit={vi.fn()}
       />
     );
-    await screen.findByText('Ventana permitida: 22/02/2024 a 07/03/2024 (ambos incluidos)');
+    expect(screen.queryByText(/Ventana permitida/)).toBeNull();
+    expect(screen.queryByLabelText(/Ventana permitida/)).toBeNull();
     expect(screen.getByLabelText<HTMLInputElement>('Fecha basal guardada').value).toBe('31/01/2024');
   });
 

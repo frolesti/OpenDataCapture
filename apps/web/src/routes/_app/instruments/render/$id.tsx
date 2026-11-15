@@ -14,9 +14,11 @@ import {
   getTheraVisit,
   canOpenTheraVisit,
   canStartTheraVisit,
+  formatTheraDate,
   isTheraPatientCode,
   theraPatientContext,
-  theraToday
+  theraToday,
+  theraVisitWindow
 } from '@opendatacapture/schemas/thera';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -487,6 +489,12 @@ const RouteComponent = () => {
     );
   });
   const theraContext = theraPatientContext(theraRecords, theraPatientCode);
+  const theraVisitReferenceDate =
+    theraVisit === 'V1' ? theraContext.baseline?.data.visit_date : theraContext.first?.data.visit_date;
+  const theraVisitWindowInfo =
+    isThera && theraVisit && theraVisit !== 'V0' && typeof theraVisitReferenceDate === 'string'
+      ? theraVisitWindow(theraVisit, theraVisitReferenceDate)
+      : undefined;
   const theraPatientOptionsJson = JSON.stringify(
     Object.fromEntries(
       theraPatients.map((record) => [String(record.data.patient_code), String(record.data.patient_code)])
@@ -1327,6 +1335,12 @@ const RouteComponent = () => {
           {t({ en: 'Codi de pacient desat', fr: 'Código de paciente guardado' })}: {submittedPatientCode}
         </p>
       ) : null}
+      {theraVisitWindowInfo ? (
+        <p className="mx-auto mb-4 max-w-3xl text-sm font-medium">
+          Ventana permitida: {formatTheraDate(theraVisitWindowInfo.min)} a {formatTheraDate(theraVisitWindowInfo.max)}{' '}
+          (ambos incluidos).
+        </p>
+      ) : null}
       {currentStep === 1 && !recordId && !formSubmitted ? (
         <div className="fixed right-6 top-6 z-[70]">
           <Button
@@ -1347,7 +1361,7 @@ const RouteComponent = () => {
       <div className="grow">
         <InstrumentRenderer
           key={rendererKey}
-          className="mx-auto max-w-3xl"
+          className={`mx-auto max-w-3xl ${isThera ? '[&_[data-testid=radio-group]]:!flex-col' : ''}`}
           initialData={formInitialData}
           isAdmin={currentUser?.basePermissionLevel === 'ADMIN'}
           isEditing={Boolean(recordId)}

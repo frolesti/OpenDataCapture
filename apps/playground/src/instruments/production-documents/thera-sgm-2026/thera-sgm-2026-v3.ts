@@ -419,26 +419,6 @@ if (!baseline) {
     shape.first_visit_date = dateSchema;
     groups[0]!.fields.first_visit_date = dateField('Fecha guardada de la primera visita (pauta completa)', true);
   }
-  {
-    groups[0]!.fields.visit_window_info = {
-      kind: 'dynamic',
-      deps: ['baseline_date', ...(visit === 'V1' ? [] : ['first_visit_date'])],
-      render(data) {
-        const reference = theraDateToISO(visit === 'V1' ? data.baseline_date : data.first_visit_date);
-        const window = reference ? theraVisitWindow(visit, reference) : undefined;
-        return window
-          ? {
-              ...text(
-                `Ventana permitida: ${formatTheraDate(window.min)} a ${formatTheraDate(window.max)} (ambos incluidos)`,
-                false
-              ),
-              disabled: true
-            }
-          : null;
-      }
-    };
-    shape.visit_window_info = z.string().optional();
-  }
 }
 
 if (baseline) {
@@ -856,7 +836,6 @@ const cleanInactive = (value: unknown) => {
     });
   }
   delete clean.eligibility_info;
-  delete clean.visit_window_info;
   return clean;
 };
 const parsedSchema = z
@@ -988,11 +967,7 @@ const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = 
 
 for (const group of groups) {
   for (const [key, field] of Object.entries(group.fields)) {
-    if (
-      !field ||
-      ['patient_code', 'visit_date', 'baseline_date', 'first_visit_date', 'visit_window_info'].includes(key)
-    )
-      continue;
+    if (!field || ['patient_code', 'visit_date', 'baseline_date', 'first_visit_date'].includes(key)) continue;
     group.fields[key] = {
       kind: 'dynamic',
       deps: [

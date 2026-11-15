@@ -42,6 +42,10 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 - Usar controls accessibles, compatibles amb teclat i amb el disseny existent.
   No inserir inputs amb manipulacio del DOM ni enganxar nous renderers al marge
   de l'estat i la validacio del formulari.
+- Mostrar les opcions de resposta radio una sota l'altra, no en files horitzontals,
+  tret que l'usuari demani explicitament una altra disposicio.
+- No crear camps de text deshabilitats o buits per presentar dates o instruccions.
+  Mostrar la finestra de visita com a text informatiu fora dels controls del formulari.
 
 ## Dates
 
@@ -82,7 +86,8 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   mateix pacient. Rebutjar ancores o codis falsificats a l'API.
 - A THERA, comprovar tambe la data d'avui: nomes obrir un seguiment si algun
   pacient pendent te la finestra oberta. No crear una pagina separada de selector
-  de pacient. Seleccionar-lo dins de "Datos de la visita"; una data incorrecta
+  de pacient ni duplicar el selector. Seleccionar el pacient una sola vegada dins
+  de "Datos de la visita"; una data incorrecta
   deshabilita la resta de preguntes i impedeix enviar. Conservar l'edicio historica.
 - Mostrar un sol missatge per pregunta o cel-la, combinant les causes diferents
   sense repetir el mateix text. Comprovar-ho al formulari real, no nomes a l'esquema.
