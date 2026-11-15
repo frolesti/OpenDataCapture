@@ -59,9 +59,33 @@ describe('OnboardingMailService', () => {
       expect.objectContaining({
         to: recipient.email,
         subject: 'Credenciales de acceso a Alta Medical Services',
-        html: expect.stringContaining('Estimada Dra. María García Pérez:')
+        html: expect.stringContaining('Estimada Dra. María García Pérez:'),
+        attachments: [
+          expect.objectContaining({ cid: 'logo-alta', contentDisposition: 'inline', contentType: 'image/png' })
+        ]
       })
     );
+  });
+
+  it('does not retry a welcome email with a broken logo after an SMTP failure', async () => {
+    mail.sendMail.mockRejectedValueOnce(new Error('SMTP unavailable'));
+    await expect(new OnboardingMailService().sendWelcomeEmail(recipient)).rejects.toThrow(
+      'Failed to send onboarding email'
+    );
+    expect(mail.sendMail).toHaveBeenCalledOnce();
+    expect(mail.sendMail.mock.calls[0]?.[0].attachments[0].cid).toBe('logo-alta');
+  });
+
+  it.each(['welcome', 'reminder'])('fails explicitly when the %s email logo is missing', async (kind) => {
+    const existsSync = fs.existsSync;
+    vi.spyOn(fs, 'existsSync').mockImplementation((file) => !String(file).endsWith('.png') && existsSync(file));
+    const service = new OnboardingMailService();
+    await expect(
+      kind === 'welcome'
+        ? service.sendWelcomeEmail(recipient)
+        : service.sendStudyReminder({ email: recipient.email, html: '<img src="cid:logo-alta">', subject: 'THERA' })
+    ).rejects.toThrow('logo is missing');
+    expect(mail.sendMail).not.toHaveBeenCalled();
   });
 
   it('never sends an email if the title has not been confirmed', async () => {

@@ -27,6 +27,8 @@ describe('investigator welcome email', () => {
     expect(html).not.toContain('Hola ');
     expect(html).toContain('https://altahealthdata.com/auth/login');
     expect(html).toContain('mailto:info@altamedicalservices.com');
+    expect(template).toContain('src="./alta-medical-services-logo.png"');
+    expect(html).toContain('src="cid:logo-alta"');
   });
 
   it.each([undefined, null, '', 'Doctor', 'FEMALE'])('rejects missing or unconfirmed title %s', (professionalTitle) => {

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { Injectable, InternalServerErrorException, Logger, ServiceUnavailableException } from '@nestjs/common';
 import nodemailer from 'nodemailer';
 
-import { renderWelcomeEmail, type WelcomeEmailData } from './welcome-email';
+import { readMailTemplate, renderWelcomeEmail, type WelcomeEmailData } from './welcome-email';
 
 @Injectable()
 export class OnboardingMailService {
@@ -58,31 +58,12 @@ export class OnboardingMailService {
       subject: 'Credenciales de acceso a Alta Medical Services'
     };
 
-    const logoPath = this.resolveLogoPath();
-    if (logoPath) {
-      mailOptions.attachments = [
-        {
-          cid: 'logo-alta',
-          filename: 'alta-medical-services-logo.png',
-          path: logoPath
-        }
-      ];
-    }
+    mailOptions.attachments = [this.logoAttachment()];
 
     try {
       const info: nodemailer.SentMessageInfo = await this.transporter.sendMail(mailOptions);
       return info;
     } catch (error) {
-      if (mailOptions.attachments) {
-        delete mailOptions.attachments;
-        try {
-          const info: nodemailer.SentMessageInfo = await this.transporter.sendMail(mailOptions);
-          return info;
-        } catch (retryError) {
-          this.logger.error(`Failed to send onboarding email after retry: ${String(retryError)}`);
-          throw new InternalServerErrorException('Failed to send onboarding email');
-        }
-      }
       this.logger.error(`Failed to send onboarding email: ${String(error)}`);
       throw new InternalServerErrorException('Failed to send onboarding email');
     }
@@ -107,18 +88,8 @@ export class OnboardingMailService {
     if (!this.hasMailConfig) {
       throw new ServiceUnavailableException('SMTP no configurado. Define MAIL_HOST, MAIL_USER y MAIL_PASSWORD.');
     }
-    const logoPath = this.resolveLogoPath();
-    if (!logoPath) {
-      throw new InternalServerErrorException('Alta Medical Services logo is missing');
-    }
     return this.transporter.sendMail({
-      attachments: [
-        {
-          cid: 'logo-alta',
-          filename: 'alta-medical-services-logo.png',
-          path: logoPath
-        }
-      ],
+      attachments: [this.logoAttachment()],
       bcc: (process.env.MAIL_AUDIT_BCC ?? process.env.MAIL_USER ?? '').trim() || undefined,
       from: process.env.MAIL_FROM ?? '"Alta Medical Services" <info@altamedicalservices.com>',
       to: email,
@@ -128,31 +99,32 @@ export class OnboardingMailService {
   }
 
   private renderTemplate(data: WelcomeEmailData) {
-    const templatePath = this.resolveTemplatePath();
-    if (!templatePath) {
-      this.logger.error('Onboarding email template is missing');
-      throw new InternalServerErrorException('Onboarding email template is missing');
-    }
+    return renderWelcomeEmail(readMailTemplate(), data);
+  }
 
-    return renderWelcomeEmail(fs.readFileSync(templatePath, 'utf8'), data);
+  private logoAttachment(): nodemailer.Attachment {
+    const logoPath = this.resolveLogoPath();
+    if (!logoPath) {
+      this.logger.error('Alta Medical Services logo is missing');
+      throw new InternalServerErrorException('Alta Medical Services logo is missing');
+    }
+    return {
+      cid: 'logo-alta',
+      contentDisposition: 'inline',
+      contentType: 'image/png',
+      filename: 'alta-medical-services-logo.png',
+      path: logoPath
+    };
   }
 
   private resolveLogoPath() {
     const candidates = [
       path.resolve(process.cwd(), 'public/alta-medical-services-logo.png'),
+      path.resolve(process.cwd(), 'apps/api/public/alta-medical-services-logo.png'),
       path.resolve(process.cwd(), '../public/alta-medical-services-logo.png'),
       path.resolve(process.cwd(), '../../alta-medical-services-logo.png'),
       path.resolve(process.cwd(), '../alta-medical-services-logo.png'),
       path.resolve(process.cwd(), 'alta-medical-services-logo.png')
-    ];
-    return candidates.find((candidate) => fs.existsSync(candidate));
-  }
-
-  private resolveTemplatePath() {
-    const candidates = [
-      path.resolve(process.cwd(), 'public/mail-template.html'),
-      path.resolve(process.cwd(), '../public/mail-template.html'),
-      path.resolve(process.cwd(), 'apps/api/public/mail-template.html')
     ];
     return candidates.find((candidate) => fs.existsSync(candidate));
   }

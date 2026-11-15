@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InstrumentsService } from '../../instruments/instruments.service';
 import { OnboardingMailService } from '../../users/onboarding-mail.service';
+import { readMailTemplate } from '../../users/welcome-email';
 import { renderTheraReminderEmail } from '../thera-reminder-email';
 import { getTheraReminders, TheraRemindersService } from '../thera-reminders.service';
 
@@ -90,7 +91,16 @@ describe('THERA reminder windows and email', () => {
       expect(html).toContain(
         stage === 'advance' ? 'primera visita se abre el 22/02/2024' : 'primera visita está abierta hasta el 07/03/2024'
       );
-      expect(html.split(/\s+/).length).toBeLessThan(180);
+      const template = readMailTemplate();
+      expect(html.match(/<style>[\s\S]*?<\/style>/)?.[0]).toBe(template.match(/<style>[\s\S]*?<\/style>/)?.[0]);
+      expect(html.match(/<div class="signature">[\s\S]*?<\/div>/)?.[0]).toBe(
+        template.match(/<div class="signature">[\s\S]*?<\/div>/)?.[0]
+      );
+      expect(html).toContain('<div class="card">');
+      expect(html).toContain('<a class="cta"');
+      expect(html).not.toContain('{{');
+      const visibleText = html.replace(/<style>[\s\S]*?<\/style>/, '').replace(/<[^>]*>/g, ' ');
+      expect(visibleText.trim().split(/\s+/).length).toBeLessThan(110);
     }
   });
 });

@@ -39,7 +39,21 @@ export function renderWelcomeEmail(template: string, data: WelcomeEmailData) {
     password: data.password,
     username: data.username
   };
-  return template.replace(/\{\{(greeting|username|password)\}\}/g, (_match, key: keyof typeof values) =>
-    escapeHtml(values[key])
-  );
+  return template
+    .replace('src="./alta-medical-services-logo.png"', 'src="cid:logo-alta"')
+    .replace(/\{\{(greeting|username|password)\}\}/g, (_match, key: keyof typeof values) => escapeHtml(values[key]));
+}
+import fs from 'node:fs';
+import path from 'node:path';
+
+export function readMailTemplate() {
+  const templatePath = [
+    'public/mail-template.html',
+    '../public/mail-template.html',
+    'apps/api/public/mail-template.html'
+  ]
+    .map((candidate) => path.resolve(process.cwd(), candidate))
+    .find((candidate) => fs.existsSync(candidate));
+  if (!templatePath) throw new Error('Onboarding email template is missing');
+  return fs.readFileSync(templatePath, 'utf8');
 }
