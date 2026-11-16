@@ -33,7 +33,12 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 - Afegir ` *` a cada pregunta obligatoria quan sigui visible, inclosos els
   camps condicionals i les columnes obligatories de taules repetibles.
   No marcar com obligatoris camps opcionals ni informatius deshabilitats.
-- Per a l'EVA, usar `kind: 'number', variant: 'slider', min: 0, max: 10`.
+- A THERA, per peticio explicita, les dues EVA de totes les visites son inputs
+  numerics `kind: 'number', variant: 'input', min: 1, max: 10`, amb validacio
+  d'enters i sense resposta per defecte. No tornar-hi a posar sliders, ni
+  instruccions o etiquetes 0-10. No modificar les edicions historiques.
+- Als altres estudis, per a l'EVA, usar el rang documentat al CRF.
+  Quan sigui un slider 0-10, usar `kind: 'number', variant: 'slider', min: 0, max: 10`.
   Indicar 0 i 10, el significat dels extrems i el valor seleccionat.
   Mostrar una linia de rang contrastada i instruccions visibles per seleccionar
   la puntuacio. No deixar aquestes instruccions nomes dins d'un tooltip.
@@ -44,6 +49,9 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   de l'estat i la validacio del formulari.
 - Mostrar les opcions de resposta radio una sota l'altra, no en files horitzontals,
   tret que l'usuari demani explicitament una altra disposicio.
+  A THERA, alinear-les a l'esquerra com les preguntes, tambe les puntuacions
+  numeriques i en pantalles amples. Comprovar-ho al renderer compartit, no
+  nomes a la ruta web ni nomes amb la direccio vertical.
 - No crear camps de text deshabilitats o buits per presentar dates o instruccions.
   Mostrar la finestra de visita com a text informatiu fora dels controls del formulari.
 
@@ -75,6 +83,12 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   "Resultado del cribado" ni un fals input informatiu per a aquest resultat.
 - Recollir edat, EVA i VHI abans de fer-los servir per determinar l'aptitud.
   No crear dependencies circulars que impedeixin demostrar un criteri.
+- A THERA V0, mostrar la resta de seccions quan hi hagi consentiment afirmatiu,
+  data de consentiment valida i totes les inclusions afirmatives. No esperar
+  l'edat, les exclusions ni els resultats EVA/VHI per mostrar-les, ni amagar-les
+  quan canviin aquestes respostes. Conservar les dependencies especifiques
+  de cada pregunta i tots els bloquejos de validacio i de data de visita.
+  La visibilitat no substitueix ni determina l'aptitud clinica.
 - Verificar edat >=18 i inclusio 3: VHI <15 o sequedat EVA >=5 o dispareunia
   EVA >=5. Assenyalar inconsistencies als camps corresponents.
 - Requerir els camps actius i eliminar valors inactius abans de persistir.
@@ -137,10 +151,17 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   Regenerar totes les visites i els bundles i executar la comprovacio `--check`.
 - Compilar i interpretar cada formulari amb el bundler real i validar-lo amb
   `$AnyInstrument`. Comprovar tambe els controls reals de libui, no nomes mocks.
-- Provar els errors al costat de cada criteri, els camps obligatoris, 0 i 10,
+- Seleccionar segons el canvi les proves dels errors al costat de cada criteri,
+  els camps obligatoris, els extrems
+  del rang (1 i 10 a THERA),
   dates impossibles, limits de visita, taules repetibles, esborranys i edicio.
 - Desar els fitxers, executar la validacio mes estreta disponible i consultar
   Problems de tot el workspace. Identificar explicitament errors previs.
+  Aplicar la validacio proporcional de les instruccions generals: no fer una
+  compilacio web completa per canvis petits de formulari o estil. Regenerar
+  instruments no implica compilar l'aplicacio web. No repetir proves superades
+  ni reiniciar processos encallats carregant dependencies; comprovar la causa
+  i usar una alternativa acotada, indicant qualsevol verificacio pendent.
 - No publicar, desplegar, fer commits o crear pacients de prova a produccio
   sense autoritzacio. No incloure canvis locals aliens ni documentacio sobrera
   en una pujada de codi.

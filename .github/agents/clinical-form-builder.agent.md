@@ -35,7 +35,9 @@ validation, date/calendar presentation and measurable verification.
 - V1: V0 + 1 calendar month +/- 7 days. V2: actual V1 + 3 months +/- 14 days. V3: actual V1 + 6 months +/- 28 days. V4: actual V1 + 12 months +/- 45 days. Clamp month-end dates; block submissions outside windows. Retrieve anchors automatically.
 - Patient codes follow ORION allocation, replacing `OR` with `TH`.
 - Show consent, inclusion and exclusion failures on their own fields and block submission, as in ORION. Remove the screening-result pseudo-field. Preserve historical records and block follow-up without eligible baseline. Verify age >=18 and inclusion 3 against VHI <15 OR dryness EVA >=5 OR dyspareunia EVA >=5.
-- Mark visible required questions with an asterisk, including conditional safety-table fields. Use an explicit 0-10 slider for each EVA with no implicit answer.
+- Mark visible required questions with an asterisk, including conditional safety-table fields. Use 1-10 integer numeric inputs for both EVA questions in every THERA visit, with no implicit answer. Do not restore sliders or 0-10 labels.
+- Keep radio answers vertical and left-aligned, including numeric VHI/vulvar scores at wide viewport sizes. Apply this in the shared renderer so web and Playground agree.
+- In V0, reveal the remaining clinical sections once consent is affirmative, its date is valid and all inclusions are affirmative. Do not wait for age, exclusions or EVA/VHI scores, and do not hide those sections when these answers change. Preserve question-specific dependencies, visit-date locks and all clinical submission validation.
 - Cervantes has 15 source items. Items 12-15 depend on sexual activity during the last four weeks. No undocumented FSFI/Cervantes/PGI-I totals.
 - Preserve source pH options pending correction; do not infer pH scoring from a numeric value. Do not classify vulvar total 5 until the overlap is resolved.
 - Repeated safety events: free-text causality and action/evolution, technical ongoing/resolved status and free-text status detail; resolution date conditional. No manual investigator signature/initials fields.
@@ -43,9 +45,9 @@ validation, date/calendar presentation and measurable verification.
 
 ## Verification and delivery
 
-1. Bundle every entry point with the real instrument bundler and interpret it with runtime-compatible imports. Validate bundle shape using the API's schema.
-2. Test consent and eligibility boundaries, missing active fields, hidden stale values, repeated safety events, score bounds, invalid calendar dates, exact visit limits, leap years/month ends, JSON round-trips, draft resume and record edits.
+1. When instrument definitions change, regenerate affected entry points with the real instrument bundler, interpret them with runtime-compatible imports and validate bundle shape using the API's schema. This does not require building the web application.
+2. Select focused tests for the behavior changed: consent and eligibility boundaries, missing active fields, hidden stale values, repeated safety events, score bounds, invalid calendar dates, exact visit limits, leap years/month ends, JSON round-trips, draft resume or record edits. Do not rerun this entire inventory for every small change.
 3. Wire create, update and bulk upload consistently; changing an anchor must not invalidate existing follow-ups silently. Check permissions, study/hospital assignment and authenticated session ownership.
-4. Run narrow executable checks for touched code, save files, then query full-workspace VS Code Problems. Restart the TS server if diagnostics are demonstrably stale. Explicitly identify remaining pre-existing errors.
+4. Follow the repository's proportionate validation rules: no routine full web builds, no repeated cold starts of stalled tests, and no repetition of applicable successful checks. Use existing sessions where available and narrow alternatives when dependency loading stalls. Run narrow executable checks for touched code, save files, then query full-workspace VS Code Problems. Restart the TS server if diagnostics are demonstrably stale. Explicitly identify remaining pre-existing errors and unverified behavior.
 5. Before modifying published definitions, ask for the latest published edition and increment it. Never assume the next edition.
 6. Deliver source, source PDF, ready-to-upload bundles, and directly related usage/limitations documentation. State precisely which checks passed and which live workflows remain unverified. Never promise that a form will always work based on compilation alone.

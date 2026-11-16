@@ -70,7 +70,7 @@ function fixture(instrument: AnyUnilingualFormInstrument, visit: string): Record
     consent_date: '2024-01-31',
     age: 18,
     eva_dryness: 5,
-    eva_dyspareunia: 0,
+    eva_dyspareunia: 1,
     weight: 65,
     height: 165,
     ...Object.fromEntries(THERA_INCLUSIONS.map((key) => [key, 'si'])),
@@ -181,13 +181,13 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
   for (const key of ['eva_dryness', 'eva_dyspareunia']) {
     verify(
       renderedFields[key]?.kind === 'number' &&
-        renderedFields[key].variant === 'slider' &&
-        renderedFields[key].min === 0 &&
+        renderedFields[key].variant === 'input' &&
+        renderedFields[key].min === 1 &&
         renderedFields[key].max === 10,
-      `${visit}: ${key} is an explicit 0-10 slider`
+      `${visit}: ${key} is a bounded 1-10 numeric input`
     );
     verify(!form.initialValues || form.initialValues[key] === undefined, `${visit}: ${key} has no implicit score`);
-    for (const value of [0, 10]) {
+    for (const value of [1, 10]) {
       const answers = {
         ...data,
         ...Object.fromEntries(THERA_VAGINAL_ITEMS.map((item) => [item, 2])),
@@ -198,7 +198,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
         `${visit}: ${key} accepts endpoint ${value}`
       );
     }
-    for (const value of [-1, 11, 0.5]) {
+    for (const value of [-1, 0, 11, 1.5]) {
       verify(
         !(await form.validationSchema.safeParseAsync({ ...data, [key]: value })).success,
         `${visit}: ${key} rejects invalid score ${value}`
@@ -330,6 +330,24 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     );
   }
   if (visit === 'v0') {
+    const screening = {
+      informed_consent: 'si',
+      consent_date: data.consent_date,
+      visit_date: data.visit_date,
+      ...Object.fromEntries(THERA_INCLUSIONS.map((key) => [key, 'si']))
+    };
+    for (const key of ['weight', 'height', 'fsfi_1', 'vulvar_labia', 'serious_adverse_event']) {
+      const field = groups.flatMap((group) => Object.entries(group.fields)).find(([name]) => name === key)?.[1];
+      assert(field?.kind === 'dynamic', `V0: expected dynamic field ${key}`);
+      const visible = field.render(screening);
+      verify(Boolean(visible && !visible.disabled), `V0: ${key} appears after consent and inclusions without scores`);
+      verify(
+        Boolean(field.render({ ...screening, age: 17, eva_dryness: 1, eva_dyspareunia: 1, exclusion_1: 'si' })),
+        `V0: ${key} does not disappear when clinical answers change`
+      );
+      verify(field.render({ ...screening, consent_date: undefined }) === null, `V0: ${key} waits for consent date`);
+      verify(field.render({ ...screening, inclusion_1: undefined }) === null, `V0: ${key} waits for inclusions`);
+    }
     const withoutConsent = await form.validationSchema.safeParseAsync({
       patient_code: data.patient_code,
       site_hospital: data.site_hospital,

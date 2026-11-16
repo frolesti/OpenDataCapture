@@ -1361,7 +1361,7 @@ const RouteComponent = () => {
       <div className="grow">
         <InstrumentRenderer
           key={rendererKey}
-          className={`mx-auto max-w-3xl ${isThera ? '[&_[data-testid=radio-group]]:!flex-col' : ''}`}
+          className="mx-auto max-w-3xl"
           initialData={formInitialData}
           isAdmin={currentUser?.basePermissionLevel === 'ADMIN'}
           isEditing={Boolean(recordId)}

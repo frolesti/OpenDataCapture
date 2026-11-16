@@ -242,15 +242,7 @@ const dateSchema = z
     return canonical;
   });
 const optionalDate = dateSchema.optional();
-const eligibilityDeps = [
-  'informed_consent',
-  ...THERA_INCLUSIONS,
-  ...THERA_EXCLUSIONS,
-  'age',
-  'eva_dryness',
-  'eva_dyspareunia',
-  ...THERA_VAGINAL_ITEMS
-];
+const clinicalVisibilityDeps = ['informed_consent', 'consent_date', ...THERA_INCLUSIONS];
 
 const requiredLabel = (label: string) => (label.endsWith(' *') ? label : `${label} *`);
 const radio = (label: string, options: { [key: string]: string } = yesNo): FormInstrument.StringField<'en'> => ({
@@ -392,11 +384,19 @@ const groups: Group[] = [
     }
   }
 ];
-const active = (data: Values) => !baseline || isTheraEligible(data);
+const active = (data: Values) =>
+  !baseline ||
+  (data.informed_consent === 'si' &&
+    Boolean(theraDateToISO(data.consent_date)) &&
+    THERA_INCLUSIONS.every((key) => data[key] === 'si'));
 const addGroup = (title: string, fields: Fields, description?: string) =>
   groups.push({ title, fields, ...(description ? { description } : {}) });
 const clinical = (field: Field, extraDeps: string[] = [], predicate: (data: Values) => boolean = () => true) =>
-  conditional(field, [...(baseline ? eligibilityDeps : []), ...extraDeps], (data) => active(data) && predicate(data));
+  conditional(
+    field,
+    [...(baseline ? clinicalVisibilityDeps : []), ...extraDeps],
+    (data) => active(data) && predicate(data)
+  );
 const requiredWhen: { deps: string[]; key: string; predicate: (data: Values) => boolean }[] = [];
 
 function addClinical(
@@ -474,13 +474,13 @@ if (baseline) {
     ['eva_dryness', 'Sequedad vaginal'],
     ['eva_dyspareunia', 'Dispareunia (dolor)']
   ]) {
-    shape[key!] = z.number().int().min(0).max(10).optional();
+    shape[key!] = z.number().int().min(1).max(10).optional();
     const field: Field = {
       kind: 'number',
-      variant: 'slider',
-      label: requiredLabel(`${label!} (0–10)`),
-      description: 'Seleccione un número entero: 0 = sin síntomas; 10 = máxima intensidad imaginable.',
-      min: 0,
+      variant: 'input',
+      label: requiredLabel(`${label!} (1–10)`),
+      description: 'Introduzca un número entero del 1 al 10. 10 = máxima intensidad imaginable.',
+      min: 1,
       max: 10
     };
     evaFields[key!] = baseline
@@ -490,7 +490,7 @@ if (baseline) {
   addGroup(
     'Escala visual análoga para síndrome genitourinario',
     evaFields,
-    'De 0 (sin síntomas) a 10 (máxima intensidad imaginable). 1-3 leve; 4-6 moderado; 7-10 intenso.'
+    'Introduzca una puntuación del 1 al 10. 1-3 leve; 4-6 moderado; 7-10 intenso (máxima intensidad: 10).'
   );
   if (fullAssessment) {
     const vaginalFields: Fields = {};

@@ -2,6 +2,7 @@ import { replacer } from '@douglasneuroinformatics/libjs';
 import { Button, Dialog, Form, Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { AnyUnilingualFormInstrument, FormInstrument } from '@opendatacapture/runtime-core';
+import { getTheraVisit } from '@opendatacapture/schemas/thera';
 import { InfoIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import type { Promisable } from 'type-fest';
@@ -35,6 +36,7 @@ export const FormContent = ({
     });
 
   const contentForForm = instrument.content;
+  const isThera = Boolean(getTheraVisit(instrument.internal.name));
 
   const hasRenderableContent =
     (Array.isArray(contentForForm) && contentForForm.length > 0) ||
@@ -96,7 +98,10 @@ export const FormContent = ({
   };
 
   return (
-    <div ref={formRef} className="space-y-6">
+    <div
+      ref={formRef}
+      className={`space-y-6 ${isThera ? '[&_[data-testid=radio-group]]:!flex-col [&_[data-testid=radio-group]]:!items-start [&_[data-testid=radio-group]]:!justify-start' : ''}`}
+    >
       <div className="flex gap-2">
         <Heading variant="h4">{title}</Heading>
         <Dialog>

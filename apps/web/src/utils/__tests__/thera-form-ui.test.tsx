@@ -22,6 +22,9 @@ vi.mock('@douglasneuroinformatics/libui/hooks', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@douglasneuroinformatics/libui/hooks')>()),
   useDownload: () => download
 }));
+vi.mock('@opendatacapture/react-core', async () => ({
+  CopyButton: (await import('../../../../../packages/react-core/src/components/CopyButton')).CopyButton
+}));
 
 const source = readFileSync(
   resolve(
@@ -52,7 +55,7 @@ const initialData = {
   age: 18,
   consent_date: '2024-01-31',
   eva_dryness: 5,
-  eva_dyspareunia: 0,
+  eva_dyspareunia: 1,
   informed_consent: 'si',
   patient_code: 'TH-01-01',
   site_hospital: 'Alta Medical Services',
@@ -129,7 +132,7 @@ describe('THERA real libui controls', () => {
     const errors = within(group as HTMLElement).getAllByText(/La fecha no puede ser futura/);
     expect(errors).toHaveLength(1);
     expect(errors[0]?.textContent).toContain('22/02/2024');
-    expect(screen.getAllByRole('slider')[0]?.getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByLabelText<HTMLInputElement>('Sequedad vaginal (1–10) *').disabled).toBe(true);
   });
 
   it.each(protocol.THERA_VISIT_ORDER)('blocks an actual incomplete submission for %s', async (visit) => {
@@ -229,26 +232,106 @@ describe('THERA real libui controls', () => {
     }
   );
 
-  it('offers real 0-10 sliders, requires an explicit score and permits zero directly', async () => {
-    const { changes } = renderBaseline({ eva_dryness: undefined, eva_dyspareunia: undefined });
-    const sliders = screen.getAllByRole('slider');
-    expect(sliders).toHaveLength(2);
-    for (const slider of sliders) {
-      expect(slider.getAttribute('aria-valuemin')).toBe('0');
-      expect(slider.getAttribute('aria-valuemax')).toBe('10');
+  it.each(protocol.THERA_VISIT_ORDER)(
+    'uses bounded 1-10 numeric inputs without default scores or sliders in %s',
+    async (visit) => {
+      const changes = vi.fn<(data: { [key: string]: unknown }) => void>();
+      const submit = vi.fn();
+      const visitDate =
+        visit === 'V0'
+          ? '2024-01-31'
+          : protocol.theraVisitWindow(visit, visit === 'V1' ? '2024-01-31' : '2024-02-29')!.min;
+      render(
+        <FormContent
+          revalidateOnChange
+          initialValues={{
+            ...initialData,
+            baseline_date: '2024-01-31',
+            first_visit_date: '2024-02-29',
+            visit_date: visitDate,
+            eva_dryness: undefined,
+            eva_dyspareunia: undefined
+          }}
+          instrument={definitions.createTheraInstrument!(visit)}
+          onDataChange={changes}
+          onSubmit={submit}
+        />
+      );
+      expect(screen.queryAllByRole('slider')).toHaveLength(0);
+      for (const label of ['Sequedad vaginal', 'Dispareunia (dolor)']) {
+        const input = screen.getByLabelText<HTMLInputElement>(`${label} (1–10) *`);
+        const key = label === 'Sequedad vaginal' ? 'eva_dryness' : 'eva_dyspareunia';
+        expect(input.value).toBe('');
+        expect(input.min).toBe('1');
+        expect(input.max).toBe('10');
+        expect(input.disabled).toBe(false);
+        expect(changes.mock.lastCall?.[0][key]).toBeUndefined();
+        fireEvent.change(input, { target: { value: '0' } });
+        expect(input.value).toBe('');
+        fireEvent.change(input, { target: { value: '1' } });
+        await waitFor(() => expect(changes.mock.lastCall?.[0][key]).toBe(1));
+        fireEvent.change(input, { target: { value: '10' } });
+        await waitFor(() => expect(changes.mock.lastCall?.[0][key]).toBe(10));
+        fireEvent.change(input, { target: { value: '11' } });
+        expect(input.value).toBe('10');
+        fireEvent.change(input, { target: { value: '1.5' } });
+        fireEvent.blur(input);
+        const group = input.closest('[data-field-group]')!;
+        await waitFor(() => expect(group.textContent).toContain('integer'));
+        fireEvent.submit(document.querySelector('form')!);
+        expect(submit).not.toHaveBeenCalled();
+      }
     }
-    for (const track of screen.getAllByTestId('slider-track')) {
-      expect(track.style.opacity).toBe('1');
-      expect(track.style.height).toBe('6px');
+  );
+
+  it.each(protocol.THERA_VISIT_ORDER)('keeps all radio options vertical and left-aligned in %s', (visit) => {
+    render(
+      <FormContent
+        initialValues={{ ...initialData, inclusion_2: 'si' }}
+        instrument={definitions.createTheraInstrument!(visit)}
+        onSubmit={vi.fn()}
+      />
+    );
+    const root = screen.getByTestId('form-content').closest('.space-y-6')!;
+    expect(root.classList.contains('[&_[data-testid=radio-group]]:!flex-col')).toBe(true);
+    expect(root.classList.contains('[&_[data-testid=radio-group]]:!items-start')).toBe(true);
+    expect(root.classList.contains('[&_[data-testid=radio-group]]:!justify-start')).toBe(true);
+    expect(root.querySelector('[data-testid="radio-group"]')).not.toBeNull();
+  });
+
+  it('reveals clinical questions after consent and inclusions without waiting for age, exclusions or scores', async () => {
+    const { submit } = renderBaseline({
+      consent_date: undefined,
+      inclusion_2: undefined,
+      age: undefined,
+      eva_dryness: undefined,
+      eva_dyspareunia: undefined,
+      ...Object.fromEntries(
+        [...protocol.THERA_EXCLUSIONS, ...protocol.THERA_VAGINAL_ITEMS].map((key) => [key, undefined])
+      )
+    });
+    expect(screen.queryByLabelText('Peso (kg) *')).toBeNull();
+    const consentDate = screen.getByLabelText('Fecha de firma del consentimiento *');
+    fireEvent.focus(consentDate);
+    fireEvent.change(consentDate, { target: { value: '31/01/2024' } });
+    fireEvent.blur(consentDate);
+    expect(screen.queryByLabelText('Peso (kg) *')).toBeNull();
+    const inclusion = document.querySelector('[data-field-group="inclusion_2"]') as HTMLElement;
+    fireEvent.click(within(inclusion).getByRole('radio', { name: 'Sí' }));
+    await screen.findByLabelText('Peso (kg) *');
+    for (const key of ['fsfi_1', 'vulvar_labia', 'serious_adverse_event']) {
+      expect(document.querySelector(`[data-field-group="${key}"]`)).not.toBeNull();
     }
-    expect(
-      screen.getAllByText('Seleccione un número entero: 0 = sin síntomas; 10 = máxima intensidad imaginable.')
-    ).toHaveLength(2);
-    expect(changes.mock.lastCall?.[0].eva_dryness).toBeUndefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Sequedad vaginal (0–10) *: 0' }));
-    await waitFor(() => expect(changes.mock.lastCall?.[0].eva_dryness).toBe(0));
-    fireEvent.keyDown(screen.getAllByRole('slider')[0]!, { key: 'End' });
-    await waitFor(() => expect(changes.mock.lastCall?.[0].eva_dryness).toBe(10));
+    fireEvent.change(screen.getByLabelText('Edad (años) *'), { target: { value: '17' } });
+    fireEvent.change(screen.getByLabelText('Sequedad vaginal (1–10) *'), { target: { value: '1' } });
+    const exclusion = document.querySelector('[data-field-group="exclusion_1"]') as HTMLElement;
+    fireEvent.click(within(exclusion).getByRole('radio', { name: 'Sí' }));
+    expect(screen.getByLabelText('Peso (kg) *')).toBeDefined();
+    fireEvent.submit(document.querySelector('form')!);
+    await waitFor(() =>
+      expect(within(exclusion).getByText('Este criterio de exclusión debe marcarse como "No".')).toBeDefined()
+    );
+    expect(submit).not.toHaveBeenCalled();
   });
 
   describe('instrument summary CSV', () => {
