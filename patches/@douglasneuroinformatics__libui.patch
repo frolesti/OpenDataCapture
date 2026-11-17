@@ -1,6 +1,44 @@
 --- a/dist/components.js
 +++ b/dist/components.js
-@@ -2795,6 +2795,7 @@
+@@ -1889,8 +1889,9 @@
+ import { jsx as jsx75, jsxs as jsxs22 } from "react/jsx-runtime";
+ var CALENDAR_ANIMATION_DURATION = 0.2;
+ var Calendar = forwardRef58(function Calendar2(props, ref) {
+-  const { t } = useTranslation("libui");
+-  const firstDay = new Date(props.year, props.month).getDay();
++  const { resolvedLanguage, t } = useTranslation("libui");
++  const mondayFirst = /^(ca|es|fr)(-|$)/.test(resolvedLanguage ?? "") || t("days.monday") === "Dilluns";
++  const firstDay = (new Date(props.year, props.month).getDay() + (mondayFirst ? 6 : 0)) % 7;
+   const lastDay = new Date(props.year, props.month + 1, 0).getDate();
+   const days = range3(1, lastDay + 1);
+   const daysOfWeek = [
+@@ -1902,6 +1903,7 @@
+     t("days.friday"),
+     t("days.saturday")
+   ];
++  if (mondayFirst) daysOfWeek.push(daysOfWeek.shift());
+   return /* @__PURE__ */ jsx75(AnimatePresence2, { initial: false, mode: "wait", children: /* @__PURE__ */ jsx75(
+     motion2.div,
+     {
+@@ -1911,7 +1913,7 @@
+       transition: { duration: CALENDAR_ANIMATION_DURATION },
+       children: /* @__PURE__ */ jsxs22("div", { className: "grid h-56 w-56 grid-cols-7 text-sm", ref, children: [
+         daysOfWeek.map((label) => /* @__PURE__ */ jsx75("div", { className: "flex h-8 w-8 items-center justify-center text-muted-foreground", children: label.charAt(0).toUpperCase() }, label)),
+-        /* @__PURE__ */ jsx75("div", { style: { gridColumn: `span ${firstDay} / span ${firstDay}` } }),
++        firstDay > 0 && /* @__PURE__ */ jsx75("div", { style: { gridColumn: `span ${firstDay} / span ${firstDay}` } }),
+         days.map((day) => /* @__PURE__ */ jsx75(
+           "button",
+           {
+@@ -2477,7 +2479,7 @@
+       return void 0;
+     } else {
+       const parsedValue = parseNumber(value2);
+-      if (parsedValue >= min && parsedValue <= max) {
++      if (Number.isFinite(parsedValue)) {
+         return parsedValue;
+       }
+     }
+@@ -2795,6 +2797,7 @@
                "aria-disabled": disabled,
                className: "bg-primary relative h-1.5 w-full grow overflow-hidden rounded-full opacity-15 aria-disabled:cursor-not-allowed aria-disabled:opacity-10",
                "data-testid": "slider-track",
@@ -8,7 +46,7 @@
                children: /* @__PURE__ */ jsx109(Range, { className: "bg-primary absolute h-full" })
              }
            ),
-@@ -2828,8 +2829,7 @@
+@@ -2828,8 +2831,7 @@
  }) => {
    return /* @__PURE__ */ jsxs36(FieldGroup, { name, children: [
      /* @__PURE__ */ jsxs36(FieldGroup.Row, { children: [
@@ -18,7 +56,7 @@
      ] }),
      /* @__PURE__ */ jsxs36(FieldGroup.Row, { children: [
        /* @__PURE__ */ jsx110(
-@@ -2843,8 +2843,22 @@
+@@ -2843,8 +2845,22 @@
            onValueChange: ([value2]) => setValue(value2)
          }
        ),
@@ -42,7 +80,7 @@
      /* @__PURE__ */ jsx110(FieldGroup.Error, { error })
    ] });
  };
-@@ -3021,38 +3035,69 @@
+@@ -3021,38 +3037,69 @@
  import { toBasicISOString as toBasicISOString2 } from "@douglasneuroinformatics/libjs";
  import { jsx as jsx116, jsxs as jsxs40 } from "react/jsx-runtime";
  var isValidDateString = (s) => /^(\d{4})-((0[1-9])|(1[0-2]))-((0[1-9])|([12])[0-9]|3[01])$/.test(s);
@@ -119,7 +157,7 @@
            onFocus: () => setIsInputFocused(true)
          }
        ) }),
-@@ -3060,7 +3105,14 @@
+@@ -3060,7 +3107,14 @@
          DatePicker,
          {
            onSelection: (value2) => {
@@ -135,7 +173,18 @@
              setIsDatePickerOpen(false);
            }
          }
-@@ -3761,15 +3813,61 @@
+@@ -3493,9 +3547,8 @@
+     }
+   };
+   return /* @__PURE__ */ jsxs48("div", { className: "flex flex-col gap-4", children: [
+-    /* @__PURE__ */ jsx129(Heading, { className: "font-medium", variant: "h5", children: label }),
+     /* @__PURE__ */ jsx129("div", { className: "flex flex-col gap-6", children: arrayValue.map((fields, i) => /* @__PURE__ */ jsxs48("div", { className: "flex flex-col gap-4", children: [
+-      /* @__PURE__ */ jsx129(Label3, { className: "font-semibold italic", children: label + " " + (i + 1) }),
++      /* @__PURE__ */ jsx129(Label3, { className: "font-semibold", children: label.replace(/\s*\*$/, "") + " " + (i + 1) + (label.endsWith("*") ? " *" : "") }),
+       Object.keys(fields).map((name) => {
+         const field = fieldset[name];
+         const fieldProps = field?.kind === "dynamic" ? field.render.call(void 0, fields) : field;
+@@ -3761,15 +3814,61 @@
      }
    };
    const isGrouped = Array.isArray(content);
@@ -205,7 +254,7 @@
    };
    useEffect11(() => {
      setErrors({});
-@@ -3782,7 +3880,8 @@
+@@ -3782,7 +3881,8 @@
        autoComplete: "off",
        className: twMerge("relative flex w-full flex-col", !isGrouped && "gap-6", className),
        id,

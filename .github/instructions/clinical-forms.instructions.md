@@ -46,6 +46,10 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   No assignar 0 com a resposta per defecte: cal una seleccio explicita i 0 ha
   de poder seleccionar-se sense haver de canviar primer a un altre valor.
 - Usar controls accessibles, compatibles amb teclat i amb el disseny existent.
+  Els numerics han de permetre escriure valors parcials per sota del minim
+  (p. ex. `1` abans de `18`); validar el rang sense rebutjar cada tecla.
+  Mostrar respostes multiples amb caselles visibles, no desplegables; conservar
+  els Sets i usar radio nomes quan la resposta es unica.
   No inserir inputs amb manipulacio del DOM ni enganxar nous renderers al marge
   de l'estat i la validacio del formulari.
 - Mostrar les opcions de resposta radio una sota l'altra, no en files horitzontals,
@@ -60,6 +64,8 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 
 - Mostrar i permetre introduir dates en format `DD/MM/AAAA`, amb calendari
   coherent amb el mateix format. No dependre del format regional del navegador.
+  En catala, castella i frances, mostrar dilluns primer i diumenge ultim,
+  amb els dies del mes alineats correctament.
 - Per a THERA, usar el camp `kind: 'date', displayFormat: 'dd/MM/yyyy'`.
   La normalitzacio conserva `AAAA-MM-DD` a l'API i als registres.
 - Conservar la representacio historica de cada estudi. No aplicar canvis globals
@@ -110,6 +116,9 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   importacio. Conservar consentiment, aptitud, ancores, duplicats i sequencia.
 - Mostrar un sol missatge per pregunta o cel-la, combinant les causes diferents
   sense repetir el mateix text. Comprovar-ho al formulari real, no nomes a l'esquema.
+  En cada intent d'enviament invalid, centrar el primer camp amb error i
+  enfocar-ne el control sense desfer el desplacament; tambe si els errors
+  ja eren visibles i el DOM no canvia.
 - THERA acaba a la quarta visita. No crear un formulari independent de
   finalitzacio. Mantenir una base de dades unificada per estudi.
 

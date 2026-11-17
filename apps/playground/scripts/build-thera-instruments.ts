@@ -234,6 +234,11 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
       )
     )
   );
+  for (const [key, field] of Object.entries(renderedFields)) {
+    if (field?.kind === 'set') {
+      verify(field.variant === 'listbox', `${visit}: ${key} presents visible multiple-choice checkboxes`);
+    }
+  }
   verify(!('eligibility_info' in renderedFields), `${visit}: no screening-result pseudo-field`);
   verify(!('visit_window_info' in renderedFields), `${visit}: visit window is not an empty form control`);
   verify(

@@ -15,7 +15,7 @@ import { FormContent } from '../../../../../packages/react-core/src/components/F
 import { InstrumentSummary } from '../../../../../packages/react-core/src/components/InstrumentSummary/InstrumentSummary';
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '../instrument-draft';
 
-import '../../services/i18n';
+import i18n from '../../services/i18n';
 
 const download = vi.hoisted(() => vi.fn<(filename: string, content: () => string) => Promise<void>>());
 vi.mock('@douglasneuroinformatics/libui/hooks', async (importOriginal) => ({
@@ -71,6 +71,7 @@ beforeEach(() => {
   HTMLElement.prototype.scrollIntoView = vi.fn();
 });
 afterEach(() => {
+  vi.useRealTimers();
   cleanup();
   download.mockClear();
   vi.restoreAllMocks();
@@ -94,6 +95,80 @@ function renderBaseline(overrides: { [key: string]: unknown } = {}) {
 }
 
 describe('THERA real libui controls', () => {
+  it('starts the local calendar on Monday and places a Monday month start in the first column', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2027-02-01T12:00:00Z'));
+    i18n.changeLanguage('fr');
+    renderBaseline();
+    fireEvent.click(screen.getByLabelText('Fecha de visita *'));
+    const calendar = await screen.findByTestId('datepicker');
+    const grid = calendar.querySelector('.grid-cols-7')!;
+    expect(
+      Array.from(grid.children)
+        .slice(0, 7)
+        .map((element) => element.textContent)
+    ).toEqual(['L', 'M', 'M', 'J', 'V', 'S', 'D']);
+    expect(grid.children[7]?.textContent).toBe('1');
+    vi.useRealTimers();
+  });
+  it('accepts each typed digit below the minimum, then validates the completed numeric answer', async () => {
+    const { changes, submit } = renderBaseline({
+      inclusion_2: 'si',
+      age: undefined,
+      weight: undefined,
+      height: undefined
+    });
+    for (const [label, key, digits] of [
+      ['Edad (años) *', 'age', ['1', '18']],
+      ['Peso (kg) *', 'weight', ['6', '65']],
+      ['Altura (cm) *', 'height', ['1', '16', '165']]
+    ] as const) {
+      const input = screen.getByLabelText<HTMLInputElement>(label);
+      for (const value of digits) {
+        fireEvent.change(input, { target: { value } });
+        expect(input.value).toBe(value);
+        await waitFor(() => expect(changes.mock.lastCall?.[0][key]).toBe(Number(value)));
+      }
+    }
+    const age = screen.getByLabelText<HTMLInputElement>('Edad (años) *');
+    fireEvent.change(age, { target: { value: '1' } });
+    fireEvent.submit(document.querySelector('form')!);
+    await waitFor(() =>
+      expect(age.closest('[data-field-group]')?.querySelector('[data-testid="error-message-text"]')).not.toBeNull()
+    );
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('shows multiple-choice answers as visible checkboxes and preserves multiple selections', async () => {
+    const { changes } = renderBaseline({
+      inclusion_2: 'si',
+      hormonal_treatment: 'si',
+      hormonal_types: new Set<string>()
+    });
+    const group = document.querySelector('[data-field-group="hormonal_types"]') as HTMLElement;
+    expect(within(group).queryByRole('combobox')).toBeNull();
+    fireEvent.click(within(group).getByRole('checkbox', { name: 'Tamoxifeno' }));
+    fireEvent.click(within(group).getByRole('checkbox', { name: 'Inhibidores de la aromatasa' }));
+    await waitFor(() =>
+      expect(changes.mock.lastCall?.[0].hormonal_types).toEqual(new Set(['tamoxifeno', 'aromatasa']))
+    );
+  });
+
+  it('centres and focuses the first error again when submitting an unchanged invalid form', async () => {
+    render(<FormContent instrument={instrument} onSubmit={vi.fn()} />);
+    const form = document.querySelector('form')!;
+    fireEvent.submit(form);
+    await waitFor(() =>
+      expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
+    );
+    vi.mocked(HTMLElement.prototype.scrollIntoView).mockClear();
+    fireEvent.submit(form);
+    await waitFor(() =>
+      expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
+    );
+    expect(document.activeElement?.getAttribute('name')).toBe('patient_code');
+  });
+
   it('renders the embedded injection diagram instead of its encoded markup', () => {
     const diagram = 'data:image/png;base64,aGVsbG8=';
     const withDiagram = {
@@ -299,7 +374,13 @@ describe('THERA real libui controls', () => {
         fireEvent.change(input, { target: { value: '10' } });
         await waitFor(() => expect(changes.mock.lastCall?.[0][key]).toBe(10));
         fireEvent.change(input, { target: { value: '11' } });
-        expect(input.value).toBe('10');
+        expect(input.value).toBe('11');
+        fireEvent.blur(input);
+        await waitFor(() =>
+          expect(
+            input.closest('[data-field-group]')?.querySelector('[data-testid="error-message-text"]')
+          ).not.toBeNull()
+        );
         fireEvent.change(input, { target: { value: '1.5' } });
         fireEvent.blur(input);
         const group = input.closest('[data-field-group]')!;

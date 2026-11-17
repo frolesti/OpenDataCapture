@@ -4,7 +4,7 @@ import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { AnyUnilingualFormInstrument, FormInstrument } from '@opendatacapture/runtime-core';
 import { getTheraVisit } from '@opendatacapture/schemas/thera';
 import { InfoIcon } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { Promisable } from 'type-fest';
 
 export type FormContentProps = {
@@ -41,7 +41,13 @@ export const FormContent = ({
         return image
           ? {
               ...group,
-              description: <img alt={image[1]} className="my-3 max-h-80 max-w-full object-contain" src={image[2]} />
+              description: (
+                <img
+                  alt={image[1]}
+                  className="mx-auto my-4 h-auto max-h-96 max-w-full rounded border border-slate-200 bg-white object-contain p-3"
+                  src={image[2]}
+                />
+              )
             }
           : group;
       })
@@ -52,43 +58,32 @@ export const FormContent = ({
     (Array.isArray(contentForForm) && contentForForm.length > 0) ||
     (!Array.isArray(contentForForm) && Object.keys(contentForForm ?? {}).length > 0);
 
+  const scrollToFirstError = useCallback(() => {
+    if (!isSubmittingRef.current || hasScrolledRef.current) return;
+    const firstError = formRef.current?.querySelector<HTMLElement>(
+      '[data-testid="error-message-text"], [role="alert"], [aria-invalid="true"], [data-invalid="true"]'
+    );
+    if (!firstError) return;
+    hasScrolledRef.current = true;
+    const field = firstError.closest('[data-field-group]') ?? firstError;
+    const input = field.querySelector<HTMLElement>(
+      'input:not([type="hidden"]):not(:disabled), select:not(:disabled), textarea:not(:disabled), [role="radio"], [role="checkbox"]'
+    );
+    input?.focus({ preventScroll: true });
+    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    isSubmittingRef.current = false;
+  }, []);
+
   const markSubmitAttempt = () => {
     isSubmittingRef.current = true;
     hasScrolledRef.current = false;
+    requestAnimationFrame(scrollToFirstError);
   };
 
   useEffect(() => {
     if (!formRef.current) return;
 
-    const observer = new MutationObserver(() => {
-      // Only scroll if we just attempted a submit and haven't scrolled yet
-      if (!isSubmittingRef.current || hasScrolledRef.current) {
-        return;
-      }
-
-      const errors = formRef.current?.querySelectorAll(
-        '[role="alert"], .text-destructive, [aria-invalid="true"], [data-invalid="true"]'
-      );
-      const firstError = errors?.[0];
-      if (firstError) {
-        firstError.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        hasScrolledRef.current = true;
-
-        const inputElement =
-          firstError.closest('[data-field]')?.querySelector('input, select, textarea') ??
-          firstError.querySelector('input, select, textarea');
-        if (inputElement instanceof HTMLElement) {
-          setTimeout(() => inputElement.focus(), 300);
-        } else if (firstError instanceof HTMLElement) {
-          setTimeout(() => firstError.focus(), 300);
-        }
-
-        // Reset flags after scrolling
-        setTimeout(() => {
-          isSubmittingRef.current = false;
-        }, 500);
-      }
-    });
+    const observer = new MutationObserver(scrollToFirstError);
 
     observer.observe(formRef.current, {
       childList: true,
@@ -98,7 +93,7 @@ export const FormContent = ({
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [scrollToFirstError]);
 
   const handleSubmit = async (data: FormInstrument.Data) => {
     // Reset flags on successful submit
@@ -137,7 +132,7 @@ export const FormContent = ({
       </div>
       <div
         className="[&_button[type='submit']]:border-[#8f8df2] [&_button[type='submit']]:bg-[#8f8df2] [&_button[type='submit']]:text-white [&_button[type='submit']]:hover:bg-[#7f7de4]"
-        onClick={(e) => {
+        onClickCapture={(e) => {
           // Detect submit button clicks to set the flag
           const target = e.target as HTMLElement;
           if (target.closest('button[type="submit"]')) {

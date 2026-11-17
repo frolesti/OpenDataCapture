@@ -403,7 +403,7 @@ export function createTheraInstrument(visit: TheraVisit) {
       addClinical(
         key,
         z.set(z.enum(Object.keys(options) as [string, ...string[]])).min(1),
-        { kind: 'set', variant: 'select', label, options },
+        { kind: 'set', variant: 'listbox', label, options },
         fields,
         [dep],
         (data) => data[dep] === value
@@ -582,7 +582,7 @@ export function createTheraInstrument(visit: TheraVisit) {
     });
     const eventField: Field = {
       kind: 'record-array',
-      label: 'Acontecimientos adversos graves',
+      label: 'Acontecimiento',
       fieldset: {
         onset_date: dateField('Fecha de inicio'),
         description: { kind: 'string', variant: 'textarea', label: 'Descripción del evento *' },
@@ -611,7 +611,7 @@ export function createTheraInstrument(visit: TheraVisit) {
       addClinical(
         'device_deficiency_records',
         z.array(eventSchema.omit({ event_type: true })).min(1),
-        { ...eventField, label: 'Deficiencias del dispositivo' },
+        { ...eventField, label: 'Deficiencia' },
         fields,
         ['device_deficiency'],
         (data) => data.device_deficiency === 'si'
@@ -658,7 +658,7 @@ export function createTheraInstrument(visit: TheraVisit) {
       z.set(z.enum(['1', '2', '3', '4', '5', '6', 'otro'])).min(1),
       {
         kind: 'set',
-        variant: 'select',
+        variant: 'listbox',
         label: 'Localización de las inyecciones',
         options: { '1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', otro: 'Otra localización' }
       },
