@@ -190,7 +190,6 @@ export class InstrumentRecordsService {
   ) {
     if (!groupId || !options.user) throw new BadRequestException('Seleccione un grupo THERA y una sesión autenticada.');
     await this.getOrionPatientCodeContext({ groupId, user: options.user, prefix: 'TH' });
-    if (visit === 'V0' && !editingId) return;
     const records = await this.getTheraRecords(groupId, subjectId, options);
     const error = validateTheraVisit(visit, data, records, editingId);
     if (error) throw new UnprocessableEntityException(error);
@@ -264,18 +263,17 @@ export class InstrumentRecordsService {
     }
 
     const isTheraBaseline = theraVisit === 'V0';
-    const isSelection = instrument.internal.name === 'ORION_PR_2026_SELECTION' || isTheraBaseline;
-    if (isSelection && !groupId) {
+    const isSelection = instrument.internal.name === 'ORION_PR_2026_SELECTION';
+    if ((isSelection || isTheraBaseline) && !groupId) {
       throw new BadRequestException('Cal seleccionar el grup ORION abans de crear un pacient.');
     }
-    if (isSelection && session.userId !== options?.user?.id) {
+    if ((isSelection || isTheraBaseline) && session.userId !== options?.user?.id) {
       throw new ForbiddenException('El codi de pacient s’ha de generar dins la sessió del mateix investigador.');
     }
     const orionContext = isSelection
       ? await this.getOrionPatientCodeContext({
           groupId: groupId!,
-          user: options?.user,
-          ...(isTheraBaseline ? { prefix: 'TH' as const } : {})
+          user: options?.user
         })
       : undefined;
     if (theraVisit) {
@@ -292,20 +290,30 @@ export class InstrumentRecordsService {
     });
     const createRecord = async (transaction?: OrionTransactionClient) => {
       if (orionContext) {
-        userCode = isTheraBaseline
-          ? await this.orionCodesService.create(
-              orionContext.group.id,
-              orionContext.user.id,
-              orionContext.hospital,
-              transaction,
-              'TH'
-            )
-          : await this.orionCodesService.create(
-              orionContext.group.id,
-              orionContext.user.id,
-              orionContext.hospital,
-              transaction
-            );
+        userCode = userCode.trim();
+        if (!userCode) throw new UnprocessableEntityException('El código del paciente es obligatorio.');
+        const selections = await this.instrumentsService.find({ kind: 'FORM' }, { currentUser });
+        const model = transaction?.instrumentRecord ?? this.instrumentRecordModel;
+        const existing = await model.findMany({
+          where: {
+            groupId,
+            subjectId,
+            instrumentId: {
+              in: selections
+                .filter((entry) => entry.internal?.name === 'ORION_PR_2026_SELECTION')
+                .map((entry) => entry.id)
+            }
+          }
+        });
+        if (
+          existing.some((record) => {
+            if (!record.data || typeof record.data !== 'object' || Array.isArray(record.data)) return false;
+            const code = record.data.patient_code ?? record.data.user_code;
+            return typeof code === 'string' && code.trim() === userCode;
+          })
+        ) {
+          throw new UnprocessableEntityException('Ya existe una visita de selección para el código de paciente.');
+        }
         parsedData.patient_code = userCode;
         parsedData.user_code = undefined;
       }
@@ -860,11 +868,6 @@ export class InstrumentRecordsService {
 
     this.assertTheraInstrumentActive(instrument.internal.name);
     const theraVisit = getTheraVisit(instrument.internal.name);
-    if (theraVisit === 'V0') {
-      throw new BadRequestException(
-        'Las visitas basales THERA deben registrarse desde el formulario para asignar el código de paciente de forma atómica.'
-      );
-    }
     if (theraVisit) {
       const seen = new Set<string>();
       for (const record of records) {
@@ -872,7 +875,7 @@ export class InstrumentRecordsService {
         if (!parsed.success)
           throw new UnprocessableEntityException({ message: 'Datos THERA no válidos', issues: parsed.error.issues });
         const data = parsed.data as Record<string, unknown>;
-        const key = `${record.subjectId}:${String(data.patient_code)}`;
+        const key = JSON.stringify([record.subjectId, data.patient_code]);
         if (seen.has(key))
           throw new BadRequestException('El archivo contiene más de una visita para el mismo paciente.');
         seen.add(key);

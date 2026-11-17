@@ -581,7 +581,7 @@ const instrumentDefinition: any = {
   language: 'en',
   tags: ['Clinical Research', 'Neuropathic Pain', 'Primary Care'],
   internal: {
-    edition: 36,
+    edition: 37,
     name: 'ORION_PR_2026_SELECTION'
   },
   content: [
@@ -591,8 +591,7 @@ const instrumentDefinition: any = {
         patient_code: {
           kind: 'string',
           variant: 'input',
-          label: 'Código generado de manera automática',
-          disabled: true
+          label: 'Código del paciente *'
         }
       }
     },
@@ -1019,7 +1018,7 @@ const instrumentDefinition: any = {
   measures: {},
   validationSchema: z
     .object({
-      patient_code: z.string().min(1, 'El código del paciente es obligatorio'),
+      patient_code: z.string().trim().min(1, 'El código del paciente es obligatorio'),
       site_hospital: z.string().optional(),
       informed_consent: z.enum(['si', 'no']),
       selection_visit_date: optionalManualDateSchema(),

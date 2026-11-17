@@ -26,7 +26,14 @@ const orionInfo = {
   internal: { name: 'ORION_PR_2026_SELECTION', edition: 1 },
   details: { title: 'ORION' }
 };
-const infoQuery = { data: [...infos, orionInfo], isLoading: false };
+const infoQuery = {
+  data: [
+    ...infos,
+    orionInfo,
+    { id: 'omega', internal: { name: 'ESTUDI_OSTEOPOROSIS', edition: 1 }, details: { title: 'OMEGA-FF-AP-2025' } }
+  ],
+  isLoading: false
+};
 const instrument = { kind: 'FORM', content: {}, internal: { name: 'THERA_SGM_2026_V0', edition: 1 } };
 vi.mock('@/hooks/useInstrumentInfoQuery', () => ({ useInstrumentInfoQuery: () => infoQuery }));
 vi.mock('@/hooks/useInstrument', () => ({
@@ -87,6 +94,19 @@ describe('THERA datahub integration', () => {
     expect(result.current.instrumentOptions[THERA_UNIFIED_OPTION_ID]).toBe('THERA-SGM-2026');
     for (const info of infos) expect(result.current.instrumentOptions[info.id]).toBeUndefined();
     expect(result.current.instrumentOptions.__ORION_PR_2026__).toBe('ORION-PR-2026');
+    expect(result.current.instrumentOptions).toEqual({
+      omega: 'OMEGA-FF-AP-2025',
+      __ORION_PR_2026__: 'ORION-PR-2026',
+      [THERA_UNIFIED_OPTION_ID]: 'THERA-SGM-2026'
+    });
+  });
+
+  it('does not restore a saved template as a fourth study', async () => {
+    localStorage.setItem('datahub:last-instrument:admin:thera-group', 'placeholder-template');
+    const { result } = renderHook(() => useGlobalInstrumentVisualization());
+    await waitFor(() => expect(result.current.instrumentId).toBeNull());
+    expect(Object.keys(result.current.instrumentOptions)).toHaveLength(3);
+    expect(result.current.instrumentOptions['placeholder-template']).toBeUndefined();
   });
 
   it('restores a previously selected visit as the unified study and loads all authorized study records', async () => {
@@ -163,19 +183,19 @@ describe('THERA datahub integration', () => {
 
   it('keeps each ORION visit and its historical answers separate for record actions', async () => {
     const selection = {
-      ...record('V0', 2, 'OR-01-01'),
+      ...record('V0', 2, 'centre/patient 7'),
       instrumentId: 'orion',
       data: {
-        patient_code: 'OR-01-01',
+        patient_code: 'centre/patient 7',
         selection_visit_date: '01-01-2025',
         pain: 2
       }
     };
     const followup = {
-      ...record('V1', 7, 'OR-01-01'),
+      ...record('V1', 7, 'centre/patient 7'),
       instrumentId: 'historical-followup',
       data: {
-        user_code: 'OR-01-01',
+        user_code: 'centre/patient 7',
         followup_date: '01-04-2025',
         pain: 7
       }

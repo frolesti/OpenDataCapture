@@ -30,7 +30,6 @@ import { getHospitalCatalog } from '@/components/admin/groups/StudyHospitalField
 import { useInstrumentBundle } from '@/hooks/useInstrumentBundle';
 import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 import { INSTRUMENT_RECORDS_QUERY_KEY, useInstrumentRecords } from '@/hooks/useInstrumentRecords';
-import { useOrionPatientCode } from '@/hooks/useOrionPatientCode';
 import { useAppStore } from '@/store';
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '@/utils/instrument-draft';
 import { ensureStudySession } from '@/utils/ensure-study-session';
@@ -238,7 +237,7 @@ function normalizeOrionBundle(bundle: string, mode: 'followup' | 'selection'): s
 
     patched = patched.replace(
       /(user_code|patient_code):\{kind:"string",label:"[^"]*",variant:"input"\}/,
-      'patient_code:{kind:"string",label:"Código del paciente",variant:"input",disabled:true}'
+      'patient_code:{kind:"string",label:"Código del paciente *",variant:"input"}'
     );
     patched = patched.replace(/user_code:z\.string\(\)\.min\(1,"[^"]*"\),?/g, '');
     patched = patched.replace(
@@ -461,14 +460,6 @@ const RouteComponent = () => {
   const theraVisit = getTheraVisit(instrumentInfo?.internal?.name ?? bundleInternalName ?? '');
   const isThera = Boolean(theraVisit);
   const [selectedTheraPatient, setSelectedTheraPatient] = useState('');
-  const theraPatientCodeQuery = useOrionPatientCode({
-    enabled: theraVisit === 'V0' && !recordId && !effectiveInitialData?.patient_code,
-    groupId: currentGroup?.id,
-    instrumentId: params.id,
-    sessionId: currentSession?.id,
-    userId: currentUser?.id,
-    study: 'TH'
-  });
   const theraRecordsQuery = useInstrumentRecords({
     enabled: isThera && Boolean(currentGroup?.id && scopedSubjectId),
     params: { groupId: currentGroup?.id, subjectId: scopedSubjectId },
@@ -525,17 +516,6 @@ const RouteComponent = () => {
     void navigate({ to: '/instruments/accessible-instruments' });
   }, [noOpenTheraVisit, navigate, notifications, t]);
 
-  const needsOrionPatientCode = Boolean(
-    isOrionSelection && !recordId && !effectiveInitialData?.patient_code && !effectiveInitialData?.user_code
-  );
-  const orionPatientCodeQuery = useOrionPatientCode({
-    enabled: needsOrionPatientCode,
-    groupId: currentGroup?.id,
-    instrumentId: params.id,
-    sessionId: currentSession?.id,
-    userId: currentUser?.id
-  });
-  const reservedOrionPatientCode = orionPatientCodeQuery.data;
   const orionSelectionRecordsQuery = useInstrumentRecords({
     enabled: Boolean(isOrionFollowup && orionSelectionInstrumentId && scopedSubjectId),
     params: {
@@ -667,6 +647,11 @@ const RouteComponent = () => {
           for (const name of ['CAP', 'site_hospital', 'centro_sanitario', 'centroAtencionPrimaria']) {
             if (section.fields[name]) section.fields[name] = restrictHospitalField(section.fields[name]);
           }
+          if (${isOrionSelection} && section.fields.patient_code) {
+            section.fields.patient_code = {
+              kind: 'string', variant: 'input', label: 'Código del paciente *', disabled: ${Boolean(recordId)}
+            };
+          }
           if (${Boolean(isThera && theraVisit !== 'V0')}) {
             if (section.fields.patient_code) section.fields.patient_code = {
               kind: 'string', variant: 'select', label: 'Código de paciente *',
@@ -708,15 +693,11 @@ const RouteComponent = () => {
         }
       : normalizedInitialData;
   const originalFormInitialData =
-    isOrionSelection &&
-    reservedOrionPatientCode &&
-    !normalizedInitialData?.patient_code &&
-    !normalizedInitialData?.user_code
+    isOrionSelection && !recordId && !normalizedInitialData?.patient_code && !normalizedInitialData?.user_code
       ? {
           prev_treatment_name_1: 'Pregabalina IR',
           current_treatment_name_1: 'Pregabalina PR',
-          ...assignedInitialData,
-          patient_code: reservedOrionPatientCode
+          ...assignedInitialData
         }
       : assignedInitialData;
   const formInitialData = isThera
@@ -726,7 +707,7 @@ const RouteComponent = () => {
           ? {}
           : originalFormInitialData),
         ...(theraVisit === 'V0'
-          ? { patient_code: effectiveInitialData?.patient_code ?? theraPatientCodeQuery.data }
+          ? {}
           : {
               patient_code: theraPatientCode,
               baseline_date: theraContext.baseline?.data.visit_date,
@@ -739,7 +720,6 @@ const RouteComponent = () => {
   const title = instrumentTitle;
 
   const isLoadingData = Boolean(recordId) && !effectiveInitialData && recordsQuery.isLoading;
-  const isWaitingForOrionPatientCode = needsOrionPatientCode && !reservedOrionPatientCode;
 
   // Auto-save form data to localStorage as draft
   const handleDataChange = useCallback(
@@ -1221,56 +1201,8 @@ const RouteComponent = () => {
     }
   };
 
-  if (isWaitingForOrionPatientCode && (orionPatientCodeQuery.isError || !currentGroup?.id || !currentUser?.id)) {
-    const missingHospital =
-      axios.isAxiosError(orionPatientCodeQuery.error) &&
-      orionPatientCodeQuery.error.response?.status === 400 &&
-      String(orionPatientCodeQuery.error.response.data?.message).includes('Assign a hospital');
-    return (
-      <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6" role="alert">
-        <Heading variant="h2">
-          {t({ en: "No s'ha pogut preparar el formulari", fr: 'No se ha podido preparar el formulario' })}
-        </Heading>
-        <p>
-          {missingHospital
-            ? t({
-                en: "Cal que un administrador assigni un hospital vàlid al teu compte dins del grup de l'estudi. Després, torna-ho a provar.",
-                fr: 'Un administrador debe asignar un hospital válido a tu cuenta dentro del grupo del estudio. Después, vuelve a intentarlo.'
-              })
-            : t({
-                en: "No s'ha pogut obtenir el codi del pacient. Comprova el grup de treball i la connexió. Si el problema continua, contacta amb l'administrador.",
-                fr: 'No se ha podido obtener el código del paciente. Comprueba el grupo de trabajo y la conexión. Si el problema continúa, contacta con el administrador.'
-              })}
-        </p>
-        <p>
-          {t({
-            en: "L'esborrany desat en aquest navegador es conserva. No es faran més intents automàtics.",
-            fr: 'El borrador guardado en este navegador se conserva. No se harán más intentos automáticos.'
-          })}
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Button
-            disabled={!currentGroup?.id || !currentUser?.id || orionPatientCodeQuery.isFetching}
-            onClick={() => void orionPatientCodeQuery.refetch()}
-          >
-            {t({ en: 'Torna-ho a provar', fr: 'Volver a intentar' })}
-          </Button>
-          <Button variant="outline" onClick={() => void navigate({ to: '/instruments/accessible-instruments' })}>
-            {t({ en: 'Torna als formularis', fr: 'Volver a los formularios' })}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (
-    isThera &&
-    (!currentGroup ||
-      !scopedSubjectId ||
-      theraRecordsQuery.isError ||
-      (theraVisit === 'V0' && theraPatientCodeQuery.isError))
-  ) {
-    const error = theraPatientCodeQuery.error;
+  if (isThera && (!currentGroup || !scopedSubjectId || theraRecordsQuery.isError)) {
+    const error = theraRecordsQuery.error;
     const message =
       axios.isAxiosError<{ message?: unknown }>(error) && typeof error.response?.data?.message === 'string'
         ? error.response.data.message
@@ -1283,7 +1215,6 @@ const RouteComponent = () => {
         <Button
           onClick={() => {
             void theraRecordsQuery.refetch();
-            if (theraVisit === 'V0') void theraPatientCodeQuery.refetch();
           }}
         >
           Reintentar
@@ -1299,13 +1230,7 @@ const RouteComponent = () => {
       </div>
     );
   }
-  if (
-    !instrumentTarget ||
-    isLoadingData ||
-    isWaitingForOrionPatientCode ||
-    instrumentInfoQuery.isLoading ||
-    (isThera && (theraRecordsQuery.isLoading || (theraVisit === 'V0' && !recordId && !formInitialData?.patient_code)))
-  ) {
+  if (!instrumentTarget || isLoadingData || instrumentInfoQuery.isLoading || (isThera && theraRecordsQuery.isLoading)) {
     if (instrumentBundleQuery.isError) {
       return (
         <div className="flex grow items-center justify-center px-6">

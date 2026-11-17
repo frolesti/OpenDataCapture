@@ -33,7 +33,7 @@ export function getTheraVisit(name: string): TheraVisit | undefined {
 }
 
 export function isTheraPatientCode(value: unknown): value is string {
-  return typeof value === 'string' && /^TH-(?:\d{2,}|[A-Z]{2,})-\d{2,}$/.test(value);
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 export function parseTheraDate(value: unknown): Date | undefined {

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toBasicISOString } from '@douglasneuroinformatics/libjs';
 import { useDownload, useNotificationsStore, useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import type { InstrumentRecordQueryParams } from '@opendatacapture/schemas/instrument-records';
-import { getTheraVisit, isTheraPatientCode } from '@opendatacapture/schemas/thera';
+import { getTheraVisit } from '@opendatacapture/schemas/thera';
 import { removeSubjectIdScope } from '@opendatacapture/subject-utils';
 import { omit } from 'lodash-es';
 import { unparse } from 'papaparse';
@@ -761,7 +761,12 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
             }
             const recordData = record.data as Record<string, unknown>;
             const code = getOrionPatientCode(recordData);
-            return Boolean(code && !isTheraPatientCode(code));
+            return Boolean(
+              code &&
+                !theraInstrumentVisits.has(record.instrumentId) &&
+                !Object.hasOwn(recordData, 'study_visit') &&
+                (Object.hasOwn(recordData, 'selection_visit_date') || Object.hasOwn(recordData, 'followup_date'))
+            );
           })
         : recordsQuery.data;
 

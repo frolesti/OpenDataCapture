@@ -56,13 +56,25 @@ const fourth: TheraStoredVisit = {
 const timeline = [baseline, first, second, third, fourth];
 
 describe('THERA protocol', () => {
-  it('recognizes only declared instruments and assigned TH codes', () => {
+  it('recognizes only declared instruments and accepts nonempty free-text patient codes', () => {
     expect(getTheraVisit('THERA_SGM_2026_V4')).toBe('V4');
     expect(getTheraVisit('THERA_SGM_2026_END')).toBeUndefined();
     expect(getTheraVisit('ORION_PR_2026_SELECTION')).toBeUndefined();
     expect(isTheraPatientCode('TH-XX-01')).toBe(true);
-    expect(isTheraPatientCode('OR-01-01')).toBe(false);
-    expect(isTheraPatientCode('TH-01-01 ')).toBe(false);
+    for (const code of ['OR-01-01', 'centre/patient 7', '123', 'a', 'TH-01-01 ']) {
+      expect(isTheraPatientCode(code)).toBe(true);
+    }
+    for (const code of ['', '   ', undefined, 123, null]) expect(isTheraPatientCode(code)).toBe(false);
+  });
+  it('preserves free-text identities through follow-up and duplicate validation', () => {
+    const patient_code = 'centre/patient 7';
+    const saved = { ...baseline, data: { ...baseline.data, patient_code } };
+    const data = { ...first.data, patient_code };
+    expect(validateTheraVisit('V0', saved.data, [])).toBeUndefined();
+    expect(validateTheraVisit('V0', saved.data, [saved])).toContain('Ya existe');
+    expect(canStartTheraVisit('V1', [saved], patient_code)).toBe(true);
+    expect(validateTheraVisit('V1', data, [saved])).toBeUndefined();
+    expect(validateTheraVisit('V1', { ...data, patient_code: 'other' }, [saved])).toContain('basal apta');
   });
   it.each(['2024-02-30', '2023-02-29', '2024-13-01', '31-01-2024', '2024-01-31T12:00:00Z'])(
     'rejects invalid or noncanonical date %s',

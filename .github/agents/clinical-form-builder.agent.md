@@ -26,14 +26,14 @@ validation, date/calendar presentation and measurable verification.
 - Use supported scalar controls, `number-record` or `record-array` only after verifying renderer and API behavior. Do not copy loose casts or accidental limitations from an existing form.
 - Display clinical dates as dd/mm/aaaa with a compatible calendar. Preserve the study's historical storage representation across drafts, JSON, API, edits, exports and measures. Validate real calendar dates and inclusive bounds. Calendar months are not fixed 30-day intervals.
 - Recover reference dates from persisted visits for the same study, patient and authorized investigator. Reject client-forged dates server-side. Do not rely on disabled fields, bundle string replacements, UI-only blocking, or ORION-only special cases.
-- Reuse atomic code allocation; never assign patient identifiers from a client preview. Match study prefixes and preserve existing ORION behavior.
+- Preserve the manually entered patient codes in THERA and ORION. Never replace them with a client preview or an automatically allocated identifier. Keep duplicate and study-isolation checks.
 - Do not add names, patient initials, signatures, unsupported classifications or arbitrary caps on repeated events. Authenticated session attribution is not a certified electronic signature.
 
 ## THERA decisions confirmed by the user
 
 - V0, V1, V2, V3 and V4 are separate instruments ordered by visit. V4 completes the study; there is no separate end-of-study instrument. Confirm the published edition before preparing a new edition.
 - V1: V0 + 1 calendar month +/- 7 days. V2: actual V1 + 3 months +/- 14 days. V3: actual V1 + 6 months +/- 28 days. V4: actual V1 + 12 months +/- 45 days. Clamp month-end dates; block submissions outside windows. Retrieve anchors automatically.
-- Patient codes follow ORION allocation, replacing `OR` with `TH`.
+- THERA and ORION initial patient codes are required free-text inputs, with no prescribed prefix, format or automatic allocation. Preserve the entered code in the API and select saved patients in follow-ups. Keep duplicate, authorization, sequencing and visit-window checks.
 - Show consent, inclusion and exclusion failures on their own fields and block submission, as in ORION. Remove the screening-result pseudo-field. Preserve historical records and block follow-up without eligible baseline. Verify age >=18 and inclusion 3 against VHI <15 OR dryness EVA >=5 OR dyspareunia EVA >=5.
 - Mark visible required questions with an asterisk, including conditional safety-table fields. Use 1-10 integer numeric inputs for both EVA questions in every THERA visit, with no implicit answer. Do not restore sliders or 0-10 labels.
 - Keep radio answers vertical and left-aligned, including numeric VHI/vulvar scores at wide viewport sizes. Apply this in the shared renderer so web and Playground agree.

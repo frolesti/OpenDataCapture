@@ -192,16 +192,16 @@ describe('THERA patient identity and persisted visit anchors', () => {
     ];
     mocks.records = [{ id: 'baseline-record', instrumentId: 'baseline', data: baselineData }];
   }
-  it('previews TH codes with the THERA endpoint, never the ORION endpoint', async () => {
+  it('opens THERA without requesting or preassigning a patient code', async () => {
     prepareThera('V0');
     vi.mocked(axios.post).mockResolvedValue({ data: { code: 'TH-01-02' } });
     renderForm();
     await screen.findByTestId('renderer');
-    expect(axios.post).toHaveBeenCalledWith('/v1/instrument-records/thera-patient-code', { groupId: 'group' });
-    expect(mocks.renderedInitialData?.patient_code).toBe('TH-01-02');
+    expect(axios.post).not.toHaveBeenCalled();
+    expect(mocks.renderedInitialData?.patient_code).toBeUndefined();
   });
 
-  it.each(['STANDARD', 'ADMIN'])('keeps a THERA configuration failure local and retryable for %s', async (role) => {
+  it.each(['STANDARD', 'ADMIN'])('preserves a THERA draft without reserving a code for %s', async (role) => {
     prepareThera('V0');
     mocks.store.currentUser.basePermissionLevel = role;
     const message = 'El grup THERA no té configurat el codi d’estudi TH.';
@@ -214,14 +214,10 @@ describe('THERA patient identity and persisted visit anchors', () => {
       })
       .mockResolvedValueOnce({ data: { code: 'TH-01-02' } });
     renderForm();
-    await screen.findByText(message);
-    expect(screen.getByRole('alert')).toBeDefined();
-    expect(Boolean(screen.queryByRole('button', { name: 'Configurar estudio' }))).toBe(role === 'ADMIN');
-    expect(localStorage.getItem('instrument-draft:selection:investigator')).toBe(draft);
-    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
     await screen.findByTestId('renderer');
+    expect(localStorage.getItem('instrument-draft:selection:investigator')).toBe(draft);
     expect(mocks.renderedInitialData?.age).toBe(50);
-    expect(axios.post).toHaveBeenCalledTimes(2);
+    expect(axios.post).not.toHaveBeenCalled();
   });
   it('requires selecting an eligible patient and loads the saved basal date and hospital', async () => {
     prepareThera();
@@ -558,7 +554,7 @@ describe('ORION selection submission date window', () => {
     Object.assign(mocks.store.currentGroup, { studyCode: 'OR', dataResetAt: new Date('2026-10-30') });
     vi.mocked(axios.post).mockResolvedValue({ data: { code: 'OR-01-01' } });
     renderForm();
-    await waitFor(() => expect(screen.getByTestId('renderer').textContent).toBe('OR-01-01'));
+    await waitFor(() => expect(screen.getByTestId('renderer').textContent).toBe(''));
     expect(localStorage.getItem('instrument-draft:selection:investigator')).toBeNull();
     expect(localStorage.getItem('instrument-draft:omega:investigator')).toBe('preserve-omega-draft');
   });
@@ -754,8 +750,8 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('ORION form recovery without an assigned hospital', () => {
-  it('shows an actionable error instead of a spinner, preserves the draft and allows leaving', async () => {
+describe('ORION manual patient codes and draft recovery', () => {
+  it('opens an incomplete draft without requesting a generated code', async () => {
     const draft = serializeInstrumentDraft({ age: 50, informed_consent: 'si' });
     localStorage.setItem('instrument-draft:selection:investigator', draft);
     vi.mocked(axios.post).mockRejectedValue({
@@ -766,26 +762,22 @@ describe('ORION form recovery without an assigned hospital', () => {
       }
     });
     renderForm();
-    await screen.findByRole('alert');
-    expect(screen.getByText(/Cal que un administrador assigni un hospital/)).toBeDefined();
+    await screen.findByTestId('renderer');
     expect(screen.queryByTestId('spinner')).toBeNull();
-    expect(screen.queryByTestId('renderer')).toBeNull();
-    expect(axios.post).toHaveBeenCalledTimes(1);
+    expect(mocks.renderedInitialData?.patient_code).toBeUndefined();
+    expect(axios.post).not.toHaveBeenCalled();
     expect(localStorage.getItem('instrument-draft:selection:investigator')).toBe(draft);
-    fireEvent.click(screen.getByText('Torna als formularis'));
-    expect(mocks.navigate).toHaveBeenCalledWith({ to: '/instruments/accessible-instruments' });
   });
 
-  it('recovers after an explicit retry and passes the existing draft to the renderer', async () => {
+  it('passes the existing draft to the renderer without an allocation dependency', async () => {
     localStorage.setItem('instrument-draft:selection:investigator', serializeInstrumentDraft({ age: 50 }));
     vi.mocked(axios.post)
       .mockRejectedValueOnce(new Error('Network unavailable'))
       .mockResolvedValueOnce({ data: { code: 'OR-01-01' } });
     renderForm();
-    await screen.findByRole('alert');
-    fireEvent.click(screen.getByText('Torna-ho a provar'));
-    await waitFor(() => expect(screen.getByTestId('renderer').textContent).toBe('OR-01-01'));
-    expect(axios.post).toHaveBeenCalledTimes(2);
+    await screen.findByTestId('renderer');
+    expect(mocks.renderedInitialData?.age).toBe(50);
+    expect(axios.post).not.toHaveBeenCalled();
     expect(localStorage.getItem('instrument-draft:selection:investigator')).toContain('50');
   });
 

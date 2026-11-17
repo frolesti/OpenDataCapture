@@ -158,7 +158,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     form.details.authors?.includes('Laura Baquedano Mainar') === true,
     `${visit}: details identify the coordinating investigator`
   );
-  verify(form.internal.edition === 4, `${visit}: edition succeeds published edition 3`);
+  verify(form.internal.edition === 5, `${visit}: edition succeeds published edition 4`);
   const data = fixture(form, visit);
   const groups = Array.isArray(form.content) ? form.content : [{ fields: form.content }];
   const renderedFields = Object.fromEntries(
@@ -171,6 +171,24 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
   );
   verify(!('eligibility_info' in renderedFields), `${visit}: no screening-result pseudo-field`);
   verify(!('visit_window_info' in renderedFields), `${visit}: visit window is not an empty form control`);
+  verify(
+    renderedFields.patient_code?.kind === 'string' &&
+      renderedFields.patient_code.variant === (visit === 'v0' ? 'input' : 'select') &&
+      !renderedFields.patient_code.disabled,
+    `${visit}: baseline uses editable text and follow-ups select a saved patient`
+  );
+  for (const patient_code of ['centre/patient 7', 'a', '123', 'TH-01-01']) {
+    verify(
+      (await form.validationSchema.safeParseAsync({ ...data, patient_code })).success,
+      `${visit}: accepts free-text code ${patient_code}`
+    );
+  }
+  for (const patient_code of ['', '   ']) {
+    verify(
+      !(await form.validationSchema.safeParseAsync({ ...data, patient_code })).success,
+      `${visit}: rejects an empty patient code`
+    );
+  }
   for (const [key, field] of Object.entries(renderedFields)) {
     if (!field || field.disabled) continue;
     verify(field.label.endsWith(' *'), `${visit}: ${key} has a required marker`);

@@ -94,6 +94,16 @@ function renderBaseline(overrides: { [key: string]: unknown } = {}) {
 }
 
 describe('THERA real libui controls', () => {
+  it('allows a manually entered baseline code and preserves it in draft changes', async () => {
+    const { changes } = renderBaseline({ patient_code: '' });
+    const input = screen.getByLabelText<HTMLInputElement>('Código de paciente *');
+    expect(input.disabled).toBe(false);
+    fireEvent.change(input, { target: { value: 'centre/patient 7' } });
+    fireEvent.blur(input);
+    await waitFor(() =>
+      expect(changes).toHaveBeenLastCalledWith(expect.objectContaining({ patient_code: 'centre/patient 7' }))
+    );
+  });
   it('locks the other controls until a valid visit date is entered and locks them again after an invalid change', async () => {
     renderBaseline({ visit_date: '' });
     const date = screen.getByLabelText<HTMLInputElement>('Fecha de visita *');

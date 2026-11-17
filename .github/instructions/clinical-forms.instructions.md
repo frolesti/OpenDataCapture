@@ -110,6 +110,8 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 
 ## Publicacio, dades i verificacio
 
+- Excloure les plantilles amb nom intern o titol `<PLACEHOLDER>` del cataleg
+  clinic. No reanomenar-les com si fossin un estudi real ni eliminar-ne registres.
 - Els JWT nomes han de portar identitat, referencies de grups i permisos.
   No incloure grups sencers, llistes de pacients, usuaris, instruments ni dades
   del formulari a capcaleres HTTP. Carregar els detalls autoritzats des del perfil
@@ -129,6 +131,10 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   No reanomenar per aixo els camps persistits.
 - No mostrar ni exportar `group_id` a THERA. Conservar la separacio entre estudis
   internament, sense exposar identificadors tecnics a la taula.
+- A THERA i ORION, el codi de pacient inicial es un input de text obligatori i lliure,
+  sense format, prefix o numeracio preassignats. No reservar-lo ni substituir-lo
+  a l'API. Als seguiments, seleccionar el codi ja desat i conservar els controls
+  de duplicats, permisos, sequencia i finestres de visita.
 - Els recordatoris THERA reutilitzen l'SMTP d'alta d'investigadors. Enviar-ne un
   7 dies abans d'obrir la finestra i un altre en obrir-la, nomes per a visites
   pendents amb tots els precedents guardats. Usar dates reals, controlar enviaments

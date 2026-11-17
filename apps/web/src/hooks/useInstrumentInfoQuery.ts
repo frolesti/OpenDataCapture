@@ -25,7 +25,12 @@ export function useInstrumentInfoQuery<TKind extends InstrumentKind>({
       const infos = await $InstrumentInfo.array().parseAsync(response.data);
       return infos
         .filter((instrument) => instrument.internal?.name !== THERA_RETIRED_INSTRUMENT_NAME)
-        .map((instrument) => translateInstrumentInfo(instrument, 'ca'));
+        .map((instrument) => translateInstrumentInfo(instrument, 'ca'))
+        .filter(
+          (instrument) =>
+            instrument.internal?.name.trim().toUpperCase() !== '<PLACEHOLDER>' &&
+            instrument.details.title.trim().toUpperCase() !== '<PLACEHOLDER>'
+        );
     },
     queryKey: ['instrument-info', params?.kind, params?.subjectId, resolvedLanguage]
   });

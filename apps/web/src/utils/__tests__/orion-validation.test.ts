@@ -22,7 +22,7 @@ const adherenceCombinations = Array.from({ length: 16 }, (_, combination) =>
 
 describe('ORION adherence wording compatibility', () => {
   it.each([
-    ['orion-pr-2026.ts', 'retro_', 'ORION_PR_2026_SELECTION', 36],
+    ['orion-pr-2026.ts', 'retro_', 'ORION_PR_2026_SELECTION', 37],
     ['orion-pr-2026-followup.ts', '', 'ORION_PR_2026_FOLLOWUP', 19]
   ] as const)(
     'uses the supplied Spanish wording with unchanged answer keys in %s',
@@ -116,16 +116,25 @@ describe('ORION client date and draft regressions', () => {
   ] as const)('formats internal investigator %i as %s', (number, code) =>
     expect(formatOrionInvestigatorNumber(number, true)).toBe(code)
   );
-  it.each(['OR-X-01', 'OR-xx-01', 'OR-X1-01', 'OR--01', 'OR-XX-'])('rejects malformed codes: %s', (code) => {
+  it.each(['', '   ', null, undefined, 12])('rejects empty or non-text codes: %s', (code) => {
     expect(isOrionPatientCode(code)).toBe(false);
   });
-  it.each(['OR-01-01', 'OR-02-01', 'OR-TEST-01-01', 'OR-1000-101', 'OR-XX-01', 'OR-XY-01', 'OR-YB-02', 'OR-AAA-01'])(
-    'accepts investigator and internal patient codes: %s',
-    (code) => {
-      expect(isOrionPatientCode(code)).toBe(true);
-      expect(selectionSchema.safeParse({ ...selectionData(), patient_code: code }).success).toBe(true);
-    }
-  );
+  it.each([
+    'centre/patient 7',
+    'a',
+    '123',
+    'OR-01-01',
+    'OR-02-01',
+    'OR-TEST-01-01',
+    'OR-1000-101',
+    'OR-XX-01',
+    'OR-XY-01',
+    'OR-YB-02',
+    'OR-AAA-01'
+  ])('accepts investigator and internal patient codes: %s', (code) => {
+    expect(isOrionPatientCode(code)).toBe(true);
+    expect(selectionSchema.safeParse({ ...selectionData(), patient_code: code }).success).toBe(true);
+  });
   it.each(['01-11-2026', '30-11-2026', '15-12-2026', '31-12-2027'])(
     'accepts selection and consent dates within the expanded study window: %s',
     (date) => {

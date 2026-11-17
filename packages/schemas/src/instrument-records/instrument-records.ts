@@ -7,7 +7,7 @@ import { $InstrumentMeasureValue } from '../instrument/instrument.js';
 import type { SessionType } from '../session/session.js';
 
 export function isOrionPatientCode(value: unknown): value is string {
-  return typeof value === 'string' && /^OR-(?:(?:TEST-)?\d{2,}|[A-Z]{2,})-\d+$/.test(value.trim());
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 export function formatOrionInvestigatorNumber(number: number, isInternal = false): string {

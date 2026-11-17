@@ -112,6 +112,10 @@ describe('ORION record assignment and atomic code persistence', () => {
     codes.transaction.mockImplementation((operation) => operation(transaction));
     codes.create.mockResolvedValue('OR-01-01');
     records.create.mockResolvedValue({ id: 'record', data: { patient_code: 'OR-01-01' } });
+    records.findMany.mockResolvedValue([]);
+    instruments.find.mockResolvedValue([
+      { id: 'selection', kind: 'FORM', internal: { name: 'ORION_PR_2026_SELECTION', edition: 34 } }
+    ]);
   });
 
   it('rejects a centre from another study before allocating any patient code', async () => {
@@ -334,13 +338,30 @@ describe('ORION record assignment and atomic code persistence', () => {
     expect(records.create).not.toHaveBeenCalled();
   });
 
-  it('replaces a THERA preview inside the same atomic record transaction', async () => {
-    await service.create(configureThera(), { user });
-    expect(codes.create).toHaveBeenCalledWith('orion', user.id, 'CS Aravaca', transaction, 'TH');
+  it('preserves the manually entered THERA code without allocating one', async () => {
+    const data = configureThera();
+    data.data.patient_code = 'centre/patient 7';
+    await service.create(data, { user });
     expect(records.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ data: expect.objectContaining({ patient_code: 'TH-01-02' }) })
+      data: expect.objectContaining({ data: expect.objectContaining({ patient_code: 'centre/patient 7' }) })
     });
-    expect(codes.transaction).toHaveBeenCalledTimes(1);
+    expect(codes.create).not.toHaveBeenCalled();
+    expect(codes.preview).not.toHaveBeenCalled();
+  });
+
+  it('rejects duplicate manually entered THERA baselines across editions', async () => {
+    const data = configureThera();
+    records.findMany.mockResolvedValue([{ id: 'existing', instrumentId: 'selection', data: data.data }]);
+    await expect(service.create(data, { user })).rejects.toThrow('Ya existe');
+    expect(records.create).not.toHaveBeenCalled();
+  });
+
+  it.each(['', '   '])('rejects empty THERA codes before writing a record (%j)', async (patient_code) => {
+    const data = configureThera();
+    await expect(service.create({ ...data, data: { ...data.data, patient_code } }, { user })).rejects.toThrow(
+      'Código de paciente'
+    );
+    expect(records.create).not.toHaveBeenCalled();
   });
 
   it('rejects THERA follow-up without eligible baseline, including direct API calls', async () => {
@@ -368,19 +389,42 @@ describe('ORION record assignment and atomic code persistence', () => {
     expect(codes.create).not.toHaveBeenCalled();
   });
 
-  it('rejects THERA baseline CSV upload before creating subjects or sessions', async () => {
+  it('preserves manual THERA baseline codes in CSV uploads and rejects duplicates', async () => {
     const data = configureThera();
+    data.data.patient_code = 'centre/patient 7';
+    const upload = {
+      groupId: 'orion',
+      instrumentId: 'selection',
+      records: [{ data: data.data, date: new Date(), subjectId: 'subject' }]
+    };
+    await service.upload(upload, { user });
+    expect(records.createMany).toHaveBeenCalledWith({
+      data: [expect.objectContaining({ data: expect.objectContaining({ patient_code: 'centre/patient 7' }) })]
+    });
+    expect(codes.create).not.toHaveBeenCalled();
+    records.createMany.mockClear();
     await expect(
-      service.upload(
-        {
-          groupId: 'orion',
-          instrumentId: 'selection',
-          records: [{ data: data.data, date: new Date(), subjectId: 'subject' }]
-        },
-        { user }
-      )
-    ).rejects.toThrow('atómica');
-    expect(records.create).not.toHaveBeenCalled();
+      service.upload({ ...upload, records: [...upload.records, ...upload.records] }, { user })
+    ).rejects.toThrow('más de una visita');
+    records.findMany.mockResolvedValue([{ id: 'existing', instrumentId: 'selection', data: data.data }]);
+    await expect(service.upload(upload, { user })).rejects.toThrow('Ya existe');
+    expect(records.createMany).not.toHaveBeenCalled();
+  });
+
+  it('does not confuse subject separators with characters in a free-text THERA code during import', async () => {
+    const data = configureThera();
+    await service.upload(
+      {
+        groupId: 'orion',
+        instrumentId: 'selection',
+        records: [
+          { data: { ...data.data, patient_code: 'b:c' }, date: new Date(), subjectId: 'a' },
+          { data: { ...data.data, patient_code: 'c' }, date: new Date(), subjectId: 'a:b' }
+        ]
+      },
+      { user }
+    );
+    expect(records.createMany).toHaveBeenCalledWith({ data: expect.any(Array) });
   });
 
   it('rejects editing a THERA anchor when that would invalidate an existing follow-up', async () => {
@@ -567,13 +611,19 @@ describe('ORION record assignment and atomic code persistence', () => {
     expect(codes.create).not.toHaveBeenCalled();
   });
 
-  it('writes the final code and response in the same transaction, replacing a stale preview', async () => {
+  it('preserves the manually entered ORION code without allocating one', async () => {
     const result = await service.create(input, { user });
-    expect(codes.create).toHaveBeenCalledWith('orion', 'researcher', 'CS Aravaca', transaction);
+    expect(codes.create).not.toHaveBeenCalled();
     expect(records.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ data: { site_hospital: 'CS Aravaca', patient_code: 'OR-01-01' } })
+      data: expect.objectContaining({ data: { site_hospital: 'CS Aravaca', patient_code: 'preview' } })
     });
     expect(result.data).toEqual({ patient_code: 'OR-01-01' });
+  });
+
+  it('rejects duplicate manual ORION codes, including historical user_code records', async () => {
+    records.findMany.mockResolvedValue([{ id: 'existing', data: { user_code: 'preview' } }]);
+    await expect(service.create(input, { user })).rejects.toThrow('Ya existe');
+    expect(records.create).not.toHaveBeenCalled();
   });
 
   it('propagates a failed record write through the transaction instead of confirming the code', async () => {

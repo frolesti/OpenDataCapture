@@ -7,7 +7,6 @@ import { z } from '/runtime/v1/zod@3.x';
 import {
   formatTheraDate,
   isTheraEligible,
-  isTheraPatientCode,
   THERA_EXCLUSIONS,
   THERA_INCLUSIONS,
   THERA_NAMES,
@@ -170,7 +169,7 @@ export function createTheraInstrument(visit: TheraVisit) {
     'Eficacia de las infiltraciones vaginales de complejos híbridos cooperativos de ácido hialurónico para el tratamiento del síndrome genitourinario de la menopausia en mujeres con antecedentes de cáncer de mama.';
   const shape: { [key: string]: z.ZodType<FormInstrument.Data[string]> } = {
     study_visit: z.string().optional(),
-    patient_code: z.string().refine(isTheraPatientCode, 'Se requiere un código THERA asignado por la plataforma'),
+    patient_code: requiredText,
     site_hospital: requiredText,
     visit_date: dateSchema
   };
@@ -181,7 +180,7 @@ export function createTheraInstrument(visit: TheraVisit) {
         'Fechas en formato DD/MM/AAAA. Introduzca una fecha válida dentro del periodo permitido para desbloquear las demás preguntas. La identificación del investigador queda vinculada a la sesión autenticada.',
       fields: {
         patient_code: baseline
-          ? { ...text('Código de paciente', false), disabled: true }
+          ? text('Código de paciente')
           : { kind: 'string', variant: 'select', label: 'Código de paciente *', options: {} },
         site_hospital: { kind: 'string', variant: 'select', label: 'Hospital *', options: {} },
         visit_date: dateField('Fecha de visita')
@@ -806,7 +805,7 @@ export function createTheraInstrument(visit: TheraVisit) {
   return defineInstrument({
     kind: 'FORM',
     language: 'en',
-    internal: { name: THERA_NAMES[visit], edition: 4 },
+    internal: { name: THERA_NAMES[visit], edition: 5 },
     tags: ['THERA-SGM-2026', 'CRF', visit],
     clientDetails: {
       estimatedDuration: 30,
