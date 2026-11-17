@@ -12,6 +12,7 @@ import { useInstrument } from '@/hooks/useInstrument';
 import { useInstrumentInfoQuery } from '@/hooks/useInstrumentInfoQuery';
 import { useInstrumentRecords } from '@/hooks/useInstrumentRecords';
 import { useAppStore } from '@/store';
+import { formatClinicalDataValue } from '@/utils/clinical-data-values';
 import { downloadSubjectTableExcel } from '@/utils/excel';
 import { formatTheraFieldLabel, mergeTheraRecords, THERA_UNIFIED_OPTION_ID } from '@/utils/thera-datahub';
 import type { TheraDatahubVisit } from '@/utils/thera-datahub';
@@ -243,66 +244,17 @@ export function formatOrionFieldLabel(fieldName: string): string {
   return baseName.replaceAll('_', ' ').replace(/^./, (character) => character.toUpperCase());
 }
 
-function formatOrionAdverseEvents(value: unknown): string {
-  let events = value;
-  if (typeof events === 'string' && events.trim().startsWith('[')) {
-    try {
-      events = JSON.parse(events) as unknown;
-    } catch {
-      return typeof events === 'string' ? events : String(events ?? '');
-    }
-  }
-  if (!Array.isArray(events)) {
-    return String(events ?? '');
-  }
-  if (events.length === 0) {
-    return 'Ninguna';
-  }
-
-  return events
-    .map((entry, index) => {
-      if (!entry || typeof entry !== 'object') {
-        return `Reacción ${index + 1}`;
-      }
-      const event = entry as Record<string, unknown>;
-      const reaction =
-        typeof event.reaction === 'string' && event.reaction.trim() ? event.reaction.trim() : 'Sin descripción';
-      const seriousness =
-        Array.isArray(event.seriousness) || event.seriousness instanceof Set
-          ? Array.from(event.seriousness as Set<unknown> | unknown[])
-              .map((item) => ORION_VALUE_LABELS[String(item)] ?? String(item))
-              .join(', ')
-          : event.seriousness
-            ? (ORION_VALUE_LABELS[String(event.seriousness)] ?? String(event.seriousness))
-            : undefined;
-      const details = [
-        event.intensity ? (ORION_VALUE_LABELS[String(event.intensity)] ?? String(event.intensity)) : undefined,
-        event.onset_date ? `inicio ${String(event.onset_date)}` : undefined,
-        event.resolution_date ? `resolución ${String(event.resolution_date)}` : undefined,
-        event.outcome ? (ORION_VALUE_LABELS[String(event.outcome)] ?? String(event.outcome)) : undefined,
-        event.actions_taken ? `medidas: ${String(event.actions_taken)}` : undefined,
-        seriousness ? `gravedad ${seriousness}` : undefined
-      ].filter(Boolean);
-      return `${index + 1}. ${reaction}${details.length ? ` (${details.join('; ')})` : ''}`;
-    })
-    .join(' · ');
-}
-
 function formatOrionDisplayValue(fieldName: string, value: unknown): unknown {
-  if (fieldName.toLowerCase().replace(/^followup_/, '') === 'adverse_event_records') {
-    return formatOrionAdverseEvents(value);
-  }
-  if (typeof value === 'boolean') {
-    return value ? 'Sí' : 'No';
-  }
-  if (typeof value === 'string') {
-    const scaleValue = formatOrionScaleValue(fieldName, value);
-    return typeof scaleValue === 'string' ? (ORION_VALUE_LABELS[scaleValue] ?? scaleValue) : scaleValue;
-  }
-  if (Array.isArray(value)) {
-    return value.map((entry) => ORION_VALUE_LABELS[String(entry)] ?? String(entry)).join(', ');
-  }
-  return value;
+  const isAdverseEvents = fieldName.toLowerCase().replace(/^followup_/, '') === 'adverse_event_records';
+  if (isAdverseEvents && Array.isArray(value) && value.length === 0) return 'Ninguna';
+  return formatClinicalDataValue(value, {
+    parseJson: isAdverseEvents,
+    formatFieldLabel: formatOrionFieldLabel,
+    formatString: (value) => {
+      const scaleValue = formatOrionScaleValue(fieldName, value);
+      return typeof scaleValue === 'string' ? (ORION_VALUE_LABELS[scaleValue] ?? scaleValue) : value;
+    }
+  });
 }
 
 function formatOrionScaleValue(fieldName: string, value: unknown): unknown {
@@ -388,6 +340,10 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
   const theraInstruments = useMemo(
     () => (instrumentInfoQuery.data ?? []).filter((entry) => entry.internal && getTheraVisit(entry.internal.name)),
     [instrumentInfoQuery.data]
+  );
+  const theraBaselineInstrument = useMemo(
+    () => pickLatestEdition(theraInstruments.filter((entry) => getTheraVisit(entry.internal?.name ?? '') === 'V0')),
+    [theraInstruments]
   );
   const theraInstrumentVisits = useMemo(
     () =>
@@ -492,7 +448,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
     isUnifiedOrionSelected
       ? (orionSelectionInstrument?.id ?? orionFollowupInstrument?.id ?? null)
       : isUnifiedTheraSelected
-        ? (theraInstruments[0]?.id ?? null)
+        ? (theraBaselineInstrument?.id ?? theraInstruments[0]?.id ?? null)
         : selectedInstrumentId
   );
 
@@ -623,7 +579,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
             obj.Date = toBasicISOString(val as Date);
             continue;
           }
-          obj[key] = typeof val === 'object' ? JSON.stringify(val) : val;
+          obj[key] = !isUnifiedOrionSelected && typeof val === 'object' ? JSON.stringify(val) : val;
         }
         return obj;
       });
@@ -748,7 +704,13 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
   useEffect(() => {
     if (recordsQuery.data) {
       if (isUnifiedTheraSelected) {
-        setRecords(mergeTheraRecords(recordsQuery.data, theraInstrumentVisits));
+        setRecords(
+          mergeTheraRecords(
+            recordsQuery.data,
+            theraInstrumentVisits,
+            instrument?.kind === 'FORM' ? instrument.content : undefined
+          )
+        );
         return;
       }
       const sourceRecords = isUnifiedOrionSelected
@@ -813,7 +775,7 @@ export function useGlobalInstrumentVisualization({ params }: UseGlobalInstrument
           delete cleanProps.user_code;
         }
         if (isUnifiedOrionSelected) {
-          for (const [key, value] of Object.entries(cleanProps)) {
+          for (const [key, value] of Object.entries({ ...record.computedMeasures, ...cleanProps })) {
             cleanProps[key] = formatOrionDisplayValue(key, value);
           }
         }

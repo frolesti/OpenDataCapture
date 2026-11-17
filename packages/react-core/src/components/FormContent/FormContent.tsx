@@ -35,7 +35,17 @@ export const FormContent = ({
       fr: 'Instrumento'
     });
 
-  const contentForForm = instrument.content;
+  const contentForForm = Array.isArray(instrument.content)
+    ? instrument.content.map((group) => {
+        const image = /^!\[([^\]]+)\]\((data:image\/png;base64,[A-Za-z0-9+/=]+)\)$/.exec(group.description ?? '');
+        return image
+          ? {
+              ...group,
+              description: <img alt={image[1]} className="my-3 max-h-80 max-w-full object-contain" src={image[2]} />
+            }
+          : group;
+      })
+    : instrument.content;
   const isThera = Boolean(getTheraVisit(instrument.internal.name));
 
   const hasRenderableContent =

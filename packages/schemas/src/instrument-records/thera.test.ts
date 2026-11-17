@@ -56,6 +56,31 @@ const fourth: TheraStoredVisit = {
 const timeline = [baseline, first, second, third, fourth];
 
 describe('THERA protocol', () => {
+  it('only exempts authorized test dates, preserving identity, prerequisites and chronology', () => {
+    const future = '2099-01-01';
+    const data = { ...first.data, visit_date: future, _thera_test_dates: true };
+    expect(validateTheraVisit('V1', data, [baseline])).toContain('futura');
+    expect(validateTheraVisit('V1', data, [baseline], undefined, true)).toBeUndefined();
+    expect(validateTheraVisit('V1', { ...data, visit_date: '2024-01-01' }, [baseline], undefined, true)).toContain(
+      'basal'
+    );
+    expect(validateTheraVisit('V2', data, [baseline], undefined, true)).toContain('V1');
+    expect(validateTheraVisit('V1', { ...data, site_hospital: 'Other' }, [baseline], undefined, true)).toContain(
+      'hospital'
+    );
+    expect(validateTheraVisit('V1', data, [baseline, first], undefined, true)).toContain('Ya existe');
+    expect(theraVisitDateError('V1', data)).toBeUndefined();
+    expect(theraVisitDateError('V1', { ...data, visit_date: '31/02/2099' })).toContain('válida');
+    expect(
+      validateTheraVisit(
+        'V3',
+        { ...third.data, _thera_test_dates: true },
+        [baseline, first, { ...second, data: { ...second.data, visit_date: future } }],
+        undefined,
+        true
+      )
+    ).toContain('precedente');
+  });
   it('recognizes only declared instruments and accepts nonempty free-text patient codes', () => {
     expect(getTheraVisit('THERA_SGM_2026_V4')).toBe('V4');
     expect(getTheraVisit('THERA_SGM_2026_END')).toBeUndefined();

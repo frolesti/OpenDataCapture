@@ -282,6 +282,64 @@ describe('ORION record assignment and atomic code persistence', () => {
     await expect(service.create(data, { user })).rejects.toThrow('V2');
   });
 
+  it('only allows administrators to persist explicitly marked future/out-of-window THERA tests', async () => {
+    const data = configureThera('V1');
+    const marked = { ...data, data: { ...data.data, visit_date: '2099-01-01', _thera_test_dates: true } };
+    records.findMany.mockResolvedValue([{ id: 'baseline', instrumentId: 'selection', data: theraBaselineData }]);
+    await expect(service.create(marked, { user })).rejects.toThrow('Solo un administrador');
+    expect(records.create).not.toHaveBeenCalled();
+    await expect(
+      service.upload(
+        {
+          groupId: data.groupId,
+          instrumentId: data.instrumentId,
+          records: [{ data: marked.data, date: new Date(), subjectId: data.subjectId }]
+        },
+        { user }
+      )
+    ).rejects.toThrow('Solo un administrador');
+
+    user.basePermissionLevel = 'ADMIN';
+    await expect(service.create(marked, { user })).resolves.toBeDefined();
+    expect(records.create).toHaveBeenCalled();
+    records.create.mockClear();
+    await expect(
+      service.create({ ...marked, data: { ...marked.data, _thera_test_dates: false } }, { user })
+    ).rejects.toThrow('futura');
+    expect(records.create).not.toHaveBeenCalled();
+  });
+
+  it('offers administrators every group hospital while keeping investigators assigned to their own centre', async () => {
+    const data = configureThera();
+    groups.findById.mockResolvedValue({
+      id: data.groupId,
+      studyCode: 'TH',
+      accessibleInstrumentIds: ['selection'],
+      hospitals: ['CS Aravaca', 'Hospital de prueba'],
+      hospitalCatalog: [
+        { id: 'aravaca', name: 'CS Aravaca', isInternal: false },
+        { id: 'other', name: 'Hospital de prueba', isInternal: false }
+      ]
+    });
+    const otherHospital = { ...data, data: { ...data.data, site_hospital: 'Hospital de prueba' } };
+    await expect(service.create(otherHospital, { user })).rejects.toThrow('not configured');
+    user.basePermissionLevel = 'ADMIN';
+    await expect(service.create(otherHospital, { user })).resolves.toBeDefined();
+    records.findFirst.mockResolvedValue({
+      id: 'baseline',
+      instrumentId: data.instrumentId,
+      subjectId: data.subjectId,
+      groupId: data.groupId,
+      data: data.data,
+      session: { userId: user.id }
+    });
+    await service.updateById('baseline', otherHospital.data, { user });
+    expect(records.update).toHaveBeenCalled();
+    await expect(
+      service.updateById('baseline', { ...otherHospital.data, site_hospital: 'Unknown' }, { user })
+    ).rejects.toThrow('not configured');
+  });
+
   it('previews a THERA code only for a TH study', async () => {
     configureThera();
     expect(await service.reserveTheraPatientCode({ groupId: 'orion', user })).toEqual({ code: 'TH-01-02' });

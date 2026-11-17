@@ -34,9 +34,10 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   camps condicionals i les columnes obligatories de taules repetibles.
   No marcar com obligatoris camps opcionals ni informatius deshabilitats.
 - A THERA, per peticio explicita, les dues EVA de totes les visites son inputs
-  numerics `kind: 'number', variant: 'input', min: 1, max: 10`, amb validacio
+  numerics `kind: 'number', variant: 'input', min: 0, max: 10`, amb validacio
   d'enters i sense resposta per defecte. No tornar-hi a posar sliders, ni
-  instruccions o etiquetes 0-10. No modificar les edicions historiques.
+  valors per defecte. El rang 0-10 substitueix el rang 1-10 segons la revisio
+  aprovada del 17/11/2026. No modificar les edicions historiques.
 - Als altres estudis, per a l'EVA, usar el rang documentat al CRF.
   Quan sigui un slider 0-10, usar `kind: 'number', variant: 'slider', min: 0, max: 10`.
   Indicar 0 i 10, el significat dels extrems i el valor seleccionat.
@@ -103,6 +104,10 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   de pacient ni duplicar el selector. Seleccionar el pacient una sola vegada dins
   de "Datos de la visita"; una data incorrecta
   deshabilita la resta de preguntes i impedeix enviar. Conservar l'edicio historica.
+- Excepcio aprovada per a proves THERA: nomes administradors poden desar dates
+  futures o fora de finestra, identificades amb `_thera_test_dates`. Comprovar
+  aquest privilegi a l'API abans de validar el formulari, tambe en edicio i
+  importacio. Conservar consentiment, aptitud, ancores, duplicats i sequencia.
 - Mostrar un sol missatge per pregunta o cel-la, combinant les causes diferents
   sense repetir el mateix text. Comprovar-ho al formulari real, no nomes a l'esquema.
 - THERA acaba a la quarta visita. No crear un formulari independent de
@@ -129,6 +134,9 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 - A THERA, usar capcaleres identiques a taula, CSV i Excel: `v0_nom_del_camp`,
   `v1_nom_del_camp`, etc., amb barres baixes. No traduir-les a "Visita basal".
   No reanomenar per aixo els camps persistits.
+- A THERA i ORION, presentar les respostes multiples i els registres repetits
+  com a valors llegibles, mai JSON, metadades de serialitzacio ni `[object Object]`,
+  tant a la taula com al CSV i Excel. Conservar les respostes originals per editar.
 - No mostrar ni exportar `group_id` a THERA. Conservar la separacio entre estudis
   internament, sense exposar identificadors tecnics a la taula.
 - A THERA i ORION, el codi de pacient inicial es un input de text obligatori i lliure,
@@ -159,7 +167,7 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   `$AnyInstrument`. Comprovar tambe els controls reals de libui, no nomes mocks.
 - Seleccionar segons el canvi les proves dels errors al costat de cada criteri,
   els camps obligatoris, els extrems
-  del rang (1 i 10 a THERA),
+  del rang (0 i 10 a THERA),
   dates impossibles, limits de visita, taules repetibles, esborranys i edicio.
 - Desar els fitxers, executar la validacio mes estreta disponible i consultar
   Problems de tot el workspace. Identificar explicitament errors previs.

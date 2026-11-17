@@ -325,16 +325,27 @@ function loadDraft(instrumentId: string): Record<string, unknown> | null {
       return null;
     }
     return parsed.data;
-  } catch {
+  } catch (error) {
+    console.error('Failed to restore instrument draft', error);
+    useNotificationsStore.getState().addNotification({
+      message: 'No se ha podido recuperar el borrador guardado. No cierre el formulario.',
+      type: 'error'
+    });
     return null;
   }
 }
 
-function saveDraft(instrumentId: string, data: Record<string, unknown>): void {
+function saveDraft(instrumentId: string, data: Record<string, unknown>): boolean {
   try {
     localStorage.setItem(getDraftKey(instrumentId), serializeInstrumentDraft(data));
-  } catch {
-    // localStorage full or unavailable — silently ignore
+    return true;
+  } catch (error) {
+    console.error('Failed to save instrument draft', error);
+    useNotificationsStore.getState().addNotification({
+      message: 'No se ha podido guardar el borrador en este navegador. No cierre el formulario.',
+      type: 'error'
+    });
+    return false;
   }
 }
 
@@ -410,11 +421,14 @@ const RouteComponent = () => {
   const assignedHospital = currentGroup
     ? getHospitalCatalog(currentGroup).find((entry) => entry.id === studyAssignment?.hospitalId)
     : undefined;
-  const availableHospitals = assignedHospital
-    ? [assignedHospital.name]
-    : !currentGroup?.hospitalIds?.length
+  const availableHospitals =
+    currentUser?.basePermissionLevel === 'ADMIN'
       ? (currentGroup?.hospitals ?? [])
-      : [];
+      : assignedHospital
+        ? [assignedHospital.name]
+        : !currentGroup?.hospitalIds?.length
+          ? (currentGroup?.hospitals ?? [])
+          : [];
   const storedHospital =
     effectiveInitialData?.site_hospital ??
     effectiveInitialData?.CAP ??
@@ -706,6 +720,7 @@ const RouteComponent = () => {
         ...(selectedTheraPatient && selectedTheraPatient !== effectiveInitialData?.patient_code
           ? {}
           : originalFormInitialData),
+        _thera_test_dates: currentUser?.basePermissionLevel === 'ADMIN',
         ...(theraVisit === 'V0'
           ? {}
           : {
@@ -732,20 +747,30 @@ const RouteComponent = () => {
         data.patient_code !== theraPatientCode
       ) {
         setSelectedTheraPatient(data.patient_code);
-        latestDataRef.current = null;
+        latestDataRef.current = { patient_code: data.patient_code };
+        saveDraft(params.id, latestDataRef.current);
         setDraftDiscarded(true);
         setDraftData(null);
         setRendererKey((key) => key + 1);
         return;
       }
-      const nextData = mergeFormSnapshots(latestDataRef.current, data);
+      const nextData = mergeFormSnapshots(latestDataRef.current ?? effectiveInitialData, data);
       latestDataRef.current = nextData;
       // Only auto-save for new records, not when editing existing ones
       if (!recordId && !isDiscardingDraftRef.current) {
         saveDraft(params.id, nextData);
       }
     },
-    [isOrionFollowup, isOrionSelection, params.id, recordId, isThera, theraVisit, theraPatientCode]
+    [
+      isOrionFollowup,
+      isOrionSelection,
+      params.id,
+      recordId,
+      isThera,
+      theraVisit,
+      theraPatientCode,
+      effectiveInitialData
+    ]
   );
 
   useEffect(() => {
@@ -874,8 +899,11 @@ const RouteComponent = () => {
       return;
     }
 
-    if (latestDataRef.current) {
-      saveDraft(params.id, latestDataRef.current);
+    const snapshot = latestDataRef.current ?? effectiveInitialData;
+    if (!snapshot || !saveDraft(params.id, snapshot)) {
+      if (!snapshot)
+        notifications.addNotification({ message: 'No hay respuestas para guardar como borrador.', type: 'info' });
+      return;
     }
 
     notifications.addNotification({
@@ -888,7 +916,7 @@ const RouteComponent = () => {
 
     endSession();
     void navigate({ to: '/instruments/accessible-instruments' });
-  }, [endSession, navigate, notifications, params.id, recordId, t]);
+  }, [endSession, navigate, notifications, params.id, recordId, t, effectiveInitialData]);
 
   // Auto-save draft when session expires
   useEffect(() => {
@@ -1264,6 +1292,12 @@ const RouteComponent = () => {
         <p className="mx-auto mb-4 max-w-3xl text-sm font-medium">
           Ventana permitida: {formatTheraDate(theraVisitWindowInfo.min)} a {formatTheraDate(theraVisitWindowInfo.max)}{' '}
           (ambos incluidos).
+        </p>
+      ) : null}
+      {isThera && currentUser?.basePermissionLevel === 'ADMIN' ? (
+        <p className="mx-auto mb-4 max-w-3xl text-sm font-medium" role="status">
+          Modo de prueba de administrador: se permiten fechas futuras o fuera de ventana. Se mantienen el
+          consentimiento, los criterios clínicos y la secuencia de visitas.
         </p>
       ) : null}
       {currentStep === 1 && !recordId && !formSubmitted ? (

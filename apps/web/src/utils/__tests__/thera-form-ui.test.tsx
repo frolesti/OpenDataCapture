@@ -94,6 +94,22 @@ function renderBaseline(overrides: { [key: string]: unknown } = {}) {
 }
 
 describe('THERA real libui controls', () => {
+  it('renders the embedded injection diagram instead of its encoded markup', () => {
+    const diagram = 'data:image/png;base64,aGVsbG8=';
+    const withDiagram = {
+      ...instrument,
+      content: [
+        {
+          title: 'Datos sobre la intervención',
+          description: `![Localización de las inyecciones](${diagram})`,
+          fields: {}
+        }
+      ]
+    };
+    render(<FormContent instrument={withDiagram} onSubmit={vi.fn()} />);
+    expect(screen.getByRole('img', { name: 'Localización de las inyecciones' }).getAttribute('src')).toBe(diagram);
+    expect(screen.queryByText(/base64/)).toBeNull();
+  });
   it('allows a manually entered baseline code and preserves it in draft changes', async () => {
     const { changes } = renderBaseline({ patient_code: '' });
     const input = screen.getByLabelText<HTMLInputElement>('Código de paciente *');
@@ -142,7 +158,7 @@ describe('THERA real libui controls', () => {
     const errors = within(group as HTMLElement).getAllByText(/La fecha no puede ser futura/);
     expect(errors).toHaveLength(1);
     expect(errors[0]?.textContent).toContain('22/02/2024');
-    expect(screen.getByLabelText<HTMLInputElement>('Sequedad vaginal (1–10) *').disabled).toBe(true);
+    expect(screen.getByLabelText<HTMLInputElement>('Sequedad vaginal (0–10) *').disabled).toBe(true);
   });
 
   it.each(protocol.THERA_VISIT_ORDER)('blocks an actual incomplete submission for %s', async (visit) => {
@@ -243,7 +259,7 @@ describe('THERA real libui controls', () => {
   );
 
   it.each(protocol.THERA_VISIT_ORDER)(
-    'uses bounded 1-10 numeric inputs without default scores or sliders in %s',
+    'uses bounded 0-10 numeric inputs without default scores or sliders in %s',
     async (visit) => {
       const changes = vi.fn<(data: { [key: string]: unknown }) => void>();
       const submit = vi.fn();
@@ -269,15 +285,15 @@ describe('THERA real libui controls', () => {
       );
       expect(screen.queryAllByRole('slider')).toHaveLength(0);
       for (const label of ['Sequedad vaginal', 'Dispareunia (dolor)']) {
-        const input = screen.getByLabelText<HTMLInputElement>(`${label} (1–10) *`);
+        const input = screen.getByLabelText<HTMLInputElement>(`${label} (0–10) *`);
         const key = label === 'Sequedad vaginal' ? 'eva_dryness' : 'eva_dyspareunia';
         expect(input.value).toBe('');
-        expect(input.min).toBe('1');
+        expect(input.min).toBe('0');
         expect(input.max).toBe('10');
         expect(input.disabled).toBe(false);
         expect(changes.mock.lastCall?.[0][key]).toBeUndefined();
         fireEvent.change(input, { target: { value: '0' } });
-        expect(input.value).toBe('');
+        await waitFor(() => expect(changes.mock.lastCall?.[0][key]).toBe(0));
         fireEvent.change(input, { target: { value: '1' } });
         await waitFor(() => expect(changes.mock.lastCall?.[0][key]).toBe(1));
         fireEvent.change(input, { target: { value: '10' } });
@@ -333,7 +349,7 @@ describe('THERA real libui controls', () => {
       expect(document.querySelector(`[data-field-group="${key}"]`)).not.toBeNull();
     }
     fireEvent.change(screen.getByLabelText('Edad (años) *'), { target: { value: '17' } });
-    fireEvent.change(screen.getByLabelText('Sequedad vaginal (1–10) *'), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText('Sequedad vaginal (0–10) *'), { target: { value: '1' } });
     const exclusion = document.querySelector('[data-field-group="exclusion_1"]') as HTMLElement;
     fireEvent.click(within(exclusion).getByRole('radio', { name: 'Sí' }));
     expect(screen.getByLabelText('Peso (kg) *')).toBeDefined();

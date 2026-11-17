@@ -95,7 +95,7 @@ function conditional(field: Field, deps: string[], predicate: (data: Values) => 
 const vaginalLabels: [string, string[]][] = [
   ['Elasticidad vaginal', ['Ausente', 'Escasa', 'Aceptable', 'Buena', 'Excelente']],
   ['Volumen de flujo', ['Ausente', 'Escaso', 'Capa fina en la superficie', 'Capa moderada', 'Normal']],
-  ['pH vaginal (categorías del CRF pendientes de aclaración)', ['> 6.1', '5.6 a 6', '5.5', '4.7 a 6', '< 4.6']],
+  ['pH vaginal', ['> 6.1', '5.6 a 6', '5.5', '4.7 a 6', '< 4.6']],
   [
     'Integridad del epitelio',
     ['Petequias espontáneas', 'Sangra al menor contacto', 'Sangra al rascado', 'Epitelio no friable', 'Normal']
@@ -168,6 +168,7 @@ export function createTheraInstrument(visit: TheraVisit) {
   const studyDescription =
     'Eficacia de las infiltraciones vaginales de complejos híbridos cooperativos de ácido hialurónico para el tratamiento del síndrome genitourinario de la menopausia en mujeres con antecedentes de cáncer de mama.';
   const shape: { [key: string]: z.ZodType<FormInstrument.Data[string]> } = {
+    _thera_test_dates: z.boolean().optional(),
     study_visit: z.string().optional(),
     patient_code: requiredText,
     site_hospital: requiredText,
@@ -227,7 +228,6 @@ export function createTheraInstrument(visit: TheraVisit) {
   if (baseline) {
     shape.informed_consent = z.enum(['si', 'no']);
     shape.consent_date = optionalDate;
-    shape.age = z.number().int().nonnegative().optional();
     addGroup('Consentimiento informado', {
       informed_consent: radio('¿La paciente ha firmado el consentimiento informado?'),
       consent_date: conditional(
@@ -237,26 +237,21 @@ export function createTheraInstrument(visit: TheraVisit) {
       )
     });
     const inclusionLabels = [
-      'Antecedentes de cáncer de mama hormonodependiente, libre de enfermedad',
-      'Estado posmenopáusico natural o inducido, definido por criterios STRAW+10',
-      'Atrofia vulvovaginal: índice de salud vaginal <15 o dispareunia y/o sequedad vaginal EVA ≥5',
-      'Paciente ≥18 años que ha firmado el consentimiento informado'
+      'El paciente presenta antecedentes de cáncer de mama hormonodependiente y está libre de enfermedad',
+      'El paciente presenta un estado posmenopáusico natural o inducido, definido por criterios STRAW+10',
+      'El paciente presenta atrofia vulvovaginal: índice de salud vaginal <15 o dispareunia y/o sequedad vaginal EVA ≥5',
+      'El paciente tiene ≥18 años y ha firmado el consentimiento informado'
     ];
     const exclusionLabels = [
-      'Contraindicación o advertencia para el uso de complejos híbridos cooperativos de ácido hialurónico según la IFU (p.ej. inflamación, embarazo, lactancia, alergia)',
-      'Lesiones vaginales, cervicales o genitales; sangrado genital no investigado; enfermedad cutánea en la zona a tratar; predisposición a cicatrices hipertróficas o queloides',
-      'Trastornos de coagulación o cáncer cervical, de ovario o uterino en el momento de la inclusión',
-      'Infección bacteriana, fúngica o vírica vulvovaginal o urinaria, o tratamiento para dichas afecciones en el último mes',
-      'Infiltraciones vaginales de ácido hialurónico, radiofrecuencia, PRP o láser vaginal en el último año',
-      'No puede cumplir los procedimientos, no es candidata adecuada a juicio del investigador o participa en otro estudio relacionado'
+      'El paciente presenta una contraindicación o advertencia para el uso de complejos híbridos cooperativos de ácido hialurónico según la IFU (p.ej. inflamación, embarazo, lactancia, alergia)',
+      'El paciente presenta lesiones vaginales, cervicales o genitales; sangrado genital no investigado; enfermedad cutánea en la zona a tratar; predisposición a cicatrices hipertróficas o queloides',
+      'El paciente presenta trastornos de coagulación o cáncer cervical, de ovario o uterino en el momento de la inclusión',
+      'El paciente presenta infección bacteriana, fúngica o vírica vulvovaginal o urinaria, o ha recibido tratamiento para dichas afecciones en el último mes',
+      'El paciente ha recibido infiltraciones vaginales de ácido hialurónico, radiofrecuencia, PRP o láser vaginal en el último año',
+      'El paciente no puede cumplir los procedimientos, no es candidato adecuado a juicio del investigador o participa en otro estudio relacionado'
     ];
     const consentGate = (field: Field) =>
       conditional(field, ['informed_consent'], (data) => data.informed_consent === 'si');
-    addGroup(
-      'Evaluación necesaria para el cribado',
-      { age: consentGate(numeric('Edad (años)', 0)) },
-      'Se recoge antes de determinar la aptitud: edad, EVA e índice de salud vaginal. No es necesario completar el resto del CRF si la paciente no es apta.'
-    );
     const inclusionFields: Fields = {};
     const exclusionFields: Fields = {};
     THERA_INCLUSIONS.forEach((key, index) => {
@@ -277,13 +272,13 @@ export function createTheraInstrument(visit: TheraVisit) {
       ['eva_dryness', 'Sequedad vaginal'],
       ['eva_dyspareunia', 'Dispareunia (dolor)']
     ]) {
-      shape[key!] = z.number().int().min(1).max(10).optional();
+      shape[key!] = z.number().int().min(0).max(10).optional();
       const field: Field = {
         kind: 'number',
         variant: 'input',
-        label: requiredLabel(`${label!} (1–10)`),
-        description: 'Introduzca un número entero del 1 al 10. 10 = máxima intensidad imaginable.',
-        min: 1,
+        label: requiredLabel(`${label!} (0–10)`),
+        description: 'Introduzca un número entero del 0 al 10. 0 = sin síntomas; 10 = máxima intensidad imaginable.',
+        min: 0,
         max: 10
       };
       evaFields[key!] = baseline
@@ -293,7 +288,7 @@ export function createTheraInstrument(visit: TheraVisit) {
     addGroup(
       'Escala visual análoga para síndrome genitourinario',
       evaFields,
-      'Introduzca una puntuación del 1 al 10. 1-3 leve; 4-6 moderado; 7-10 intenso (máxima intensidad: 10).'
+      'Escala del 0 al 10: marque el número que mejor describa la intensidad de la sequedad vaginal y el dolor genital. El 0 significa que no presenta síntomas y el 10 la máxima intensidad imaginable. De forma orientativa: 1-3 = leve, 4-6 = moderado y 7-10 = intenso.'
     );
     if (fullAssessment) {
       const vaginalFields: Fields = {};
@@ -311,7 +306,7 @@ export function createTheraInstrument(visit: TheraVisit) {
       addGroup(
         'Índice de salud vaginal (investigador)',
         vaginalFields,
-        'Suma de los cinco ítems: 5-25. Las categorías de pH se reproducen del CRF y están pendientes de aclaración; no se convierten automáticamente desde un pH numérico.'
+        'El investigador deberá completar el índice de salud vaginal. Debe seleccionar el valor (1-5) correspondiente para cada uno de los cinco parámetros (elasticidad vaginal, secreciones, pH, integridad de la mucosa e hidratación) según la exploración ginecológica. La puntuación total (5-25) se obtiene sumando los ítems. Valores más bajos indican mayor atrofia vaginal y valores más altos mejor estado vaginal.'
       );
       const fsfiFields: Fields = {};
       fsfiQuestions.forEach((label, index) => {
@@ -326,7 +321,7 @@ export function createTheraInstrument(visit: TheraVisit) {
       addGroup(
         'Función sexual femenina (FSFI-6)',
         fsfiFields,
-        'Responda pensando en las últimas 4 semanas. Seleccione «Sin actividad sexual» cuando corresponda. Sin puntuación total no documentada.'
+        'Responda a cada pregunta pensando en su experiencia durante las últimas 4 semanas y marque la opción que mejor la describa. No existen preguntas correctas o incorrectas. Es importante contestar con sinceridad. Si no ha tenido actividad sexual en este periodo, seleccione la opción “Sin actividad sexual” cuando corresponda. Toda la información será tratada de forma confidencial.'
       );
       const vulvarFields: Fields = {};
       THERA_VULVAR_ITEMS.forEach((key, index) => {
@@ -336,18 +331,20 @@ export function createTheraInstrument(visit: TheraVisit) {
       addGroup(
         'Índice de salud vulvar (investigador)',
         vulvarFields,
-        'Se suma la puntuación (0-15), sin asignar categorías de atrofia: el CRF solapa las categorías en el valor 5 y está pendiente de aclaración.'
+        'El investigador deberá completar el índice de salud vulvar. Debe seleccionar la puntuación (0-3) para cada ítem (labios menores y mayores, clítoris, vestíbulo y elasticidad, color, y dolor) según la exploración ginecológica. La suma total indica el grado de afectación. Puntuaciones: 0-5 corresponde a atrofia leve; 5-10 moderada; >10 corresponde a atrofia severa.'
       );
     }
     if (cervantes) {
       const cervantesFields: Fields = {};
-      addClinical(
-        'sexual_activity_4_weeks',
-        z.enum(['si', 'no']),
-        radio('¿Ha tenido actividad sexual en las últimas 4 semanas? (coito, masturbación, caricias, etc.)'),
-        cervantesFields
-      );
       cervantesQuestions.forEach((label, index) => {
+        if (index === 11) {
+          addClinical(
+            'sexual_activity_4_weeks',
+            z.enum(['si', 'no']),
+            radio('¿Ha tenido actividad sexual en las últimas 4 semanas? (coito, masturbación, caricias, etc.)'),
+            cervantesFields
+          );
+        }
         addClinical(
           `cervantes_${index + 1}`,
           z.number().int().min(1).max(5),
@@ -369,7 +366,7 @@ export function createTheraInstrument(visit: TheraVisit) {
       addGroup(
         'Calidad de vida (Escala Cervantes-SGM)',
         cervantesFields,
-        'Últimas 4 semanas. Se conservan los 15 ítems del documento. Los ítems 12-15 solo se responden si ha tenido actividad sexual. Sin puntuación total no documentada.'
+        'Por favor lea atentamente cada una de las preguntas que vienen a continuación. Este cuestionario le pide que responda según una escala del 1 al 5, donde 1 significa “totalmente en desacuerdo” y 5 “totalmente de acuerdo”, con opciones intermedias. Las preguntas se refieren a posibles síntomas o molestias en la zona genital (vulva y/o vagina) durante las últimas 4 semanas. Algunas preguntas (12 a 15) tratan sobre la actividad sexual (relaciones, caricias o masturbación) y solo debe responderlas si ha tenido actividad sexual. Le pedimos que responda con sinceridad y sin pensarlo demasiado, ya que no hay respuestas correctas o incorrectas. El cuestionario es confidencial. Es importante contestar todas las preguntas que correspondan, ya que si alguna queda en blanco, el cuestionario podría no ser válido.'
       );
     }
     if (visit === 'V3') {
@@ -395,8 +392,9 @@ export function createTheraInstrument(visit: TheraVisit) {
 
   if (baseline) {
     const fields: Fields = {};
-    addClinical('weight', z.number().positive(), numeric('Peso (kg)', 0), fields);
-    addClinical('height', z.number().positive(), numeric('Altura (cm)', 0), fields);
+    addClinical('age', z.number().int().min(18).max(120), numeric('Edad (años)', 18, 120), fields);
+    addClinical('weight', z.number().min(20).max(300), numeric('Peso (kg)', 20, 300), fields);
+    addClinical('height', z.number().min(100).max(250), numeric('Altura (cm)', 100, 250), fields);
     const single = (key: string, label: string, options: { [key: string]: string } = yesNo) =>
       addClinical(key, z.enum(Object.keys(options) as [string, ...string[]]), radio(label, options), fields);
     const dependentText = (key: string, label: string, dep: string, value = 'si') =>
@@ -582,17 +580,11 @@ export function createTheraInstrument(visit: TheraVisit) {
       status_detail: requiredText,
       resolution_date: optionalDate
     });
-    const eventPredicate = (data: Values) => data.serious_adverse_event === 'si' || data.device_deficiency === 'si';
     const eventField: Field = {
       kind: 'record-array',
-      label: 'Acontecimientos adversos graves y deficiencias del dispositivo',
+      label: 'Acontecimientos adversos graves',
       fieldset: {
         onset_date: dateField('Fecha de inicio'),
-        event_type: radio('Tipo', {
-          grave: 'Acontecimiento adverso grave',
-          deficiencia: 'Deficiencia del dispositivo',
-          ambos: 'Ambos'
-        }),
         description: { kind: 'string', variant: 'textarea', label: 'Descripción del evento *' },
         device_problem: text('Problema del dispositivo (indique «no aplica» si procede)'),
         clinical_signs: text('Signos y síntomas clínicos (indique «no aplica» si procede)'),
@@ -609,18 +601,115 @@ export function createTheraInstrument(visit: TheraVisit) {
     };
     addClinical(
       'adverse_event_records',
-      z.array(eventSchema).min(1),
+      z.array(eventSchema.omit({ event_type: true })).min(1),
       eventField,
       fields,
-      ['serious_adverse_event', ...(hasDeviceQuestion ? ['device_deficiency'] : [])],
-      eventPredicate
+      ['serious_adverse_event'],
+      (data) => data.serious_adverse_event === 'si'
+    );
+    if (hasDeviceQuestion) {
+      addClinical(
+        'device_deficiency_records',
+        z.array(eventSchema.omit({ event_type: true })).min(1),
+        { ...eventField, label: 'Deficiencias del dispositivo' },
+        fields,
+        ['device_deficiency'],
+        (data) => data.device_deficiency === 'si'
+      );
+    }
+    const deviceFields: Fields = {};
+    for (const key of ['device_deficiency', 'device_deficiency_description', 'device_deficiency_records']) {
+      if (fields[key]) {
+        deviceFields[key] = fields[key];
+        delete fields[key];
+      }
+    }
+    if (hasDeviceQuestion) addGroup('Deficiencias del dispositivo', deviceFields);
+    addGroup('Acontecimientos adversos graves', fields, 'Añada un registro por acontecimiento.');
+  }
+
+  if (hasDeviceQuestion) {
+    const fields: Fields = {};
+    addClinical(
+      'injections_performed',
+      z.enum(['si', 'no']),
+      radio('¿Se realizaron las inyecciones vaginales?'),
+      fields
+    );
+    addClinical(
+      'injections_not_performed_reason',
+      requiredText,
+      text('Si no, especifique el motivo'),
+      fields,
+      ['injections_performed'],
+      (data) => data.injections_performed === 'no'
+    );
+    const injected = (data: Values) => data.injections_performed === 'si';
+    addClinical(
+      'injection_count',
+      z.number().int().min(1),
+      numeric('Número total de inyecciones administradas', 1),
+      fields,
+      ['injections_performed'],
+      injected
+    );
+    addClinical(
+      'injection_sites',
+      z.set(z.enum(['1', '2', '3', '4', '5', '6', 'otro'])).min(1),
+      {
+        kind: 'set',
+        variant: 'select',
+        label: 'Localización de las inyecciones',
+        options: { '1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', otro: 'Otra localización' }
+      },
+      fields,
+      ['injections_performed'],
+      injected
+    );
+    addClinical(
+      'injection_site_comment',
+      requiredText,
+      text('Especifique la otra localización'),
+      fields,
+      ['injections_performed', 'injection_sites'],
+      (data) => injected(data) && data.injection_sites instanceof Set && data.injection_sites.has('otro')
+    );
+    addClinical(
+      'injection_volume_ml',
+      z.number().positive(),
+      numeric('Volumen total de producto utilizado (mL)', 0),
+      fields,
+      ['injections_performed'],
+      injected
     );
     addGroup(
-      'Seguridad',
+      'Datos sobre la intervención',
       fields,
-      'Añada tantos registros como sea necesario. Causalidad y evolución se recogen en texto libre hasta disponer de catálogos oficiales.'
+      '![Localización numerada de las inyecciones](thera-injection-sites.png)'
     );
   }
+
+  const sectionOrder = [
+    'Datos de la visita',
+    'Consentimiento informado',
+    'Criterios de inclusión (todos deben ser SÍ)',
+    'Criterios de exclusión (todos deben ser NO)',
+    'Datos sociodemográficos',
+    'Datos gineco-obstétricos',
+    'Antecedentes oncológicos',
+    'Síndrome genitourinario de la menopausia',
+    'Actividad sexual actual',
+    'Escala visual análoga para síndrome genitourinario',
+    'Índice de salud vaginal (investigador)',
+    'Índice de salud vulvar (investigador)',
+    'Función sexual femenina (FSFI-6)',
+    'Calidad de vida (Escala Cervantes-SGM)',
+    'Mejoría global del paciente (PGI-I)',
+    'Datos sobre la intervención',
+    'Deficiencias del dispositivo',
+    'Acontecimientos adversos graves'
+  ];
+  groups.sort((a, b) => sectionOrder.indexOf(a.title ?? '') - sectionOrder.indexOf(b.title ?? ''));
 
   const cleanInactive = (value: unknown) => {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
@@ -639,8 +728,9 @@ export function createTheraInstrument(visit: TheraVisit) {
         ...THERA_VAGINAL_ITEMS
       ].forEach((key) => delete clean[key]);
     }
-    if (Array.isArray(clean.adverse_event_records)) {
-      clean.adverse_event_records = clean.adverse_event_records.map((event: unknown) => {
+    for (const key of ['adverse_event_records', 'device_deficiency_records']) {
+      if (!Array.isArray(clean[key])) continue;
+      clean[key] = clean[key].map((event: unknown) => {
         if (!event || typeof event !== 'object' || Array.isArray(event)) return event;
         const result: Values = { ...event };
         if (result.status !== 'resuelto') delete result.resolution_date;
@@ -725,37 +815,26 @@ export function createTheraInstrument(visit: TheraVisit) {
           )
             issue(key, 'La finalización no puede preceder al diagnóstico oncológico');
         }
-        if (
-          active(data) &&
-          (data.serious_adverse_event === 'si' || data.device_deficiency === 'si') &&
-          Array.isArray(data.adverse_event_records)
-        ) {
-          const events = data.adverse_event_records;
-          const eventIssue = (index: number, key: string, message: string) =>
-            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['adverse_event_records', index, key], message });
-          events.forEach((event, index) => {
-            if (visitDate && typeof event.onset_date === 'string' && event.onset_date > visitDate)
-              eventIssue(index, 'onset_date', 'El inicio no puede ser posterior a la visita');
-            if (event.status === 'resuelto' && !event.resolution_date)
-              eventIssue(index, 'resolution_date', 'Indique la fecha de resolución');
-            if (
-              typeof event.resolution_date === 'string' &&
-              event.status === 'resuelto' &&
-              ((typeof event.onset_date === 'string' && event.resolution_date < event.onset_date) ||
-                (visitDate !== undefined && event.resolution_date > visitDate))
-            )
-              eventIssue(index, 'resolution_date', 'La resolución debe estar entre el inicio y la visita');
-          });
-          if (
-            data.serious_adverse_event === 'si' &&
-            !events.some((event) => event.event_type === 'grave' || event.event_type === 'ambos')
-          )
-            issue('adverse_event_records', 'Falta el registro del acontecimiento grave declarado');
-          if (
-            data.device_deficiency === 'si' &&
-            !events.some((event) => event.event_type === 'deficiencia' || event.event_type === 'ambos')
-          )
-            issue('adverse_event_records', 'Falta el registro de la deficiencia declarada');
+        if (active(data)) {
+          for (const table of ['adverse_event_records', 'device_deficiency_records']) {
+            const events = data[table];
+            if (!Array.isArray(events)) continue;
+            const eventIssue = (index: number, key: string, message: string) =>
+              ctx.addIssue({ code: z.ZodIssueCode.custom, path: [table, index, key], message });
+            events.forEach((event, index) => {
+              if (visitDate && typeof event.onset_date === 'string' && event.onset_date > visitDate)
+                eventIssue(index, 'onset_date', 'El inicio no puede ser posterior a la visita');
+              if (event.status === 'resuelto' && !event.resolution_date)
+                eventIssue(index, 'resolution_date', 'Indique la fecha de resolución');
+              if (
+                typeof event.resolution_date === 'string' &&
+                event.status === 'resuelto' &&
+                ((typeof event.onset_date === 'string' && event.resolution_date < event.onset_date) ||
+                  (visitDate !== undefined && event.resolution_date > visitDate))
+              )
+                eventIssue(index, 'resolution_date', 'La resolución debe estar entre el inicio y la visita');
+            });
+          }
         }
       })
     )
@@ -805,10 +884,10 @@ export function createTheraInstrument(visit: TheraVisit) {
   return defineInstrument({
     kind: 'FORM',
     language: 'en',
-    internal: { name: THERA_NAMES[visit], edition: 5 },
+    internal: { name: THERA_NAMES[visit], edition: 7 },
     tags: ['THERA-SGM-2026', 'CRF', visit],
     clientDetails: {
-      estimatedDuration: 30,
+      estimatedDuration: { V0: 40, V1: 25, V2: 25, V3: 10, V4: 25 }[visit],
       instructions: [
         [
           baseline

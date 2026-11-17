@@ -1,7 +1,10 @@
-import { replacer, toBasicISOString } from '@douglasneuroinformatics/libjs';
+import { toBasicISOString } from '@douglasneuroinformatics/libjs';
+import type { FormInstrument, Language } from '@opendatacapture/runtime-core';
 import type { InstrumentRecord } from '@opendatacapture/schemas/instrument-records';
 import { getTheraVisit, isTheraPatientCode, THERA_NAMES } from '@opendatacapture/schemas/thera';
 import type { TheraStoredVisit, TheraVisit } from '@opendatacapture/schemas/thera';
+
+import { formatClinicalRecordValues } from './clinical-data-values';
 
 export const THERA_UNIFIED_OPTION_ID = '__THERA_SGM_2026__';
 export const THERA_VISIT_LABELS: { [key in TheraVisit]: string } = {
@@ -57,7 +60,11 @@ export function getTheraRecordVisit(
     : undefined;
 }
 
-export function mergeTheraRecords(records: InstrumentRecord[], instrumentVisits: ReadonlyMap<string, TheraVisit>) {
+export function mergeTheraRecords(
+  records: InstrumentRecord[],
+  instrumentVisits: ReadonlyMap<string, TheraVisit>,
+  content?: FormInstrument.Content<FormInstrument.Data, Language>
+) {
   const patients = new Map<string, { record: InstrumentRecord; visit: TheraVisit }[]>();
   for (const record of records) {
     const visit = getTheraRecordVisit(record, instrumentVisits);
@@ -102,16 +109,17 @@ export function mergeTheraRecords(records: InstrumentRecord[], instrumentVisits:
       study_completed: entries.some(({ visit }) => visit === 'V4'),
       completion_date: fourth ? recordData(fourth.record).visit_date : undefined
     };
+    if (entries.some(({ record }) => recordData(record)._thera_test_dates === true)) row.test_record = true;
     const counts = new Map<TheraVisit, number>();
     for (const { record, visit } of entries) {
       const count = (counts.get(visit) ?? 0) + 1;
       counts.set(visit, count);
       const prefix = `${visit.toLowerCase()}${count > 1 ? `_${count}` : ''}`;
       row[`${prefix}_date_collected`] = toBasicISOString(record.date);
-      for (const [field, value] of Object.entries({ ...record.computedMeasures, ...recordData(record) })) {
-        if (field.startsWith('_warning')) continue;
-        row[`${prefix}_${field}`] =
-          typeof value === 'object' && value !== null ? JSON.stringify(value, replacer) : value;
+      const displayData = formatClinicalRecordValues({ ...record.computedMeasures, ...recordData(record) }, content);
+      for (const [field, value] of Object.entries(displayData)) {
+        if (field.startsWith('_warning') || field === '_thera_test_dates') continue;
+        row[`${prefix}_${field}`] = value;
       }
       row.__visits__.push({
         __data__: recordData(record),

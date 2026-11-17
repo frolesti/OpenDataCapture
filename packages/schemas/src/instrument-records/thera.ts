@@ -155,18 +155,22 @@ export function theraVisitDateError(visit: TheraVisit, data: { [key: string]: un
       : 'Introduzca una fecha válida (DD/MM/AAAA)';
   }
   const messages: string[] = [];
-  if (date > theraToday()) messages.push('La fecha no puede ser futura.');
+  const testDates = data._thera_test_dates === true;
+  if (!testDates && date > theraToday()) messages.push('La fecha no puede ser futura.');
   if (visit !== 'V0') {
     const reference = theraDateToISO(visit === 'V1' ? data.baseline_date : data.first_visit_date);
     const window = reference ? theraVisitWindow(visit, reference) : undefined;
     if (!window) messages.push('Se requiere una fecha de referencia guardada válida.');
-    else if (date < window.min || date > window.max) {
+    else if (!testDates && (date < window.min || date > window.max)) {
       messages.push(
         `La visita debe realizarse entre ${formatTheraDate(window.min)} y ${formatTheraDate(window.max)}, ambos incluidos.`
       );
     }
     const baseline = theraDateToISO(data.baseline_date);
     if (baseline && date < baseline) messages.push('La visita no puede preceder a la visita basal.');
+    if (visit !== 'V1' && reference && date < reference) {
+      messages.push('La visita no puede preceder a la primera visita.');
+    }
   }
   return messages.length ? messages.join(' ') : undefined;
 }
@@ -175,7 +179,8 @@ export function validateTheraVisit(
   visit: TheraVisit,
   data: { [key: string]: unknown },
   records: TheraStoredVisit[],
-  editingId?: string
+  editingId?: string,
+  allowTestDates = false
 ): string | undefined {
   if (!isTheraPatientCode(data.patient_code)) return 'Código de paciente THERA no válido.';
   if (
@@ -187,7 +192,7 @@ export function validateTheraVisit(
   }
   const { baseline, first, patient } = theraPatientContext(records, data.patient_code);
   const visitDate = data.visit_date;
-  if (!parseTheraDate(visitDate) || typeof visitDate !== 'string' || visitDate > theraToday()) {
+  if (!parseTheraDate(visitDate) || typeof visitDate !== 'string' || (!allowTestDates && visitDate > theraToday())) {
     return 'La fecha de visita debe ser válida y no puede ser futura.';
   }
   if (visit === 'V0') return undefined;
@@ -205,7 +210,11 @@ export function validateTheraVisit(
   }
   const missing = missingTheraPrerequisite(visit, records, data.patient_code);
   if (missing) return `Se requiere la visita ${missing} guardada antes de registrar la visita ${visit}.`;
+  const previous = patient.find((record) => record.visit === THERA_VISIT_ORDER[THERA_VISIT_ORDER.indexOf(visit) - 1]);
+  const previousDate = theraDateToISO(previous?.data.visit_date);
+  if (previousDate && visitDate < previousDate)
+    return 'La fecha no puede ser anterior a la visita precedente guardada.';
   const window = theraVisitWindow(visit, String(visit === 'V1' ? baseline.data.visit_date : first?.data.visit_date));
   if (!window) return 'No se puede calcular la ventana de visita.';
-  return theraVisitDateError(visit, data);
+  return theraVisitDateError(visit, { ...data, _thera_test_dates: allowTestDates });
 }

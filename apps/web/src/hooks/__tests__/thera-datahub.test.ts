@@ -1,6 +1,7 @@
 import type { InstrumentRecord } from '@opendatacapture/schemas/instrument-records';
 import { THERA_NAMES } from '@opendatacapture/schemas/thera';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { parse } from 'papaparse';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { read, utils, write } from 'xlsx';
 
@@ -34,7 +35,18 @@ const infoQuery = {
   ],
   isLoading: false
 };
-const instrument = { kind: 'FORM', content: {}, internal: { name: 'THERA_SGM_2026_V0', edition: 1 } };
+const instrument = {
+  kind: 'FORM',
+  content: {
+    childbirth_types: {
+      kind: 'set',
+      variant: 'select',
+      label: 'Tipos de parto',
+      options: { instrumental: 'Vaginal con fórceps/ventosa', vaginal_con: 'Vaginal con episiotomía' }
+    }
+  },
+  internal: { name: 'THERA_SGM_2026_V0', edition: 1 }
+};
 vi.mock('@/hooks/useInstrumentInfoQuery', () => ({ useInstrumentInfoQuery: () => infoQuery }));
 vi.mock('@/hooks/useInstrument', () => ({
   useInstrument: () => instrument
@@ -169,6 +181,81 @@ describe('THERA datahub integration', () => {
     act(() => result.current.setFilter('__subjectId__', 'other'));
     expect(result.current.records).toHaveLength(0);
   });
+
+  it.each([
+    {
+      study: THERA_UNIFIED_OPTION_ID,
+      instrumentId: 'V0',
+      column: 'v0_childbirth_types',
+      expected: 'Vaginal con fórceps/ventosa, Vaginal con episiotomía'
+    },
+    {
+      study: '__ORION_PR_2026__',
+      instrumentId: 'orion',
+      column: 'neuropathy_etiology',
+      expected: 'Central, Periférico'
+    }
+  ])(
+    'exports the same readable compound answers shown in $study, preserving raw edit data',
+    async ({ study, instrumentId, column, expected }) => {
+      const data = {
+        patient_code: 'Paciente libre/7',
+        childbirth_types: new Set(['instrumental', 'vaginal_con']),
+        neuropathy_etiology: new Set(['central', 'peripheral']),
+        adverse_event_records: [
+          {
+            reaction: 'Dolor, "leve"\nSegundo día',
+            seriousness: {
+              __deserializedType: 'Set',
+              __isSerializedType: true,
+              value: ['hospitalizacion', 'no_grave']
+            },
+            additional_detail: { score: 0, resolved: false }
+          }
+        ]
+      };
+      mocks.records = [
+        {
+          ...record('V0', 2),
+          instrumentId,
+          data,
+          computedMeasures: { breakdown: [[{ answered: 0 }]] }
+        }
+      ];
+      const { result } = renderHook(() => useGlobalInstrumentVisualization());
+      act(() => result.current.setInstrumentId(study));
+      await waitFor(() => expect(result.current.records[0]?.[column]).toBe(expected));
+      const row = result.current.records[0]!;
+      const eventColumn = study === THERA_UNIFIED_OPTION_ID ? 'v0_adverse_event_records' : 'adverse_event_records';
+      const events = String(row[eventColumn]);
+      expect(events).toContain('Dolor, "leve"\nSegundo día');
+      expect(events).toContain('0');
+      expect(events).toContain('No');
+      expect(events).not.toMatch(/__deserializedType|__isSerializedType|\[object Object\]|[{}]/);
+      expect(row.__visits__?.[0]?.__data__.childbirth_types).toBe(data.childbirth_types);
+      expect(row.__visits__?.[0]?.__data__.adverse_event_records).toBe(data.adverse_event_records);
+
+      act(() => result.current.dl('CSV'));
+      const content = String(mocks.download.mock.calls[0]![1]());
+      const csv = parse<Record<string, string>>(content, { header: true });
+      expect(csv.errors).toEqual([]);
+      expect(csv.data[0]?.[column]).toBe(expected);
+      expect(csv.data[0]?.[eventColumn]).toBe(events);
+
+      act(() => result.current.dl('Excel'));
+      const [workbook] = mocks.writeWorkbook.mock.calls[0]!;
+      const reopened = read(write(workbook, { bookType: 'xlsx', type: 'buffer' }), { type: 'buffer' });
+      const savedRows = utils.sheet_to_json<Record<string, unknown>>(reopened.Sheets[reopened.SheetNames[0]!]!);
+      expect(savedRows[0]?.[column]).toBe(expected);
+      expect(savedRows[0]?.[eventColumn]).toBe(events);
+      for (const exported of [csv.data[0], savedRows[0]]) {
+        for (const value of Object.values(exported ?? {})) {
+          expect(typeof value).not.toBe('object');
+          expect(String(value)).not.toMatch(/__deserializedType|__isSerializedType|\[object Object\]/);
+        }
+      }
+    }
+  );
 
   it('keeps THERA patients out of the unified ORION dataset', async () => {
     mocks.records.push({

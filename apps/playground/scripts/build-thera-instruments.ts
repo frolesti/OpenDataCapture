@@ -26,6 +26,7 @@ const outputDirectory = path.join(directory, 'bundles');
 const checkOnly = process.argv.includes('--check');
 const $PlaygroundLanguage = z.object({ language: z.enum(['en', 'fr']) });
 const source = await readFile(path.join(directory, 'thera-sgm-2026-template.ts'), 'utf8');
+const injectionDiagram = (await readFile(path.join(directory, 'thera-injection-sites.png'))).toString('base64');
 const protocol = await readFile(path.join(root, 'packages/schemas/src/instrument-records/thera.ts'), 'utf8');
 const factoryDeclaration = 'export function createTheraInstrument(visit: TheraVisit) {';
 const protocolImports =
@@ -39,6 +40,7 @@ async function standaloneSource(visit: string): Promise<string> {
     .trimEnd()
     .slice(0, -1)
     .replace(protocolImports, protocol)
+    .replace('(thera-injection-sites.png)', `(data:image/png;base64,${injectionDiagram})`)
     .replace(factoryDeclaration, `const visit = '${visit.toUpperCase()}' as TheraVisit;`)
     .replace('return defineInstrument({', 'export default defineInstrument({');
   assert(!content.includes('@opendatacapture/schemas/thera'), 'Standalone forms cannot import workspace packages');
@@ -138,7 +140,10 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     overview.includes('calendario. Si no puede'),
     `${visit}: instruction sentences are separated by a period and space`
   );
-  verify(form.clientDetails?.estimatedDuration === 30, `${visit}: overview includes the estimated duration`);
+  verify(
+    form.clientDetails?.estimatedDuration === { v0: 40, v1: 25, v2: 25, v3: 10, v4: 25 }[visit],
+    `${visit}: overview includes a visit-specific estimated duration`
+  );
   verify(!overview.includes('THERA-SGM-2026'), `${visit}: overview does not repeat the heading`);
   verify(!overview.includes('.,'), `${visit}: rendered overview has no period-comma punctuation`);
   verify(overview.split(/\s+/).length <= 80, `${visit}: overview stays concise`);
@@ -158,9 +163,69 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     form.details.authors?.includes('Laura Baquedano Mainar') === true,
     `${visit}: details identify the coordinating investigator`
   );
-  verify(form.internal.edition === 5, `${visit}: edition succeeds published edition 4`);
+  verify(form.internal.edition === 7, `${visit}: edition succeeds published edition 6`);
   const data = fixture(form, visit);
   const groups = Array.isArray(form.content) ? form.content : [{ fields: form.content }];
+  const titles = groups.map((group) => group.title);
+  verify(
+    !titles.includes('Evaluación necesaria para el cribado'),
+    `${visit}: no screening disclaimer or early age question`
+  );
+  if (visit === 'v0') {
+    verify(
+      titles.indexOf('Datos sociodemográficos') < titles.indexOf('Escala visual análoga para síndrome genitourinario'),
+      'V0: demographics precede scales'
+    );
+    for (const [key, values] of Object.entries({ age: [17, 121], weight: [0, 900], height: [0, 11111] })) {
+      for (const value of values)
+        verify(
+          !(await form.validationSchema.safeParseAsync({ ...data, [key]: value })).success,
+          `V0: rejects implausible ${key} ${value}`
+        );
+    }
+  }
+  if (visit !== 'v3')
+    verify(
+      titles.indexOf('Índice de salud vulvar (investigador)') ===
+        titles.indexOf('Índice de salud vaginal (investigador)') + 1,
+      `${visit}: vaginal and vulvar indices are adjacent`
+    );
+  if (['v0', 'v2', 'v4'].includes(visit)) {
+    const fields = Object.keys(
+      groups.find((group) => group.title === 'Calidad de vida (Escala Cervantes-SGM)')!.fields
+    );
+    verify(
+      fields.indexOf('sexual_activity_4_weeks') === fields.indexOf('cervantes_11') + 1,
+      `${visit}: sexual activity question follows item 11`
+    );
+  }
+  if (visit === 'v0' || visit === 'v1') {
+    verify(entry.includes('data:image/png;base64,'), `${visit}: standalone contains the numbered injection diagram`);
+    const injected = {
+      ...data,
+      injections_performed: 'si',
+      injection_count: 2,
+      injection_sites: new Set(['1', 'otro']),
+      injection_site_comment: 'Otra localización',
+      injection_volume_ml: 1.5
+    };
+    verify((await form.validationSchema.safeParseAsync(injected)).success, `${visit}: intervention details persist`);
+    verify(
+      !(await form.validationSchema.safeParseAsync({ ...injected, injection_site_comment: '' })).success,
+      `${visit}: another site requires a comment`
+    );
+  }
+  const future = new Date();
+  future.setUTCFullYear(future.getUTCFullYear() + 2);
+  const futureDate = future.toISOString().slice(0, 10);
+  verify(
+    !(await form.validationSchema.safeParseAsync({ ...data, visit_date: futureDate })).success,
+    `${visit}: regular submissions reject future dates`
+  );
+  verify(
+    (await form.validationSchema.safeParseAsync({ ...data, visit_date: futureDate, _thera_test_dates: true })).success,
+    `${visit}: marked administrator test data allows future/out-of-window dates`
+  );
   const renderedFields = Object.fromEntries(
     groups.flatMap((group) =>
       Object.entries(group.fields).map(
@@ -200,12 +265,12 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     verify(
       renderedFields[key]?.kind === 'number' &&
         renderedFields[key].variant === 'input' &&
-        renderedFields[key].min === 1 &&
+        renderedFields[key].min === 0 &&
         renderedFields[key].max === 10,
-      `${visit}: ${key} is a bounded 1-10 numeric input`
+      `${visit}: ${key} is a bounded 0-10 numeric input`
     );
     verify(!form.initialValues || form.initialValues[key] === undefined, `${visit}: ${key} has no implicit score`);
-    for (const value of [1, 10]) {
+    for (const value of [0, 10]) {
       const answers = {
         ...data,
         ...Object.fromEntries(THERA_VAGINAL_ITEMS.map((item) => [item, 2])),
@@ -216,7 +281,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
         `${visit}: ${key} accepts endpoint ${value}`
       );
     }
-    for (const value of [-1, 0, 11, 1.5]) {
+    for (const value of [-1, 11, 1.5]) {
       verify(
         !(await form.validationSchema.safeParseAsync({ ...data, [key]: value })).success,
         `${visit}: ${key} rejects invalid score ${value}`
@@ -286,9 +351,26 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
       ]
     };
     verify((await form.validationSchema.safeParseAsync(withEvent)).success, `${visit}: resolved safety event`);
+    if (visit === 'v0' || visit === 'v1') {
+      const deviceOnly = {
+        ...withEvent,
+        serious_adverse_event: 'no',
+        device_deficiency: 'si',
+        device_deficiency_description: 'Deficiencia sintética',
+        device_deficiency_records: withEvent.adverse_event_records
+      };
+      const separate = await form.validationSchema.safeParseAsync(deviceOnly);
+      verify(
+        separate.success && !('adverse_event_records' in separate.data),
+        `${visit}: device deficiencies do not create an adverse-event record`
+      );
+      verify(
+        !(await form.validationSchema.safeParseAsync({ ...deviceOnly, device_deficiency_records: [] })).success,
+        `${visit}: a declared device deficiency requires its own records`
+      );
+    }
     const tableFields = [
       'onset_date',
-      'event_type',
       'description',
       'device_problem',
       'clinical_signs',
@@ -297,7 +379,9 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
       'serious_unexpected_device_effect',
       'status'
     ];
-    const safety = Array.isArray(form.content) ? form.content.find((group) => group.title === 'Seguridad') : undefined;
+    const safety = Array.isArray(form.content)
+      ? form.content.find((group) => group.title === 'Acontecimientos adversos graves')
+      : undefined;
     const eventField = safety?.fields.adverse_event_records;
     assert(eventField?.kind === 'dynamic', `${visit}: safety table is conditional`);
     const activeEvents = eventField.render({ ...valid.data, serious_adverse_event: 'si' });
@@ -311,7 +395,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     }
     verify(
       tableFields.every((field) => Object.hasOwn(activeEvents.fieldset, field)),
-      `${visit}: safety editor includes all nine CRF table columns`
+      `${visit}: safety editor includes the CRF table columns for its event category`
     );
     for (const field of tableFields) {
       const event: Record<string, unknown> = { ...withEvent.adverse_event_records[0] };
