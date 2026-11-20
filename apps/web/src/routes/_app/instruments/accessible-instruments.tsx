@@ -4,7 +4,12 @@ import { Button, Heading } from '@douglasneuroinformatics/libui/components';
 import { useTranslation } from '@douglasneuroinformatics/libui/hooks';
 import { isOrionPatientCode } from '@opendatacapture/schemas/instrument-records';
 import { getInstrumentStudyCode } from '@opendatacapture/schemas/group';
-import { canOpenTheraVisit, getTheraVisit, THERA_VISIT_ORDER } from '@opendatacapture/schemas/thera';
+import {
+  canOpenTheraVisit,
+  getTheraVisit,
+  THERA_VISIT_ORDER,
+  usesFlexibleTheraVisits
+} from '@opendatacapture/schemas/thera';
 import { encodeScopedSubjectId } from '@opendatacapture/subject-utils';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
@@ -129,6 +134,7 @@ const RouteComponent = () => {
     if (isAdmin) return true;
     if (instrument.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME) return hasPendingOrionFollowup;
     const visit = instrument.internal && getTheraVisit(instrument.internal.name);
+    if (usesFlexibleTheraVisits(instrument.internal)) return true;
     return !visit || (!theraRecordsQuery.isError && availableTheraVisits.has(visit)) || visit === 'V0';
   });
 
@@ -145,7 +151,14 @@ const RouteComponent = () => {
 
     const instrument = instrumentInfoQuery.data.find((entry) => entry.id === lastInstrumentId);
     const theraVisit = instrument?.internal && getTheraVisit(instrument.internal.name);
-    if (!isAdmin && theraVisit && theraVisit !== 'V0' && theraRecordsQuery.data === undefined) return;
+    if (
+      !isAdmin &&
+      theraVisit &&
+      !usesFlexibleTheraVisits(instrument?.internal) &&
+      theraVisit !== 'V0' &&
+      theraRecordsQuery.data === undefined
+    )
+      return;
     if (
       !isAdmin &&
       instrument?.internal?.name === ORION_FOLLOWUP_INTERNAL_NAME &&
@@ -186,8 +199,8 @@ const RouteComponent = () => {
         <div role="alert">
           <p>
             {t({
-              en: 'No s’han pogut comprovar les visites THERA guardades. Els seguiments es desbloquejaran quan es recuperin les dades.',
-              fr: 'No se han podido comprobar las visitas THERA guardadas. Los seguimientos se desbloquearán cuando se recuperen los datos.'
+              en: 'No s’han pogut recuperar les visites THERA guardades. Torneu-ho a provar abans d’emplenar un formulari per comprovar les dades del pacient.',
+              fr: 'No se han podido recuperar las visitas THERA guardadas. Vuelva a intentarlo antes de completar un formulario para comprobar los datos del paciente.'
             })}
           </p>
           <Button onClick={() => void theraRecordsQuery.refetch()}>

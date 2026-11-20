@@ -41,7 +41,7 @@ const mocks = vi.hoisted(() => {
 const infos = [
   ...THERA_VISIT_ORDER.map((visit) => ({
     id: visit,
-    internal: { name: THERA_NAMES[visit] },
+    internal: { name: THERA_NAMES[visit], edition: 1 },
     details: { title: visit }
   })),
   { id: 'orion-selection', internal: { name: 'ORION_PR_2026_SELECTION' }, details: { title: 'ORION basal' } },
@@ -70,7 +70,17 @@ function record(
     date,
     createdAt: date,
     updatedAt: date,
-    data: { ...eligible, study_visit: visit },
+    data: {
+      ...eligible,
+      study_visit: visit,
+      visit_date: {
+        V0: '2024-12-01',
+        V1: '2025-01-01',
+        V2: '2025-04-01',
+        V3: '2025-07-01',
+        V4: '2026-01-01'
+      }[visit]
+    },
     ...overrides
   };
 }
@@ -138,6 +148,8 @@ vi.mock('@/store', () => ({
 import '../../routes/_app/instruments/accessible-instruments';
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2025-04-01T12:00:00Z'));
   vi.clearAllMocks();
   localStorage.clear();
   mocks.records = [];
@@ -152,13 +164,36 @@ beforeEach(() => {
     accessibleInstrumentIds: [...THERA_VISIT_ORDER]
   };
   mocks.store.currentUser.groups = [mocks.store.currentGroup];
+  for (const info of infos) {
+    if ('edition' in info.internal) info.internal.edition = 1;
+  }
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 function visibleVisits() {
   return screen.getAllByRole('listitem').map((item) => item.textContent);
 }
 
 describe('sequential study instrument visibility', () => {
+  it('shows and restores every edition-10 visit without earlier records or waiting for their dates', async () => {
+    for (const info of infos) {
+      if ('edition' in info.internal) info.internal.edition = 10;
+    }
+    mocks.loading = true;
+    mocks.store.currentSession = { id: 'session' };
+    localStorage.setItem('last-instrument:session', 'V4');
+    const Component = mocks.component!;
+    render(<Component />);
+    expect(visibleVisits()).toEqual([...THERA_VISIT_ORDER]);
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith(
+        expect.objectContaining({ params: { id: 'V4' }, to: '/instruments/render/$id' })
+      )
+    );
+  });
+
   it('initially shows only the baseline to an investigator', () => {
     const Component = mocks.component!;
     render(<Component />);
@@ -166,6 +201,9 @@ describe('sequential study instrument visibility', () => {
   });
 
   it.each([1, 2, 3, 4, 5])('unlocks only the next unfinished visit after %i saved visits', (count) => {
+    vi.setSystemTime(
+      new Date(`${['2025-01-01', '2025-04-01', '2025-07-01', '2026-01-01', '2026-01-01'][count - 1]}T12:00:00Z`)
+    );
     mocks.records = THERA_VISIT_ORDER.slice(0, count).map((visit) => record(visit));
     const Component = mocks.component!;
     render(<Component />);
@@ -180,9 +218,13 @@ describe('sequential study instrument visibility', () => {
   });
 
   it('keeps progress separate for each patient and excludes completed patients', () => {
+    vi.setSystemTime(new Date('2025-01-01T12:00:00Z'));
     mocks.records = [
       ...THERA_VISIT_ORDER.map((visit) => record(visit)),
-      record('V0', { id: 'other-patient', data: { ...eligible, patient_code: 'TH-01-02', study_visit: 'V0' } })
+      record('V0', {
+        id: 'other-patient',
+        data: { ...eligible, patient_code: 'TH-01-02', study_visit: 'V0', visit_date: '2024-12-01' }
+      })
     ];
     const Component = mocks.component!;
     render(<Component />);

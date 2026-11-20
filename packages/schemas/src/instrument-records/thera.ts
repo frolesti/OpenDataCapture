@@ -100,9 +100,14 @@ export function theraVisitWindow(visit: TheraVisit, reference: string): undefine
 
 export type TheraStoredVisit = {
   data: { [key: string]: unknown };
+  edition?: number;
   id: string;
   visit: TheraVisit;
 };
+
+export function usesFlexibleTheraVisits(internal?: null | { edition: number; name: string }): boolean {
+  return Boolean(internal && getTheraVisit(internal.name) && internal.edition >= 10);
+}
 
 export function theraPatientContext(records: TheraStoredVisit[], patientCode: string) {
   const patient = records.filter((record) => record.data.patient_code === patientCode);
@@ -118,7 +123,18 @@ export function missingTheraPrerequisite(visit: TheraVisit, records: TheraStored
   );
 }
 
-export function canStartTheraVisit(visit: TheraVisit, records: TheraStoredVisit[], patientCode: string): boolean {
+export function canStartTheraVisit(
+  visit: TheraVisit,
+  records: TheraStoredVisit[],
+  patientCode: string,
+  flexibleVisits = false
+): boolean {
+  if (flexibleVisits) {
+    return (
+      isTheraPatientCode(patientCode) &&
+      !records.some((record) => record.visit === visit && record.data.patient_code === patientCode)
+    );
+  }
   if (visit === 'V0') return true;
   const { baseline, patient } = theraPatientContext(records, patientCode);
   return (
@@ -147,7 +163,24 @@ export function canOpenTheraVisit(
   return Boolean(parseTheraDate(today) && window && today >= window.min && today <= window.max);
 }
 
-export function theraVisitDateError(visit: TheraVisit, data: { [key: string]: unknown }): string | undefined {
+export function theraVisitDateWarning(visit: TheraVisit, data: { [key: string]: unknown }): string | undefined {
+  if (visit === 'V0') return undefined;
+  const reference = theraDateToISO(visit === 'V1' ? data.baseline_date : data.first_visit_date);
+  const window = reference ? theraVisitWindow(visit, reference) : undefined;
+  if (!window) {
+    return 'No se puede calcular el periodo recomendado: no consta la fecha de la visita de referencia. Puede completar y enviar esta visita.';
+  }
+  const date = theraDateToISO(data.visit_date);
+  return `Periodo recomendado: ${formatTheraDate(window.min)} a ${formatTheraDate(window.max)} (ambos incluidos).${
+    date && (date < window.min || date > window.max) ? ' La fecha indicada queda fuera de este periodo.' : ''
+  } Puede completar y enviar esta visita fuera de plazo.`;
+}
+
+export function theraVisitDateError(
+  visit: TheraVisit,
+  data: { [key: string]: unknown },
+  flexibleVisits = false
+): string | undefined {
   const date = theraDateToISO(data.visit_date);
   if (!date) {
     return data.visit_date === undefined || data.visit_date === ''
@@ -156,12 +189,12 @@ export function theraVisitDateError(visit: TheraVisit, data: { [key: string]: un
   }
   const messages: string[] = [];
   const testDates = data._thera_test_dates === true;
-  if (!testDates && date > theraToday()) messages.push('La fecha no puede ser futura.');
+  if (!flexibleVisits && !testDates && date > theraToday()) messages.push('La fecha no puede ser futura.');
   if (visit !== 'V0') {
     const reference = theraDateToISO(visit === 'V1' ? data.baseline_date : data.first_visit_date);
     const window = reference ? theraVisitWindow(visit, reference) : undefined;
-    if (!window) messages.push('Se requiere una fecha de referencia guardada válida.');
-    else if (!testDates && (date < window.min || date > window.max)) {
+    if (!window && !flexibleVisits) messages.push('Se requiere una fecha de referencia guardada válida.');
+    else if (window && !flexibleVisits && !testDates && (date < window.min || date > window.max)) {
       messages.push(
         `La visita debe realizarse entre ${formatTheraDate(window.min)} y ${formatTheraDate(window.max)}, ambos incluidos.`
       );
@@ -180,7 +213,8 @@ export function validateTheraVisit(
   data: { [key: string]: unknown },
   records: TheraStoredVisit[],
   editingId?: string,
-  allowTestDates = false
+  allowTestDates = false,
+  flexibleVisits = false
 ): string | undefined {
   if (!isTheraPatientCode(data.patient_code)) return 'Código de paciente THERA no válido.';
   if (
@@ -192,8 +226,40 @@ export function validateTheraVisit(
   }
   const { baseline, first, patient } = theraPatientContext(records, data.patient_code);
   const visitDate = data.visit_date;
-  if (!parseTheraDate(visitDate) || typeof visitDate !== 'string' || (!allowTestDates && visitDate > theraToday())) {
-    return 'La fecha de visita debe ser válida y no puede ser futura.';
+  if (
+    !parseTheraDate(visitDate) ||
+    typeof visitDate !== 'string' ||
+    (!flexibleVisits && !allowTestDates && visitDate > theraToday())
+  ) {
+    return flexibleVisits
+      ? 'La fecha de visita debe ser válida (DD/MM/AAAA).'
+      : 'La fecha de visita debe ser válida y no puede ser futura.';
+  }
+  if (flexibleVisits) {
+    for (const [key, reference] of [
+      ['baseline_date', baseline],
+      ['first_visit_date', first]
+    ] as const) {
+      if (key === 'first_visit_date' && (visit === 'V0' || visit === 'V1')) continue;
+      const submittedReference = data[key];
+      if (submittedReference !== undefined && submittedReference !== reference?.data.visit_date) {
+        return 'Las fechas de referencia deben coincidir con las visitas guardadas del mismo paciente.';
+      }
+    }
+    if (visit !== 'V0' && baseline && !isTheraEligible(baseline.data)) {
+      return 'La visita basal guardada no cumple los criterios de aptitud.';
+    }
+    const position = THERA_VISIT_ORDER.indexOf(visit);
+    for (const saved of patient) {
+      if (saved.id === editingId) continue;
+      const savedDate = theraDateToISO(saved.data.visit_date);
+      if (!savedDate) continue;
+      const savedPosition = THERA_VISIT_ORDER.indexOf(saved.visit);
+      if ((savedPosition < position && savedDate > visitDate) || (savedPosition > position && savedDate < visitDate)) {
+        return 'La fecha no respeta el orden cronológico de las visitas guardadas del mismo paciente.';
+      }
+    }
+    return undefined;
   }
   if (visit === 'V0') return undefined;
   if (!baseline || !isTheraEligible(baseline.data)) return 'Se requiere una visita basal apta para este paciente.';

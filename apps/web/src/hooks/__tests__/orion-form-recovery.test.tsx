@@ -1,6 +1,6 @@
 import { runInNewContext } from 'node:vm';
 
-import { StrictMode } from 'react';
+import { StrictMode, useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
 
 import { replacer, reviver } from '@douglasneuroinformatics/libjs';
@@ -12,7 +12,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import axios from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { serializeInstrumentDraft } from '../../utils/instrument-draft';
+import { deserializeInstrumentDraft, serializeInstrumentDraft } from '../../utils/instrument-draft';
 import { loadSchema, selectionData } from '../../utils/__tests__/orion-test-utils';
 import { THERA_EXCLUSIONS, THERA_INCLUSIONS, THERA_VAGINAL_ITEMS } from '@opendatacapture/schemas/thera';
 
@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => ({
   bundle: {
     id: 'selection',
     kind: 'FORM',
-    internal: { name: 'ORION_PR_2026_SELECTION' },
+    internal: { name: 'ORION_PR_2026_SELECTION', edition: 1 },
     bundle: '({})'
   },
   bundleContext: {} as { [key: string]: unknown },
@@ -31,6 +31,9 @@ const mocks = vi.hoisted(() => ({
   recordRequests: vi.fn(),
   renderedBundle: '',
   renderedInitialData: undefined as undefined | { [key: string]: unknown },
+  rendererMounts: 0,
+  renderedInitialStep: 0,
+  stepChange: undefined as ((step: number) => void) | undefined,
   records: [] as Record<string, unknown>[],
   extraInfo: [] as { id: string; internal: { name: string } }[],
   search: {} as { recordId?: string },
@@ -79,12 +82,16 @@ vi.mock('@douglasneuroinformatics/libui/components', () => {
 vi.mock('@opendatacapture/react-core', () => ({
   InstrumentRenderer: ({
     initialData,
+    initialStep,
     onDataChange,
+    onStepChange,
     onSubmit,
     target
   }: {
     initialData?: Record<string, unknown>;
+    initialStep: number;
     onDataChange?: (data: Record<string, unknown>) => void;
+    onStepChange: (step: number) => void;
     onSubmit: InstrumentSubmitHandler;
     target: { bundle: string };
   }) => {
@@ -92,6 +99,11 @@ vi.mock('@opendatacapture/react-core', () => ({
     mocks.submit = onSubmit;
     mocks.renderedBundle = target.bundle;
     mocks.renderedInitialData = initialData;
+    mocks.renderedInitialStep = initialStep;
+    mocks.stepChange = onStepChange;
+    useEffect(() => {
+      mocks.rendererMounts++;
+    }, []);
     return <div data-testid="renderer">{String(initialData?.patient_code ?? '')}</div>;
   }
 }));
@@ -150,10 +162,14 @@ beforeEach(() => {
   mocks.change = undefined;
   mocks.renderedBundle = '';
   mocks.renderedInitialData = undefined;
+  mocks.renderedInitialStep = 0;
+  mocks.rendererMounts = 0;
+  mocks.stepChange = undefined;
   mocks.bundleContext = {};
   mocks.records = [];
   mocks.extraInfo = [];
   mocks.bundle.internal.name = 'ORION_PR_2026_SELECTION';
+  mocks.bundle.internal.edition = 1;
   mocks.bundle.bundle = '({})';
   mocks.store.currentUser.studyHospitals = [];
   mocks.store.currentUser.basePermissionLevel = 'STANDARD';
@@ -192,6 +208,104 @@ describe('THERA patient identity and persisted visit anchors', () => {
     ];
     mocks.records = [{ id: 'baseline-record', instrumentId: 'baseline', data: baselineData }];
   }
+  it('keeps edition-10 follow-ups open without a basal and preserves progress while typing the code', () => {
+    prepareThera('V4');
+    mocks.bundle.internal.edition = 10;
+    mocks.records = [];
+    renderForm();
+    expect(screen.getByTestId('renderer')).toBeDefined();
+    expect(screen.getByRole('status').textContent).toContain('no consta la fecha');
+    act(() => mocks.stepChange?.(1));
+    const mounts = mocks.rendererMounts;
+    for (const patient_code of ['p', 'pa', 'patient']) {
+      act(() => mocks.change?.({ patient_code, visit_date: '2099-01-01', eva_dryness: 6 }));
+    }
+    expect(mocks.rendererMounts).toBe(mounts);
+    expect(mocks.renderedInitialStep).toBe(1);
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(mocks.store.startSession).not.toHaveBeenCalled();
+    expect(mocks.store.setIsCurrentSessionSubmitted).not.toHaveBeenCalled();
+    const draft = deserializeInstrumentDraft(localStorage.getItem('instrument-draft:selection:investigator')!);
+    expect(draft.data).toMatchObject({ patient_code: 'patient', visit_date: '2099-01-01', eva_dryness: 6 });
+  });
+
+  it('updates the advisory period when the typed code or date changes without remounting', () => {
+    prepareThera();
+    mocks.bundle.internal.edition = 10;
+    mocks.state.initialData = { patient_code: 'TH-01-01', visit_date: '2099-01-01' };
+    renderForm();
+    const mounts = mocks.rendererMounts;
+    act(() => mocks.change?.({ patient_code: 'TH-01-01', visit_date: '2099-01-01' }));
+    expect(screen.getByRole('status').textContent).toContain('22/02/2024 a 07/03/2024');
+    expect(screen.getByRole('status').textContent).toContain('fuera de este periodo');
+    act(() => mocks.change?.({ patient_code: 'TH-01-01', visit_date: '2024-02-29' }));
+    expect(screen.getByRole('status').textContent).not.toContain('fuera de este periodo');
+    act(() => mocks.change?.({ patient_code: 'TH-01-01', visit_date: '' }));
+    expect(screen.getByRole('status').textContent).not.toContain('fuera de este periodo');
+    act(() => mocks.change?.({ patient_code: 'another-patient', visit_date: '2024-02-29' }));
+    expect(screen.getByRole('status').textContent).toContain('no consta la fecha');
+    expect(mocks.rendererMounts).toBe(mounts);
+  });
+
+  it('offers every group hospital and retains a free-text code in edition 10', async () => {
+    prepareThera();
+    mocks.bundle.internal.edition = 10;
+    mocks.store.currentGroup.hospitals = ['Hospital THERA', 'Otro hospital'];
+    mocks.bundle.bundle = `Promise.resolve({
+      content: [{ fields: {
+        site_hospital: { kind: 'string', variant: 'select', options: { old: 'Old' } },
+        patient_code: { kind: 'string', variant: 'input' }
+      } }]
+    })`;
+    renderForm();
+    const form = await (runInNewContext(mocks.renderedBundle) as Promise<{
+      content: { fields: { site_hospital: { options: Record<string, string> }; patient_code: { variant: string } } }[];
+    }>);
+    expect(form.content[0]?.fields.site_hospital.options).toEqual({
+      'Hospital THERA': 'Hospital THERA',
+      'Otro hospital': 'Otro hospital'
+    });
+    expect(form.content[0]?.fields.patient_code.variant).toBe('input');
+  });
+
+  it.each([true, false])(
+    'submits only actual saved references for the chosen edition-10 patient (known=%s)',
+    async (known) => {
+      prepareThera('V3');
+      mocks.bundle.internal.edition = 10;
+      mocks.records.push({
+        id: 'first-record',
+        instrumentId: 'first',
+        data: { patient_code: 'TH-01-01', visit_date: '2024-02-29' }
+      });
+      vi.mocked(axios.post).mockResolvedValue({ data: {} });
+      renderForm();
+      const data = {
+        patient_code: known ? 'TH-01-01' : 'another-patient',
+        site_hospital: 'Hospital THERA',
+        visit_date: '2099-01-01',
+        baseline_date: 'forged',
+        first_visit_date: 'forged',
+        _thera_test_dates: true,
+        eva_dryness: 6
+      };
+      act(() => mocks.change?.(data));
+      const submit = mocks.submit;
+      if (!submit) throw new Error('The instrument submit handler was not rendered');
+      await act(async () => {
+        await submit({ data, instrumentId: 'selection' });
+      });
+      const request = vi.mocked(axios.post).mock.calls.find(([url]) => url === '/v1/instrument-records');
+      expect(request?.[1].data).toMatchObject({ patient_code: data.patient_code, eva_dryness: 6 });
+      expect(request?.[1].data).not.toHaveProperty('_thera_test_dates');
+      if (known) {
+        expect(request?.[1].data).toMatchObject({ baseline_date: '2024-01-31', first_visit_date: '2024-02-29' });
+      } else {
+        expect(request?.[1].data).not.toHaveProperty('baseline_date');
+        expect(request?.[1].data).not.toHaveProperty('first_visit_date');
+      }
+    }
+  );
   it('opens THERA without requesting or preassigning a patient code', async () => {
     prepareThera('V0');
     vi.mocked(axios.post).mockResolvedValue({ data: { code: 'TH-01-02' } });

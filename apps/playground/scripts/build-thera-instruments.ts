@@ -163,7 +163,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     form.details.authors?.includes('Laura Baquedano Mainar') === true,
     `${visit}: details identify the coordinating investigator`
   );
-  verify(form.internal.edition === 9, `${visit}: edition succeeds published edition 8`);
+  verify(form.internal.edition === 10, `${visit}: edition succeeds published edition 9`);
   const data = fixture(form, visit);
   const groups = Array.isArray(form.content) ? form.content : [{ fields: form.content }];
   const titles = groups.map((group) => group.title);
@@ -190,6 +190,13 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
         titles.indexOf('Índice de salud vaginal (investigador)') + 1,
       `${visit}: vaginal and vulvar indices are adjacent`
     );
+  if (visit !== 'v3') {
+    verify(
+      titles.indexOf('Escala visual análoga para síndrome genitourinario') >
+        titles.indexOf('Índice de salud vulvar (investigador)'),
+      `${visit}: EVA follows the vaginal and vulvar indices`
+    );
+  }
   if (['v0', 'v2', 'v4'].includes(visit)) {
     const fields = Object.keys(
       groups.find((group) => group.title === 'Calidad de vida (Escala Cervantes-SGM)')!.fields
@@ -200,6 +207,11 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     );
   }
   if (visit === 'v0' || visit === 'v1') {
+    verify(
+      titles.indexOf('Datos sobre la intervención') ===
+        titles.indexOf('Escala visual análoga para síndrome genitourinario') + 1,
+      `${visit}: intervention follows the indices and EVA before the other questionnaires`
+    );
     verify(entry.includes('data:image/png;base64,'), `${visit}: standalone contains the numbered injection diagram`);
     const injected = {
       ...data,
@@ -219,8 +231,8 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
   future.setUTCFullYear(future.getUTCFullYear() + 2);
   const futureDate = future.toISOString().slice(0, 10);
   verify(
-    !(await form.validationSchema.safeParseAsync({ ...data, visit_date: futureDate })).success,
-    `${visit}: regular submissions reject future dates`
+    (await form.validationSchema.safeParseAsync({ ...data, visit_date: futureDate })).success,
+    `${visit}: regular submissions accept future dates without a test flag`
   );
   verify(
     (await form.validationSchema.safeParseAsync({ ...data, visit_date: futureDate, _thera_test_dates: true })).success,
@@ -243,9 +255,9 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
   verify(!('visit_window_info' in renderedFields), `${visit}: visit window is not an empty form control`);
   verify(
     renderedFields.patient_code?.kind === 'string' &&
-      renderedFields.patient_code.variant === (visit === 'v0' ? 'input' : 'select') &&
+      renderedFields.patient_code.variant === 'input' &&
       !renderedFields.patient_code.disabled,
-    `${visit}: baseline uses editable text and follow-ups select a saved patient`
+    `${visit}: independent visits accept a patient code even without any saved visits`
   );
   for (const patient_code of ['centre/patient 7', 'a', '123', 'TH-01-01']) {
     verify(
@@ -379,13 +391,10 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
       adverse_event_records: [
         {
           onset_date: String(data.visit_date),
-          event_type: 'grave',
           description: 'Evento sintético',
-          device_problem: 'No aplica',
           clinical_signs: 'Registro sintético',
           action_evolution: 'Seguimiento',
           causality: 'Pendiente de evaluación',
-          serious_unexpected_device_effect: 'no',
           status: 'resuelto',
           status_detail: 'Resuelto',
           resolution_date: String(data.visit_date)
@@ -398,8 +407,12 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
         ...withEvent,
         serious_adverse_event: 'no',
         device_deficiency: 'si',
-        device_deficiency_description: 'Deficiencia sintética',
-        device_deficiency_records: withEvent.adverse_event_records
+        device_deficiency_records: [
+          {
+            onset_date: String(data.visit_date),
+            description: 'Deficiencia sintética'
+          }
+        ]
       };
       const separate = await form.validationSchema.safeParseAsync(deviceOnly);
       verify(
@@ -410,16 +423,35 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
         !(await form.validationSchema.safeParseAsync({ ...deviceOnly, device_deficiency_records: [] })).success,
         `${visit}: a declared device deficiency requires its own records`
       );
+      const deficiencyField = groups.find((group) => group.title === 'Deficiencias del dispositivo')!.fields
+        .device_deficiency_records;
+      assert(deficiencyField?.kind === 'dynamic');
+      const deficiency = deficiencyField.render(deviceOnly);
+      assert(deficiency?.kind === 'record-array');
+      verify(
+        Object.keys(deficiency.fieldset).sort().join(',') === 'description,onset_date',
+        `${visit}: a device deficiency asks only for its date and description`
+      );
+      for (const field of ['onset_date', 'description']) {
+        verify(
+          !(
+            await form.validationSchema.safeParseAsync({
+              ...deviceOnly,
+              device_deficiency_records: [{ ...deviceOnly.device_deficiency_records[0], [field]: undefined }]
+            })
+          ).success,
+          `${visit}: device deficiency requires ${field}`
+        );
+      }
     }
     const tableFields = [
       'onset_date',
       'description',
-      'device_problem',
       'clinical_signs',
       'action_evolution',
       'causality',
-      'serious_unexpected_device_effect',
-      'status'
+      'status',
+      'status_detail'
     ];
     const safety = Array.isArray(form.content)
       ? form.content.find((group) => group.title === 'Acontecimientos adversos graves')
@@ -438,6 +470,10 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     verify(
       tableFields.every((field) => Object.hasOwn(activeEvents.fieldset, field)),
       `${visit}: safety editor includes the CRF table columns for its event category`
+    );
+    verify(
+      !('device_problem' in activeEvents.fieldset) && !('serious_unexpected_device_effect' in activeEvents.fieldset),
+      `${visit}: adverse-event records omit the removed device-specific questions`
     );
     for (const field of tableFields) {
       const event: Record<string, unknown> = { ...withEvent.adverse_event_records[0] };
@@ -536,6 +572,16 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
       'V0: screening errors stay on criteria; inactive stale clinical fields are removed'
     );
   } else {
+    verify(
+      (
+        await form.validationSchema.safeParseAsync({
+          ...data,
+          baseline_date: undefined,
+          first_visit_date: undefined
+        })
+      ).success,
+      `${visit}: missing baseline and V1 do not block an independent follow-up`
+    );
     const window = theraVisitWindow(
       visit.toUpperCase() as 'V1' | 'V2' | 'V3' | 'V4',
       visit === 'v1' ? String(data.baseline_date) : String(data.first_visit_date)
@@ -547,14 +593,14 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     const before = new Date(`${window.min}T12:00:00Z`);
     before.setUTCDate(before.getUTCDate() - 1);
     verify(
-      !(await form.validationSchema.safeParseAsync({ ...data, visit_date: before.toISOString().slice(0, 10) })).success,
-      `${visit}: before window`
+      (await form.validationSchema.safeParseAsync({ ...data, visit_date: before.toISOString().slice(0, 10) })).success,
+      `${visit}: before the recommended window is allowed`
     );
     const after = new Date(`${window.max}T12:00:00Z`);
     after.setUTCDate(after.getUTCDate() + 1);
     verify(
-      !(await form.validationSchema.safeParseAsync({ ...data, visit_date: after.toISOString().slice(0, 10) })).success,
-      `${visit}: after window`
+      (await form.validationSchema.safeParseAsync({ ...data, visit_date: after.toISOString().slice(0, 10) })).success,
+      `${visit}: after the recommended window is allowed`
     );
   }
   if (visit === 'v0' || visit === 'v2' || visit === 'v4') {

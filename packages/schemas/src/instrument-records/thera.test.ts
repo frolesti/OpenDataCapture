@@ -4,6 +4,7 @@ import {
   canStartTheraVisit,
   canOpenTheraVisit,
   theraVisitDateError,
+  theraVisitDateWarning,
   formatTheraDate,
   getTheraVisit,
   isTheraEligible,
@@ -15,7 +16,8 @@ import {
   THERA_VISIT_ORDER,
   theraDateToISO,
   theraVisitWindow,
-  validateTheraVisit
+  validateTheraVisit,
+  usesFlexibleTheraVisits
 } from './thera';
 
 import type { TheraStoredVisit } from './thera';
@@ -56,6 +58,52 @@ const fourth: TheraStoredVisit = {
 const timeline = [baseline, first, second, third, fourth];
 
 describe('THERA protocol', () => {
+  describe('independent visits from edition 10', () => {
+    it('does not apply the new rules to historical instruments or other studies', () => {
+      expect(usesFlexibleTheraVisits({ name: 'THERA_SGM_2026_V1', edition: 9 })).toBe(false);
+      expect(usesFlexibleTheraVisits({ name: 'THERA_SGM_2026_V1', edition: 10 })).toBe(true);
+      expect(usesFlexibleTheraVisits({ name: 'ORION_PR_2026_FOLLOWUP', edition: 20 })).toBe(false);
+    });
+
+    it.each(THERA_VISIT_ORDER)('accepts %s without any other saved visits, including future dates', (visit) => {
+      const data = { patient_code: 'manual / patient', site_hospital: 'Hospital', visit_date: '2099-01-01' };
+      expect(canStartTheraVisit(visit, [], data.patient_code, true)).toBe(true);
+      expect(validateTheraVisit(visit, data, [], undefined, false, true)).toBeUndefined();
+      expect(theraVisitDateError(visit, data, true)).toBeUndefined();
+    });
+
+    it('keeps duplicates, valid dates, stored references and known chronological order enforced', () => {
+      const data = { ...second.data, site_hospital: 'Another group hospital', visit_date: '2099-01-01' };
+      expect(validateTheraVisit('V2', data, [baseline, first], undefined, false, true)).toBeUndefined();
+      expect(validateTheraVisit('V2', data, [baseline, first, second], undefined, false, true)).toContain('Ya existe');
+      expect(validateTheraVisit('V2', data, [baseline, first, second], second.id, false, true)).toBeUndefined();
+      expect(validateTheraVisit('V2', { ...data, visit_date: '2099-02-30' }, [], undefined, false, true)).toBeDefined();
+      expect(
+        validateTheraVisit('V2', { ...data, baseline_date: '2024-01-30' }, [baseline], undefined, false, true)
+      ).toContain('referencia');
+      expect(
+        validateTheraVisit('V2', { ...data, patient_code: 'someone else' }, [baseline, first], undefined, false, true)
+      ).toContain('referencia');
+      expect(
+        validateTheraVisit('V2', { ...data, visit_date: '2024-01-01' }, [baseline, first], undefined, false, true)
+      ).toContain('cronológico');
+      expect(
+        validateTheraVisit('V0', { ...eligible, visit_date: '2024-06-01' }, [second], undefined, false, true)
+      ).toContain('cronológico');
+    });
+
+    it('permits filling a missing earlier visit after V4 and never invents an advisory window', () => {
+      expect(validateTheraVisit('V1', first.data, [baseline, fourth], undefined, false, true)).toBeUndefined();
+      expect(theraVisitDateWarning('V2', {})).toContain('no consta');
+      expect(theraVisitDateWarning('V1', { baseline_date: '2024-01-31', visit_date: '2099-01-01' })).toContain(
+        '22/02/2024'
+      );
+      expect(theraVisitDateWarning('V1', { baseline_date: '2024-01-31', visit_date: '2099-01-01' })).toContain(
+        'fuera de este periodo'
+      );
+      expect(theraVisitDateWarning('V0', {})).toBeUndefined();
+    });
+  });
   it('only exempts authorized test dates, preserving identity, prerequisites and chronology', () => {
     const future = '2099-01-01';
     const data = { ...first.data, visit_date: future, _thera_test_dates: true };

@@ -28,6 +28,7 @@ import {
   canOpenTheraVisit,
   getTheraVisit,
   THERA_RETIRED_INSTRUMENT_NAME,
+  usesFlexibleTheraVisits,
   validateTheraVisit
 } from '@opendatacapture/schemas/thera';
 import type { TheraStoredVisit, TheraVisit } from '@opendatacapture/schemas/thera';
@@ -176,7 +177,7 @@ export class InstrumentRecordsService {
     const names = new Map(
       instruments.flatMap((instrument) => {
         const visit = instrument.internal && getTheraVisit(instrument.internal.name);
-        return visit ? [[instrument.id, visit] as const] : [];
+        return visit ? [[instrument.id, { visit, edition: instrument.internal.edition }] as const] : [];
       })
     );
     const records = await this.instrumentRecordModel.findMany({
@@ -188,9 +189,9 @@ export class InstrumentRecordsService {
       }
     });
     return records.flatMap((record) => {
-      const visit = names.get(record.instrumentId);
-      if (!visit || !record.data || typeof record.data !== 'object' || Array.isArray(record.data)) return [];
-      return [{ id: record.id, visit, data: record.data as Record<string, unknown> }];
+      const metadata = names.get(record.instrumentId);
+      if (!metadata || !record.data || typeof record.data !== 'object' || Array.isArray(record.data)) return [];
+      return [{ id: record.id, ...metadata, data: record.data as Record<string, unknown> }];
     });
   }
 
@@ -200,21 +201,29 @@ export class InstrumentRecordsService {
     groupId: null | string | undefined,
     subjectId: string,
     options: EntityOperationOptions,
-    editingId?: string
+    editingId?: string,
+    flexibleVisits = false
   ) {
     if (!groupId || !options.user) throw new BadRequestException('Seleccione un grupo THERA y una sesión autenticada.');
     const isAdmin = options.user.basePermissionLevel === 'ADMIN';
-    if (isAdmin) {
+    if (isAdmin || flexibleVisits) {
       const group = await this.groupsService.findById(groupId, options);
       if (group.studyCode !== 'TH') throw new BadRequestException('Seleccione el grupo del estudio THERA.');
+      if (!isAdmin) {
+        const account = await this.userModel.findUniqueOrThrow({ where: { id: options.user.id } });
+        if (!account.groupIds.includes(groupId)) {
+          throw new ForbiddenException('El investigador no pertenece al grupo THERA seleccionado.');
+        }
+      }
+      this.validateHospitalSelection(data, group.hospitals, group.hospitalCatalog);
     } else {
       await this.getOrionPatientCodeContext({ groupId, user: options.user, prefix: 'TH' });
     }
     const testDates = isAdmin && data._thera_test_dates === true;
     const records = await this.getTheraRecords(groupId, subjectId, options);
-    const error = validateTheraVisit(visit, data, records, editingId, testDates);
+    const error = validateTheraVisit(visit, data, records, editingId, testDates, flexibleVisits);
     if (error) throw new UnprocessableEntityException(error);
-    if (!editingId && !testDates && !canOpenTheraVisit(visit, records, String(data.patient_code))) {
+    if (!flexibleVisits && !editingId && !testDates && !canOpenTheraVisit(visit, records, String(data.patient_code))) {
       throw new UnprocessableEntityException(
         'No se puede registrar esta visita: hoy está fuera del periodo permitido para este paciente.'
       );
@@ -227,7 +236,8 @@ export class InstrumentRecordsService {
           record.data,
           replacement,
           record.id,
-          isAdmin && record.data._thera_test_dates === true
+          isAdmin && record.data._thera_test_dates === true,
+          (record.edition ?? 0) >= 10
         );
         if (dependentError)
           throw new UnprocessableEntityException(`El cambio invalidaría una visita guardada: ${dependentError}`);
@@ -275,6 +285,7 @@ export class InstrumentRecordsService {
 
     const parsedData = parseResult.data as Record<string, unknown>;
     const theraVisit = getTheraVisit(instrument.internal.name);
+    const flexibleThera = usesFlexibleTheraVisits(instrument.internal);
     const adminThera = Boolean(theraVisit && currentUser?.basePermissionLevel === 'ADMIN');
     if (group && options?.user) {
       if (!group.accessibleInstrumentIds.includes(instrumentId)) {
@@ -287,7 +298,7 @@ export class InstrumentRecordsService {
       const assignment = account.studyHospitals.find((entry) => entry.groupId === group.id);
       const hospital = group.hospitalCatalog?.find((entry) => entry.id === assignment?.hospitalId);
       if (group.hospitals.length > 0) {
-        if (adminThera) {
+        if (adminThera || flexibleThera) {
           this.validateHospitalSelection(parsedData, group.hospitals, group.hospitalCatalog ?? []);
         } else {
           if (!hospital) {
@@ -313,7 +324,15 @@ export class InstrumentRecordsService {
         })
       : undefined;
     if (theraVisit) {
-      await this.validateTheraRecord(theraVisit, parsedData, groupId, subjectId, options ?? {});
+      await this.validateTheraRecord(
+        theraVisit,
+        parsedData,
+        groupId,
+        subjectId,
+        options ?? {},
+        undefined,
+        flexibleThera
+      );
     }
     const rawPatientCode = parsedData.patient_code ?? parsedData.user_code;
     let userCode = typeof rawPatientCode === 'string' ? rawPatientCode : '';
@@ -426,7 +445,8 @@ export class InstrumentRecordsService {
           record.data,
           remaining,
           record.id,
-          user?.basePermissionLevel === 'ADMIN' && record.data._thera_test_dates === true
+          user?.basePermissionLevel === 'ADMIN' && record.data._thera_test_dates === true,
+          (record.edition ?? 0) >= 10
         );
         if (error)
           throw new BadRequestException(
@@ -849,7 +869,8 @@ export class InstrumentRecordsService {
         instrumentRecord.groupId,
         instrumentRecord.subjectId,
         { ability, user },
-        id
+        id,
+        usesFlexibleTheraVisits(instrument.internal)
       );
     }
     if (
@@ -860,7 +881,7 @@ export class InstrumentRecordsService {
     }
     if (instrumentRecord.groupId && this.getHospitalSelection(oldDataObj) !== this.getHospitalSelection(newDataObj)) {
       const group = await this.groupsService.findById(instrumentRecord.groupId);
-      if (theraVisit && user?.basePermissionLevel === 'ADMIN') {
+      if (theraVisit && (user?.basePermissionLevel === 'ADMIN' || usesFlexibleTheraVisits(instrument.internal))) {
         this.validateHospitalSelection(newDataObj, group.hospitals, group.hospitalCatalog);
       } else {
         if (!instrumentRecord.session.userId) {
@@ -933,7 +954,15 @@ export class InstrumentRecordsService {
         if (seen.has(key))
           throw new BadRequestException('El archivo contiene más de una visita para el mismo paciente.');
         seen.add(key);
-        await this.validateTheraRecord(theraVisit, data, groupId, record.subjectId, options ?? {});
+        await this.validateTheraRecord(
+          theraVisit,
+          data,
+          groupId,
+          record.subjectId,
+          options ?? {},
+          undefined,
+          usesFlexibleTheraVisits(instrument.internal)
+        );
       }
     }
 
@@ -946,7 +975,11 @@ export class InstrumentRecordsService {
         throw new ForbiddenException('L’investigador no pertany al grup seleccionat.');
       }
       let hospitals = group.hospitals;
-      if (account.basePermissionLevel === 'STANDARD' && hospitals.length > 0) {
+      if (
+        account.basePermissionLevel === 'STANDARD' &&
+        !usesFlexibleTheraVisits(instrument.internal) &&
+        hospitals.length > 0
+      ) {
         const assignment = account.studyHospitals.find((entry) => entry.groupId === group.id);
         const hospital = group.hospitalCatalog?.find((entry) => entry.id === assignment?.hospitalId);
         if (!hospital) {

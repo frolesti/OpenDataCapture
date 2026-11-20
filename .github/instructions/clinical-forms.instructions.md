@@ -77,6 +77,25 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 
 ## Consentiment, aptitud i validacio
 
+- Revisio THERA del 20/11/2026, aplicable des de l'edicio 10: les finestres
+  son orientatives per a tots els rols; permetre dates futures i fora de termini.
+  Permetre visites independents, inclosos seguiments sense basal i completar
+  visites anteriors despres de V4. No inventar dates de referencia: mostrar
+  que no es pot calcular el periode si no consten V0 o V1.
+  El codi es text lliure a totes les visites, amb el mateix valor per pacient.
+  No remuntar ni reiniciar el formulari mentre s'escriu aquest codi.
+  Tots els investigadors poden seleccionar qualsevol hospital del seu grup.
+  Mantenir permisos, duplicats, dates reals, cronologia de les visites conegudes,
+  consentiment, aptitud i obligatorietat clinica; no flexibilitzar preguntes
+  sense una decisio explicita. Les regles de sequencia, finestres bloquejants,
+  selector de pacients i hospital assignat descrites a continuacio nomes
+  s'apliquen a les edicions anteriors. Preservar-ne els esquemes originals.
+- A THERA edicio 10, ordenar els indexs vaginal i vulvar, EVA i intervencio,
+  abans dels altres questionaris. Les deficiencies nomes demanen data i
+  descripcio, sense duplicar-les en un camp separat. Als esdeveniments adversos,
+  retirar problema del dispositiu i efecte greu/imprevist; conservar signes,
+  accio/evolucio, causalitat, estat, detall de l'estat i resolucio condicional.
+  Eliminar "tecnico" i "indique no aplica" de les etiquetes corresponents.
 - No permetre mai enviar un formulari incomplet. Tots els camps obligatoris
   actius han de tenir respostes valides abans de desar un registre definitiu.
   Un esborrany pot ser incomplet, pero no equival a un formulari enviat.

@@ -106,9 +106,14 @@ export function theraVisitWindow(visit: TheraVisit, reference: string): undefine
 
 export type TheraStoredVisit = {
   data: { [key: string]: unknown };
+  edition?: number;
   id: string;
   visit: TheraVisit;
 };
+
+export function usesFlexibleTheraVisits(internal?: null | { edition: number; name: string }): boolean {
+  return Boolean(internal && getTheraVisit(internal.name) && internal.edition >= 10);
+}
 
 export function theraPatientContext(records: TheraStoredVisit[], patientCode: string) {
   const patient = records.filter((record) => record.data.patient_code === patientCode);
@@ -124,7 +129,18 @@ export function missingTheraPrerequisite(visit: TheraVisit, records: TheraStored
   );
 }
 
-export function canStartTheraVisit(visit: TheraVisit, records: TheraStoredVisit[], patientCode: string): boolean {
+export function canStartTheraVisit(
+  visit: TheraVisit,
+  records: TheraStoredVisit[],
+  patientCode: string,
+  flexibleVisits = false
+): boolean {
+  if (flexibleVisits) {
+    return (
+      isTheraPatientCode(patientCode) &&
+      !records.some((record) => record.visit === visit && record.data.patient_code === patientCode)
+    );
+  }
   if (visit === 'V0') return true;
   const { baseline, patient } = theraPatientContext(records, patientCode);
   return (
@@ -153,7 +169,24 @@ export function canOpenTheraVisit(
   return Boolean(parseTheraDate(today) && window && today >= window.min && today <= window.max);
 }
 
-export function theraVisitDateError(visit: TheraVisit, data: { [key: string]: unknown }): string | undefined {
+export function theraVisitDateWarning(visit: TheraVisit, data: { [key: string]: unknown }): string | undefined {
+  if (visit === 'V0') return undefined;
+  const reference = theraDateToISO(visit === 'V1' ? data.baseline_date : data.first_visit_date);
+  const window = reference ? theraVisitWindow(visit, reference) : undefined;
+  if (!window) {
+    return 'No se puede calcular el periodo recomendado: no consta la fecha de la visita de referencia. Puede completar y enviar esta visita.';
+  }
+  const date = theraDateToISO(data.visit_date);
+  return `Periodo recomendado: ${formatTheraDate(window.min)} a ${formatTheraDate(window.max)} (ambos incluidos).${
+    date && (date < window.min || date > window.max) ? ' La fecha indicada queda fuera de este periodo.' : ''
+  } Puede completar y enviar esta visita fuera de plazo.`;
+}
+
+export function theraVisitDateError(
+  visit: TheraVisit,
+  data: { [key: string]: unknown },
+  flexibleVisits = false
+): string | undefined {
   const date = theraDateToISO(data.visit_date);
   if (!date) {
     return data.visit_date === undefined || data.visit_date === ''
@@ -162,12 +195,12 @@ export function theraVisitDateError(visit: TheraVisit, data: { [key: string]: un
   }
   const messages: string[] = [];
   const testDates = data._thera_test_dates === true;
-  if (!testDates && date > theraToday()) messages.push('La fecha no puede ser futura.');
+  if (!flexibleVisits && !testDates && date > theraToday()) messages.push('La fecha no puede ser futura.');
   if (visit !== 'V0') {
     const reference = theraDateToISO(visit === 'V1' ? data.baseline_date : data.first_visit_date);
     const window = reference ? theraVisitWindow(visit, reference) : undefined;
-    if (!window) messages.push('Se requiere una fecha de referencia guardada válida.');
-    else if (!testDates && (date < window.min || date > window.max)) {
+    if (!window && !flexibleVisits) messages.push('Se requiere una fecha de referencia guardada válida.');
+    else if (window && !flexibleVisits && !testDates && (date < window.min || date > window.max)) {
       messages.push(
         `La visita debe realizarse entre ${formatTheraDate(window.min)} y ${formatTheraDate(window.max)}, ambos incluidos.`
       );
@@ -186,7 +219,8 @@ export function validateTheraVisit(
   data: { [key: string]: unknown },
   records: TheraStoredVisit[],
   editingId?: string,
-  allowTestDates = false
+  allowTestDates = false,
+  flexibleVisits = false
 ): string | undefined {
   if (!isTheraPatientCode(data.patient_code)) return 'Código de paciente THERA no válido.';
   if (
@@ -198,8 +232,40 @@ export function validateTheraVisit(
   }
   const { baseline, first, patient } = theraPatientContext(records, data.patient_code);
   const visitDate = data.visit_date;
-  if (!parseTheraDate(visitDate) || typeof visitDate !== 'string' || (!allowTestDates && visitDate > theraToday())) {
-    return 'La fecha de visita debe ser válida y no puede ser futura.';
+  if (
+    !parseTheraDate(visitDate) ||
+    typeof visitDate !== 'string' ||
+    (!flexibleVisits && !allowTestDates && visitDate > theraToday())
+  ) {
+    return flexibleVisits
+      ? 'La fecha de visita debe ser válida (DD/MM/AAAA).'
+      : 'La fecha de visita debe ser válida y no puede ser futura.';
+  }
+  if (flexibleVisits) {
+    for (const [key, reference] of [
+      ['baseline_date', baseline],
+      ['first_visit_date', first]
+    ] as const) {
+      if (key === 'first_visit_date' && (visit === 'V0' || visit === 'V1')) continue;
+      const submittedReference = data[key];
+      if (submittedReference !== undefined && submittedReference !== reference?.data.visit_date) {
+        return 'Las fechas de referencia deben coincidir con las visitas guardadas del mismo paciente.';
+      }
+    }
+    if (visit !== 'V0' && baseline && !isTheraEligible(baseline.data)) {
+      return 'La visita basal guardada no cumple los criterios de aptitud.';
+    }
+    const position = THERA_VISIT_ORDER.indexOf(visit);
+    for (const saved of patient) {
+      if (saved.id === editingId) continue;
+      const savedDate = theraDateToISO(saved.data.visit_date);
+      if (!savedDate) continue;
+      const savedPosition = THERA_VISIT_ORDER.indexOf(saved.visit);
+      if ((savedPosition < position && savedDate > visitDate) || (savedPosition > position && savedDate < visitDate)) {
+        return 'La fecha no respeta el orden cronológico de las visitas guardadas del mismo paciente.';
+      }
+    }
+    return undefined;
   }
   if (visit === 'V0') return undefined;
   if (!baseline || !isTheraEligible(baseline.data)) return 'Se requiere una visita basal apta para este paciente.';
@@ -414,7 +480,6 @@ const visitTitle = {
 const studyDescription =
   'Eficacia de las infiltraciones vaginales de complejos híbridos cooperativos de ácido hialurónico para el tratamiento del síndrome genitourinario de la menopausia en mujeres con antecedentes de cáncer de mama.';
 const shape: { [key: string]: z.ZodType<FormInstrument.Data[string]> } = {
-  _thera_test_dates: z.boolean().optional(),
   study_visit: z.string().optional(),
   patient_code: requiredText,
   site_hospital: requiredText,
@@ -424,11 +489,12 @@ const groups: Group[] = [
   {
     title: 'Datos de la visita',
     description:
-      'Fechas en formato DD/MM/AAAA. Introduzca una fecha válida dentro del periodo permitido para desbloquear las demás preguntas. La identificación del investigador queda vinculada a la sesión autenticada.',
+      'Fechas en formato DD/MM/AAAA. Las visitas pueden registrarse de forma independiente, aunque falten otras visitas, y fuera del periodo recomendado, incluidas fechas futuras. La identificación del investigador queda vinculada a la sesión autenticada.',
     fields: {
-      patient_code: baseline
-        ? text('Código de paciente')
-        : { kind: 'string', variant: 'select', label: 'Código de paciente *', options: {} },
+      patient_code: {
+        ...text('Código de paciente'),
+        description: 'Introduzca el mismo código en todas las visitas de la paciente, aunque no conste la visita basal.'
+      },
       site_hospital: { kind: 'string', variant: 'select', label: 'Hospital *', options: {} },
       visit_date: dateField('Fecha de visita')
     }
@@ -463,11 +529,9 @@ function addClinical(
 }
 
 if (!baseline) {
-  shape.baseline_date = dateSchema;
-  groups[0]!.fields.baseline_date = dateField('Fecha basal guardada', true);
+  shape.baseline_date = optionalDate;
   if (visit !== 'V1') {
-    shape.first_visit_date = dateSchema;
-    groups[0]!.fields.first_visit_date = dateField('Fecha guardada de la primera visita (pauta completa)', true);
+    shape.first_visit_date = optionalDate;
   }
 }
 
@@ -787,14 +851,6 @@ if (baseline) {
       radio('¿Se ha observado alguna deficiencia del producto?'),
       fields
     );
-    addClinical(
-      'device_deficiency_description',
-      requiredText,
-      text('Especifique la deficiencia del producto'),
-      fields,
-      ['device_deficiency'],
-      (data) => data.device_deficiency === 'si'
-    );
   }
   addClinical(
     'serious_adverse_event',
@@ -804,13 +860,10 @@ if (baseline) {
   );
   const eventSchema = z.object({
     onset_date: dateSchema,
-    event_type: z.enum(['grave', 'deficiencia', 'ambos']),
     description: requiredText,
-    device_problem: requiredText,
     clinical_signs: requiredText,
     action_evolution: requiredText,
     causality: requiredText,
-    serious_unexpected_device_effect: z.enum(['si', 'no']),
     status: z.enum(['en_curso', 'resuelto']),
     status_detail: requiredText,
     resolution_date: optionalDate
@@ -821,12 +874,10 @@ if (baseline) {
     fieldset: {
       onset_date: dateField('Fecha de inicio'),
       description: { kind: 'string', variant: 'textarea', label: 'Descripción del evento *' },
-      device_problem: text('Problema del dispositivo (indique «no aplica» si procede)'),
-      clinical_signs: text('Signos y síntomas clínicos (indique «no aplica» si procede)'),
+      clinical_signs: text('Signos y síntomas clínicos'),
       action_evolution: { kind: 'string', variant: 'textarea', label: 'Acción/tratamiento y evolución clínica *' },
       causality: text('Relación con el dispositivo (causalidad, texto libre)'),
-      serious_unexpected_device_effect: radio('¿Efecto adverso grave o imprevisto relacionado con el dispositivo?'),
-      status: radio('Estado técnico del evento', { en_curso: 'En curso', resuelto: 'Resuelto' }),
+      status: radio('Estado del evento', { en_curso: 'En curso', resuelto: 'Resuelto' }),
       status_detail: text('Detalle del estado del evento'),
       resolution_date: {
         kind: 'dynamic',
@@ -836,7 +887,7 @@ if (baseline) {
   };
   addClinical(
     'adverse_event_records',
-    z.array(eventSchema.omit({ event_type: true })).min(1),
+    z.array(eventSchema).min(1),
     eventField,
     fields,
     ['serious_adverse_event'],
@@ -845,15 +896,22 @@ if (baseline) {
   if (hasDeviceQuestion) {
     addClinical(
       'device_deficiency_records',
-      z.array(eventSchema.omit({ event_type: true })).min(1),
-      { ...eventField, label: 'Deficiencia' },
+      z.array(z.object({ onset_date: dateSchema, description: requiredText })).min(1),
+      {
+        kind: 'record-array',
+        label: 'Deficiencia',
+        fieldset: {
+          onset_date: dateField('Fecha de inicio'),
+          description: { kind: 'string', variant: 'textarea', label: 'Descripción de la deficiencia *' }
+        }
+      },
       fields,
       ['device_deficiency'],
       (data) => data.device_deficiency === 'si'
     );
   }
   const deviceFields: Fields = {};
-  for (const key of ['device_deficiency', 'device_deficiency_description', 'device_deficiency_records']) {
+  for (const key of ['device_deficiency', 'device_deficiency_records']) {
     if (fields[key]) {
       deviceFields[key] = fields[key];
       delete fields[key];
@@ -929,13 +987,13 @@ const sectionOrder = [
   'Antecedentes oncológicos',
   'Síndrome genitourinario de la menopausia',
   'Actividad sexual actual',
-  'Escala visual análoga para síndrome genitourinario',
   'Índice de salud vaginal (investigador)',
   'Índice de salud vulvar (investigador)',
+  'Escala visual análoga para síndrome genitourinario',
+  'Datos sobre la intervención',
   'Función sexual femenina (FSFI-6)',
   'Calidad de vida (Escala Cervantes-SGM)',
   'Mejoría global del paciente (PGI-I)',
-  'Datos sobre la intervención',
   'Deficiencias del dispositivo',
   'Acontecimientos adversos graves'
 ];
@@ -981,7 +1039,7 @@ const parsedSchema = z
       const visitDate = theraDateToISO(data.visit_date);
       const issue = (key: string, message: string) =>
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message });
-      const dateError = theraVisitDateError(visit, data);
+      const dateError = theraVisitDateError(visit, data, true);
       if (dateError) issue('visit_date', dateError);
       const requireValue = (key: string) => {
         const value = data[key];
@@ -1104,7 +1162,7 @@ for (const group of groups) {
       render(data) {
         const rendered = field.kind === 'dynamic' ? field.render(data) : field;
         return rendered
-          ? { ...rendered, disabled: Boolean(rendered.disabled || theraVisitDateError(visit, data)) }
+          ? { ...rendered, disabled: Boolean(rendered.disabled || theraVisitDateError(visit, data, true)) }
           : null;
       }
     };
@@ -1114,7 +1172,7 @@ for (const group of groups) {
 export default defineInstrument({
   kind: 'FORM',
   language: 'en',
-  internal: { name: THERA_NAMES[visit], edition: 9 },
+  internal: { name: THERA_NAMES[visit], edition: 10 },
   tags: ['THERA-SGM-2026', 'CRF', visit],
   clientDetails: {
     estimatedDuration: { V0: 40, V1: 25, V2: 25, V3: 10, V4: 25 }[visit],

@@ -252,25 +252,29 @@ describe('THERA real libui controls', () => {
     );
   });
 
-  it('combines a future date and an out-of-window date into one field error and disables the report', async () => {
+  it('allows future and out-of-window dates without disabling the form or requiring earlier visits', async () => {
     const followup = definitions.createTheraInstrument!('V1');
     const future = new Date();
     future.setUTCFullYear(future.getUTCFullYear() + 1);
     render(
       <FormContent
         revalidateOnChange
-        initialValues={{ ...initialData, baseline_date: '2024-01-31', visit_date: future.toISOString().slice(0, 10) }}
+        initialValues={{
+          patient_code: 'independent',
+          site_hospital: 'Hospital',
+          visit_date: future.toISOString().slice(0, 10)
+        }}
         instrument={followup}
         onSubmit={vi.fn()}
       />
     );
     fireEvent.submit(document.querySelector('form')!);
     const group = document.querySelector('[data-field-group="visit_date"]')!;
-    await waitFor(() => expect(group.textContent).toContain('La fecha no puede ser futura.'));
-    const errors = within(group as HTMLElement).getAllByText(/La fecha no puede ser futura/);
-    expect(errors).toHaveLength(1);
-    expect(errors[0]?.textContent).toContain('22/02/2024');
-    expect(screen.getByLabelText<HTMLInputElement>('Sequedad vaginal (0–10) *').disabled).toBe(true);
+    await waitFor(() => expect(screen.getAllByTestId('error-message-text').length).toBeGreaterThan(0));
+    expect(group.querySelector('[data-testid="error-message-text"]')).toBeNull();
+    expect(screen.getByLabelText<HTMLInputElement>('Sequedad vaginal (0–10) *').disabled).toBe(false);
+    expect(screen.queryByLabelText('Fecha basal guardada')).toBeNull();
+    expect(screen.getByLabelText<HTMLInputElement>('Código de paciente *').value).toBe('independent');
   });
 
   it.each(protocol.THERA_VISIT_ORDER)('blocks an actual incomplete submission for %s', async (visit) => {
@@ -339,7 +343,7 @@ describe('THERA real libui controls', () => {
     await screen.findByText('Introduzca una fecha válida (DD/MM/AAAA)');
   });
 
-  it('keeps the stored reference date in the form without a blank visit-window input', async () => {
+  it('does not render empty reference-date or visit-window controls for independent visits', () => {
     const followup = definitions.createTheraInstrument!('V1');
     render(
       <FormContent
@@ -351,7 +355,7 @@ describe('THERA real libui controls', () => {
     );
     expect(screen.queryByText(/Ventana permitida/)).toBeNull();
     expect(screen.queryByLabelText(/Ventana permitida/)).toBeNull();
-    expect(screen.getByLabelText<HTMLInputElement>('Fecha basal guardada').value).toBe('31/01/2024');
+    expect(screen.queryByLabelText('Fecha basal guardada')).toBeNull();
   });
 
   it.each(['UTC', 'Pacific/Honolulu', 'Pacific/Auckland'])(

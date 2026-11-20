@@ -139,7 +139,7 @@ describe('ORION record assignment and atomic code persistence', () => {
     expect(codes.create).not.toHaveBeenCalled();
   });
 
-  function configureThera(visit: TheraVisit = 'V0') {
+  function configureThera(visit: TheraVisit = 'V0', edition = 1) {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-11-14T12:00:00Z'));
     const ids = { V0: 'selection', V1: 'first', V2: 'second', V3: 'third', V4: 'fourth' };
@@ -153,7 +153,7 @@ describe('ORION record assignment and atomic code persistence', () => {
     const instrument = {
       id: ids[visit],
       kind: 'FORM' as const,
-      internal: { name: THERA_NAMES[visit], edition: 1 },
+      internal: { name: THERA_NAMES[visit], edition },
       validationSchema: z
         .object({ patient_code: z.string(), site_hospital: z.string(), visit_date: z.string() })
         .passthrough()
@@ -163,7 +163,7 @@ describe('ORION record assignment and atomic code persistence', () => {
       THERA_VISIT_ORDER.map((key) => ({
         ...instrument,
         id: ids[key],
-        internal: { name: THERA_NAMES[key], edition: 1 }
+        internal: { name: THERA_NAMES[key], edition }
       }))
     );
     codes.create.mockResolvedValue('TH-01-02');
@@ -194,6 +194,87 @@ describe('ORION record assignment and atomic code persistence', () => {
     ...Object.fromEntries(THERA_EXCLUSIONS.map((key) => [key, 'no'])),
     ...Object.fromEntries(THERA_VAGINAL_ITEMS.map((key) => [key, 3]))
   };
+
+  it.each(['V1', 'V4'] as const)(
+    'accepts edition-10 %s in create, import and edit without earlier visits',
+    async (visit) => {
+      const data = configureThera(visit, 10);
+      const independent = {
+        ...data,
+        data: { patient_code: 'independent / patient', site_hospital: 'CS Aravaca', visit_date: '2099-01-01' }
+      };
+      user.studyHospitals = [];
+      await expect(service.create(independent, { user })).resolves.toBeDefined();
+      await service.upload(
+        {
+          groupId: data.groupId,
+          instrumentId: data.instrumentId,
+          records: [{ data: independent.data, date: new Date(), subjectId: data.subjectId }]
+        },
+        { user }
+      );
+      expect(records.createMany).toHaveBeenCalledOnce();
+      records.findFirst.mockResolvedValue({
+        id: 'existing',
+        instrumentId: data.instrumentId,
+        groupId: data.groupId,
+        subjectId: data.subjectId,
+        data: independent.data,
+        session: { userId: user.id }
+      });
+      await service.updateById('existing', { ...independent.data, visit_date: '2099-01-02' }, { user });
+      expect(records.update).toHaveBeenCalledOnce();
+      records.findMany.mockResolvedValue([{ id: 'existing', instrumentId: data.instrumentId, data: independent.data }]);
+      await expect(service.create(independent, { user })).rejects.toThrow('Ya existe');
+    }
+  );
+
+  it('allows every configured hospital in edition 10 but rejects other hospitals and nonmembers', async () => {
+    const data = configureThera('V3', 10);
+    groups.findById.mockResolvedValue({
+      id: data.groupId,
+      studyCode: 'TH',
+      accessibleInstrumentIds: [data.instrumentId],
+      hospitals: ['CS Aravaca', 'Hospital de prueba'],
+      hospitalCatalog: [
+        { id: 'aravaca', name: 'CS Aravaca', isInternal: false },
+        { id: 'other', name: 'Hospital de prueba', isInternal: false }
+      ]
+    });
+    const independent = {
+      ...data,
+      data: { patient_code: 'independent', site_hospital: 'Hospital de prueba', visit_date: '2099-01-01' }
+    };
+    await service.create(independent, { user });
+    await service.upload(
+      {
+        groupId: data.groupId,
+        instrumentId: data.instrumentId,
+        records: [{ data: independent.data, date: new Date(), subjectId: data.subjectId }]
+      },
+      { user }
+    );
+    records.findFirst.mockResolvedValue({
+      id: 'existing',
+      instrumentId: data.instrumentId,
+      groupId: data.groupId,
+      subjectId: data.subjectId,
+      data: { ...independent.data, site_hospital: 'CS Aravaca' },
+      session: { userId: user.id }
+    });
+    await service.updateById('existing', independent.data, { user });
+    await expect(
+      service.create(
+        {
+          ...independent,
+          data: { ...independent.data, site_hospital: 'Unknown' }
+        },
+        { user }
+      )
+    ).rejects.toThrow('not configured');
+    user.groupIds = [];
+    await expect(service.create(independent, { user })).rejects.toThrow('pertany');
+  });
 
   it.each(['V3', 'V4'] as const)('rejects skipped predecessors in %s create, CSV and edit requests', async (visit) => {
     const data = configureThera(visit);

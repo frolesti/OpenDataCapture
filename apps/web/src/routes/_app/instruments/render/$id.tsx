@@ -17,8 +17,11 @@ import {
   formatTheraDate,
   isTheraPatientCode,
   theraPatientContext,
+  theraDateToISO,
   theraToday,
-  theraVisitWindow
+  theraVisitWindow,
+  theraVisitDateWarning,
+  usesFlexibleTheraVisits
 } from '@opendatacapture/schemas/thera';
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -417,12 +420,14 @@ const RouteComponent = () => {
 
   const instrumentBundleQuery = useInstrumentBundle(params.id);
   const instrumentInfoQuery = useInstrumentInfoQuery();
+  const instrumentInfo = (instrumentInfoQuery.data ?? []).find((instrument) => instrument.id === params.id);
+  const flexibleThera = usesFlexibleTheraVisits(instrumentInfo?.internal);
   const studyAssignment = currentUser?.studyHospitals?.find((entry) => entry.groupId === currentGroup?.id);
   const assignedHospital = currentGroup
     ? getHospitalCatalog(currentGroup).find((entry) => entry.id === studyAssignment?.hospitalId)
     : undefined;
   const availableHospitals =
-    currentUser?.basePermissionLevel === 'ADMIN'
+    currentUser?.basePermissionLevel === 'ADMIN' || flexibleThera
       ? (currentGroup?.hospitals ?? [])
       : assignedHospital
         ? [assignedHospital.name]
@@ -450,7 +455,6 @@ const RouteComponent = () => {
     ...(historicalHospital && typeof storedHospital === 'string' ? [storedHospital] : [])
   ]);
 
-  const instrumentInfo = (instrumentInfoQuery.data ?? []).find((instrument) => instrument.id === params.id);
   const orionSelectionInstrumentId = (instrumentInfoQuery.data ?? [])
     .filter((instrument) => instrument.internal?.name === ORION_SELECTION_INTERNAL_NAME)
     .sort((first, second) => (second.internal?.edition ?? 0) - (first.internal?.edition ?? 0))[0]?.id;
@@ -474,6 +478,7 @@ const RouteComponent = () => {
   const theraVisit = getTheraVisit(instrumentInfo?.internal?.name ?? bundleInternalName ?? '');
   const isThera = Boolean(theraVisit);
   const [selectedTheraPatient, setSelectedTheraPatient] = useState('');
+  const [theraEnteredVisitDate, setTheraEnteredVisitDate] = useState<null | string>();
   const theraRecordsQuery = useInstrumentRecords({
     enabled: isThera && Boolean(currentGroup?.id && scopedSubjectId),
     params: { groupId: currentGroup?.id, subjectId: scopedSubjectId },
@@ -485,12 +490,14 @@ const RouteComponent = () => {
     : selectedTheraPatient || String(effectiveInitialData?.patient_code ?? '');
   const theraPatients = theraRecords.filter((record) => {
     return (
-      record.visit === 'V0' &&
+      (flexibleThera || record.visit === 'V0') &&
       theraVisit &&
       typeof record.data.patient_code === 'string' &&
-      (currentUser?.basePermissionLevel === 'ADMIN'
-        ? canStartTheraVisit(theraVisit, theraRecords, record.data.patient_code)
-        : canOpenTheraVisit(theraVisit, theraRecords, record.data.patient_code))
+      (flexibleThera
+        ? canStartTheraVisit(theraVisit, theraRecords, record.data.patient_code, true)
+        : currentUser?.basePermissionLevel === 'ADMIN'
+          ? canStartTheraVisit(theraVisit, theraRecords, record.data.patient_code)
+          : canOpenTheraVisit(theraVisit, theraRecords, record.data.patient_code))
     );
   });
   const theraContext = theraPatientContext(theraRecords, theraPatientCode);
@@ -508,6 +515,7 @@ const RouteComponent = () => {
   const theraAccessRedirected = useRef(false);
   const noOpenTheraVisit = Boolean(
     isThera &&
+      !flexibleThera &&
       theraVisit !== 'V0' &&
       !recordId &&
       currentUser?.basePermissionLevel !== 'ADMIN' &&
@@ -666,7 +674,7 @@ const RouteComponent = () => {
               kind: 'string', variant: 'input', label: 'Código del paciente *', disabled: ${Boolean(recordId)}
             };
           }
-          if (${Boolean(isThera && theraVisit !== 'V0')}) {
+          if (${Boolean(isThera && theraVisit !== 'V0' && !flexibleThera)}) {
             if (section.fields.patient_code) section.fields.patient_code = {
               kind: 'string', variant: 'select', label: 'Código de paciente *',
               options: ${theraPatientOptionsJson}, disabled: ${Boolean(recordId)}
@@ -686,7 +694,8 @@ const RouteComponent = () => {
     isThera,
     theraVisit,
     recordId,
-    theraPatientOptionsJson
+    theraPatientOptionsJson,
+    flexibleThera
   ]);
 
   const instrumentTarget = instrumentBundleWithOverrides;
@@ -720,14 +729,18 @@ const RouteComponent = () => {
         ...(selectedTheraPatient && selectedTheraPatient !== effectiveInitialData?.patient_code
           ? {}
           : originalFormInitialData),
-        _thera_test_dates: currentUser?.basePermissionLevel === 'ADMIN',
+        _thera_test_dates: !flexibleThera && currentUser?.basePermissionLevel === 'ADMIN',
         ...(theraVisit === 'V0'
           ? {}
           : {
               patient_code: theraPatientCode,
-              baseline_date: theraContext.baseline?.data.visit_date,
-              first_visit_date: theraContext.first?.data.visit_date,
-              site_hospital: theraContext.baseline?.data.site_hospital
+              ...(flexibleThera
+                ? {}
+                : {
+                    baseline_date: theraContext.baseline?.data.visit_date,
+                    first_visit_date: theraContext.first?.data.visit_date,
+                    site_hospital: theraContext.baseline?.data.site_hospital
+                  })
             })
       }
     : originalFormInitialData;
@@ -740,6 +753,7 @@ const RouteComponent = () => {
   const handleDataChange = useCallback(
     (data: Record<string, unknown>) => {
       if (
+        !flexibleThera &&
         isThera &&
         theraVisit !== 'V0' &&
         !recordId &&
@@ -753,6 +767,10 @@ const RouteComponent = () => {
         setDraftData(null);
         setRendererKey((key) => key + 1);
         return;
+      }
+      if (flexibleThera && typeof data.patient_code === 'string') {
+        setSelectedTheraPatient(data.patient_code.trim());
+        setTheraEnteredVisitDate(theraDateToISO(data.visit_date) ?? null);
       }
       const nextData = mergeFormSnapshots(latestDataRef.current ?? effectiveInitialData, data);
       latestDataRef.current = nextData;
@@ -769,6 +787,7 @@ const RouteComponent = () => {
       isThera,
       theraVisit,
       theraPatientCode,
+      flexibleThera,
       effectiveInitialData
     ]
   );
@@ -882,6 +901,8 @@ const RouteComponent = () => {
     setDraftDiscarded(true);
     isDiscardingDraftRef.current = false;
     latestDataRef.current = null;
+    setSelectedTheraPatient('');
+    setTheraEnteredVisitDate(undefined);
     setRendererKey((k) => k + 1);
     setCurrentStep(0);
     notifications.addNotification({
@@ -968,6 +989,16 @@ const RouteComponent = () => {
     // latestDataRef tracks cumulative snapshots seen via onDataChange, so we merge both
     // payloads while preserving previously entered non-empty values.
     const mergedData = mergeFormSnapshots(latestDataRef.current, data as Record<string, unknown>);
+    if (flexibleThera) {
+      const context = theraPatientContext(theraRecords, String(mergedData.patient_code ?? '').trim());
+      delete mergedData.baseline_date;
+      delete mergedData.first_visit_date;
+      delete mergedData._thera_test_dates;
+      if (theraVisit !== 'V0' && context.baseline) mergedData.baseline_date = context.baseline.data.visit_date;
+      if (theraVisit !== 'V0' && theraVisit !== 'V1' && context.first) {
+        mergedData.first_visit_date = context.first.data.visit_date;
+      }
+    }
     if (isOrionSelection || isOrionFollowup) {
       const normalized = normalizeOrionAdverseEventRecords(
         mergedData,
@@ -1288,13 +1319,21 @@ const RouteComponent = () => {
           {t({ en: 'Codi de pacient desat', fr: 'Código de paciente guardado' })}: {submittedPatientCode}
         </p>
       ) : null}
-      {theraVisitWindowInfo ? (
+      {flexibleThera && theraVisit && theraVisit !== 'V0' ? (
+        <p className="mx-auto mb-4 max-w-3xl text-sm font-medium" role="status">
+          {theraVisitDateWarning(theraVisit, {
+            visit_date: theraEnteredVisitDate === undefined ? formInitialData?.visit_date : theraEnteredVisitDate,
+            baseline_date: theraContext.baseline?.data.visit_date,
+            first_visit_date: theraContext.first?.data.visit_date
+          })}
+        </p>
+      ) : theraVisitWindowInfo ? (
         <p className="mx-auto mb-4 max-w-3xl text-sm font-medium">
           Ventana permitida: {formatTheraDate(theraVisitWindowInfo.min)} a {formatTheraDate(theraVisitWindowInfo.max)}{' '}
           (ambos incluidos).
         </p>
       ) : null}
-      {isThera && currentUser?.basePermissionLevel === 'ADMIN' ? (
+      {isThera && !flexibleThera && currentUser?.basePermissionLevel === 'ADMIN' ? (
         <p className="mx-auto mb-4 max-w-3xl text-sm font-medium" role="status">
           Modo de prueba de administrador: se permiten fechas futuras o fuera de ventana. Se mantienen el
           consentimiento, los criterios clínicos y la secuencia de visitas.
