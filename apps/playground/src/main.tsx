@@ -11,8 +11,8 @@ import '@opendatacapture/react-core/globals.css';
 declare module '@douglasneuroinformatics/libui/i18n' {
   export namespace UserConfig {
     export interface LanguageOptions {
-      ca: true;
-      es: true;
+      en: true;
+      fr: true;
     }
     export interface Translations {
       libui: typeof libui;
@@ -23,7 +23,7 @@ declare module '@douglasneuroinformatics/libui/i18n' {
 const root = document.getElementById('root')!;
 
 i18n.init({
-  defaultLanguage: 'ca',
+  defaultLanguage: 'en',
   translations: {
     libui
   }

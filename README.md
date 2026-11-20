@@ -60,6 +60,26 @@ Assuming that Docker and Docker Compose are already installed on your system, yo
 
 By default, the application will run on port 5500. So, navigate to `http://localhost:5500` in your browser and you should be greeted with the setup screen. After getting started, we highly recommend reading our [deployment guide](http://opendatacapture.org/en/docs/tutorials/deployment/) for additional information on how to configure Open Data Capture to best meet the needs of your organization.
 
+### Local instrument playground
+
+Run `pnpm --filter @opendatacapture/playground dev --host 127.0.0.1 --strictPort`
+and open `http://localhost:3750`. Previewing and validating instruments does not
+require an API or database. On WSL, keep the development checkout and dependencies
+on the Linux filesystem rather than `/mnt/c` to avoid slow dependency loading.
+
+To upload instruments, set **User Settings → API Base URL** to the existing
+instance's API URL, for example `https://your-instance.example/api`. A local
+playground can connect directly to a remote instance, including production;
+no local database or data migration is needed. Uploads are real writes to the
+selected instance: confirm the destination before submitting.
+
+If cross-origin access requires a proxy, set `PLAYGROUND_API_PROXY_TARGET` to
+that same API base URL before starting the playground, then use
+`http://localhost:3750/api` in User Settings. The development server removes the
+local `/api` prefix and forwards the remaining path under the target URL.
+The target must be the main API, not the assignment gateway. Credentials belong
+in the upload dialog, never in the proxy URL or versioned files.
+
 ## Investigator credential emails
 
 The production template is `apps/api/public/mail-template.html`. Both the API and

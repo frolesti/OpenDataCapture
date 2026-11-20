@@ -35,6 +35,15 @@ export default defineConfig(({ mode }) => ({
     }
   },
   server: {
-    port: parseInt(process.env.PLAYGROUND_DEV_SERVER_PORT ?? '3750')
+    port: parseInt(process.env.PLAYGROUND_DEV_SERVER_PORT ?? '3750'),
+    proxy: process.env.PLAYGROUND_API_PROXY_TARGET
+      ? {
+          '/api': {
+            changeOrigin: true,
+            rewrite: (requestPath) => requestPath.replace(/^\/api/, ''),
+            target: process.env.PLAYGROUND_API_PROXY_TARGET
+          }
+        }
+      : undefined
   }
 }));
