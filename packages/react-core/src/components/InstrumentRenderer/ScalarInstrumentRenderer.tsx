@@ -22,6 +22,7 @@ import type { InstrumentSubmitHandler, SubjectDisplayInfo } from '../../types';
 export type ScalarInstrumentRendererProps = {
   className?: string;
   initialData?: Record<string, unknown>;
+  initialStep?: 0 | 1;
   isAdmin?: boolean;
   isEditing?: boolean;
   isResuming?: boolean;
@@ -57,6 +58,7 @@ const fixDates = (data: unknown): unknown => {
 export const ScalarInstrumentRenderer = ({
   className,
   initialData,
+  initialStep = 0,
   isAdmin,
   isEditing,
   isResuming,
@@ -72,7 +74,7 @@ export const ScalarInstrumentRenderer = ({
 }: ScalarInstrumentRendererProps) => {
   const [data, setData] = useState<unknown>();
   const interpreted = useInterpretedInstrument(target.bundle, options);
-  const [index, setIndex] = useState<0 | 1 | 2>(0);
+  const [index, setIndex] = useState<0 | 1 | 2>(initialStep);
   const { t } = useTranslation();
 
   const handleSubmit = async (data: unknown) => {

@@ -116,6 +116,13 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
   importacio. Conservar consentiment, aptitud, ancores, duplicats i sequencia.
 - Mostrar un sol missatge per pregunta o cel-la, combinant les causes diferents
   sense repetir el mateix text. Comprovar-ho al formulari real, no nomes a l'esquema.
+  A THERA, tots els errors de validacio han d'estar en castella, inclosos
+  tipus incorrectes, enters, minims, maxims, enums i camps repetibles de Zod.
+  Aplicar la traduccio localment a l'esquema, sense canviar altres estudis.
+  El tipus de part es una resposta unica amb radio; conservar la lectura
+  de Sets historics amb una resposta i exigir reseleccio si n'hi havia diverses.
+  Canviar el pacient d'un seguiment no ha de tornar a la visio general:
+  conservar el pas de contingut quan es remunta el renderer amb les ancores noves.
   En cada intent d'enviament invalid, centrar el primer camp amb error i
   enfocar-ne el control sense desfer el desplacament; tambe si els errors
   ja eren visibles i el DOM no canvia.
@@ -173,7 +180,10 @@ applyTo: 'apps/playground/src/instruments/production-documents/**/*.ts,apps/play
 - Modificar la plantilla i el protocol compartit, no nomes un fitxer generat.
   Regenerar totes les visites i els bundles i executar la comprovacio `--check`.
 - Compilar i interpretar cada formulari amb el bundler real i validar-lo amb
-  `$AnyInstrument`. Comprovar tambe els controls reals de libui, no nomes mocks.
+  `$AnyInstrument`. Comprovar tambe els diagnostics TypeScript del codi
+  independent contra les declaracions del runtime que carrega el playground:
+  interpretar el bundle no detecta els errors de tipus que bloquegen la pujada.
+  Comprovar tambe els controls reals de libui, no nomes mocks.
 - Seleccionar segons el canvi les proves dels errors al costat de cada criteri,
   els camps obligatoris, els extrems
   del rang (0 i 10 a THERA),

@@ -53,6 +53,11 @@ export const FormContent = ({
       })
     : instrument.content;
   const isThera = Boolean(getTheraVisit(instrument.internal.name));
+  const legacyChildbirth = initialValues?.childbirth_types;
+  const formInitialValues =
+    isThera && instrument.internal.edition >= 9 && legacyChildbirth instanceof Set && legacyChildbirth.size === 1
+      ? { ...initialValues, childbirth_types: [...legacyChildbirth][0] }
+      : initialValues;
 
   const hasRenderableContent =
     (Array.isArray(contentForForm) && contentForForm.length > 0) ||
@@ -153,7 +158,7 @@ export const FormContent = ({
           preventResetValuesOnReset
           content={contentForForm as any}
           data-testid="form-content"
-          initialValues={{ ...instrument.initialValues, ...initialValues } as any}
+          initialValues={{ ...instrument.initialValues, ...formInitialValues } as any}
           revalidateOnBlur={revalidateOnChange}
           subscribe={
             onDataChange

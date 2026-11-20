@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod/v3';
 
 import { FormContent } from '../../../../../packages/react-core/src/components/FormContent';
+import { ScalarInstrumentRenderer } from '../../../../../packages/react-core/src/components/InstrumentRenderer/ScalarInstrumentRenderer';
 import { InstrumentSummary } from '../../../../../packages/react-core/src/components/InstrumentSummary/InstrumentSummary';
 import { deserializeInstrumentDraft, serializeInstrumentDraft } from '../instrument-draft';
 
@@ -24,6 +25,9 @@ vi.mock('@douglasneuroinformatics/libui/hooks', async (importOriginal) => ({
 }));
 vi.mock('@opendatacapture/react-core', async () => ({
   CopyButton: (await import('../../../../../packages/react-core/src/components/CopyButton')).CopyButton
+}));
+vi.mock('../../../../../packages/react-core/src/hooks/useInterpretedInstrument', () => ({
+  useInterpretedInstrument: () => ({ status: 'DONE', instrument })
 }));
 
 const source = readFileSync(
@@ -95,6 +99,39 @@ function renderBaseline(overrides: { [key: string]: unknown } = {}) {
 }
 
 describe('THERA real libui controls', () => {
+  it('stays in content when the patient change remounts the renderer', () => {
+    const target = { id: 'thera', bundle: 'test bundle' };
+    const { rerender } = render(
+      <ScalarInstrumentRenderer
+        key="first"
+        initialStep={1}
+        initialData={initialData}
+        target={target}
+        onSubmit={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('form-content')).toBeDefined();
+    rerender(
+      <ScalarInstrumentRenderer
+        key="second"
+        initialStep={1}
+        initialData={{ ...initialData, patient_code: 'otro paciente' }}
+        target={target}
+        onSubmit={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('form-content')).toBeDefined();
+    expect(screen.getByLabelText<HTMLInputElement>('Código de paciente *').value).toBe('otro paciente');
+  });
+
+  it('uses a single birth-type radio answer and restores a historical singleton Set', async () => {
+    const { changes } = renderBaseline({ inclusion_2: 'si', childbirth: 'si', childbirth_types: new Set(['cesarea']) });
+    const group = document.querySelector('[data-field-group="childbirth_types"]') as HTMLElement;
+    expect(within(group).queryAllByRole('checkbox')).toHaveLength(0);
+    expect(within(group).getByRole('radio', { name: 'Cesárea' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(within(group).getByRole('radio', { name: 'Vaginal sin episiotomía' }));
+    await waitFor(() => expect(changes.mock.lastCall?.[0].childbirth_types).toBe('vaginal_sin'));
+  });
   it('starts the local calendar on Monday and places a Monday month start in the first column', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2027-02-01T12:00:00Z'));
@@ -384,7 +421,7 @@ describe('THERA real libui controls', () => {
         fireEvent.change(input, { target: { value: '1.5' } });
         fireEvent.blur(input);
         const group = input.closest('[data-field-group]')!;
-        await waitFor(() => expect(group.textContent).toContain('integer'));
+        await waitFor(() => expect(group.textContent).toContain('Introduzca un número entero'));
         fireEvent.submit(document.querySelector('form')!);
         expect(submit).not.toHaveBeenCalled();
       }

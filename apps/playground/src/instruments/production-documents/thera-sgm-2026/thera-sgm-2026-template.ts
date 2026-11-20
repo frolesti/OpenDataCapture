@@ -26,6 +26,46 @@ type Group = FormInstrument.FieldsGroup<FormInstrument.Data, 'en'>;
 
 const yesNo = { si: 'Sí', no: 'No' };
 const requiredText = z.string().trim().min(1, 'Este campo es obligatorio');
+const spanishValidationError: z.ZodErrorMap = (issue, context) => {
+  switch (issue.code) {
+    case z.ZodIssueCode.invalid_type:
+      return {
+        message:
+          context.data === undefined
+            ? 'Este campo es obligatorio'
+            : issue.expected === 'integer'
+              ? 'Introduzca un número entero'
+              : issue.expected === 'number'
+                ? 'Introduzca un número válido'
+                : 'Introduzca una respuesta válida'
+      };
+    case z.ZodIssueCode.too_small:
+      return {
+        message:
+          issue.type === 'number'
+            ? `El valor debe ser ${issue.inclusive ? 'mayor o igual que' : 'mayor que'} ${issue.minimum}`
+            : issue.type === 'set' || issue.type === 'array'
+              ? 'Seleccione al menos una respuesta o añada un registro'
+              : 'Este campo es obligatorio'
+      };
+    case z.ZodIssueCode.too_big:
+      return {
+        message:
+          issue.type === 'number'
+            ? `El valor debe ser ${issue.inclusive ? 'menor o igual que' : 'menor que'} ${issue.maximum}`
+            : 'La respuesta supera el tamaño permitido'
+      };
+    case z.ZodIssueCode.invalid_enum_value:
+    case z.ZodIssueCode.invalid_literal:
+      return { message: 'Seleccione una de las opciones disponibles' };
+    case z.ZodIssueCode.invalid_date:
+      return { message: 'Introduzca una fecha válida (DD/MM/AAAA)' };
+    case z.ZodIssueCode.custom:
+      return { message: issue.message ?? 'Revise la respuesta introducida' };
+    default:
+      return { message: 'Introduzca una respuesta válida' };
+  }
+};
 const dateSchema = z
   .union([z.string(), z.date(), z.undefined()], {
     errorMap: (_issue, context) => ({
@@ -409,14 +449,10 @@ export function createTheraInstrument(visit: TheraVisit) {
         (data) => data[dep] === value
       );
     const otherText = (key: string, dep: string, parent: string) =>
-      addClinical(
-        key,
-        requiredText,
-        text('Otro: especificar'),
-        fields,
-        [dep, parent],
-        (data) => data[parent] === 'si' && data[dep] instanceof Set && data[dep].has('otro')
-      );
+      addClinical(key, requiredText, text('Otro: especificar'), fields, [dep, parent], (data) => {
+        const selected = data[dep];
+        return data[parent] === 'si' && selected instanceof Set && selected.has('otro');
+      });
     const historicalDate = (key: string, label: string, deps: string[], predicate: (data: Values) => boolean) =>
       addClinical(key, dateSchema, dateField(label), fields, deps, predicate);
     single('ethnicity', 'Etnia', { caucasica: 'Caucásica', africana: 'Africana', asiatica: 'Asiática', otra: 'Otra' });
@@ -429,16 +465,18 @@ export function createTheraInstrument(visit: TheraVisit) {
       farmacoinducida: 'Farmacoinducida'
     });
     single('childbirth', '¿Ha tenido algún parto?');
-    multi(
+    addClinical(
       'childbirth_types',
-      'Tipos de parto (seleccione todos los que correspondan)',
-      {
+      z.enum(['vaginal_sin', 'vaginal_con', 'instrumental', 'cesarea']),
+      radio('Tipo de parto', {
         vaginal_sin: 'Vaginal sin episiotomía',
         vaginal_con: 'Vaginal con episiotomía',
         instrumental: 'Vaginal con fórceps/ventosa',
         cesarea: 'Cesárea'
-      },
-      'childbirth'
+      }),
+      fields,
+      ['childbirth'],
+      (data) => data.childbirth === 'si'
     );
     single('vaginal_surgery', '¿Ha tenido algún tipo de cirugía vaginal?');
     addGroup('Datos gineco-obstétricos', { ...fields });
@@ -717,6 +755,9 @@ export function createTheraInstrument(visit: TheraVisit) {
     requiredWhen.forEach(({ key, predicate }) => {
       if (!predicate(clean)) delete clean[key];
     });
+    if (clean.childbirth_types instanceof Set && clean.childbirth_types.size === 1) {
+      clean.childbirth_types = [...clean.childbirth_types][0];
+    }
     if (baseline && clean.informed_consent !== 'si') {
       [
         'consent_date',
@@ -729,8 +770,9 @@ export function createTheraInstrument(visit: TheraVisit) {
       ].forEach((key) => delete clean[key]);
     }
     for (const key of ['adverse_event_records', 'device_deficiency_records']) {
-      if (!Array.isArray(clean[key])) continue;
-      clean[key] = clean[key].map((event: unknown) => {
+      const events = clean[key];
+      if (!Array.isArray(events)) continue;
+      clean[key] = events.map((event: unknown) => {
         if (!event || typeof event !== 'object' || Array.isArray(event)) return event;
         const result: Values = { ...event };
         if (result.status !== 'resuelto') delete result.resolution_date;
@@ -750,7 +792,8 @@ export function createTheraInstrument(visit: TheraVisit) {
         const dateError = theraVisitDateError(visit, data);
         if (dateError) issue('visit_date', dateError);
         const requireValue = (key: string) => {
-          if (data[key] === undefined || data[key] === '' || (data[key] instanceof Set && data[key].size === 0))
+          const value = data[key];
+          if (value === undefined || value === '' || (value instanceof Set && value.size === 0))
             issue(key, 'Este campo es obligatorio');
         };
         if (baseline && data.informed_consent === 'no') {
@@ -802,16 +845,18 @@ export function createTheraInstrument(visit: TheraVisit) {
           'genital_symptoms_diagnosis_date'
         ]) {
           const rule = requiredWhen.find((item) => item.key === key);
-          if (visitDate && rule?.predicate(data) && typeof data[key] === 'string' && data[key] > visitDate)
+          const value = data[key];
+          if (visitDate && rule?.predicate(data) && typeof value === 'string' && value > visitDate)
             issue(key, 'La fecha no puede ser posterior a la visita');
         }
         for (const key of ['chemotherapy_end_date', 'hormonal_end_date', 'radiotherapy_end_date']) {
           const rule = requiredWhen.find((item) => item.key === key);
+          const value = data[key];
           if (
             rule?.predicate(data) &&
-            typeof data[key] === 'string' &&
+            typeof value === 'string' &&
             typeof data.breast_cancer_diagnosis_date === 'string' &&
-            data[key] < data.breast_cancer_diagnosis_date
+            value < data.breast_cancer_diagnosis_date
           )
             issue(key, 'La finalización no puede preceder al diagnóstico oncológico');
         }
@@ -843,7 +888,7 @@ export function createTheraInstrument(visit: TheraVisit) {
   const validationSchema: z.ZodType<FormInstrument.Data, z.ZodTypeDef, unknown> = z
     .unknown()
     .transform((value, ctx) => {
-      const result = parsedSchema.safeParse(value);
+      const result = parsedSchema.safeParse(value, { errorMap: spanishValidationError });
       if (result.success) return result.data;
       const errors = new Map<string, { path: (string | number)[]; messages: Set<string> }>();
       for (const issue of result.error.issues) {
@@ -884,7 +929,7 @@ export function createTheraInstrument(visit: TheraVisit) {
   return defineInstrument({
     kind: 'FORM',
     language: 'en',
-    internal: { name: THERA_NAMES[visit], edition: 7 },
+    internal: { name: THERA_NAMES[visit], edition: 9 },
     tags: ['THERA-SGM-2026', 'CRF', visit],
     clientDetails: {
       estimatedDuration: { V0: 40, V1: 25, V2: 25, V3: 10, V4: 25 }[visit],

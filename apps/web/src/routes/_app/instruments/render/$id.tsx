@@ -1322,6 +1322,7 @@ const RouteComponent = () => {
           key={rendererKey}
           className="mx-auto max-w-3xl"
           initialData={formInitialData}
+          initialStep={isThera && currentStep === 1 ? 1 : 0}
           isAdmin={currentUser?.basePermissionLevel === 'ADMIN'}
           isEditing={Boolean(recordId)}
           isResuming={Boolean(recordId) || Boolean(effectiveInitialData)}

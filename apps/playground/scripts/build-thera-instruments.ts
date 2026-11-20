@@ -163,7 +163,7 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
     form.details.authors?.includes('Laura Baquedano Mainar') === true,
     `${visit}: details identify the coordinating investigator`
   );
-  verify(form.internal.edition === 7, `${visit}: edition succeeds published edition 6`);
+  verify(form.internal.edition === 9, `${visit}: edition succeeds published edition 8`);
   const data = fixture(form, visit);
   const groups = Array.isArray(form.content) ? form.content : [{ fields: form.content }];
   const titles = groups.map((group) => group.title);
@@ -296,6 +296,43 @@ for (const visit of ['v0', 'v1', 'v2', 'v3', 'v4']) {
   const valid = await form.validationSchema.safeParseAsync(data);
   assert(valid.success, `${visit}: ${valid.success ? '' : JSON.stringify(valid.error.issues)}`);
   assertions++;
+  for (const [value, message] of [
+    [-1, 'El valor debe ser mayor o igual que 0'],
+    [11, 'El valor debe ser menor o igual que 10'],
+    [1.5, 'Introduzca un número entero'],
+    ['incorrecto', 'Introduzca un número válido']
+  ] as const) {
+    const invalid = await form.validationSchema.safeParseAsync({ ...data, eva_dyspareunia: value });
+    verify(
+      !invalid.success && invalid.error.issues.some((issue) => issue.message.includes(message)),
+      `${visit}: numeric validation is Spanish for ${value}`
+    );
+  }
+  if (visit === 'v0') {
+    for (const value of ['cesarea', new Set(['cesarea'])]) {
+      const childbirth = await form.validationSchema.safeParseAsync({
+        ...data,
+        childbirth: 'si',
+        childbirth_types: value
+      });
+      verify(
+        childbirth.success && childbirth.data.childbirth_types === 'cesarea',
+        'V0: a single birth answer and a historical singleton Set persist as one answer'
+      );
+    }
+    const multipleBirths = await form.validationSchema.safeParseAsync({
+      ...data,
+      childbirth: 'si',
+      childbirth_types: new Set(['cesarea', 'instrumental'])
+    });
+    verify(!multipleBirths.success, 'V0: multiple birth answers require explicit reselection');
+    const height = await form.validationSchema.safeParseAsync({ ...data, height: 1788 });
+    verify(
+      !height.success &&
+        height.error.issues.some((issue) => issue.message === 'El valor debe ser menor o igual que 250'),
+      'V0: height maximum is Spanish'
+    );
+  }
   for (const value of [formatTheraDate(data.visit_date), new Date(`${String(data.visit_date)}T12:00:00.000Z`)]) {
     const calendarData = await form.validationSchema.safeParseAsync({ ...data, visit_date: value });
     verify(
